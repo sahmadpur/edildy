@@ -77,7 +77,7 @@ async function signIn(page: Page, t: Tenant): Promise<void> {
   await page.getByLabel('E-poçt', { exact: true }).fill(t.email);
   await page.getByLabel('Şifrə', { exact: true }).fill(t.password);
   await page.getByRole('button', { name: 'Daxil ol' }).click();
-  await expect(page.getByRole('heading', { name: 'İdarə paneli' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ana səhifə' })).toBeVisible();
 }
 
 interface Run {

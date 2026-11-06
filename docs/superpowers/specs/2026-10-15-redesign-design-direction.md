@@ -31,7 +31,9 @@ IBM Plex Sans, one family on all three surfaces, variable weight 300–700. Chos
 
 ### Components
 
-- Web shell: Deep sidebar with the logo, a saffron tick on the current item, groups separated by spacing not rules; a white header with organisation name, language, notifications, user menu. Radius 10 px for controls, 14 px for cards, 6 px for chips. One shadow level (a 1 px line plus a faint ink tint) for cards; dialogs and popovers get a second, stronger level.
+- Web shell: Deep sidebar with the logo, a saffron tick on the current item, groups separated by spacing not rules; a white header with organisation name, language (globe), messages (for senders), notifications, user menu. Radius 10 px for controls, 14 px for cards, 6 px for chips. One shadow level (a 1 px line plus a faint ink tint) for cards; dialogs and popovers get a second, stronger level.
+  - Since 6 Nov 2026 the sidebar has three collapsible groups: Ümumi (Ana səhifə, Hesabatlar), Əməliyyatlar (Təyinatlar, Yoxlama vərəqələri, Problemlər, Tapşırıqlar, Audit, Növbələr) and İdarəetmə (İşçilər, Obyektlər, Komandalar, Rollar, İstifadə jurnalı, Parametrlər). A group's heading folds it; the fold is remembered in localStorage (`taskop.nav.collapsed`), and the group of the current page always stays open. Mesajlar left the menu for a header icon.
+  - Merged pages are one menu item with a line-style tab bar of links (`PageTabs`): Yoxlama vərəqələri + Şablonlar (`/checklists`, `/templates`), Təyinatlar + İcra cədvəli (`/assignments`, `/schedule`), Növbələr + Növbə cədvəli (`/shifts`, `/roster`). Every tab keeps its URL, so deep links need no redirect; the sidebar item stays highlighted on either tab.
 - Tables: 44 px rows, sticky header, sortable heads with a visible arrow, right-aligned tabular numbers, hover tint. Filters sit in one wrapping toolbar with labelled controls.
 - Dialogs and run-dialog tabs: a line-style tab bar (underline, not pills), 24 px padding, titled sections.
 - Charts: due bars in slate, completed in Caspian, the completion line in saffron; the hidden data table stays.

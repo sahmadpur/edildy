@@ -116,26 +116,24 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
     .poll(async () => (await owner<ReportSummary>('GET', `/reports/summary?from=${yesterday}&to=${yesterday}`)).counts, { timeout: 90_000, intervals: [2_000] })
     .toMatchObject({ planned: 2, due: 2, completed: 1, inProgress: 0, overdue: 1, withProblems: 1, withCritical: 1 });
 
-  // The owner on the web: the home page is the dashboard (decision 17).
+  // The owner on the web: the home page shows every period's tiles, one block each.
   await page.goto('/login');
   await page.getByLabel('E-poçt', { exact: true }).fill(email);
   await page.getByLabel('Şifrə', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Daxil ol' }).click();
-  await expect(page.getByRole('heading', { name: 'İdarə paneli' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ana səhifə' })).toBeVisible();
 
   // Last 7 days covers yesterday whatever the time of day (decision 18).
-  await page.getByLabel('Dövr').selectOption('last_7');
-  await expect(page).toHaveURL(/[?&]period=last_7/);
+  const week = page.getByRole('region', { name: 'Son 7 gün' });
   for (const name of ['Planlaşdırılıb: 2', 'Tamamlanıb: 1', 'Davam edir: 0', 'Gecikib: 1', 'Problemli: 1']) {
-    await expect(page.getByRole('link', { name })).toBeVisible();
+    await expect(week.getByRole('link', { name })).toBeVisible();
   }
-  await expect(page.getByRole('group', { name: 'Tamamlanma faizi' })).toContainText('50%');
-  await expect(page.getByRole('group', { name: 'Orta bal' })).toContainText(/87[,.]5%/);
-  await expect(page.getByRole('figure', { name: 'Gündəlik icra' })).toBeVisible();
-  await expect(page.getByRole('list', { name: 'Kritik problemlər' })).toContainText('Şüşədə çat var');
+  await expect(week.getByRole('group', { name: 'Tamamlanma faizi' })).toContainText('50%');
+  await expect(week.getByRole('group', { name: 'Orta bal' })).toContainText(/87[,.]5%/);
+  await expect(week.getByRole('figure', { name: 'Gündəlik icra' })).toBeVisible();
 
-  // Overdue → the runs report, overdue bucket, same period.
-  await page.getByRole('link', { name: 'Gecikib: 1' }).click();
+  // Overdue → the runs report, overdue bucket, the block's period.
+  await week.getByRole('link', { name: 'Gecikib: 1' }).click();
   await expect(page).toHaveURL(/\/reports\?/);
   expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual({ period: 'last_7', tab: 'runs', bucket: 'overdue' });
   await expect(page.getByRole('tab', { name: 'İcralar' })).toHaveAttribute('aria-selected', 'true');

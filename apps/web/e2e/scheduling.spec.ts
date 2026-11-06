@@ -70,7 +70,10 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await expect(page.getByRole('heading', { name: 'E2E açılış' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Yaxın icralar' }).getByRole('listitem').first()).toBeVisible();
 
-  // The schedule page opens.
+  // The schedule is the second tab of Təyinatlar.
+  await page.getByRole('link', { name: 'Təyinatlar' }).click();
   await page.getByRole('link', { name: 'İcra cədvəli' }).click();
-  await expect(page.getByRole('heading', { name: 'İcra cədvəli' })).toBeVisible();
+  await expect(page).toHaveURL(/\/schedule$/);
+  await expect(page.getByRole('heading', { name: 'Təyinatlar' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'İcra cədvəli' })).toHaveAttribute('aria-current', 'page');
 });
