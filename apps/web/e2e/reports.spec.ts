@@ -132,10 +132,18 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   await expect(week.getByRole('group', { name: 'Orta bal' })).toContainText(/87[,.]5%/);
   await expect(week.getByRole('figure', { name: 'Gündəlik icra' })).toBeVisible();
 
-  // Overdue → the runs report, overdue bucket, the block's period.
-  await week.getByRole('link', { name: 'Gecikib: 1' }).click();
-  await expect(page).toHaveURL(/\/reports\?/);
-  expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual({ period: 'last_7', tab: 'runs', bucket: 'overdue' });
+  // Overdue → the overdue runs of that block unfold on the home page itself; the URL does not change.
+  await week.getByRole('button', { name: 'Gecikib: 1' }).click();
+  const unfolded = week.getByRole('region', { name: 'Gecikib' });
+  const homeRows = unfolded.getByRole('table').getByRole('row');
+  await expect(homeRows).toHaveCount(2);
+  for (const text of ['E2E hesabat', 'Anbar №1', 'Gecikib', 'Nigar Səfərli']) await expect(homeRows.nth(1)).toContainText(text);
+  await expect(page).toHaveURL(/\/$/);
+  await unfolded.getByRole('button', { name: 'Bağla' }).click();
+  await expect(unfolded).toHaveCount(0);
+
+  // The runs report, overdue bucket, same period.
+  await page.goto('/reports?period=last_7&tab=runs&bucket=overdue');
   await expect(page.getByRole('tab', { name: 'İcralar' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByRole('group', { name: 'İcralar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
   const rows = page.getByRole('table').getByRole('row');

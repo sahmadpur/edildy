@@ -38,13 +38,6 @@ export function RunsTab({
   onAuditState?: (state: RunAuditState | null) => void;
 }) {
   const { t } = useTranslation();
-  const locale = useLocale();
-  const time = useTimeFormat();
-  const formatDateTime = useFormatDateTime();
-  const runs = useReportRuns(filters, bucket, auditState);
-  const [open, setOpen] = useState<string | null>(null);
-  const items = runs.data?.pages.flatMap((p) => p.items) ?? [];
-
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -65,6 +58,23 @@ export function RunsTab({
           </NativeSelect>
         )}
       </div>
+      <RunsTable filters={filters} bucket={bucket} auditState={auditState} />
+    </div>
+  );
+}
+
+/** The runs of one bucket: a paged table whose rows open the run drawer. Shared by the Runs tab and the home page's tiles. */
+export function RunsTable({ filters, bucket, auditState = null }: { filters: ReportFilters; bucket: RunBucket; auditState?: RunAuditState | null }) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const time = useTimeFormat();
+  const formatDateTime = useFormatDateTime();
+  const runs = useReportRuns(filters, bucket, auditState);
+  const [open, setOpen] = useState<string | null>(null);
+  const items = runs.data?.pages.flatMap((p) => p.items) ?? [];
+
+  return (
+    <div className="grid gap-4">
       {runs.error && <p className="text-destructive">{errorText(t, runs.error)}</p>}
       {runs.isPending && <LoadingState />}
       {runs.isSuccess && items.length === 0 && <EmptyState title={t('reports.empty')} />}

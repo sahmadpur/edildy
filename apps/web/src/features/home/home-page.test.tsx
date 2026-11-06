@@ -4,7 +4,7 @@ import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fixedSizeCharts } from '@/features/reports/chart-test-setup';
-import { meWith, reportSummary, TODAY, VIEWER } from '@/features/reports/fixtures';
+import { meWith, page, reportRun, reportSummary, TODAY, VIEWER } from '@/features/reports/fixtures';
 import { queryClient as appQueryClient } from '@/lib/query';
 import { renderWithRouter } from '@/test/router';
 import { HomeDashboard } from './home-dashboard';
@@ -12,7 +12,7 @@ import { HomePage } from './home-page';
 
 const mocks = vi.hoisted(() => ({
   me: { current: null as unknown },
-  api: { reports: { summary: vi.fn() } },
+  api: { reports: { summary: vi.fn(), runs: vi.fn() }, occurrences: { get: vi.fn() }, executions: { get: vi.fn() } },
 }));
 vi.mock('@/lib/session', () => ({
   api: mocks.api,
@@ -32,6 +32,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.me.current = meWith(VIEWER);
   mocks.api.reports.summary.mockResolvedValue(reportSummary());
+  mocks.api.reports.runs.mockResolvedValue(page([reportRun()]));
 });
 
 afterEach(() => {
@@ -72,8 +73,8 @@ describe('HomeDashboard', () => {
     expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-10-06', to: TODAY });
 
     const today = screen.getByRole('region', { name: 'Bu gün' });
-    expect(await within(today).findByRole('link', { name: 'Planlaşdırılıb: 12' })).toBeInTheDocument();
-    for (const name of ['Tamamlanıb: 7', 'Davam edir: 1', 'Gecikib: 1', 'Problemli: 2']) expect(within(today).getByRole('link', { name })).toBeInTheDocument();
+    expect(await within(today).findByRole('button', { name: 'Planlaşdırılıb: 12' })).toBeInTheDocument();
+    for (const name of ['Tamamlanıb: 7', 'Davam edir: 1', 'Gecikib: 1', 'Problemli: 2']) expect(within(today).getByRole('button', { name })).toBeInTheDocument();
     expect(within(today).getByRole('group', { name: 'Tamamlanma faizi' })).toHaveTextContent('70%');
     // One day: no trend. A week: a trend.
     expect(within(today).queryByRole('figure')).not.toBeInTheDocument();
@@ -89,12 +90,39 @@ describe('HomeDashboard', () => {
     expect(within(week).getByRole('heading', { level: 2 })).toHaveTextContent(/^Son 7 gün .*29 okt 2026 – .*4 noy 2026$/);
   });
 
-  it("carries the block's period to the runs report", async () => {
-    renderWithRouter(<HomeDashboard today={TODAY} />);
+  it("opens a tile's runs inside its block, on the home page itself, and closes them on a second click", async () => {
+    const router = renderWithRouter(<HomeDashboard today={TODAY} />);
     const week = await screen.findByRole('region', { name: 'Son 7 gün' });
-    const href = new URL((await within(week).findByRole('link', { name: 'Gecikib: 1' })).getAttribute('href')!, 'http://localhost');
-    expect(href.pathname).toBe('/reports');
-    expect(Object.fromEntries(href.searchParams)).toEqual({ period: 'last_7', tab: 'runs', bucket: 'overdue' });
+    const tile = await within(week).findByRole('button', { name: 'Gecikib: 1' });
+    expect(screen.queryByRole('link', { name: 'Gecikib: 1' })).not.toBeInTheDocument();
+    await userEvent.click(tile);
+    expect(tile).toHaveAttribute('aria-pressed', 'true');
+    const panel = await within(week).findByRole('region', { name: 'Gecikib' });
+    expect(await within(panel).findByRole('row', { name: /Açılış yoxlaması/ })).toBeInTheDocument();
+    expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: '2026-10-29', to: TODAY, bucket: 'overdue' });
+    expect(router.state.location.pathname).toBe('/');
+
+    // One list at a time: another tile replaces it, the same tile closes it.
+    await userEvent.click(within(week).getByRole('button', { name: 'Tamamlanıb: 7' }));
+    expect(await within(week).findByRole('region', { name: 'Tamamlanıb' })).toBeInTheDocument();
+    expect(within(week).queryByRole('region', { name: 'Gecikib' })).not.toBeInTheDocument();
+    expect(mocks.api.reports.runs).toHaveBeenLastCalledWith({ from: '2026-10-29', to: TODAY, bucket: 'completed' });
+    await userEvent.click(within(week).getByRole('button', { name: 'Tamamlanıb: 7' }));
+    expect(within(week).queryByRole('region')).not.toBeInTheDocument();
+  });
+
+  it('keeps one open list across blocks and closes it from its own button', async () => {
+    renderWithRouter(<HomeDashboard today={TODAY} />);
+    const today = await screen.findByRole('region', { name: 'Bu gün' });
+    await userEvent.click(await within(today).findByRole('button', { name: 'Problemli: 2' }));
+    expect(await within(today).findByRole('region', { name: 'Problemli' })).toBeInTheDocument();
+    expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'problems' });
+    const week = screen.getByRole('region', { name: 'Son 7 gün' });
+    await userEvent.click(within(week).getByRole('button', { name: 'Gecikib: 1' }));
+    expect(await within(week).findByRole('region', { name: 'Gecikib' })).toBeInTheDocument();
+    expect(within(today).queryByRole('region')).not.toBeInTheDocument();
+    await userEvent.click(within(week).getByRole('button', { name: 'Bağla' }));
+    expect(within(week).queryByRole('region')).not.toBeInTheDocument();
   });
 
   it("resolves the periods from the tenant's today, not the browser's", async () => {
@@ -114,7 +142,7 @@ describe('HomeDashboard', () => {
   it('asks again every minute while the page is visible, not while it is hidden, and at once when it comes back', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     renderWithRouter(<HomeDashboard today={TODAY} />, '/', appClient());
-    await screen.findAllByRole('link', { name: 'Gecikib: 1' });
+    await screen.findAllByRole('button', { name: 'Gecikib: 1' });
     expect(mocks.api.reports.summary).toHaveBeenCalledTimes(6);
     await act(() => vi.advanceTimersByTimeAsync(60_000));
     await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledTimes(12));
