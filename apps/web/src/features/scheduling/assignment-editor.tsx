@@ -5,6 +5,7 @@ import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckboxList } from '@/components/checkbox-list';
+import { Field, RequiredLegend } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -107,13 +108,13 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="grid content-start gap-4">
+        <RequiredLegend />
         <div className="grid gap-1.5">
           <Label htmlFor="assignment-name">{t('scheduling.assignments.name')}</Label>
           <Input id="assignment-name" value={name} maxLength={200} onChange={(e) => setName(e.target.value)} />
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="assignment-checklist">{t('scheduling.assignments.checklist')}</Label>
-          <NativeSelect id="assignment-checklist" value={checklistId} disabled={Boolean(initial)} onChange={(e) => setChecklistId(e.target.value)}>
+        <Field id="assignment-checklist" label={t('scheduling.assignments.checklist')} required empty={!checklistId}>
+          <NativeSelect id="assignment-checklist" value={checklistId} aria-required disabled={Boolean(initial)} onChange={(e) => setChecklistId(e.target.value)}>
             <option value="">{t('scheduling.assignments.chooseChecklist')}</option>
             {initial && <option value={initial.checklistId}>{initial.checklistName}</option>}
             {(checklists.data ?? [])
@@ -124,10 +125,9 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
                 </option>
               ))}
           </NativeSelect>
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="assignment-site">{t('scheduling.assignments.site')}</Label>
-          <NativeSelect id="assignment-site" value={siteId} disabled={Boolean(initial)} onChange={(e) => changeSite(e.target.value)}>
+        </Field>
+        <Field id="assignment-site" label={t('scheduling.assignments.site')} required empty={!siteId}>
+          <NativeSelect id="assignment-site" value={siteId} aria-required disabled={Boolean(initial)} onChange={(e) => changeSite(e.target.value)}>
             <option value="">{t('scheduling.assignments.chooseSite')}</option>
             {(sites.data ?? [])
               .filter((s) => s.active || s.id === initial?.siteId)
@@ -137,13 +137,14 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
                 </option>
               ))}
           </NativeSelect>
-        </div>
+        </Field>
         {siteId && (
           <CheckboxList
             label={t('scheduling.assignments.assignees')}
             options={assigneeOptions}
             value={assigneeIds}
             onChange={setAssigneeIds}
+            required
           />
         )}
         <RecurrenceEditor value={schedule} onChange={setSchedule} today={today} />

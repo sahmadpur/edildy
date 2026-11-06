@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { EmptyTag, RequiredLegend } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -68,32 +69,45 @@ export function ComposeMessage() {
           if (canPreview(draft)) preview.mutate(sendBody(draft));
         }}
       >
+        <RequiredLegend />
         <TargetPicker value={draft.targets} onChange={(v) => set('targets', v)} />
         {targetError && <p className="text-destructive text-sm">{t(targetError)}</p>}
-        <div className="grid gap-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="message-title">{t('notifications.messages.titleLabel')}</Label>
-            <span className="text-muted-foreground text-xs">{t('notifications.messages.counter', { count: draft.title.length, max: MESSAGE_LIMITS.titleMax })}</span>
+        <div className="grid gap-1.5" data-field-empty={draft.title.trim() ? undefined : 'true'}>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="message-title" className="after:text-saffron after:ml-0.5 after:content-['*']">
+              {t('notifications.messages.titleLabel')}
+            </Label>
+            <span className="flex items-center gap-2 text-muted-foreground text-xs">
+              {!draft.title.trim() && <EmptyTag label={t('common.emptyField')} />}
+              {t('notifications.messages.counter', { count: draft.title.length, max: MESSAGE_LIMITS.titleMax })}
+            </span>
           </div>
           <Input
             id="message-title"
             maxLength={MESSAGE_LIMITS.titleMax}
             value={draft.title}
+            aria-required
             aria-invalid={Boolean(fields.title)}
             onChange={(e) => set('title', e.target.value)}
           />
           {fields.title && <p className="text-destructive text-sm">{t(fields.title)}</p>}
         </div>
-        <div className="grid gap-1.5">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="message-body">{t('notifications.messages.bodyLabel')}</Label>
-            <span className="text-muted-foreground text-xs">{t('notifications.messages.counter', { count: draft.body.length, max: MESSAGE_LIMITS.bodyMax })}</span>
+        <div className="grid gap-1.5" data-field-empty={draft.body.trim() ? undefined : 'true'}>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="message-body" className="after:text-saffron after:ml-0.5 after:content-['*']">
+              {t('notifications.messages.bodyLabel')}
+            </Label>
+            <span className="flex items-center gap-2 text-muted-foreground text-xs">
+              {!draft.body.trim() && <EmptyTag label={t('common.emptyField')} />}
+              {t('notifications.messages.counter', { count: draft.body.length, max: MESSAGE_LIMITS.bodyMax })}
+            </span>
           </div>
           <Textarea
             id="message-body"
             rows={4}
             maxLength={MESSAGE_LIMITS.bodyMax}
             value={draft.body}
+            aria-required
             aria-invalid={Boolean(fields.body)}
             onChange={(e) => set('body', e.target.value)}
           />

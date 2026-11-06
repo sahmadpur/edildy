@@ -34,4 +34,7 @@ export default {
   closeMenu: 'Закрыть меню',
   skipToContent: 'К содержимому',
   errorTitle: 'Не удалось загрузить',
+  requiredField: 'обязательное поле',
+  emptyField: 'Пусто',
+  requiredLegend: '* — обязательные поля',
 } as const;

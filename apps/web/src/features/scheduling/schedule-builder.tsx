@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Field } from '@/components/field';
 import { formatLocalDate } from './labels';
 import { useLocale } from '@/lib/i18n';
 
@@ -285,9 +286,8 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor={`${id}-shift`}>{t('scheduling.builder.shift')}</Label>
-            <NativeSelect id={`${id}-shift`} value={value.shiftId} onChange={(e) => onChange({ ...value, shiftId: e.target.value })}>
+          <Field id={`${id}-shift`} label={t('scheduling.builder.shift')} required empty={!value.shiftId}>
+            <NativeSelect id={`${id}-shift`} value={value.shiftId} aria-required onChange={(e) => onChange({ ...value, shiftId: e.target.value })}>
               <option value="">{t('scheduling.builder.chooseShift')}</option>
               {shifts
                 .filter((s) => s.active || s.id === value.shiftId)
@@ -297,7 +297,7 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
                   </option>
                 ))}
             </NativeSelect>
-          </div>
+          </Field>
           <NumberField id={`${id}-grace`} label={t('scheduling.builder.grace')} value={value.graceMinutes} min={0} max={max} onChange={(graceMinutes) => onChange({ ...value, graceMinutes })} />
         </div>
       )}

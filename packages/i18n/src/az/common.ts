@@ -34,4 +34,7 @@ export default {
   closeMenu: 'Menyunu bağla',
   skipToContent: 'Məzmuna keç',
   errorTitle: 'Yükləmək mümkün olmadı',
+  requiredField: 'mütləq xana',
+  emptyField: 'Boş',
+  requiredLegend: '* — mütləq xanalar',
 } as const;

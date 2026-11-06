@@ -47,7 +47,7 @@ export function TeamDialog({ open, onOpenChange, team, users, canEditMembers, on
           <DialogTitle>{team ? t('teams.editTitle') : t('teams.createTitle')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-4" noValidate>
-          <TextField form={form} name="name" label={t('teams.name')} />
+          <TextField form={form} name="name" label={t('teams.name')} required />
           <TextField form={form} name="description" label={t('teams.description')} />
           {canEditMembers && (
             <CheckboxList

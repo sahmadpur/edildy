@@ -9,6 +9,7 @@ import { FormError } from '@/components/form-error';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Field } from '@/components/field';
 import { Textarea } from '@/components/ui/textarea';
 import { refreshRunViews } from '@/features/executions/queries';
 import { errorText } from '@/lib/errors';
@@ -153,10 +154,9 @@ function CancelAuditDialog({ audit, onClose }: { audit: AuditDetail; onClose: ()
           <DialogTitle>{t('audits.web.cancel.title')}</DialogTitle>
           <DialogDescription>{t('audits.web.cancel.description')}</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-1.5">
-          <Label htmlFor="cancel-audit-reason">{t('audits.fields.cancelReason')}</Label>
-          <Textarea id="cancel-audit-reason" maxLength={AUDIT_LIMITS.cancelReason} value={reason} onChange={(e) => setReason(e.target.value)} />
-        </div>
+        <Field id="cancel-audit-reason" label={t('audits.fields.cancelReason')} required empty={!reason.trim()}>
+          <Textarea id="cancel-audit-reason" maxLength={AUDIT_LIMITS.cancelReason} value={reason} aria-required onChange={(e) => setReason(e.target.value)} />
+        </Field>
         <FormError message={cancel.error ? errorText(t, cancel.error) : null} />
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

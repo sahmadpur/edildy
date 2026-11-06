@@ -2,6 +2,7 @@ import { TEMPLATE_CATEGORIES, type CreateChecklistInput, type TemplateCategory, 
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Field } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -91,10 +92,10 @@ export function NewChecklistDialog({ open, onOpenChange, initialMode = 'blank', 
             />
           </TabsContent>
           <TabsContent value="copy">
-            <div className="grid gap-1.5">
-              <Label htmlFor="copy-from">{t('checklists.create.pickChecklist')}</Label>
+            <Field id="copy-from" label={t('checklists.create.pickChecklist')} required empty={!copyId}>
               <NativeSelect
                 id="copy-from"
+                aria-required
                 value={copyId}
                 onChange={(e) => {
                   const picked = published.data?.find((c) => c.id === e.target.value);
@@ -110,14 +111,13 @@ export function NewChecklistDialog({ open, onOpenChange, initialMode = 'blank', 
                 ))}
               </NativeSelect>
               {published.data?.length === 0 && <EmptyState title={t('checklists.create.noPublished')} />}
-            </div>
+            </Field>
           </TabsContent>
         </Tabs>
         <div className="grid gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor="new-checklist-name">{t('checklists.name')}</Label>
-            <Input id="new-checklist-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} />
-          </div>
+          <Field id="new-checklist-name" label={t('checklists.name')} required empty={!name.trim()}>
+            <Input id="new-checklist-name" value={name} aria-required onChange={(e) => setName(e.target.value)} maxLength={200} />
+          </Field>
           <div className="grid gap-1.5">
             <Label htmlFor="new-checklist-category">{t('checklists.category')}</Label>
             <NativeSelect id="new-checklist-category" value={category} onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}>
