@@ -55,7 +55,8 @@ export class TasksService {
       .values({
         id: dto.id,
         tenantId: p.tenantId,
-        title: dto.title,
+        // The schema requires a title unless the task comes from a problem report, whose text then supplies it (2026-11-06 design §6.2).
+        title: dto.title ?? '',
         instructions: dto.instructions,
         priority: dto.priority,
         siteId,

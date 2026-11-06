@@ -43,6 +43,7 @@ export const toTaskSummary = (r: TaskSummaryRow): TaskSummary => ({
   requiresReview: r.t.requiresReview,
   source: r.t.problemId ? 'problem' : 'adhoc',
   problemId: r.t.problemId,
+  problemReportId: r.t.problemReportId,
   dueAt: iso(r.t.dueAt),
   overdueAt: iso(r.t.overdueAt),
   rev: r.t.rev,

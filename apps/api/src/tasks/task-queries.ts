@@ -92,6 +92,8 @@ export class TaskQueries {
           media: media.filter((m) => m.m.taskId === r.t.id).map(toTaskMediaDto),
           submissions: submissions.filter((s) => s.s.taskId === r.t.id).map(toSubmissionDto),
           problem: r.t.problemId ? (problems.get(r.t.problemId) ?? null) : null,
+          // Filled once tasks can be made from problem reports (2026-11-06 design §6.2).
+          problemReport: null,
         },
       ]),
     );

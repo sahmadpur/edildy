@@ -127,6 +127,20 @@
       "when": 1792127724573,
       "tag": "0017_user_locale",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793973914193,
+      "tag": "0018_problem_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793973915193,
+      "tag": "0019_problem_reports_security",
+      "breakpoints": true
     }
   ]
 }

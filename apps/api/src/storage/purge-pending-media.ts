@@ -5,13 +5,13 @@ import type { PgColumn } from 'drizzle-orm/pg-core';
 import type { Clock } from '../common/clock';
 import { perTenant, tenantsWith } from '../common/per-tenant';
 import type { DbService } from '../db/db.service';
-import type { executionMedia, taskMedia } from '../db/schema';
+import type { executionMedia, problemReportMedia, taskMedia } from '../db/schema';
 import type { S3Service } from './s3.service';
 
 const DAY = 86_400_000;
 
 /** A media table whose pending rows media.cleanup / task-media.cleanup purge; the rows themselves are never deleted. */
-export type PendingMediaTable = typeof executionMedia | typeof taskMedia;
+export type PendingMediaTable = typeof executionMedia | typeof taskMedia | typeof problemReportMedia;
 
 export interface PurgeDeps {
   db: DbService;

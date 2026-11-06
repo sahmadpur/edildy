@@ -127,6 +127,10 @@ export class SyncService {
         rework: rework.get(x.id) ?? null,
       })),
       ...(await this.taskSync.forUser(p, q.knownTaskIds, now)),
+      // Problem reports join the sync once their module exists (2026-11-06 design §6.3).
+      problemReports: [],
+      removedProblemReportIds: [],
+      reportSites: [],
       unreadNotifications: await this.inbox.unreadCount(p.userId),
     };
   }
