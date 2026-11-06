@@ -87,6 +87,20 @@ describe('AppShell', () => {
     expect(await screen.findByRole('link', { name: 'İşçilər' })).toHaveAttribute('aria-current', 'page');
   });
 
+  it('folds and unfolds the group of the current page on its heading, and shows that', async () => {
+    state.current = { status: 'authenticated', me: me(['users.view']) };
+    renderShell('/users');
+    const heading = await screen.findByRole('button', { name: 'İdarəetmə' });
+    await userEvent.click(heading);
+    expect(heading).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('link', { name: 'İşçilər' })).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual(['admin']);
+    await userEvent.click(heading);
+    expect(heading).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'İşçilər' })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual([]);
+  });
+
   it('marks Təyinatlar current on the schedule page', async () => {
     state.current = { status: 'authenticated', me: me(['assignments.view']) };
     renderShell('/schedule');

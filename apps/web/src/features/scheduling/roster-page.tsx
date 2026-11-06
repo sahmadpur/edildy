@@ -94,23 +94,25 @@ export function RosterPage({ initialDate, tabs }: { initialDate?: string; tabs?:
 
   return (
     <div className="grid gap-4">
-      <PageHeader
-        title={t('scheduling.shifts.title')}
-        actions={
-          canManage &&
-          siteId && (
-            <>
-              <Button variant="outline" disabled={dirty || !roster.data} onClick={() => setCopying(true)}>
-                {t('scheduling.roster.copy')}
-              </Button>
-              <Button disabled={!dirty} onClick={() => void save()}>
-                {t('common.save')}
-              </Button>
-            </>
-          )
-        }
-      />
-      {tabs}
+      <div>
+        <PageHeader
+          title={t('scheduling.shifts.title')}
+          actions={
+            canManage &&
+            siteId && (
+              <>
+                <Button variant="outline" disabled={dirty || !roster.data} onClick={() => setCopying(true)}>
+                  {t('scheduling.roster.copy')}
+                </Button>
+                <Button disabled={!dirty} onClick={() => void save()}>
+                  {t('common.save')}
+                </Button>
+              </>
+            )
+          }
+        />
+        {tabs}
+      </div>
       <div className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="roster-site">{t('scheduling.roster.site')}</Label>

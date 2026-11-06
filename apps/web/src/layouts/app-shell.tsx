@@ -69,10 +69,15 @@ export function AppShell() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
-  const toggleGroup = (group: string) =>
+  // The group of the current page is shown open on arrival whatever was folded; it folds only when its heading is
+  // clicked on this very page, so the heading always does what it shows. Forgotten on every page change.
+  const [folded, setFolded] = useState<{ group: string; at: string } | null>(null);
+  const activeFolded = folded?.at === pathname ? folded.group : null;
+  const setGroupOpen = (group: string, open: boolean) => {
+    setFolded(open ? null : { group, at: pathname });
     setCollapsed((prev) => {
       const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
+      if (open) next.delete(group);
       else next.add(group);
       try {
         localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next]));
@@ -81,6 +86,7 @@ export function AppShell() {
       }
       return next;
     });
+  };
 
   // Remember the last location seen while signed in, so the redirect target is the page the user was on
   // (not /login itself, which would loop).
@@ -114,8 +120,8 @@ export function AppShell() {
   const allowed = (p: NavItem['permission']) => !p || (typeof p === 'string' ? [p] : p).some((k) => me.permissions.includes(k));
   const items = NAV_ITEMS.filter((i) => allowed(i.permission));
   const groups = GROUPS.map((g) => [g, items.filter((i) => i.group === g)] as const).filter(([, list]) => list.length > 0);
-  // The group of the current page stays open whatever was folded, so the highlighted item is always in view.
   const activeGroup = items.find((i) => isNavItemActive(i, pathname))?.group;
+  const isOpen = (group: string) => (group === activeGroup ? activeFolded !== group : !collapsed.has(group));
 
   return (
     <div className="flex min-h-screen">
@@ -142,7 +148,7 @@ export function AppShell() {
         </div>
         <nav aria-label={t('common.menu')} className="flex-1 overflow-y-auto px-3 pb-4">
           {groups.map(([group, list]) => (
-            <Collapsible key={group} open={!collapsed.has(group) || group === activeGroup} onOpenChange={() => toggleGroup(group)} className="mt-3 first:mt-0">
+            <Collapsible key={group} open={isOpen(group)} onOpenChange={(open) => setGroupOpen(group, open)} className="mt-3 first:mt-0">
               <CollapsibleTrigger className="text-on-deep-muted flex w-full items-center justify-between rounded-md px-3 pb-1 text-[11px] font-medium hover:text-white focus-visible:outline-saffron [&[data-state=open]>svg]:rotate-180">
                 {t(`nav.groups.${group}`)}
                 <ChevronDown className="size-3 transition-transform" aria-hidden />

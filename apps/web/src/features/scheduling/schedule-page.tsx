@@ -39,8 +39,10 @@ export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?
 
   return (
     <div className="grid gap-4">
-      <PageHeader title={t('scheduling.assignments.title')} />
-      {props.tabs}
+      <div>
+        <PageHeader title={t('scheduling.assignments.title')} />
+        {props.tabs}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         {(['day', 'week'] as const).map((v) => (
           <Button key={v} variant={view === v ? 'default' : 'outline'} aria-pressed={view === v} onClick={() => setView(v)}>
