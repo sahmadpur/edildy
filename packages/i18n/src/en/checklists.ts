@@ -43,6 +43,7 @@ export default {
   },
   title: 'Checklists',
   new: 'New checklist',
+  open: 'Open',
   empty: 'No checklists yet.',
   name: 'Name',
   description: 'Description',

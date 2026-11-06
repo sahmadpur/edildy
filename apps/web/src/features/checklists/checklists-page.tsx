@@ -7,7 +7,8 @@ import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/states';
 import { ChecklistTabs } from './checklist-tabs';
 import { categoryLabel } from './labels';
 import { NewChecklistDialog } from './new-checklist-dialog';
@@ -47,43 +48,34 @@ export function ChecklistsPage() {
           ))}
         </NativeSelect>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('checklists.name')}</TableHead>
-            <TableHead>{t('checklists.category')}</TableHead>
-            <TableHead>{t('checklists.version')}</TableHead>
-            <TableHead>{t('common.status')}</TableHead>
-            <TableHead>{t('checklists.updated')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map((c) => (
+          <Card key={c.id}>
+            <CardHeader>
+              <CardTitle className="flex flex-wrap items-center gap-2">
                 <WsLink to={`/checklists/${c.id}`}>{c.name}</WsLink>
-                {c.description && <div className="text-muted-foreground text-xs">{c.description}</div>}
-              </TableCell>
-              <TableCell>{categoryLabel(t, c.category)}</TableCell>
-              <TableCell className="flex items-center gap-2">
-                {c.currentVersionNumber ? t('checklists.versionN', { n: c.currentVersionNumber }) : t('checklists.notPublished')}
+                {c.status !== 'active' && <Badge variant="secondary">{t(`checklists.statuses.${c.status}`)}</Badge>}
                 {c.draftRevision !== null && <Badge variant="outline">{t('checklists.draft')}</Badge>}
-              </TableCell>
-              <TableCell>
-                <Badge variant={c.status === 'active' ? 'default' : 'secondary'}>{t(`checklists.statuses.${c.status}`)}</Badge>
-              </TableCell>
-              <TableCell>{formatDateTime(c.updatedAt, { locale, timeZone: ws.timeZone })}</TableCell>
-            </TableRow>
-          ))}
-          {pages.isSuccess && rows.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={5} className="text-muted-foreground text-center">
-                {t('checklists.empty')}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+              </CardTitle>
+              <CardDescription>
+                <span>{categoryLabel(t, c.category)}</span> · <span>{c.currentVersionNumber ? t('checklists.versionN', { n: c.currentVersionNumber }) : t('checklists.notPublished')}</span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {c.description && <p className="text-muted-foreground text-sm">{c.description}</p>}
+              <p className="text-muted-foreground text-xs tabular-nums">
+                {t('checklists.updated')}: {formatDateTime(c.updatedAt, { locale, timeZone: ws.timeZone })}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => ws.go(`/checklists/${c.id}`)}>
+                  {t('checklists.open')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      {pages.isSuccess && rows.length === 0 && <EmptyState title={t('checklists.empty')} />}
       {pages.hasNextPage && (
         <Button variant="outline" className="mt-3" disabled={pages.isFetchingNextPage} onClick={() => void pages.fetchNextPage()}>
           {t('common.loadMore')}

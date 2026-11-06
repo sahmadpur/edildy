@@ -32,6 +32,17 @@ describe('ChecklistsPage', () => {
     await waitFor(() => expect(ws.checklists.list).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'anb', status: 'active' })));
   });
 
+  it('shows each checklist as a card, like the templates tab, and opens it from the card button', async () => {
+    const ws = fakeWorkspace();
+    ws.checklists.list.mockResolvedValue({ items: [row()], nextCursor: null });
+    renderInWorkspace(<ChecklistsPage />, ws);
+    expect(await screen.findByText('Gündəlik təmizlik')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(screen.getByText('v2')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Aç' }));
+    expect(ws.go).toHaveBeenCalledWith('/checklists/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01');
+  });
+
   it('creates a blank checklist and opens its draft', async () => {
     const ws = fakeWorkspace();
     ws.checklists.list.mockResolvedValue({ items: [], nextCursor: null });

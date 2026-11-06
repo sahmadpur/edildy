@@ -43,6 +43,7 @@ export default {
   },
   title: 'Yoxlama vərəqələri',
   new: 'Yeni yoxlama vərəqəsi',
+  open: 'Aç',
   empty: 'Hələ yoxlama vərəqəsi yoxdur.',
   name: 'Ad',
   description: 'Təsvir',
