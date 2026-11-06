@@ -14,10 +14,31 @@ export interface FormatOptions {
 
 /** Capitalised, as the owner wants dates to read "8 Okt 2026". */
 const AZ_MONTHS_SHORT = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn', 'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek'];
-const AZ_MONTHS_LONG = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avqust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
+const AZ_MONTHS_LONG = [
+  'yanvar',
+  'fevral',
+  'mart',
+  'aprel',
+  'may',
+  'iyun',
+  'iyul',
+  'avqust',
+  'sentyabr',
+  'oktyabr',
+  'noyabr',
+  'dekabr',
+];
 /** Sunday first, as `getUTCDay()` counts. CLDR's abbreviated forms. */
 const AZ_WEEKDAYS_SHORT = ['B.', 'B.e.', 'Ç.a.', 'Ç.', 'C.a.', 'C.', 'Ş.'];
-const AZ_WEEKDAYS_LONG = ['bazar', 'bazar ertəsi', 'çərşənbə axşamı', 'çərşənbə', 'cümə axşamı', 'cümə', 'şənbə'];
+const AZ_WEEKDAYS_LONG = [
+  'bazar',
+  'bazar ertəsi',
+  'çərşənbə axşamı',
+  'çərşənbə',
+  'cümə axşamı',
+  'cümə',
+  'şənbə',
+];
 
 interface Parts {
   year: number;
@@ -42,11 +63,20 @@ function partsOf(date: Date, timeZone: string): Parts {
   }).formatToParts(date);
   const get = (type: Intl.DateTimeFormatPartTypes) => list.find((p) => p.type === type)?.value ?? '';
   const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(get('weekday'));
-  return { year: Number(get('year')), month: Number(get('month')), day: Number(get('day')), hour: get('hour'), minute: get('minute'), weekday: Math.max(0, weekday) };
+  return {
+    year: Number(get('year')),
+    month: Number(get('month')),
+    day: Number(get('day')),
+    hour: get('hour'),
+    minute: get('minute'),
+    weekday: Math.max(0, weekday),
+  };
 }
 
-
-function azDate(p: Parts, { weekday = false, long = false }: { weekday?: boolean; long?: boolean } = {}): string {
+function azDate(
+  p: Parts,
+  { weekday = false, long = false }: { weekday?: boolean; long?: boolean } = {},
+): string {
   const month = (long ? AZ_MONTHS_LONG : AZ_MONTHS_SHORT)[p.month - 1];
   const base = `${p.day} ${month} ${p.year}`;
   if (!weekday) return base;
@@ -60,7 +90,12 @@ export function formatDateTime(iso: string, { locale, timeZone }: FormatOptions)
     const p = partsOf(date, timeZone);
     return `${azDate(p)}, ${p.hour}:${p.minute}`;
   }
-  return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23', timeZone }).format(date);
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    hourCycle: 'h23',
+    timeZone,
+  }).format(date);
 }
 
 /** "15 Okt 2026" in the tenant's time zone. */
@@ -77,7 +112,12 @@ export function formatTime(iso: string, { locale, timeZone }: FormatOptions): st
     const p = partsOf(date, timeZone);
     return `${p.hour}:${p.minute}`;
   }
-  return new Intl.DateTimeFormat(intlLocale(locale), { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone }).format(date);
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZone,
+  }).format(date);
 }
 
 export interface LocalDateOptions {
@@ -88,10 +128,18 @@ export interface LocalDateOptions {
 }
 
 /** A calendar date 'YYYY-MM-DD' (an occurrence's local date), never shifted by a time zone. */
-export function formatLocalDate(date: string, locale: string, { weekday = false, long = false }: LocalDateOptions = {}): string {
+export function formatLocalDate(
+  date: string,
+  locale: string,
+  { weekday = false, long = false }: LocalDateOptions = {},
+): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
   const utc = new Date(Date.UTC(y, m - 1, d));
-  if (locale === 'az') return azDate({ year: y, month: m, day: d, hour: '00', minute: '00', weekday: utc.getUTCDay() }, { weekday, long });
+  if (locale === 'az')
+    return azDate(
+      { year: y, month: m, day: d, hour: '00', minute: '00', weekday: utc.getUTCDay() },
+      { weekday, long },
+    );
   return new Intl.DateTimeFormat(intlLocale(locale), {
     ...(weekday ? { weekday: long ? 'long' : 'short' } : {}),
     day: 'numeric',
@@ -105,20 +153,43 @@ export function formatLocalDate(date: string, locale: string, { weekday = false,
 export function formatShortDate(date: string, locale: string): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
   if (locale === 'az') return `${d} ${AZ_MONTHS_SHORT[m - 1]}`;
-  return new Intl.DateTimeFormat(intlLocale(locale), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d)));
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/** "6 Noy 26": a calendar date with a two-digit year, for a box or chip title that must stay on one line. */
+export function formatCompactDate(date: string, locale: string): string {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  if (locale === 'az') return `${d} ${AZ_MONTHS_SHORT[m - 1]} ${String(y).slice(-2)}`;
+  const text = new Intl.DateTimeFormat(intlLocale(locale), {
+    day: 'numeric',
+    month: 'short',
+    year: '2-digit',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+  // ru appends " г." after the year; a two-digit year reads better without it.
+  return text.replace(/\s*г\.$/u, '');
 }
 
 /** A number in the language's digits and separators (az: "1 234,5"). */
 export function formatNumber(value: number, locale: string, options: Intl.NumberFormatOptions = {}): string {
   const text = new Intl.NumberFormat(intlLocale(locale), options).format(value);
   // Engines without az data fall back to "1,234.5"; CLDR az is "1.234,5", and the apps use a space to keep it unambiguous.
-  return locale === 'az' ? text.replace(/[.,]/g, (m, i, s) => (i === s.search(/[.,]\d{1,2}$/) ? ',' : ' ')) : text;
+  return locale === 'az'
+    ? text.replace(/[.,]/g, (m, i, s) => (i === s.search(/[.,]\d{1,2}$/) ? ',' : ' '))
+    : text;
 }
 
 /** The number part of a percentage with at most one decimal ("85,7"); the UI's own string adds the sign. */
-export const formatPercent = (value: number, locale: string): string => formatNumber(value, locale, { maximumFractionDigits: 1 });
+export const formatPercent = (value: number, locale: string): string =>
+  formatNumber(value, locale, { maximumFractionDigits: 1 });
 
 /** Fills `{{name}}` placeholders; a placeholder without a value stays visible, so a missing variable is noticed. */
 export function interpolate(template: string, vars: Record<string, string | number>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (match, name: string) => (Object.hasOwn(vars, name) ? String(vars[name]) : match));
+  return template.replace(/\{\{(\w+)\}\}/g, (match, name: string) =>
+    Object.hasOwn(vars, name) ? String(vars[name]) : match,
+  );
 }

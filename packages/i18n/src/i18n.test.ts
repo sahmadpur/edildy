@@ -52,14 +52,45 @@ import {
   TASK_STATUSES,
   TEMPLATE_CATEGORIES,
 } from '@taskop/contracts';
-import { az, en, formatDate, formatDateTime, formatLocalDate, formatNumber, formatPercent, formatShortDate, formatTime, interpolate, LANGUAGE_NAMES, LANGUAGES, pickLanguage, resolveLanguage, resources, ru, translationsFor } from './index.js';
+import {
+  az,
+  en,
+  formatDate,
+  formatCompactDate,
+  formatDateTime,
+  formatLocalDate,
+  formatNumber,
+  formatPercent,
+  formatShortDate,
+  formatTime,
+  interpolate,
+  LANGUAGE_NAMES,
+  LANGUAGES,
+  pickLanguage,
+  resolveLanguage,
+  resources,
+  ru,
+  translationsFor,
+} from './index.js';
 
 describe('az translations', () => {
   it('has a message for every API error code', () => {
     for (const code of Object.values(ErrorCode)) expect(az.errors[code], code).toBeTypeOf('string');
   });
   it('has every validation key used by contracts', () => {
-    for (const k of ['required', 'invalid', 'tooShort', 'tooLong', 'email', 'username', 'orgCode', 'pinFormat', 'pinWeak', 'passwordLength', 'timezone'] as const) {
+    for (const k of [
+      'required',
+      'invalid',
+      'tooShort',
+      'tooLong',
+      'email',
+      'username',
+      'orgCode',
+      'pinFormat',
+      'pinWeak',
+      'passwordLength',
+      'timezone',
+    ] as const) {
       expect(az.errors.validation[k], k).toBeTypeOf('string');
     }
   });
@@ -74,8 +105,10 @@ describe('checklist translations', () => {
     for (const t of ITEM_TYPES) expect(az.checklists.itemTypes[t], t).toBeTypeOf('string');
   });
   it('labels every permission group and key', () => {
-    for (const g of PERMISSION_GROUPS) expect(az.roles.groups[g.group as keyof typeof az.roles.groups], g.group).toBeTypeOf('string');
-    for (const k of ALL_PERMISSIONS) expect(az.roles.keys[k.replace('.', '_') as keyof typeof az.roles.keys], k).toBeTypeOf('string');
+    for (const g of PERMISSION_GROUPS)
+      expect(az.roles.groups[g.group as keyof typeof az.roles.groups], g.group).toBeTypeOf('string');
+    for (const k of ALL_PERMISSIONS)
+      expect(az.roles.keys[k.replace('.', '_') as keyof typeof az.roles.keys], k).toBeTypeOf('string');
   });
 });
 
@@ -140,11 +173,16 @@ describe('formatting', () => {
   });
   it('formats calendar dates without shifting the day', () => {
     expect(formatLocalDate('2026-10-15', 'az', { weekday: true })).toBe('C.a., 15 Okt 2026');
-    expect(formatLocalDate('2026-10-15', 'az', { weekday: true, long: true })).toBe('cümə axşamı, 15 oktyabr 2026');
+    expect(formatLocalDate('2026-10-15', 'az', { weekday: true, long: true })).toBe(
+      'cümə axşamı, 15 oktyabr 2026',
+    );
     expect(formatLocalDate('2026-10-15', 'en', { weekday: true })).toBe('Thu, 15 Oct 2026');
     expect(formatLocalDate('2026-10-15', 'ru')).toContain('2026');
     expect(formatShortDate('2026-01-05', 'az')).toBe('5 Yan');
     expect(formatShortDate('2026-01-05', 'en')).toBe('5 Jan');
+    expect(formatCompactDate('2026-11-06', 'az')).toBe('6 Noy 26');
+    expect(formatCompactDate('2026-11-06', 'en')).toBe('6 Nov 26');
+    expect(formatCompactDate('2026-11-06', 'ru')).toBe('6 нояб. 26');
   });
   it('formats numbers and percentages per language', () => {
     expect(formatNumber(1234.5, 'az')).toBe('1 234,5');
@@ -157,7 +195,8 @@ describe('formatting', () => {
 });
 
 describe('scheduling translations', () => {
-  const lookup = (key: string): unknown => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
   const t = (key: string, vars: Record<string, string | number> = {}) =>
     String(lookup(key)).replace(/\{\{(\w+)\}\}/g, (_m, name: string) => String(vars[name]));
 
@@ -171,21 +210,36 @@ describe('scheduling translations', () => {
   it('renders schedule summaries in Azerbaijani', () => {
     const r0 = { startDate: '2026-11-02', endDate: null, skipDates: [] };
     const fixed = { mode: 'fixed' as const, startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 0 };
-    expect(describeSchedule({ kind: 'weekly', every: 1, weekdays: [1, 3], ...r0 }, fixed, null, t)).toBe('Hər həftə: B.e., Ç., 08:00–10:00');
-    expect(describeSchedule({ kind: 'monthly', every: 1, by: { nth: -1, weekday: 5 }, ...r0 }, fixed, null, t)).toBe('Hər ay, sonuncu Cümə, 08:00–10:00');
-    expect(describeSchedule({ kind: 'daily', every: 1, ...r0 }, { mode: 'shift', shiftId: 'x', graceMinutes: 0 }, 'Səhər', t)).toBe('Hər gün, Səhər növbəsi');
+    expect(describeSchedule({ kind: 'weekly', every: 1, weekdays: [1, 3], ...r0 }, fixed, null, t)).toBe(
+      'Hər həftə: B.e., Ç., 08:00–10:00',
+    );
+    expect(
+      describeSchedule({ kind: 'monthly', every: 1, by: { nth: -1, weekday: 5 }, ...r0 }, fixed, null, t),
+    ).toBe('Hər ay, sonuncu Cümə, 08:00–10:00');
+    expect(
+      describeSchedule(
+        { kind: 'daily', every: 1, ...r0 },
+        { mode: 'shift', shiftId: 'x', graceMinutes: 0 },
+        'Səhər',
+        t,
+      ),
+    ).toBe('Hər gün, Səhər növbəsi');
   });
 
   it('has the UI strings the web screens use', () => {
-    for (const k of ['assignments', 'schedule', 'shifts', 'roster'] as const) expect(az.nav[k], k).toBeTypeOf('string');
-    for (const k of ['once', 'daily', 'weekly', 'monthly', 'dates'] as const) expect(az.scheduling.builder.kinds[k], k).toBeTypeOf('string');
-    for (const k of ['active', 'paused', 'ended'] as const) expect(az.scheduling.assignments.status[k], k).toBeTypeOf('string');
+    for (const k of ['assignments', 'schedule', 'shifts', 'roster'] as const)
+      expect(az.nav[k], k).toBeTypeOf('string');
+    for (const k of ['once', 'daily', 'weekly', 'monthly', 'dates'] as const)
+      expect(az.scheduling.builder.kinds[k], k).toBeTypeOf('string');
+    for (const k of ['active', 'paused', 'ended'] as const)
+      expect(az.scheduling.assignments.status[k], k).toBeTypeOf('string');
     expect(az.scheduling.roster.cellLabel).toContain('{{person}}');
   });
 });
 
 describe('execution translations', () => {
-  const lookup = (key: string): unknown => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
 
   it('translates states, claim rejections, issue codes, sources, severities and media labels', () => {
     for (const s of EXECUTION_STATES) expect(az.executions.states[s], s).toBeTypeOf('string');
@@ -199,7 +253,9 @@ describe('execution translations', () => {
 
   it('uses the spec wording for the clock and the lost claim', () => {
     expect(az.errors.CLOCK_INVALID).toBe('Telefonun saatını yoxlayın.');
-    expect(az.executions.alreadyClaimedBy.replace('{{name}}', 'Murad')).toBe('Bu checklist artıq Murad tərəfindən icra olunur');
+    expect(az.executions.alreadyClaimedBy.replace('{{name}}', 'Murad')).toBe(
+      'Bu checklist artıq Murad tərəfindən icra olunur',
+    );
     expect(az.executions.flags.mediaPending).toContain('{{count}}');
   });
 });
@@ -212,7 +268,17 @@ describe('execution web translations', () => {
     expect(az.executions.receivedAt).toContain('{{time}}');
     expect(az.executions.progressValue).toContain('{{answered}}');
     expect(az.executions.media.pendingLabel).toContain('{{kind}}');
-    for (const k of ['date', 'site', 'checklist', 'item', 'severity', 'source', 'note', 'executor', 'media'] as const) {
+    for (const k of [
+      'date',
+      'site',
+      'checklist',
+      'item',
+      'severity',
+      'source',
+      'note',
+      'executor',
+      'media',
+    ] as const) {
       expect(az.executions.problemsPage.columns[k], k).toBeTypeOf('string');
     }
   });
@@ -221,13 +287,25 @@ describe('execution web translations', () => {
 describe('mobile execution translations', () => {
   it('labels every missing kind, outbox command, start block and sync state', () => {
     for (const k of MISSING_KINDS) expect(az.mobile.finish.missingKinds[k], k).toBeTypeOf('string');
-    for (const k of ['claim', 'media', 'answers', 'complete', 'upload'] as const) expect(az.mobile.sync.kinds[k], k).toBeTypeOf('string');
-    for (const k of ['notYetOpen', 'closed', 'claimedByOther', 'finished', 'needsUpdate', 'notDownloaded', 'clockAhead'] as const) {
+    for (const k of ['claim', 'media', 'answers', 'complete', 'upload'] as const)
+      expect(az.mobile.sync.kinds[k], k).toBeTypeOf('string');
+    for (const k of [
+      'notYetOpen',
+      'closed',
+      'claimedByOther',
+      'finished',
+      'needsUpdate',
+      'notDownloaded',
+      'clockAhead',
+    ] as const) {
       expect(az.mobile.checklists.startBlocked[k], k).toBeTypeOf('string');
     }
-    for (const k of ['synced', 'pending', 'offline', 'failed'] as const) expect(az.mobile.sync[k], k).toBeTypeOf('string');
-    for (const k of ['FILE_MISSING', 'UPLOAD_FAILED'] as const) expect(az.mobile.sync.mediaErrors[k], k).toBeTypeOf('string');
-    for (const k of ['tooLong', 'tooLarge', 'resolution'] as const) expect(az.mobile.evidence[k], k).toBeTypeOf('string');
+    for (const k of ['synced', 'pending', 'offline', 'failed'] as const)
+      expect(az.mobile.sync[k], k).toBeTypeOf('string');
+    for (const k of ['FILE_MISSING', 'UPLOAD_FAILED'] as const)
+      expect(az.mobile.sync.mediaErrors[k], k).toBeTypeOf('string');
+    for (const k of ['tooLong', 'tooLarge', 'resolution'] as const)
+      expect(az.mobile.evidence[k], k).toBeTypeOf('string');
   });
 
   it('uses the spec wording', () => {
@@ -239,7 +317,9 @@ describe('mobile execution translations', () => {
       done: 'Bitmiş',
     });
     expect(az.mobile.checklists.claimedBy.replace('{{name}}', 'Murad')).toBe('Murad icra edir');
-    expect(az.mobile.checklists.startBlocked.clockAhead).toBe('Telefonun saatı irəlidədir. Saatı düzəldin və yenidən cəhd edin.');
+    expect(az.mobile.checklists.startBlocked.clockAhead).toBe(
+      'Telefonun saatı irəlidədir. Saatı düzəldin və yenidən cəhd edin.',
+    );
     expect(az.mobile.sync.pending.replace('{{count}}', '3')).toBe('3 gözləyir');
     expect(az.mobile.sync.retry).toBe('Yenidən cəhd et');
     expect(az.mobile.execution.flagProblem).toBe('Problem qeyd et');
@@ -251,12 +331,14 @@ describe('mobile execution translations', () => {
   });
 
   it('has the discard confirmation texts', () => {
-    for (const k of ['discardTitle', 'discardBody', 'discardClaimBody'] as const) expect(az.mobile.sync[k], k).toBeTypeOf('string');
+    for (const k of ['discardTitle', 'discardBody', 'discardClaimBody'] as const)
+      expect(az.mobile.sync[k], k).toBeTypeOf('string');
   });
 });
 
 describe('task translations', () => {
-  const lookup = (key: string): unknown => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
 
   it('translates statuses, priorities, sources, resolutions, evidence, roles, decisions, reasons and issues', () => {
     for (const s of TASK_STATUSES) expect(az.tasks.statuses[s], s).toBeTypeOf('string');
@@ -284,48 +366,106 @@ describe('task translations', () => {
 describe('mobile task translations', () => {
   it('labels the tasks tab, its sections, the task commands and every task screen', () => {
     expect(az.mobile.tabs.tasks).toBe('Tapşırıqlar');
-    for (const k of ['accept', 'start', 'media', 'submit'] as const) expect(az.mobile.sync.kinds.task[k], k).toBeTypeOf('string');
-    for (const k of ['open', 'overdue', 'title'] as const) expect(az.mobile.tasks.home[k], k).toBeTypeOf('string');
+    for (const k of ['accept', 'start', 'media', 'submit'] as const)
+      expect(az.mobile.sync.kinds.task[k], k).toBeTypeOf('string');
+    for (const k of ['open', 'overdue', 'title'] as const)
+      expect(az.mobile.tasks.home[k], k).toBeTypeOf('string');
     for (const k of [
-      'instructions', 'noInstructions', 'problem', 'accept', 'start', 'response', 'responsePlaceholder', 'complete', 'submitted',
-      'readOnly', 'rejected', 'cancelled', 'mediaOffline', 'mediaFailed', 'notFound',
+      'instructions',
+      'noInstructions',
+      'problem',
+      'accept',
+      'start',
+      'response',
+      'responsePlaceholder',
+      'complete',
+      'submitted',
+      'readOnly',
+      'rejected',
+      'cancelled',
+      'mediaOffline',
+      'mediaFailed',
+      'notFound',
     ] as const) {
       expect(az.mobile.tasks.detail[k], k).toBeTypeOf('string');
     }
     for (const k of [
-      'open', 'title', 'name', 'instructions', 'priority', 'assignee', 'search', 'teams', 'people', 'teamOption', 'site', 'noSite',
-      'due', 'review', 'evidence', 'photos', 'save', 'created', 'titleRequired', 'assigneeRequired',
+      'open',
+      'title',
+      'name',
+      'instructions',
+      'priority',
+      'assignee',
+      'search',
+      'teams',
+      'people',
+      'teamOption',
+      'site',
+      'noSite',
+      'due',
+      'review',
+      'evidence',
+      'photos',
+      'save',
+      'created',
+      'titleRequired',
+      'assigneeRequired',
     ] as const) {
       expect(az.mobile.tasks.create[k], k).toBeTypeOf('string');
     }
-    for (const k of ['title', 'approve', 'reject', 'comment', 'approved', 'rejected', 'submission', 'empty', 'notReviewable'] as const) {
+    for (const k of [
+      'title',
+      'approve',
+      'reject',
+      'comment',
+      'approved',
+      'rejected',
+      'submission',
+      'empty',
+      'notReviewable',
+    ] as const) {
       expect(az.mobile.tasks.review[k], k).toBeTypeOf('string');
     }
   });
 
   it('uses the spec wording', () => {
-    expect(az.mobile.tasks.sections).toEqual({ team: 'Komanda üçün', mine: 'Mənim', inReview: 'Yoxlamada', done: 'Tamamlanıb', review: 'Yoxlama' });
+    expect(az.mobile.tasks.sections).toEqual({
+      team: 'Komanda üçün',
+      mine: 'Mənim',
+      inReview: 'Yoxlamada',
+      done: 'Tamamlanıb',
+      review: 'Yoxlama',
+    });
     expect(az.mobile.tasks.detail.accept).toBe('Qəbul et');
     expect(az.mobile.tasks.detail.start).toBe('Başla');
     expect(az.mobile.tasks.detail.complete).toBe('Tamamla');
     expect(az.mobile.tasks.online).toBe('İnternet bağlantısı tələb olunur');
     expect(az.mobile.tasks.home.open.replace('{{count}}', '2')).toBe('Açıq: 2');
-    expect(az.mobile.tasks.create.teamOption.replace('{{name}}', 'Texniki xidmət').replace('{{count}}', '3')).toBe('Texniki xidmət (3 nəfər)');
+    expect(
+      az.mobile.tasks.create.teamOption.replace('{{name}}', 'Texniki xidmət').replace('{{count}}', '3'),
+    ).toBe('Texniki xidmət (3 nəfər)');
   });
 });
 
 describe('task web translations', () => {
   it('has the strings the tasks page, the dialog, the drawer and the problems page use', () => {
-    expect(az.tasks.page.tabs).toEqual({ all: 'Hamısı', review: 'Yoxlamamı gözləyir', overdue: 'Gecikmiş', mine: 'Mənim yaratdıqlarım' });
+    expect(az.tasks.page.tabs).toEqual({
+      all: 'Hamısı',
+      review: 'Yoxlamamı gözləyir',
+      overdue: 'Gecikmiş',
+      mine: 'Mənim yaratdıqlarım',
+    });
     expect(az.tasks.page.new).toBe('Yeni tapşırıq');
-    for (const k of ['title', 'status', 'assignee', 'site', 'due', 'source'] as const) expect(az.tasks.page.columns[k], k).toBeTypeOf('string');
+    for (const k of ['title', 'status', 'assignee', 'site', 'due', 'source'] as const)
+      expect(az.tasks.page.columns[k], k).toBeTypeOf('string');
     expect(az.tasks.page.teamWaiting).toContain('{{team}}');
     expect(az.tasks.picker.members).toContain('{{count}}');
     expect(az.tasks.dialog.dueHint).toContain('{{timeZone}}');
     expect(az.tasks.dialog.siteFromProblem).toContain('{{site}}');
     expect(az.tasks.dialog.uploadFailed).toContain('{{count}}');
     expect(az.tasks.dialog.mediaLimit).toContain('{{count}}');
-    for (const s of ['waiting', 'uploading', 'done', 'failed', 'refused'] as const) expect(az.tasks.dialog.fileStates[s], s).toBeTypeOf('string');
+    for (const s of ['waiting', 'uploading', 'done', 'failed', 'refused'] as const)
+      expect(az.tasks.dialog.fileStates[s], s).toBeTypeOf('string');
     expect(az.tasks.dialog.uploadClock).toBe('Kompüterin saatını yoxlayın.');
     expect(az.tasks.dialog.uploadLimit).toBe('Təlimat faylları limiti dolub ({{count}}).');
     expect(az.tasks.drawer.submission).toContain('{{n}}');
@@ -338,13 +478,15 @@ describe('task web translations', () => {
 });
 
 describe('notification translations', () => {
-  const lookup = (key: string): unknown => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
 
   it('labels every type, group, audience, channel, delivery status and issue', () => {
     for (const ty of NOTIFICATION_TYPES) expect(az.notifications.types[ty], ty).toBeTypeOf('string');
     for (const g of NOTIFICATION_GROUPS) expect(az.notifications.groups[g], g).toBeTypeOf('string');
     for (const a of DIRECT_AUDIENCES) expect(az.notifications.audiences[a], a).toBeTypeOf('string');
-    for (const c of ['inApp', 'push', 'email'] as const) expect(az.notifications.channels[c], c).toBeTypeOf('string');
+    for (const c of ['inApp', 'push', 'email'] as const)
+      expect(az.notifications.channels[c], c).toBeTypeOf('string');
     for (const s of DELIVERY_STATUSES) expect(az.notifications.deliveryStatuses[s], s).toBeTypeOf('string');
     for (const code of NOTIFICATION_ISSUE_CODES) expect(lookup(code), code).toBeTypeOf('string');
   });
@@ -352,7 +494,9 @@ describe('notification translations', () => {
   it('has no labels for types or statuses that do not exist', () => {
     expect(Object.keys(az.notifications.types).sort()).toEqual([...NOTIFICATION_TYPES].sort());
     expect(Object.keys(az.notifications.deliveryStatuses).sort()).toEqual([...DELIVERY_STATUSES].sort());
-    expect(Object.keys(az.notifications.issues).sort()).toEqual(NOTIFICATION_ISSUE_CODES.map((c) => c.split('.').pop()).sort());
+    expect(Object.keys(az.notifications.issues).sort()).toEqual(
+      NOTIFICATION_ISSUE_CODES.map((c) => c.split('.').pop()).sort(),
+    );
   });
 
   it('keeps the interpolation placeholder in the lead-time label', () => {
@@ -363,7 +507,12 @@ describe('notification translations', () => {
   it('uses the agreed wording and registers the nav, audit and role labels', () => {
     expect(az.notifications.types['checklist.due_soon']).toBe('Checklistin vaxtı yaxınlaşır');
     expect(az.notifications.types.manual).toBe('Admin mesajı');
-    expect(az.notifications.groups).toEqual({ checklist: 'Checklistlər', problem: 'Problemlər', task: 'Tapşırıqlar', audit: 'Audit və düzəlişlər' });
+    expect(az.notifications.groups).toEqual({
+      checklist: 'Checklistlər',
+      problem: 'Problemlər',
+      task: 'Tapşırıqlar',
+      audit: 'Audit və düzəlişlər',
+    });
     expect(az.notifications.audiences).toEqual({ assignees: 'İcraçılar', creator: 'Yaradan' });
     expect(az.notifications.channels).toEqual({ inApp: 'Tətbiqdə', push: 'Push', email: 'E-poçt' });
     expect(az.notifications.title).toBe('Bildirişlər');
@@ -382,11 +531,17 @@ describe('notification translations', () => {
 describe('mobile notification translations', () => {
   it('labels the bell, the inbox and the profile settings', () => {
     expect(az.mobile.notifications.bell.replace('{{count}}', '3')).toBe('Bildirişlər, 3 oxunmamış');
-    for (const k of ['channel', 'unread', 'online'] as const) expect(az.mobile.notifications[k], k).toBeTypeOf('string');
+    for (const k of ['channel', 'unread', 'online'] as const)
+      expect(az.mobile.notifications[k], k).toBeTypeOf('string');
     for (const k of ['email', 'noEmail', 'online', 'push', 'deniedHint', 'openSettings'] as const) {
       expect(az.mobile.notifications.profile[k], k).toBeTypeOf('string');
     }
-    expect(Object.keys(az.mobile.notifications.profile.pushStates).sort()).toEqual(['denied', 'granted', 'unavailable', 'undetermined']);
+    expect(Object.keys(az.mobile.notifications.profile.pushStates).sort()).toEqual([
+      'denied',
+      'granted',
+      'unavailable',
+      'undetermined',
+    ]);
   });
 
   it('shares the inbox wording with the web (Part 1)', () => {
@@ -401,15 +556,56 @@ describe('notification web translations', () => {
 
   it('has the strings the bell, the inbox, the rules tab, the messages page and the preferences dialog use', () => {
     for (const k of ['unread', 'viewAll'] as const) expect(n().bell[k], `bell.${k}`).toBeTypeOf('string');
-    for (const k of ['unread', 'unreadOnly', 'emptyUnread', 'more'] as const) expect(n().inbox[k], `inbox.${k}`).toBeTypeOf('string');
-    for (const k of ['intro', 'control', 'customized', 'reset', 'resetDone', 'noRoles', 'rolesCount', 'rolesUnavailable'] as const) {
+    for (const k of ['unread', 'unreadOnly', 'emptyUnread', 'more'] as const)
+      expect(n().inbox[k], `inbox.${k}`).toBeTypeOf('string');
+    for (const k of [
+      'intro',
+      'control',
+      'customized',
+      'reset',
+      'resetDone',
+      'noRoles',
+      'rolesCount',
+      'rolesUnavailable',
+    ] as const) {
       expect(n().rules[k], `rules.${k}`).toBeTypeOf('string');
     }
-    for (const k of ['type', 'enabled', 'roles', 'leadTime'] as const) expect(n().rules.columns[k], `rules.columns.${k}`).toBeTypeOf('string');
+    for (const k of ['type', 'enabled', 'roles', 'leadTime'] as const)
+      expect(n().rules.columns[k], `rules.columns.${k}`).toBeTypeOf('string');
     for (const k of [
-      'compose', 'recipients', 'recipientsPlaceholder', 'people', 'teams', 'sites', 'members', 'chosen', 'remove', 'targetLimit', 'refine', 'sitesCapped',
-      'titleLabel', 'bodyLabel', 'counter', 'email', 'send', 'confirmTitle', 'confirm', 'sent', 'history', 'emptyHistory', 'more',
-      'processing', 'notRequested', 'detailTitle', 'sentBy', 'targets', 'totals', 'recipient', 'notRead', 'devices', 'noDevice',
+      'compose',
+      'recipients',
+      'recipientsPlaceholder',
+      'people',
+      'teams',
+      'sites',
+      'members',
+      'chosen',
+      'remove',
+      'targetLimit',
+      'refine',
+      'sitesCapped',
+      'titleLabel',
+      'bodyLabel',
+      'counter',
+      'email',
+      'send',
+      'confirmTitle',
+      'confirm',
+      'sent',
+      'history',
+      'emptyHistory',
+      'more',
+      'processing',
+      'notRequested',
+      'detailTitle',
+      'sentBy',
+      'targets',
+      'totals',
+      'recipient',
+      'notRead',
+      'devices',
+      'noDevice',
       'noRecipientsYet',
     ] as const) {
       expect(n().messages[k], `messages.${k}`).toBeTypeOf('string');
@@ -452,7 +648,8 @@ describe('notification web translations', () => {
 });
 
 describe('report translations', () => {
-  const lookup = (key: string): unknown => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
 
   it('labels every count, bucket, period, tab, export title and issue', () => {
     for (const k of RUN_COUNT_KEYS) expect(az.reports.counts[k], k).toBeTypeOf('string');
@@ -493,12 +690,19 @@ describe('mobile team translations', () => {
     expect(az.mobile.team.problems.replace('{{count}}', '2')).toBe('Problem: 2');
     expect(az.mobile.team.critical.replace('{{count}}', '1')).toBe('Kritik: 1');
     expect(az.mobile.team.run.notExecuted).toBe('Hələ icra edilməyib');
-    for (const k of ['title', 'answers', 'cancelReason'] as const) expect(az.mobile.team.run[k], k).toBeTypeOf('string');
+    for (const k of ['title', 'answers', 'cancelReason'] as const)
+      expect(az.mobile.team.run[k], k).toBeTypeOf('string');
   });
 
   it('shares the report wording with the web (Part 1)', () => {
     expect(az.reports.notCompleted).toBe('Tamamlanmayıb');
-    expect(az.reports.buckets).toMatchObject({ all: 'Hamısı', overdue: 'Gecikmiş', partial: 'Yarımçıq', missed: 'Buraxılmış', problems: 'Problemli' });
+    expect(az.reports.buckets).toMatchObject({
+      all: 'Hamısı',
+      overdue: 'Gecikmiş',
+      partial: 'Yarımçıq',
+      missed: 'Buraxılmış',
+      problems: 'Problemli',
+    });
     expect(az.reports.measures.completionPercent).toBe('Tamamlanma faizi');
     expect(az.errors.REPORT_TIMEOUT).toBeTypeOf('string');
   });
@@ -527,7 +731,8 @@ describe('report web translations', () => {
 });
 
 describe('audit and correction translations', () => {
-  const lookup = (key: string): unknown => key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
+  const lookup = (key: string): unknown =>
+    key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], az);
 
   it('labels every audit status, result, verdict, report status, queue, run audit state, correction kind and issue', () => {
     for (const s of AUDIT_STATUSES) expect(az.audits.statuses[s], s).toBeTypeOf('string');
@@ -538,22 +743,78 @@ describe('audit and correction translations', () => {
     for (const q of AUDIT_QUEUES) expect(az.audits.queues[q], q).toBeTypeOf('string');
     for (const s of RUN_AUDIT_STATES) expect(az.audits.runAuditStates[s], s).toBeTypeOf('string');
     for (const k of CORRECTION_KINDS) expect(az.corrections.kinds[k], k).toBeTypeOf('string');
-    for (const code of [...AUDIT_ISSUE_CODES, ...CORRECTION_ISSUE_CODES]) expect(lookup(code), code).toBeTypeOf('string');
-    expect(Object.keys(az.audits.issues).sort()).toEqual(AUDIT_ISSUE_CODES.map((c) => c.split('.').pop()).sort());
-    expect(Object.keys(az.corrections.issues).sort()).toEqual(CORRECTION_ISSUE_CODES.map((c) => c.split('.').pop()).sort());
+    for (const code of [...AUDIT_ISSUE_CODES, ...CORRECTION_ISSUE_CODES])
+      expect(lookup(code), code).toBeTypeOf('string');
+    expect(Object.keys(az.audits.issues).sort()).toEqual(
+      AUDIT_ISSUE_CODES.map((c) => c.split('.').pop()).sort(),
+    );
+    expect(Object.keys(az.corrections.issues).sort()).toEqual(
+      CORRECTION_ISSUE_CODES.map((c) => c.split('.').pop()).sort(),
+    );
   });
 
   it('has the actions, fields, PDF and e-mail texts with their placeholders', () => {
-    for (const k of ['start', 'open', 'finish', 'cancel', 'approve', 'reject', 'clearVerdict', 'downloadReport', 'resendReport', 'retryReport'] as const) {
+    for (const k of [
+      'start',
+      'open',
+      'finish',
+      'cancel',
+      'approve',
+      'reject',
+      'clearVerdict',
+      'downloadReport',
+      'resendReport',
+      'retryReport',
+    ] as const) {
       expect(az.audits.actions[k], k).toBeTypeOf('string');
     }
-    for (const k of ['result', 'comment', 'extraEmails', 'reportEmails', 'requiresAudit', 'cancelReason', 'auditor', 'startedAt', 'finishedAt', 'recipients', 'sentAt'] as const) {
+    for (const k of [
+      'result',
+      'comment',
+      'extraEmails',
+      'reportEmails',
+      'requiresAudit',
+      'cancelReason',
+      'auditor',
+      'startedAt',
+      'finishedAt',
+      'recipients',
+      'sentAt',
+    ] as const) {
       expect(az.audits.fields[k], k).toBeTypeOf('string');
     }
     for (const k of [
-      'title', 'run', 'executor', 'window', 'startedAt', 'completedAt', 'syncedAt', 'auditor', 'finishedAt', 'result', 'auditScore', 'runScore', 'originalScore',
-      'comment', 'item', 'answer', 'verdict', 'original', 'correctedBy', 'problem', 'videos', 'morePhotos', 'generatedAt', 'auditId', 'page',
-      'checklist', 'site', 'version', 'photos', 'noAnswer', 'none',
+      'title',
+      'run',
+      'executor',
+      'window',
+      'startedAt',
+      'completedAt',
+      'syncedAt',
+      'auditor',
+      'finishedAt',
+      'result',
+      'auditScore',
+      'runScore',
+      'originalScore',
+      'comment',
+      'item',
+      'answer',
+      'verdict',
+      'original',
+      'correctedBy',
+      'problem',
+      'videos',
+      'morePhotos',
+      'generatedAt',
+      'auditId',
+      'page',
+      'checklist',
+      'site',
+      'version',
+      'photos',
+      'noAnswer',
+      'none',
     ] as const) {
       expect(az.audits.report[k], k).toBeTypeOf('string');
     }
@@ -561,10 +822,14 @@ describe('audit and correction translations', () => {
     expect(az.audits.report.morePhotos).toContain('{{count}}');
     expect(az.audits.report.page).toBe('Səhifə {{page}} / {{pages}}');
     expect(az.audits.progress).toContain('{{reviewed}}');
-    for (const p of ['{{checklist}}', '{{site}}', '{{date}}']) expect(az.audits.email.subject, p).toContain(p);
-    for (const p of ['{{checklist}}', '{{site}}', '{{date}}', '{{result}}', '{{auditor}}']) expect(az.audits.email.body, p).toContain(p);
-    for (const k of ['correct', 'sendBack', 'withdraw', 'resubmit'] as const) expect(az.corrections.actions[k], k).toBeTypeOf('string');
-    for (const k of ['reason', 'itemComment', 'dueAt', 'items'] as const) expect(az.corrections.fields[k], k).toBeTypeOf('string');
+    for (const p of ['{{checklist}}', '{{site}}', '{{date}}'])
+      expect(az.audits.email.subject, p).toContain(p);
+    for (const p of ['{{checklist}}', '{{site}}', '{{date}}', '{{result}}', '{{auditor}}'])
+      expect(az.audits.email.body, p).toContain(p);
+    for (const k of ['correct', 'sendBack', 'withdraw', 'resubmit'] as const)
+      expect(az.corrections.actions[k], k).toBeTypeOf('string');
+    for (const k of ['reason', 'itemComment', 'dueAt', 'items'] as const)
+      expect(az.corrections.fields[k], k).toBeTypeOf('string');
     expect(az.corrections.round).toContain('{{round}}');
     expect(az.corrections.dueAt).toContain('{{date}}');
   });
@@ -612,13 +877,18 @@ describe('mobile audit and correction translations', () => {
     expect(az.mobile.checklists.sections.rework).toBe('Düzəliş tələb olunur');
     expect(az.mobile.rework.items.replace('{{count}}', '2')).toBe('2 bənd düzəliş tələb edir');
     expect(az.mobile.rework.fix).toBe('Düzəliş et');
-    expect(az.mobile.rework.managerComment.replace('{{comment}}', 'Yenidən ölçün')).toBe('Rəhbərin şərhi: Yenidən ölçün');
-    expect(az.mobile.rework.progress.replace('{{done}}', '1').replace('{{total}}', '2')).toBe('1/2 qaytarılan bənd hazırdır');
+    expect(az.mobile.rework.managerComment.replace('{{comment}}', 'Yenidən ölçün')).toBe(
+      'Rəhbərin şərhi: Yenidən ölçün',
+    );
+    expect(az.mobile.rework.progress.replace('{{done}}', '1').replace('{{total}}', '2')).toBe(
+      '1/2 qaytarılan bənd hazırdır',
+    );
     expect(az.mobile.rework.resubmit).toBe('Yenidən təqdim et');
     expect(az.mobile.rework.resubmitted).toBe('Düzəlişlər göndərildi.');
     expect(az.mobile.rework.newQuestion).toBe('Yeni sual');
     expect(az.mobile.sync.kinds.resubmit).toBe('Yenidən təqdim');
-    for (const k of ['notFlagged', 'title', 'flaggedTitle', 'ready', 'sentBanner'] as const) expect(az.mobile.rework[k], k).toBeTypeOf('string');
+    for (const k of ['notFlagged', 'title', 'flaggedTitle', 'ready', 'sentBanner'] as const)
+      expect(az.mobile.rework[k], k).toBeTypeOf('string');
   });
 
   it('labels the Team tab’s audit, correction, send-back and history screens', () => {
@@ -626,10 +896,15 @@ describe('mobile audit and correction translations', () => {
     expect(az.mobile.team.correct.noChanges).toBe('Heç bir cavab dəyişməyib.');
     expect(az.mobile.team.sendBack.title).toBe('İcraçıya qaytar');
     expect(az.mobile.team.sendBack.noItems).toBe('Ən azı bir bənd seçin.');
-    expect(az.mobile.team.history.requested.replace('{{name}}', 'Leyla').replace('{{count}}', '2')).toBe('Leyla 2 bəndi qaytarıb');
-    expect(az.mobile.team.audit.reportTo.replace('{{emails}}', 'a@b.az')).toBe('Hesabat göndəriləcək: a@b.az');
+    expect(az.mobile.team.history.requested.replace('{{name}}', 'Leyla').replace('{{count}}', '2')).toBe(
+      'Leyla 2 bəndi qaytarıb',
+    );
+    expect(az.mobile.team.audit.reportTo.replace('{{emails}}', 'a@b.az')).toBe(
+      'Hesabat göndəriləcək: a@b.az',
+    );
     for (const group of ['audit', 'correct', 'sendBack', 'history'] as const) {
-      for (const [k, v] of Object.entries(az.mobile.team[group])) expect(v, `${group}.${k}`).toBeTypeOf('string');
+      for (const [k, v] of Object.entries(az.mobile.team[group]))
+        expect(v, `${group}.${k}`).toBeTypeOf('string');
     }
   });
 
@@ -691,7 +966,8 @@ describe('server-side language', () => {
       }
       expect(t.mail.notification.open).toContain('{{link}}');
       expect(t.mail.notification.footer).toBeTypeOf('string');
-      for (const type of NOTIFICATION_TYPES) if (type !== 'manual') expect(t.notifications.templates[type].title, type).toBeTypeOf('string');
+      for (const type of NOTIFICATION_TYPES)
+        if (type !== 'manual') expect(t.notifications.templates[type].title, type).toBeTypeOf('string');
     }
   });
 });

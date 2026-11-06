@@ -11,16 +11,27 @@ import { HomePage } from './home-page';
 
 const mocks = vi.hoisted(() => ({
   me: { current: null as unknown },
-  api: { reports: { summary: vi.fn(), runs: vi.fn() }, occurrences: { get: vi.fn() }, executions: { get: vi.fn() } },
+  api: {
+    reports: { summary: vi.fn(), runs: vi.fn() },
+    occurrences: { get: vi.fn() },
+    executions: { get: vi.fn() },
+  },
 }));
 vi.mock('@/lib/session', () => ({
   api: mocks.api,
   useMe: () => mocks.me.current,
-  useCan: (...keys: string[]) => keys.every((k) => (mocks.me.current as { permissions: string[] }).permissions.includes(k)),
+  useCan: (...keys: string[]) =>
+    keys.every((k) => (mocks.me.current as { permissions: string[] }).permissions.includes(k)),
 }));
 
 /** The app's own query defaults (30 s stale, no focus refetch), so these tests pin the home page's overrides. */
-const appClient = () => new QueryClient({ defaultOptions: { ...appQueryClient.getDefaultOptions(), queries: { ...appQueryClient.getDefaultOptions().queries, retry: false } } });
+const appClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      ...appQueryClient.getDefaultOptions(),
+      queries: { ...appQueryClient.getDefaultOptions().queries, retry: false },
+    },
+  });
 
 const PERIODS = ['Bu gün', 'Dünən', 'Son 7 gün', 'Son 30 gün'];
 const boxes = async () => within(await screen.findByRole('group', { name: 'Dövrlər' }));
@@ -29,7 +40,14 @@ const box = async (name: string) => within((await boxes()).getByRole('article', 
 const detail = (name: string) => within(screen.getByRole('region', { name }));
 
 beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
   vi.resetAllMocks();
   mocks.me.current = meWith(VIEWER);
   mocks.api.reports.summary.mockResolvedValue(reportSummary());
@@ -73,21 +91,28 @@ describe('HomeDashboard', () => {
 
     const week = await box('Son 7 gün');
     expect(await week.findByRole('button', { name: 'Planlaşdırılıb: 12' })).toBeInTheDocument();
-    for (const name of ['Tamamlanıb: 7', 'Problemli: 2', 'Gecikib: 1']) expect(week.getByRole('button', { name })).toBeInTheDocument();
+    for (const name of ['Tamamlanıb: 7', 'Problemli: 2', 'Gecikib: 1'])
+      expect(week.getByRole('button', { name })).toBeInTheDocument();
     // Only the four figures: no in-progress tile, no percentages inside a box.
     expect(week.queryByRole('button', { name: /Davam edir/ })).not.toBeInTheDocument();
     expect(week.queryByText('Tamamlanma faizi')).not.toBeInTheDocument();
-    expect(week.getByRole('heading', { level: 2 })).toHaveTextContent(/^Son 7 gün.*29 Okt 2026 – .*4 Noy 2026$/);
+    expect(week.getByRole('heading', { level: 2 })).toHaveTextContent('Son 7 gün | 29 Okt 26 – 4 Noy 26');
   });
 
   it('selects today on arrival and shows its measures and runs under the boxes, every run first', async () => {
     renderWithRouter(<HomeDashboard today={TODAY} />);
     const today = await box('Bu gün');
-    expect(await today.findByRole('button', { name: 'Bu gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
-    expect((await box('Dünən')).getByRole('button', { name: 'Dünən dövrünü seç' })).toHaveAttribute('aria-pressed', 'false');
+    expect(await today.findByRole('button', { name: 'Bu gün dövrünü seç' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect((await box('Dünən')).getByRole('button', { name: 'Dünən dövrünü seç' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
 
     const panel = detail('Bu gün');
-    expect(panel.getByRole('heading', { level: 2 })).toHaveTextContent(/^Bu gün.*4 Noy 2026$/);
+    expect(panel.getByRole('heading', { level: 2 })).toHaveTextContent('Bu gün | 4 Noy 26');
     expect(await panel.findByRole('group', { name: 'Tamamlanma faizi' })).toHaveTextContent('70%');
     expect(panel.getByRole('group', { name: 'Orta bal' })).toHaveTextContent('87,5%');
     // No charts on the home page.
@@ -106,13 +131,23 @@ describe('HomeDashboard', () => {
 
   it('switches the details to the clicked box; the URL stays on /', async () => {
     const router = renderWithRouter(<HomeDashboard today={TODAY} />);
-    await userEvent.click(await (await box('Son 7 gün')).findByRole('button', { name: 'Son 7 gün dövrünü seç' }));
-    expect((await box('Son 7 gün')).getByRole('button', { name: 'Son 7 gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
-    expect((await box('Bu gün')).getByRole('button', { name: 'Bu gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(
+      await (await box('Son 7 gün')).findByRole('button', { name: 'Son 7 gün dövrünü seç' }),
+    );
+    expect((await box('Son 7 gün')).getByRole('button', { name: 'Son 7 gün dövrünü seç' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect((await box('Bu gün')).getByRole('button', { name: 'Bu gün dövrünü seç' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
     const panel = detail('Son 7 gün');
     expect(await panel.findByRole('group', { name: 'Tamamlanma faizi' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Bu gün' })).not.toBeInTheDocument();
-    await waitFor(() => expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: '2026-10-29', to: TODAY, bucket: 'all' }));
+    await waitFor(() =>
+      expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: '2026-10-29', to: TODAY, bucket: 'all' }),
+    );
     expect(router.state.location.pathname).toBe('/');
   });
 
@@ -121,19 +156,44 @@ describe('HomeDashboard', () => {
     const late = await (await box('Son 30 gün')).findByRole('button', { name: 'Gecikib: 1' });
     await userEvent.click(late);
     expect(late).toHaveAttribute('aria-pressed', 'true');
-    expect((await box('Son 30 gün')).getByRole('button', { name: 'Son 30 gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
+    expect((await box('Son 30 gün')).getByRole('button', { name: 'Son 30 gün dövrünü seç' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     const panel = detail('Son 30 gün');
-    await waitFor(() => expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: '2026-10-06', to: TODAY, bucket: 'overdue' }));
-    expect(panel.getByRole('group', { name: 'İcralar' }).querySelector('[aria-pressed="true"]')).toHaveTextContent('Gecikmiş');
+    await waitFor(() =>
+      expect(mocks.api.reports.runs).toHaveBeenCalledWith({
+        from: '2026-10-06',
+        to: TODAY,
+        bucket: 'overdue',
+      }),
+    );
+    expect(
+      panel.getByRole('group', { name: 'İcralar' }).querySelector('[aria-pressed="true"]'),
+    ).toHaveTextContent('Gecikmiş');
 
     await userEvent.click((await box('Bu gün')).getByRole('button', { name: 'Problemli: 2' }));
-    await waitFor(() => expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'problems' }));
-    expect((await box('Bu gün')).getByRole('button', { name: 'Problemli: 2' })).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() =>
+      expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'problems' }),
+    );
+    expect((await box('Bu gün')).getByRole('button', { name: 'Problemli: 2' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(late).toHaveAttribute('aria-pressed', 'false');
 
-    await userEvent.click(within(detail('Bu gün').getByRole('group', { name: 'İcralar' })).getByRole('button', { name: 'Tamamlanmış' }));
-    await waitFor(() => expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'completed' }));
-    expect((await box('Bu gün')).getByRole('button', { name: 'Tamamlanıb: 7' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(
+      within(detail('Bu gün').getByRole('group', { name: 'İcralar' })).getByRole('button', {
+        name: 'Tamamlanmış',
+      }),
+    );
+    await waitFor(() =>
+      expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'completed' }),
+    );
+    expect((await box('Bu gün')).getByRole('button', { name: 'Tamamlanıb: 7' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   it("resolves the periods from the tenant's today, not the browser's", async () => {
@@ -141,12 +201,16 @@ describe('HomeDashboard', () => {
     // 01:30 on 5 November in Baku; 16:30 on 4 November in New York.
     vi.setSystemTime(new Date('2026-11-04T21:30:00Z'));
     renderWithRouter(<HomeDashboard />);
-    await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-10-30', to: '2026-11-05' }));
+    await waitFor(() =>
+      expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-10-30', to: '2026-11-05' }),
+    );
     cleanup();
     mocks.api.reports.summary.mockClear();
     mocks.me.current = meWith(VIEWER, { timezone: 'America/New_York' });
     renderWithRouter(<HomeDashboard />);
-    await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-10-29', to: '2026-11-04' }));
+    await waitFor(() =>
+      expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-10-29', to: '2026-11-04' }),
+    );
     expect(mocks.api.reports.summary).not.toHaveBeenCalledWith({ from: '2026-11-05', to: '2026-11-05' });
   });
 
@@ -170,10 +234,14 @@ describe('HomeDashboard', () => {
     // 23:59:30 in Baku.
     vi.setSystemTime(new Date('2026-11-04T19:59:30Z'));
     renderWithRouter(<HomeDashboard />, '/', appClient());
-    await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-11-04', to: '2026-11-04' }));
+    await waitFor(() =>
+      expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-11-04', to: '2026-11-04' }),
+    );
     expect(mocks.api.reports.summary).not.toHaveBeenCalledWith({ from: '2026-11-05', to: '2026-11-05' });
     await act(() => vi.advanceTimersByTimeAsync(60_000));
-    await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-11-05', to: '2026-11-05' }));
+    await waitFor(() =>
+      expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-11-05', to: '2026-11-05' }),
+    );
   });
 
   it('refreshes every box on demand and says when the numbers were last updated', async () => {
@@ -193,6 +261,10 @@ describe('HomeDashboard', () => {
     mocks.api.reports.summary.mockRejectedValue(new ApiError(503, 'REPORT_TIMEOUT', 'errors.REPORT_TIMEOUT'));
     renderWithRouter(<HomeDashboard today={TODAY} />);
     // Four boxes and the selected period's panel.
-    expect(await screen.findAllByText('Hesabat vaxtında hazırlanmadı. Dövrü qısaldın və ya bir az sonra yenidən cəhd edin.')).toHaveLength(5);
+    expect(
+      await screen.findAllByText(
+        'Hesabat vaxtında hazırlanmadı. Dövrü qısaldın və ya bir az sonra yenidən cəhd edin.',
+      ),
+    ).toHaveLength(5);
   });
 });

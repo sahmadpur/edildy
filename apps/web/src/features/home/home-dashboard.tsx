@@ -1,5 +1,12 @@
-import { type PeriodPreset, type ReportFilters, type ReportSummary, resolvePeriod, type RunBucket, type RunCountKey } from '@taskop/contracts';
-import { intlLocale } from '@taskop/i18n';
+import {
+  type PeriodPreset,
+  type ReportFilters,
+  type ReportSummary,
+  resolvePeriod,
+  type RunBucket,
+  type RunCountKey,
+} from '@taskop/contracts';
+import { formatCompactDate, intlLocale } from '@taskop/i18n';
 import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
@@ -10,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { isSingleDay, percentText } from '@/features/reports/labels';
 import { reportKeys, summaryQueryOptions } from '@/features/reports/queries';
 import { RunsTab } from '@/features/reports/runs-tab';
-import { formatLocalDate, useTenantToday, useTimeFormat } from '@/features/scheduling/labels';
+import { useTenantToday, useTimeFormat } from '@/features/scheduling/labels';
 import { errorText } from '@/lib/errors';
 import { useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -21,15 +28,36 @@ export const DEFAULT_HOME_PERIOD: PeriodPreset = 'today';
 export const DEFAULT_HOME_BUCKET: RunBucket = 'all';
 
 /** A figure is a toggle: a saffron rule under the number says which list is open; hover and focus show the same rule faintly. */
-const PRESSABLE = 'border-b-2 border-transparent transition-colors group-hover:border-saffron/40 hover:border-saffron/40 group-focus-visible:border-saffron focus-visible:border-saffron';
+const PRESSABLE =
+  'border-b-2 border-transparent transition-colors group-hover:border-saffron/40 hover:border-saffron/40 group-focus-visible:border-saffron focus-visible:border-saffron';
 const PRESSED = 'border-saffron! ';
 
 /** A box's figures: the count shown, the runs list it opens, and the colour of its number. */
-type BoxStat = { key: Extract<RunCountKey, 'planned' | 'completed' | 'withProblems' | 'overdue'>; bucket: RunBucket; labelKey: string; tone: string };
-const PLANNED: BoxStat = { key: 'planned', bucket: 'planned', labelKey: 'reports.counts.planned', tone: 'text-foreground' };
+type BoxStat = {
+  key: Extract<RunCountKey, 'planned' | 'completed' | 'withProblems' | 'overdue'>;
+  bucket: RunBucket;
+  labelKey: string;
+  tone: string;
+};
+const PLANNED: BoxStat = {
+  key: 'planned',
+  bucket: 'planned',
+  labelKey: 'reports.counts.planned',
+  tone: 'text-foreground',
+};
 const OUTCOMES: readonly BoxStat[] = [
-  { key: 'completed', bucket: 'completed', labelKey: 'reports.counts.completed', tone: 'text-status-ok-text' },
-  { key: 'withProblems', bucket: 'problems', labelKey: 'reports.home.problems', tone: 'text-status-bad-text' },
+  {
+    key: 'completed',
+    bucket: 'completed',
+    labelKey: 'reports.counts.completed',
+    tone: 'text-status-ok-text',
+  },
+  {
+    key: 'withProblems',
+    bucket: 'problems',
+    labelKey: 'reports.home.problems',
+    tone: 'text-status-bad-text',
+  },
   { key: 'overdue', bucket: 'overdue', labelKey: 'reports.home.late', tone: 'text-status-late-text' },
 ];
 
@@ -47,7 +75,10 @@ export function HomeDashboard({ today: fixedToday }: { today?: string }) {
   const time = useTimeFormat();
   const tenantToday = useTenantToday();
   const today = fixedToday ?? tenantToday;
-  const boxes = HOME_PERIODS.map((period) => ({ period, filters: resolvePeriod(period, today) as ReportFilters }));
+  const boxes = HOME_PERIODS.map((period) => ({
+    period,
+    filters: resolvePeriod(period, today) as ReportFilters,
+  }));
   const results = useQueries({ queries: boxes.map((b) => summaryQueryOptions(b.filters, { live: true })) });
   const updatedAt = Math.max(0, ...results.map((r) => r.dataUpdatedAt));
   const fetching = results.some((r) => r.isFetching);
@@ -67,20 +98,46 @@ export function HomeDashboard({ today: fixedToday }: { today?: string }) {
         title={t('nav.home')}
         actions={
           <>
-            {updatedAt > 0 && <span className="text-muted-foreground self-center text-sm">{t('reports.live.updatedAt', { time: time(new Date(updatedAt).toISOString()) })}</span>}
-            <Button variant="outline" disabled={fetching} onClick={() => void qc.invalidateQueries({ queryKey: reportKeys.all })}>
+            {updatedAt > 0 && (
+              <span className="text-muted-foreground self-center text-sm">
+                {t('reports.live.updatedAt', { time: time(new Date(updatedAt).toISOString()) })}
+              </span>
+            )}
+            <Button
+              variant="outline"
+              disabled={fetching}
+              onClick={() => void qc.invalidateQueries({ queryKey: reportKeys.all })}
+            >
               <RefreshCw className={cn('size-4', fetching && 'animate-spin')} aria-hidden />
               {t('reports.live.refresh')}
             </Button>
           </>
         }
       />
-      <div role="group" aria-label={t('reports.home.periods')} className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div
+        role="group"
+        aria-label={t('reports.home.periods')}
+        className="grid grid-cols-2 gap-3 xl:grid-cols-4"
+      >
         {boxes.map((b, i) => (
-          <PeriodBox key={b.period} period={b.period} filters={b.filters} query={results[i]!} selected={b.period === selected} bucket={bucket} onPick={pick} />
+          <PeriodBox
+            key={b.period}
+            period={b.period}
+            filters={b.filters}
+            query={results[i]!}
+            selected={b.period === selected}
+            bucket={bucket}
+            onPick={pick}
+          />
         ))}
       </div>
-      <PeriodDetail period={current.period} filters={current.filters} query={currentQuery} bucket={bucket} onBucket={setBucket} />
+      <PeriodDetail
+        period={current.period}
+        filters={current.filters}
+        query={currentQuery}
+        bucket={bucket}
+        onBucket={setBucket}
+      />
     </div>
   );
 }
@@ -88,7 +145,12 @@ export function HomeDashboard({ today: fixedToday }: { today?: string }) {
 function useRangeText(filters: ReportFilters): string {
   const { t } = useTranslation();
   const locale = useLocale();
-  return isSingleDay(filters) ? formatLocalDate(filters.from, locale) : t('reports.range.label', { from: formatLocalDate(filters.from, locale), to: formatLocalDate(filters.to, locale) });
+  return isSingleDay(filters)
+    ? formatCompactDate(filters.from, locale)
+    : t('reports.range.label', {
+        from: formatCompactDate(filters.from, locale),
+        to: formatCompactDate(filters.to, locale),
+      });
 }
 
 function PeriodBox({
@@ -127,7 +189,8 @@ function PeriodBox({
       )}
     >
       {/* The heading is the box's own button and stretches over the whole card; the counts below sit on top of it. */}
-      <h2 className="grid gap-0.5">
+      {/* One line: "Bu gün | 6 Noy 26". The date is part of the box's name, not a caption under it. */}
+      <h2 className="flex flex-wrap items-baseline gap-x-2 leading-tight">
         <button
           type="button"
           aria-pressed={selected}
@@ -136,8 +199,11 @@ function PeriodBox({
           className="focus-visible:ring-ring rounded-md text-left text-base leading-tight font-semibold after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2"
         >
           {label}
-        </button>
-        <span className="text-muted-foreground text-xs tabular-nums">{range}</span>
+        </button>{' '}
+        <span className="text-muted-foreground text-sm font-normal" aria-hidden>
+          |
+        </span>{' '}
+        <span className="text-muted-foreground text-sm font-normal tabular-nums">{range}</span>
       </h2>
       {query.error && <p className="text-destructive relative text-sm">{errorText(t, query.error)}</p>}
       <button
@@ -147,7 +213,16 @@ function PeriodBox({
         onClick={() => onPick(period, PLANNED.bucket)}
         className="group relative grid w-fit justify-items-start gap-0.5 rounded-md text-left focus-visible:outline-none"
       >
-        <span className={cn('text-[32px] leading-none font-semibold tabular-nums', !counts && 'text-muted-foreground', PRESSABLE, pressed(PLANNED) && PRESSED)}>{value(PLANNED.key)}</span>
+        <span
+          className={cn(
+            'text-[32px] leading-none font-semibold tabular-nums',
+            !counts && 'text-muted-foreground',
+            PRESSABLE,
+            pressed(PLANNED) && PRESSED,
+          )}
+        >
+          {value(PLANNED.key)}
+        </span>
         <span className="text-muted-foreground text-xs">{t(PLANNED.labelKey)}</span>
       </button>
       <dl className="relative grid grid-cols-3 gap-2 border-t pt-3">
@@ -159,7 +234,12 @@ function PeriodBox({
                 aria-label={statName(s)}
                 aria-pressed={pressed(s)}
                 onClick={() => onPick(period, s.bucket)}
-                className={cn('rounded-md text-xl leading-none font-semibold tabular-nums focus-visible:outline-none', counts ? s.tone : 'text-muted-foreground', PRESSABLE, pressed(s) && PRESSED)}
+                className={cn(
+                  'rounded-md text-xl leading-none font-semibold tabular-nums focus-visible:outline-none',
+                  counts ? s.tone : 'text-muted-foreground',
+                  PRESSABLE,
+                  pressed(s) && PRESSED,
+                )}
               >
                 {value(s.key)}
               </button>
@@ -191,22 +271,43 @@ function PeriodDetail({
   const range = useRangeText(filters);
   const summary = query.data;
   const measures = [
-    { key: 'completionPercent', name: t('reports.measures.completionPercent'), value: summary?.completionPercent ?? null, hint: t('reports.measures.completionHint') },
-    { key: 'averageScore', name: t('reports.measures.averageScore'), value: summary?.averageScore ?? null, hint: undefined },
+    {
+      key: 'completionPercent',
+      name: t('reports.measures.completionPercent'),
+      value: summary?.completionPercent ?? null,
+      hint: t('reports.measures.completionHint'),
+    },
+    {
+      key: 'averageScore',
+      name: t('reports.measures.averageScore'),
+      value: summary?.averageScore ?? null,
+      hint: undefined,
+    },
   ] as const;
   return (
     <section aria-label={label} className="grid gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 px-1">
-        <h2 className="flex flex-wrap items-baseline gap-x-3 text-lg font-semibold">
-          {label}
+        <h2 className="flex flex-wrap items-baseline gap-x-2 text-lg font-semibold">
+          {label}{' '}
+          <span className="text-muted-foreground text-sm font-normal" aria-hidden>
+            |
+          </span>{' '}
           <span className="text-muted-foreground text-sm font-normal tabular-nums">{range}</span>
         </h2>
         {summary && (
           <dl className="flex flex-wrap gap-x-6 gap-y-1">
             {measures.map((m) => (
-              <div key={m.key} role="group" aria-label={m.name} title={m.hint} className="flex items-baseline gap-2">
+              <div
+                key={m.key}
+                role="group"
+                aria-label={m.name}
+                title={m.hint}
+                className="flex items-baseline gap-2"
+              >
                 <dt className="text-muted-foreground text-sm">{m.name}</dt>
-                <dd className="text-lg leading-none font-semibold tabular-nums">{percentText(t, m.value, locale)}</dd>
+                <dd className="text-lg leading-none font-semibold tabular-nums">
+                  {percentText(t, m.value, locale)}
+                </dd>
               </div>
             ))}
           </dl>
