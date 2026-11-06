@@ -32,6 +32,10 @@ export type AuditListQuery = z.input<typeof auditListQuerySchema>;
 export const TASK_AUDIT_ACTIONS = ['task.created', 'task.updated', 'task.reassigned', 'task.cancelled', 'task.approved', 'task.rejected'] as const;
 export type TaskAuditAction = (typeof TASK_AUDIT_ACTIONS)[number];
 
+/** Audited problem report actions (2026-11-06 design §6.4), entity type `problem_report`. */
+export const PROBLEM_REPORT_AUDIT_ACTIONS = ['problem_report.created', 'problem_report.closed'] as const;
+export type ProblemReportAuditAction = (typeof PROBLEM_REPORT_AUDIT_ACTIONS)[number];
+
 /**
  * Audited notification actions (spec §4). `notification_rule.*` use entity type `notification_rule` with a null entity id and
  * `{ type, … }` in before/after; `notification.message_sent` uses entity type `notification_message`, entity id = the event id.

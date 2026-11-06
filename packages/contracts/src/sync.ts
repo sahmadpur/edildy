@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { idSchema, isoDateTimeSchema } from './common.js';
 import { myExecutionSchema, syncChecklistVersionSchema, syncOccurrenceSchema } from './execution-views.js';
+import { PROBLEM_REPORT_LIMITS, problemReportDtoSchema, reportSiteSchema } from './problem-reports.js';
 import { syncTaskSchema } from './task-views.js';
 import { TASK_LIMITS } from './tasks.js';
 
@@ -22,6 +23,8 @@ export const syncQuerySchema = z.object({
   knownVersionIds: idList(200),
   /** Tasks the phone holds; those no longer in `tasks` come back in `removedTaskIds` (spec §6.4). Only the first TASK_LIMITS.knownTaskIds are read. */
   knownTaskIds: idListTruncated(TASK_LIMITS.knownTaskIds),
+  /** The caller's own problem reports the phone holds; those no longer synced come back in `removedProblemReportIds`. */
+  knownProblemReportIds: idListTruncated(PROBLEM_REPORT_LIMITS.knownIds),
 });
 export type SyncQuery = z.input<typeof syncQuerySchema>;
 
@@ -33,6 +36,11 @@ export const syncResponseSchema = z.object({
   /** The complete current set: open tasks of the user, unaccepted team tasks, and tasks closed in the last 7 days. */
   tasks: z.array(syncTaskSchema),
   removedTaskIds: z.array(idSchema),
+  /** The caller's own reports of the last 30 days plus any still open (2026-11-06 design §6.3). */
+  problemReports: z.array(problemReportDtoSchema).default([]),
+  removedProblemReportIds: z.array(idSchema).default([]),
+  /** The sites the caller may report a problem at. Defaulted (with the two above) so a phone can read an older API's answer. */
+  reportSites: z.array(reportSiteSchema).default([]),
   /** The caller's unread inbox rows (spec §4); the phone sets its app-icon badge from it. */
   unreadNotifications: z.number().int().min(0),
 });

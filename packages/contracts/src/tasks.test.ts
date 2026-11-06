@@ -112,6 +112,7 @@ describe('task input schemas', () => {
       evidence: DEFAULT_TASK_EVIDENCE,
       assignee: { teamId: ID },
       problemId: null,
+      problemReportId: null,
     });
   });
 
