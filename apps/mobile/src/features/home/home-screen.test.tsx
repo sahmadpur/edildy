@@ -79,7 +79,11 @@ describe('My checklists', () => {
     const name = card.getByText(/Çox uzun adı/);
     expect(name.props.numberOfLines).toBe(1);
     expect(StyleSheet.flatten(name.props.style).flexShrink).toBe(1);
-    expect(StyleSheet.flatten(card.getByText('Nərimanov filialı').props.style).flexShrink).toBe(0);
+    const site = card.getByText('Nərimanov filialı');
+    expect(StyleSheet.flatten(site.props.style).flexShrink).toBe(0);
+    // A very long site name must not squeeze the checklist name to nothing: the site column is capped and clipped.
+    expect(site.props.numberOfLines).toBe(1);
+    expect(StyleSheet.flatten(card.getByTestId('site-column').props.style).maxWidth).toBe('55%');
   });
 
   it('greets by full name under a date-only eyebrow, with the sync dot and the bell, and no tasks box', async () => {

@@ -31,8 +31,10 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
         <Text style={styles.title} numberOfLines={1}>
           {o.checklistName}
         </Text>
-        <View style={styles.right}>
-          <Text style={styles.site}>{o.siteName}</Text>
+        <View testID="site-column" style={styles.right}>
+          <Text style={styles.site} numberOfLines={1}>
+            {o.siteName}
+          </Text>
           {o.shiftName ? <Text style={styles.shift}>{o.shiftName}</Text> : null}
         </View>
       </View>
@@ -78,7 +80,8 @@ const styles = StyleSheet.create({
   edgeDone: { borderLeftColor: colors.success },
   edgeUpcoming: { borderLeftColor: colors.planned },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm },
-  right: { alignItems: 'flex-end', flexShrink: 0 },
+  // Capped so a long site name never squeezes the checklist name to an ellipsis; the site clips instead.
+  right: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '55%' },
   title: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, flexShrink: 1 },
   site: { fontFamily: font, fontSize: type.base, color: colors.muted, flexShrink: 0 },
   shift: { fontFamily: font, fontSize: type.sm, color: colors.muted },
