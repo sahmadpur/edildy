@@ -6,7 +6,15 @@ import type { Principal } from '../src/common/request';
 import { DbService } from '../src/db/db.service';
 import { UsersService } from '../src/users/users.service';
 import { createTestApp, type TestApp } from './app';
-import { as, createUserDirect, loginStaff, loginWorker, roleIdOf, signupTenant, siteTypeIdOf } from './fixtures';
+import {
+  as,
+  createUserDirect,
+  loginStaff,
+  loginWorker,
+  roleIdOf,
+  signupTenant,
+  siteTypeIdOf,
+} from './fixtures';
 import { ownerQuery } from './owner-db';
 
 describe('users', () => {
@@ -18,7 +26,10 @@ describe('users', () => {
 
   async function verified() {
     const s = await signupTenant(t);
-    await t.http().post('/api/v1/auth/verify-email').send({ token: t.mailer.tokenFor(s.email) });
+    await t
+      .http()
+      .post('/api/v1/auth/verify-email')
+      .send({ token: t.mailer.tokenFor(s.email) });
     return { s, owner: as(t, s.accessToken) };
   }
 
@@ -31,7 +42,13 @@ describe('users', () => {
       jobTitle: 'Təmizlikçi',
     });
     expect(res.status).toBe(201);
-    expect(res.body.user).toMatchObject({ username: 'elvin.m', kind: 'worker', status: 'active', credentialKind: 'pin', role: { systemKey: 'worker' } });
+    expect(res.body.user).toMatchObject({
+      username: 'elvin.m',
+      kind: 'worker',
+      status: 'active',
+      credentialKind: 'pin',
+      role: { systemKey: 'worker' },
+    });
     expect(res.body.generatedSecret).toMatch(/^\d{6}$/);
     await loginWorker(t, s.orgCode, 'elvin.m', res.body.generatedSecret);
   });
@@ -39,14 +56,22 @@ describe('users', () => {
   it('validates usernames and provided PINs', async () => {
     const { s, owner } = await verified();
     const roleId = await roleIdOf(s.tenantId, 'worker');
-    const weak = await owner.post('/api/v1/users/workers', { fullName: 'A B', username: 'ali', roleId, secret: '123456' });
+    const weak = await owner.post('/api/v1/users/workers', {
+      fullName: 'A B',
+      username: 'ali',
+      roleId,
+      secret: '123456',
+    });
     expect(weak.body.error.fields).toEqual({ secret: 'errors.validation.pinWeak' });
     const az = await owner.post('/api/v1/users/workers', { fullName: 'A B', username: 'əli', roleId });
     expect(az.body.error.fields).toEqual({ username: 'errors.validation.username' });
     await owner.post('/api/v1/users/workers', { fullName: 'A B', username: 'ali', roleId });
     const dup = await owner.post('/api/v1/users/workers', { fullName: 'C D', username: 'ALI', roleId });
     expect(dup.status).toBe(409);
-    expect(dup.body.error).toMatchObject({ code: 'USERNAME_TAKEN', fields: { username: 'errors.USERNAME_TAKEN' } });
+    expect(dup.body.error).toMatchObject({
+      code: 'USERNAME_TAKEN',
+      fields: { username: 'errors.USERNAME_TAKEN' },
+    });
   });
 
   it('invites staff only after the actor verified their email, and the invite can be accepted', async () => {
@@ -56,20 +81,35 @@ describe('users', () => {
     const blocked = await as(t, s.accessToken).post('/api/v1/users/invite', body);
     expect(blocked.body.error.code).toBe('EMAIL_NOT_VERIFIED');
 
-    await t.http().post('/api/v1/auth/verify-email').send({ token: t.mailer.tokenFor(s.email) });
+    await t
+      .http()
+      .post('/api/v1/auth/verify-email')
+      .send({ token: t.mailer.tokenFor(s.email) });
     const invited = await as(t, s.accessToken).post('/api/v1/users/invite', body);
     expect(invited.status).toBe(201);
     expect(invited.body).toMatchObject({ status: 'invited', kind: 'staff' });
-    const accept = await t.http().post('/api/v1/auth/invite/accept').send({ token: t.mailer.tokenFor(body.email), password: 'leyla password 1', client: 'web' });
+    const accept = await t
+      .http()
+      .post('/api/v1/auth/invite/accept')
+      .send({ token: t.mailer.tokenFor(body.email), password: 'leyla password 1', client: 'web' });
     expect(accept.status).toBe(200);
-    expect((await as(t, s.accessToken).post('/api/v1/users/invite', body)).body.error.code).toBe('EMAIL_TAKEN');
+    expect((await as(t, s.accessToken).post('/api/v1/users/invite', body)).body.error.code).toBe(
+      'EMAIL_TAKEN',
+    );
   });
 
   it('filters and paginates the list', async () => {
     const { s, owner } = await verified();
     const roleId = await roleIdOf(s.tenantId, 'worker');
     for (const name of ['Nərmin Əliyeva', 'Orxan Həsənov', 'Nigar Səfərli']) {
-      await owner.post('/api/v1/users/workers', { fullName: name, username: name.split(' ')[0]!.toLowerCase().replace(/[^a-z]/g, 'x'), roleId });
+      await owner.post('/api/v1/users/workers', {
+        fullName: name,
+        username: name
+          .split(' ')[0]!
+          .toLowerCase()
+          .replace(/[^a-z]/g, 'x'),
+        roleId,
+      });
     }
     const search = await owner.get('/api/v1/users?q=orxan');
     expect(search.body.items.map((u: { fullName: string }) => u.fullName)).toEqual(['Orxan Həsənov']);
@@ -90,10 +130,30 @@ describe('users', () => {
     const a = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'A' })).body;
     const a1 = (await owner.post('/api/v1/sites', { parentId: a.id, typeId, name: 'A1' })).body;
     const b = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'B' })).body;
-    const scopedRole = (await owner.post('/api/v1/roles', { name: 'Site lead', dataScope: 'site_subtree', permissions: ['users.view', 'users.manage'] })).body;
+    const scopedRole = (
+      await owner.post('/api/v1/roles', {
+        name: 'Site lead',
+        dataScope: 'site_subtree',
+        permissions: ['users.view', 'users.manage'],
+      })
+    ).body;
     const roleId = await roleIdOf(s.tenantId, 'worker');
-    const inA = (await owner.post('/api/v1/users/workers', { fullName: 'In A', username: 'in-a', roleId, siteIds: [a1.id] })).body.user;
-    const inB = (await owner.post('/api/v1/users/workers', { fullName: 'In B', username: 'in-b', roleId, siteIds: [b.id] })).body.user;
+    const inA = (
+      await owner.post('/api/v1/users/workers', {
+        fullName: 'In A',
+        username: 'in-a',
+        roleId,
+        siteIds: [a1.id],
+      })
+    ).body.user;
+    const inB = (
+      await owner.post('/api/v1/users/workers', {
+        fullName: 'In B',
+        username: 'in-b',
+        roleId,
+        siteIds: [b.id],
+      })
+    ).body.user;
     const lead = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: scopedRole.id });
     await owner.put(`/api/v1/users/${lead.id}/sites`, { siteIds: [a.id] });
     const leadApi = as(t, (await loginStaff(t, lead.email!, lead.secret)).accessToken);
@@ -109,42 +169,74 @@ describe('users', () => {
     const { s } = await verified();
     const m = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'manager' });
     const manager = as(t, (await loginStaff(t, m.email!, m.secret)).accessToken);
-    const res = await manager.post('/api/v1/users/workers', { fullName: 'X Y', username: 'xyz', roleId: await roleIdOf(s.tenantId, 'worker') });
+    const res = await manager.post('/api/v1/users/workers', {
+      fullName: 'X Y',
+      username: 'xyz',
+      roleId: await roleIdOf(s.tenantId, 'worker'),
+    });
     expect(res.body.error.code).toBe('FORBIDDEN');
   });
 
   it('prevents manager cycles', async () => {
     const { s, owner } = await verified();
     const roleId = await roleIdOf(s.tenantId, 'worker');
-    const a = (await owner.post('/api/v1/users/workers', { fullName: 'A A', username: 'aaa', roleId })).body.user;
-    const bRes = await owner.post('/api/v1/users/workers', { fullName: 'B B', username: 'bbb', roleId, managerId: a.id }); const b = bRes.body.user;
+    const a = (await owner.post('/api/v1/users/workers', { fullName: 'A A', username: 'aaa', roleId })).body
+      .user;
+    const bRes = await owner.post('/api/v1/users/workers', {
+      fullName: 'B B',
+      username: 'bbb',
+      roleId,
+      managerId: a.id,
+    });
+    const b = bRes.body.user;
     expect(b.managerName).toBe('A A');
-    expect((await owner.patch(`/api/v1/users/${a.id}`, { managerId: b.id })).body.error.code).toBe('MANAGER_CYCLE');
-    expect((await owner.patch(`/api/v1/users/${a.id}`, { managerId: a.id })).body.error.code).toBe('MANAGER_CYCLE');
+    expect((await owner.patch(`/api/v1/users/${a.id}`, { managerId: b.id })).body.error.code).toBe(
+      'MANAGER_CYCLE',
+    );
+    expect((await owner.patch(`/api/v1/users/${a.id}`, { managerId: a.id })).body.error.code).toBe(
+      'MANAGER_CYCLE',
+    );
     expect((await owner.patch(`/api/v1/users/${b.id}`, { managerId: null })).body.managerId).toBeNull();
   });
 
   it('refuses self-destructive and privilege-escalating changes', async () => {
     const { s, owner } = await verified();
-    expect((await owner.post(`/api/v1/users/${s.ownerId}/deactivate`)).body.error.code).toBe('SELF_MODIFICATION');
-    expect((await owner.patch(`/api/v1/users/${s.ownerId}`, { roleId: await roleIdOf(s.tenantId, 'admin') })).body.error.code).toBe(
+    expect((await owner.post(`/api/v1/users/${s.ownerId}/deactivate`)).body.error.code).toBe(
       'SELF_MODIFICATION',
     );
+    expect(
+      (await owner.patch(`/api/v1/users/${s.ownerId}`, { roleId: await roleIdOf(s.tenantId, 'admin') })).body
+        .error.code,
+    ).toBe('SELF_MODIFICATION');
 
-    const admin = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'admin', emailVerified: true });
+    const admin = await createUserDirect(t, s.tenantId, {
+      kind: 'staff',
+      roleKey: 'admin',
+      emailVerified: true,
+    });
     const adminApi = as(t, (await loginStaff(t, admin.email!, admin.secret)).accessToken);
     const w = await createUserDirect(t, s.tenantId);
-    expect((await adminApi.patch(`/api/v1/users/${w.id}`, { roleId: await roleIdOf(s.tenantId, 'owner') })).body.error.code).toBe(
+    expect(
+      (await adminApi.patch(`/api/v1/users/${w.id}`, { roleId: await roleIdOf(s.tenantId, 'owner') })).body
+        .error.code,
+    ).toBe('OWNER_ROLE_RESTRICTED');
+    expect((await adminApi.post(`/api/v1/users/${s.ownerId}/deactivate`)).body.error.code).toBe(
       'OWNER_ROLE_RESTRICTED',
     );
-    expect((await adminApi.post(`/api/v1/users/${s.ownerId}/deactivate`)).body.error.code).toBe('OWNER_ROLE_RESTRICTED');
 
-    const limited = (await owner.post('/api/v1/roles', { name: 'HR', dataScope: 'all', permissions: ['users.view', 'users.manage'] })).body;
+    const limited = (
+      await owner.post('/api/v1/roles', {
+        name: 'HR',
+        dataScope: 'all',
+        permissions: ['users.view', 'users.manage'],
+      })
+    ).body;
     const hr = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: limited.id });
     const hrApi = as(t, (await loginStaff(t, hr.email!, hr.secret)).accessToken);
-    expect((await hrApi.patch(`/api/v1/users/${w.id}`, { roleId: await roleIdOf(s.tenantId, 'admin') })).body.error.code).toBe(
-      'ROLE_ESCALATION',
-    );
+    expect(
+      (await hrApi.patch(`/api/v1/users/${w.id}`, { roleId: await roleIdOf(s.tenantId, 'admin') })).body.error
+        .code,
+    ).toBe('ROLE_ESCALATION');
   });
 
   it('keeps at least one active owner (service-level guard)', async () => {
@@ -162,7 +254,11 @@ describe('users', () => {
       emailVerified: true,
     };
     await expect(
-      t.app.get(DbService).withTenant(s.tenantId, synthetic.userId, () => t.app.get(UsersService).deactivate(synthetic, s.ownerId)),
+      t.app
+        .get(DbService)
+        .withTenant(s.tenantId, synthetic.userId, () =>
+          t.app.get(UsersService).deactivate(synthetic, s.ownerId),
+        ),
     ).rejects.toMatchObject({ code: 'LAST_OWNER' });
   });
 
@@ -172,7 +268,9 @@ describe('users', () => {
     const login = await loginWorker(t, s.orgCode, w.username!, w.secret);
     expect((await owner.post(`/api/v1/users/${w.id}/deactivate`)).body.status).toBe('deactivated');
     expect((await as(t, login.accessToken).get('/api/v1/me')).status).toBe(401);
-    expect((await t.http().post('/api/v1/auth/refresh').send({ refreshToken: login.refreshToken })).status).toBe(401);
+    expect(
+      (await t.http().post('/api/v1/auth/refresh').send({ refreshToken: login.refreshToken })).status,
+    ).toBe(401);
     expect((await owner.post(`/api/v1/users/${w.id}/reactivate`)).body.status).toBe('active');
     await loginWorker(t, s.orgCode, w.username!, w.secret);
   });
@@ -182,10 +280,20 @@ describe('users', () => {
     const w = await createUserDirect(t, s.tenantId);
     const reset = await owner.post(`/api/v1/users/${w.id}/reset-credential`);
     expect(reset.body.generatedSecret).toMatch(/^\d{6}$/);
-    expect((await t.http().post('/api/v1/auth/login/worker').send({ orgCode: s.orgCode, username: w.username, secret: w.secret, client: 'mobile' })).status).toBe(401);
+    expect(
+      (
+        await t
+          .http()
+          .post('/api/v1/auth/login/worker')
+          .send({ orgCode: s.orgCode, username: w.username, secret: w.secret, client: 'mobile' })
+      ).status,
+    ).toBe(401);
     await loginWorker(t, s.orgCode, w.username!, reset.body.generatedSecret);
 
-    const chosen = await owner.post(`/api/v1/users/${w.id}/reset-credential`, { credentialKind: 'password', secret: 'worker password 1' });
+    const chosen = await owner.post(`/api/v1/users/${w.id}/reset-credential`, {
+      credentialKind: 'password',
+      secret: 'worker password 1',
+    });
     expect(chosen.body.generatedSecret).toBeNull();
     expect(chosen.body.user.credentialKind).toBe('password');
 
@@ -202,25 +310,43 @@ describe('users', () => {
     await ownerQuery('update users set failed_login_count = 3 where id = $1', [staff.id]);
 
     expect((await owner.post(`/api/v1/users/${staff.id}/reset-credential`)).status).toBe(200);
-    const [row] = (await ownerQuery('select credential_hash, failed_login_count, locked_until from users where id = $1', [staff.id])).rows;
+    const [row] = (
+      await ownerQuery('select credential_hash, failed_login_count, locked_until from users where id = $1', [
+        staff.id,
+      ])
+    ).rows;
     expect(row).toMatchObject({ credential_hash: null, failed_login_count: 0, locked_until: null });
 
-    const oldLogin = await t.http().post('/api/v1/auth/login/staff').send({ email: staff.email, password: staff.secret, client: 'mobile' });
+    const oldLogin = await t
+      .http()
+      .post('/api/v1/auth/login/staff')
+      .send({ email: staff.email, password: staff.secret, client: 'mobile' });
     expect(oldLogin.status).toBe(401);
     expect(oldLogin.body.error.code).toBe('INVALID_CREDENTIALS');
-    expect((await t.http().post('/api/v1/auth/refresh').send({ refreshToken: before.refreshToken })).status).toBe(401);
-    const audit = (await ownerQuery("select before, after from audit_log where entity_id = $1 and action = 'user.password_reset_requested'", [staff.id])).rows;
+    expect(
+      (await t.http().post('/api/v1/auth/refresh').send({ refreshToken: before.refreshToken })).status,
+    ).toBe(401);
+    const audit = (
+      await ownerQuery(
+        "select before, after from audit_log where entity_id = $1 and action = 'user.password_reset_requested'",
+        [staff.id],
+      )
+    ).rows;
     expect(audit).toHaveLength(1);
     expect(JSON.stringify(audit[0])).not.toMatch(/credential_?hash|token/i);
 
     const token = t.mailer.tokenFor(staff.email!);
-    expect((await t.http().post('/api/v1/auth/password/reset').send({ token, password: 'fresh password 1' })).status).toBe(204);
+    expect(
+      (await t.http().post('/api/v1/auth/password/reset').send({ token, password: 'fresh password 1' }))
+        .status,
+    ).toBe(204);
     await loginStaff(t, staff.email!, 'fresh password 1');
   });
 
   it('refuses to reactivate a user onto an inactive role', async () => {
     const { s, owner } = await verified();
-    const role = (await owner.post('/api/v1/roles', { name: uniqEmail(), dataScope: 'own', permissions: [] })).body;
+    const role = (await owner.post('/api/v1/roles', { name: uniqEmail(), dataScope: 'own', permissions: [] }))
+      .body;
     const w = await createUserDirect(t, s.tenantId, { roleId: role.id, status: 'deactivated' });
     expect((await owner.patch(`/api/v1/roles/${role.id}`, { active: false })).status).toBe(200);
     const res = await owner.post(`/api/v1/users/${w.id}/reactivate`);
@@ -231,7 +357,9 @@ describe('users', () => {
 
   it('a user whose role became inactive has no permissions and own scope', async () => {
     const { s, owner } = await verified();
-    const role = (await owner.post('/api/v1/roles', { name: uniqEmail(), dataScope: 'all', permissions: ['users.view'] })).body;
+    const role = (
+      await owner.post('/api/v1/roles', { name: uniqEmail(), dataScope: 'all', permissions: ['users.view'] })
+    ).body;
     const staff = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: role.id });
     const login = await loginStaff(t, staff.email!, staff.secret);
     const api = as(t, login.accessToken);
@@ -248,18 +376,38 @@ describe('users', () => {
     const { s } = await verified();
     const db = t.app.get(DbService);
     const credentials = t.app.get(CredentialService);
-    const rolledBack = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'manager', status: 'invited', secret: null });
+    const rolledBack = await createUserDirect(t, s.tenantId, {
+      kind: 'staff',
+      roleKey: 'manager',
+      status: 'invited',
+      secret: null,
+    });
     await expect(
       db.withTenant(s.tenantId, null, async () => {
-        await credentials.issueInvite({ tenantId: s.tenantId, userId: rolledBack.id, email: rolledBack.email!, fullName: 'X' });
+        await credentials.issueInvite({
+          tenantId: s.tenantId,
+          userId: rolledBack.id,
+          email: rolledBack.email!,
+          fullName: 'X',
+        });
         throw new Error('rollback');
       }),
     ).rejects.toThrow('rollback');
     expect(t.mailer.lastTo(rolledBack.email!)).toBeUndefined();
 
-    const committed = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'manager', status: 'invited', secret: null });
+    const committed = await createUserDirect(t, s.tenantId, {
+      kind: 'staff',
+      roleKey: 'manager',
+      status: 'invited',
+      secret: null,
+    });
     await db.withTenant(s.tenantId, null, async () => {
-      await credentials.issueInvite({ tenantId: s.tenantId, userId: committed.id, email: committed.email!, fullName: 'Y' });
+      await credentials.issueInvite({
+        tenantId: s.tenantId,
+        userId: committed.id,
+        email: committed.email!,
+        fullName: 'Y',
+      });
       expect(t.mailer.lastTo(committed.email!)).toBeUndefined();
     });
     await vi.waitFor(() => expect(t.mailer.lastTo(committed.email!)).toBeDefined());
@@ -272,19 +420,41 @@ describe('users', () => {
     const site = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'S' })).body;
     const team = (await owner.post('/api/v1/teams', { name: 'T' })).body;
     const w = await createUserDirect(t, s.tenantId);
-    expect((await owner.put(`/api/v1/users/${w.id}/sites`, { siteIds: [site.id] })).body.siteIds).toEqual([site.id]);
-    expect((await owner.put(`/api/v1/users/${w.id}/teams`, { teamIds: [team.id] })).body.teamIds).toEqual([team.id]);
-    const foreignSite = (await as(t, other.accessToken).post('/api/v1/sites', { parentId: null, typeId: await siteTypeIdOf(other.tenantId), name: 'F' })).body;
+    expect((await owner.put(`/api/v1/users/${w.id}/sites`, { siteIds: [site.id] })).body.siteIds).toEqual([
+      site.id,
+    ]);
+    expect((await owner.put(`/api/v1/users/${w.id}/teams`, { teamIds: [team.id] })).body.teamIds).toEqual([
+      team.id,
+    ]);
+    const foreignSite = (
+      await as(t, other.accessToken).post('/api/v1/sites', {
+        parentId: null,
+        typeId: await siteTypeIdOf(other.tenantId),
+        name: 'F',
+      })
+    ).body;
     expect((await owner.put(`/api/v1/users/${w.id}/sites`, { siteIds: [foreignSite.id] })).status).toBe(422);
   });
 
   describe('target privilege, owner and scope rules', () => {
     it('refuses resetting the credential of a user whose role exceeds the actor', async () => {
       const { s, owner } = await verified();
-      const limited = (await owner.post('/api/v1/roles', { name: 'HR', dataScope: 'all', permissions: ['users.view', 'users.manage'] })).body;
+      const limited = (
+        await owner.post('/api/v1/roles', {
+          name: 'HR',
+          dataScope: 'all',
+          permissions: ['users.view', 'users.manage'],
+        })
+      ).body;
       const hr = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: limited.id });
       const hrApi = as(t, (await loginStaff(t, hr.email!, hr.secret)).accessToken);
-      const adminWorker = (await owner.post('/api/v1/users/workers', { fullName: 'Ad Min', username: 'admin-w', roleId: await roleIdOf(s.tenantId, 'admin') })).body.user;
+      const adminWorker = (
+        await owner.post('/api/v1/users/workers', {
+          fullName: 'Ad Min',
+          username: 'admin-w',
+          roleId: await roleIdOf(s.tenantId, 'admin'),
+        })
+      ).body.user;
       const res = await hrApi.post(`/api/v1/users/${adminWorker.id}/reset-credential`);
       expect(res.status).toBe(403);
       expect(res.body.error.code).toBe('ROLE_ESCALATION');
@@ -297,9 +467,24 @@ describe('users', () => {
       const typeId = await siteTypeIdOf(s.tenantId);
       const a = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'A' })).body;
       const perms = ['users.view', 'users.manage'];
-      const narrow = (await owner.post('/api/v1/roles', { name: 'Site lead', dataScope: 'site_subtree', permissions: perms })).body;
-      const wide = (await owner.post('/api/v1/roles', { name: 'Wide lead', dataScope: 'all', permissions: perms })).body;
-      const w = (await owner.post('/api/v1/users/workers', { fullName: 'In A', username: 'in-a', roleId: await roleIdOf(s.tenantId, 'worker'), siteIds: [a.id] })).body.user;
+      const narrow = (
+        await owner.post('/api/v1/roles', {
+          name: 'Site lead',
+          dataScope: 'site_subtree',
+          permissions: perms,
+        })
+      ).body;
+      const wide = (
+        await owner.post('/api/v1/roles', { name: 'Wide lead', dataScope: 'all', permissions: perms })
+      ).body;
+      const w = (
+        await owner.post('/api/v1/users/workers', {
+          fullName: 'In A',
+          username: 'in-a',
+          roleId: await roleIdOf(s.tenantId, 'worker'),
+          siteIds: [a.id],
+        })
+      ).body.user;
       const lead = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: narrow.id });
       await owner.put(`/api/v1/users/${lead.id}/sites`, { siteIds: [a.id] });
       const leadApi = as(t, (await loginStaff(t, lead.email!, lead.secret)).accessToken);
@@ -310,7 +495,11 @@ describe('users', () => {
 
     it('stops an admin from editing the owner', async () => {
       const { s } = await verified();
-      const admin = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'admin', emailVerified: true });
+      const admin = await createUserDirect(t, s.tenantId, {
+        kind: 'staff',
+        roleKey: 'admin',
+        emailVerified: true,
+      });
       const adminApi = as(t, (await loginStaff(t, admin.email!, admin.secret)).accessToken);
       const patch = await adminApi.patch(`/api/v1/users/${s.ownerId}`, { fullName: 'Hacked' });
       expect(patch.status).toBe(403);
@@ -326,7 +515,13 @@ describe('users', () => {
       const a = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'A' })).body;
       const a1 = (await owner.post('/api/v1/sites', { parentId: a.id, typeId, name: 'A1' })).body;
       const b = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'B' })).body;
-      const role = (await owner.post('/api/v1/roles', { name: 'Site lead', dataScope: 'site_subtree', permissions: ['users.view', 'users.manage'] })).body;
+      const role = (
+        await owner.post('/api/v1/roles', {
+          name: 'Site lead',
+          dataScope: 'site_subtree',
+          permissions: ['users.view', 'users.manage'],
+        })
+      ).body;
       const lead = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: role.id });
       await owner.put(`/api/v1/users/${lead.id}/sites`, { siteIds: [a1.id] });
       const peer = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: role.id });
@@ -342,7 +537,9 @@ describe('users', () => {
 
       const contained = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: role.id });
       await owner.put(`/api/v1/users/${contained.id}/sites`, { siteIds: [a1.id] });
-      expect((await leadApi.patch(`/api/v1/users/${contained.id}`, { fullName: 'Renamed' })).status).toBe(200);
+      expect((await leadApi.patch(`/api/v1/users/${contained.id}`, { fullName: 'Renamed' })).status).toBe(
+        200,
+      );
     });
 
     it('confines site-subtree leads to their own subtree', async () => {
@@ -351,9 +548,22 @@ describe('users', () => {
       const a = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'A' })).body;
       const a1 = (await owner.post('/api/v1/sites', { parentId: a.id, typeId, name: 'A1' })).body;
       const b = (await owner.post('/api/v1/sites', { parentId: null, typeId, name: 'B' })).body;
-      const role = (await owner.post('/api/v1/roles', { name: 'Site lead', dataScope: 'site_subtree', permissions: ['users.view', 'users.manage'] })).body;
+      const role = (
+        await owner.post('/api/v1/roles', {
+          name: 'Site lead',
+          dataScope: 'site_subtree',
+          permissions: ['users.view', 'users.manage'],
+        })
+      ).body;
       const roleId = await roleIdOf(s.tenantId, 'worker');
-      const inA = (await owner.post('/api/v1/users/workers', { fullName: 'In A', username: 'in-a', roleId, siteIds: [a1.id] })).body.user;
+      const inA = (
+        await owner.post('/api/v1/users/workers', {
+          fullName: 'In A',
+          username: 'in-a',
+          roleId,
+          siteIds: [a1.id],
+        })
+      ).body.user;
       const lead = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: role.id });
       await owner.put(`/api/v1/users/${lead.id}/sites`, { siteIds: [a.id] });
       const leadApi = as(t, (await loginStaff(t, lead.email!, lead.secret)).accessToken);
@@ -363,10 +573,19 @@ describe('users', () => {
       expect(self.body.error.code).toBe('SELF_MODIFICATION');
       expect((await leadApi.put(`/api/v1/users/${inA.id}/sites`, { siteIds: [b.id] })).status).toBe(422);
 
-      const none = await leadApi.post('/api/v1/users/workers', { fullName: 'No Site', username: 'no-site', roleId });
+      const none = await leadApi.post('/api/v1/users/workers', {
+        fullName: 'No Site',
+        username: 'no-site',
+        roleId,
+      });
       expect(none.status).toBe(400);
       expect(none.body.error.fields).toHaveProperty('siteIds');
-      const ok = await leadApi.post('/api/v1/users/workers', { fullName: 'With Site', username: 'with-site', roleId, siteIds: [a1.id] });
+      const ok = await leadApi.post('/api/v1/users/workers', {
+        fullName: 'With Site',
+        username: 'with-site',
+        roleId,
+        siteIds: [a1.id],
+      });
       expect(ok.status).toBe(201);
       const ids = (await leadApi.get('/api/v1/users')).body.items.map((u: { id: string }) => u.id);
       expect(ids).toContain(ok.body.user.id);

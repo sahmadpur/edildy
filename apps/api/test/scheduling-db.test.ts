@@ -6,8 +6,22 @@ import { createTestApp, type TestApp } from './app';
 import { signupTenant, siteTypeIdOf } from './fixtures';
 import { ownerQuery } from './owner-db';
 
-const TABLES = ['shifts', 'shift_roster', 'assignments', 'assignment_assignees', 'occurrences', 'occurrence_assignees', 'occurrence_status_history'];
-const NEW_ADMIN_KEYS = ['assignments.view', 'assignments.manage', 'assignments.extended_window', 'shifts.view', 'shifts.manage'];
+const TABLES = [
+  'shifts',
+  'shift_roster',
+  'assignments',
+  'assignment_assignees',
+  'occurrences',
+  'occurrence_assignees',
+  'occurrence_status_history',
+];
+const NEW_ADMIN_KEYS = [
+  'assignments.view',
+  'assignments.manage',
+  'assignments.extended_window',
+  'shifts.view',
+  'shifts.manage',
+];
 
 async function asApp<T>(tenantId: string, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const pool = new pg.Pool({ connectionString: inject('db').appUrl, max: 1 });
@@ -61,7 +75,8 @@ describe('scheduling tables', () => {
       [TABLES],
     );
     expect(r.rows).toHaveLength(TABLES.length);
-    for (const row of r.rows) expect(row, row.relname).toMatchObject({ relrowsecurity: true, relforcerowsecurity: true });
+    for (const row of r.rows)
+      expect(row, row.relname).toMatchObject({ relrowsecurity: true, relforcerowsecurity: true });
   });
 
   it('hides another tenant’s occurrences from the app account', async () => {
@@ -86,23 +101,37 @@ describe('scheduling tables', () => {
     const { occ } = await seedOccurrence(s.tenantId, s.ownerId);
     const id = (await occ('pending')).rows[0]!.id;
     await asApp(s.tenantId, async (c) => {
-      await c.query("insert into occurrence_status_history (id, tenant_id, occurrence_id, to_status, at) values (gen_random_uuid(), $1, $2, 'pending', now())", [s.tenantId, id]);
+      await c.query(
+        "insert into occurrence_status_history (id, tenant_id, occurrence_id, to_status, at) values (gen_random_uuid(), $1, $2, 'pending', now())",
+        [s.tenantId, id],
+      );
       await c.query('savepoint sp');
-      await expect(c.query("update occurrence_status_history set reason = 'x'")).rejects.toThrow(/permission denied/);
+      await expect(c.query("update occurrence_status_history set reason = 'x'")).rejects.toThrow(
+        /permission denied/,
+      );
       await c.query('rollback to savepoint sp');
       await expect(c.query('delete from occurrence_status_history')).rejects.toThrow(/permission denied/);
     });
   });
 
   it('gives the app account its own pgboss schema', async () => {
-    const r = await ownerQuery<{ owner: string }>("select nspowner::regrole::text as owner from pg_namespace where nspname = 'pgboss'");
+    const r = await ownerQuery<{ owner: string }>(
+      "select nspowner::regrole::text as owner from pg_namespace where nspname = 'pgboss'",
+    );
     expect(r.rows[0]?.owner).toBe('taskop_app');
   });
 
   it('backfills the new keys for existing Admin roles', async () => {
     const s = await signupTenant(t);
-    const adminRole = (await ownerQuery<{ id: string }>("select id from roles where tenant_id = $1 and system_key = 'admin'", [s.tenantId])).rows[0]!.id;
-    await ownerQuery('delete from role_permissions where role_id = $1 and permission_key = any($2)', [adminRole, NEW_ADMIN_KEYS]);
+    const adminRole = (
+      await ownerQuery<{ id: string }>("select id from roles where tenant_id = $1 and system_key = 'admin'", [
+        s.tenantId,
+      ])
+    ).rows[0]!.id;
+    await ownerQuery('delete from role_permissions where role_id = $1 and permission_key = any($2)', [
+      adminRole,
+      NEW_ADMIN_KEYS,
+    ]);
     const file = readFileSync(path.resolve(__dirname, '../drizzle/0006_scheduling_security.sql'), 'utf8');
     const stmts = file.split('--> statement-breakpoint').map((x) => x.trim());
     const start = stmts.findIndex((x) => /row_security\s*=\s*off/i.test(x));
@@ -115,7 +144,10 @@ describe('scheduling tables', () => {
     } finally {
       await client.end();
     }
-    const keys = await ownerQuery<{ permission_key: string }>('select permission_key from role_permissions where role_id = $1', [adminRole]);
+    const keys = await ownerQuery<{ permission_key: string }>(
+      'select permission_key from role_permissions where role_id = $1',
+      [adminRole],
+    );
     expect(keys.rows.map((r) => r.permission_key)).toEqual(expect.arrayContaining(NEW_ADMIN_KEYS));
   });
 });

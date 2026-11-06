@@ -2,7 +2,17 @@ import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DomainEvents } from '../src/common/domain-events';
 import { createTestApp, type TestApp } from './app';
-import { type AuditWorld, auditLogOf, auditWorld, correct, correctionRows, problemRows, reworkRows, sendBack, withdraw } from './audit-fixtures';
+import {
+  type AuditWorld,
+  auditLogOf,
+  auditWorld,
+  correct,
+  correctionRows,
+  problemRows,
+  reworkRows,
+  sendBack,
+  withdraw,
+} from './audit-fixtures';
 import { executionRow, historyOf, statusOf } from './execution-fixtures';
 import { FakeClock } from './fake-clock';
 import { ownerQuery } from './owner-db';
@@ -38,19 +48,63 @@ describe('send-back and withdrawal (spec §3.1, §6.2)', () => {
     off();
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toEqual({
-      id: expect.any(String), round: 1, items: items(a), dueAt: DUE, requestedBy: { id: a.manager.id, fullName: 'Menecer' },
-      requestedAt: AT, resubmittedAt: null, withdrawnAt: null, withdrawnBy: null, answersBefore: a.answers,
+      id: expect.any(String),
+      round: 1,
+      items: items(a),
+      dueAt: DUE,
+      requestedBy: { id: a.manager.id, fullName: 'Menecer' },
+      requestedAt: AT,
+      resubmittedAt: null,
+      withdrawnAt: null,
+      withdrawnBy: null,
+      answersBefore: a.answers,
     });
     expect(await reworkRows(a.executionId)).toEqual([
-      expect.objectContaining({ round: 1, answers_before: a.answers, status_before: 'completed', requested_by_user_id: a.manager.id, due_at: new Date(DUE) }),
+      expect.objectContaining({
+        round: 1,
+        answers_before: a.answers,
+        status_before: 'completed',
+        requested_by_user_id: a.manager.id,
+        due_at: new Date(DUE),
+      }),
     ]);
-    expect(await executionRow(a.executionId)).toMatchObject({ state: 'rework', answers: a.answers, answers_rev: 1 });
-    const x = await ownerQuery<{ rework_round: number; original_answers: unknown; original_captured_at: Date }>('select rework_round, original_answers, original_captured_at from executions where id = $1', [a.executionId]);
-    expect(x.rows[0]).toEqual({ rework_round: 1, original_answers: a.answers, original_captured_at: new Date(AT) });
+    expect(await executionRow(a.executionId)).toMatchObject({
+      state: 'rework',
+      answers: a.answers,
+      answers_rev: 1,
+    });
+    const x = await ownerQuery<{
+      rework_round: number;
+      original_answers: unknown;
+      original_captured_at: Date;
+    }>('select rework_round, original_answers, original_captured_at from executions where id = $1', [
+      a.executionId,
+    ]);
+    expect(x.rows[0]).toEqual({
+      rework_round: 1,
+      original_answers: a.answers,
+      original_captured_at: new Date(AT),
+    });
     expect(await statusOf(a.w.occurrenceId)).toBe('correction_required');
-    expect((await historyOf(a.w.occurrenceId)).at(-1)).toEqual(['completed', 'correction_required', AT, null, a.manager.id]);
-    expect(seen).toEqual([{ tenantId: a.w.s.tenantId, executionId: a.executionId, occurrenceId: a.w.occurrenceId, round: 1, actorUserId: a.manager.id }]);
-    expect((await auditLogOf(a.executionId)).map((l) => [l.action, l.after])).toEqual([['execution.sent_back', { round: 1, items: items(a), dueAt: DUE }]]);
+    expect((await historyOf(a.w.occurrenceId)).at(-1)).toEqual([
+      'completed',
+      'correction_required',
+      AT,
+      null,
+      a.manager.id,
+    ]);
+    expect(seen).toEqual([
+      {
+        tenantId: a.w.s.tenantId,
+        executionId: a.executionId,
+        occurrenceId: a.w.occurrenceId,
+        round: 1,
+        actorUserId: a.manager.id,
+      },
+    ]);
+    expect((await auditLogOf(a.executionId)).map((l) => [l.action, l.after])).toEqual([
+      ['execution.sent_back', { round: 1, items: items(a), dueAt: DUE }],
+    ]);
   });
 
   it('sends back an audit-pending run and remembers that status', async () => {
@@ -62,13 +116,27 @@ describe('send-back and withdrawal (spec §3.1, §6.2)', () => {
 
   it('refuses a second send-back, corrections while sent back, unknown items and a past due date', async () => {
     const a = await world();
-    const unknown = await sendBack(a.manager.api, a.executionId, { items: [{ itemId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', comment: 'x' }] });
-    expect([unknown.status, unknown.body.error.fields]).toEqual([400, { 'items.0.itemId': 'executions.issues.unknownItem' }]);
-    const past = await sendBack(a.manager.api, a.executionId, { items: items(a), dueAt: '2026-11-02T04:00:00.000Z' });
+    const unknown = await sendBack(a.manager.api, a.executionId, {
+      items: [{ itemId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', comment: 'x' }],
+    });
+    expect([unknown.status, unknown.body.error.fields]).toEqual([
+      400,
+      { 'items.0.itemId': 'executions.issues.unknownItem' },
+    ]);
+    const past = await sendBack(a.manager.api, a.executionId, {
+      items: items(a),
+      dueAt: '2026-11-02T04:00:00.000Z',
+    });
     expect([past.status, past.body.error.fields]).toEqual([400, { dueAt: 'corrections.issues.dueInPast' }]);
     expect((await sendBack(a.manager.api, a.executionId, { items: items(a) })).status).toBe(200);
-    expect((await sendBack(a.manager.api, a.executionId, { items: items(a) })).body.error.code).toBe('EXECUTION_NOT_CORRECTABLE');
-    const c = await correct(a.manager.api, a.executionId, { answersRev: 1, changes: [{ itemId: a.w.c.temp.id, answer: { number: 5 } }], reason: 'x' });
+    expect((await sendBack(a.manager.api, a.executionId, { items: items(a) })).body.error.code).toBe(
+      'EXECUTION_NOT_CORRECTABLE',
+    );
+    const c = await correct(a.manager.api, a.executionId, {
+      answersRev: 1,
+      changes: [{ itemId: a.w.c.temp.id, answer: { number: 5 } }],
+      reason: 'x',
+    });
     expect(c.body.error.code).toBe('EXECUTION_NOT_CORRECTABLE');
     expect(await reworkRows(a.executionId)).toHaveLength(1);
   });
@@ -79,26 +147,54 @@ describe('send-back and withdrawal (spec §3.1, §6.2)', () => {
     clock.set('2026-11-02T05:30:00Z');
     const res = await withdraw(a.manager.api, a.executionId);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body).toMatchObject({ round: 1, withdrawnAt: '2026-11-02T05:30:00.000Z', withdrawnBy: { id: a.manager.id, fullName: 'Menecer' }, resubmittedAt: null });
+    expect(res.body).toMatchObject({
+      round: 1,
+      withdrawnAt: '2026-11-02T05:30:00.000Z',
+      withdrawnBy: { id: a.manager.id, fullName: 'Menecer' },
+      resubmittedAt: null,
+    });
     expect((await executionRow(a.executionId)).state).toBe('completed');
     expect(await statusOf(a.w.occurrenceId)).toBe('completed');
-    expect((await historyOf(a.w.occurrenceId)).at(-1)).toEqual(['correction_required', 'completed', '2026-11-02T05:30:00.000Z', null, a.manager.id]);
-    expect((await auditLogOf(a.executionId)).map((l) => l.action)).toEqual(['execution.sent_back', 'execution.send_back_withdrawn']);
+    expect((await historyOf(a.w.occurrenceId)).at(-1)).toEqual([
+      'correction_required',
+      'completed',
+      '2026-11-02T05:30:00.000Z',
+      null,
+      a.manager.id,
+    ]);
+    expect((await auditLogOf(a.executionId)).map((l) => l.action)).toEqual([
+      'execution.sent_back',
+      'execution.send_back_withdrawn',
+    ]);
     // The run can be corrected directly again (the withdrawal bumped answers_rev to 2, ruling R7).
-    expect((await correct(a.manager.api, a.executionId, { answersRev: 2, changes: [{ itemId: a.w.c.temp.id, answer: { number: 5 } }], reason: 'x' })).status).toBe(200);
+    expect(
+      (
+        await correct(a.manager.api, a.executionId, {
+          answersRev: 2,
+          changes: [{ itemId: a.w.c.temp.id, answer: { number: 5 } }],
+          reason: 'x',
+        })
+      ).status,
+    ).toBe(200);
   });
 
-  it('R7: withdrawing restores answers_before over the worker\'s rework answers, bumps answers_rev, recalculates and writes no corrections', async () => {
+  it("R7: withdrawing restores answers_before over the worker's rework answers, bumps answers_rev, recalculates and writes no corrections", async () => {
     const a = await world();
     await sendBack(a.manager.api, a.executionId, { items: items(a) });
     // The worker saved rework answers in between (the rework save path is Task 11): temp back in range, its problem cleared.
     const rework = { ...a.answers, [a.w.c.temp.id]: { number: 5 } };
-    await ownerQuery("update executions set answers = $2, answers_rev = 2, score = $3, progress = progress where id = $1", [
-      a.executionId,
-      JSON.stringify(rework),
-      JSON.stringify({ earned: 2, possible: 2, percent: 100, problems: [] }),
-    ]);
-    await ownerQuery('update execution_problems set cleared_at = now() where execution_id = $1 and item_id = $2', [a.executionId, a.w.c.temp.id]);
+    await ownerQuery(
+      'update executions set answers = $2, answers_rev = 2, score = $3, progress = progress where id = $1',
+      [
+        a.executionId,
+        JSON.stringify(rework),
+        JSON.stringify({ earned: 2, possible: 2, percent: 100, problems: [] }),
+      ],
+    );
+    await ownerQuery(
+      'update execution_problems set cleared_at = now() where execution_id = $1 and item_id = $2',
+      [a.executionId, a.w.c.temp.id],
+    );
     const before = (await executionRow(a.executionId)).score!.percent;
     expect(before).toBe(100);
     clock.set('2026-11-02T05:30:00Z');
@@ -113,7 +209,10 @@ describe('send-back and withdrawal (spec §3.1, §6.2)', () => {
     const log = (await auditLogOf(a.executionId)).at(-1)!;
     expect(log.action).toBe('execution.send_back_withdrawn');
     expect(log.before).toMatchObject({ round: 1, answers: { [a.w.c.temp.id]: { number: 5 } } });
-    expect(log.after).toMatchObject({ status: 'completed', answers: { [a.w.c.temp.id]: { number: 10, note: 'isti' } } });
+    expect(log.after).toMatchObject({
+      status: 'completed',
+      answers: { [a.w.c.temp.id]: { number: 10, note: 'isti' } },
+    });
   });
 
   it('R7: withdrawing with no rework answers saved still bumps answers_rev and keeps the answers', async () => {

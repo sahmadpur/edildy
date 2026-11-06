@@ -47,7 +47,10 @@ describe('authentication guard and /me', () => {
       "delete from role_permissions where permission_key = 'users.view' and role_id = (select id from roles where tenant_id = $1 and system_key = 'manager')",
       [s.tenantId],
     );
-    await ownerQuery("update roles set version = version + 1 where tenant_id = $1 and system_key = 'manager'", [s.tenantId]);
+    await ownerQuery(
+      "update roles set version = version + 1 where tenant_id = $1 and system_key = 'manager'",
+      [s.tenantId],
+    );
     const me = await t.http().get('/api/v1/me').set(bearer(login.accessToken));
     expect(me.body.permissions).not.toContain('users.view');
   });
@@ -64,16 +67,25 @@ describe('logout and resend verification', () => {
     const s = await signupTenant(t);
     const login = await loginStaff(t, s.email, s.password);
     expect((await t.http().post('/api/v1/auth/logout').set(bearer(login.accessToken))).status).toBe(204);
-    expect((await t.http().post('/api/v1/auth/refresh').send({ refreshToken: login.refreshToken })).status).toBe(401);
+    expect(
+      (await t.http().post('/api/v1/auth/refresh').send({ refreshToken: login.refreshToken })).status,
+    ).toBe(401);
   });
 
   it('resends the verification email once per call (rate limited) and is a no-op when verified', async () => {
     const s = await signupTenant(t);
     const before = t.mailer.sent.length;
-    expect((await t.http().post('/api/v1/auth/verify-email/resend').set(bearer(s.accessToken))).status).toBe(204);
+    expect((await t.http().post('/api/v1/auth/verify-email/resend').set(bearer(s.accessToken))).status).toBe(
+      204,
+    );
     expect(t.mailer.sent.length).toBe(before + 1);
-    await t.http().post('/api/v1/auth/verify-email').send({ token: t.mailer.tokenFor(s.email) });
-    expect((await t.http().post('/api/v1/auth/verify-email/resend').set(bearer(s.accessToken))).status).toBe(204);
+    await t
+      .http()
+      .post('/api/v1/auth/verify-email')
+      .send({ token: t.mailer.tokenFor(s.email) });
+    expect((await t.http().post('/api/v1/auth/verify-email/resend').set(bearer(s.accessToken))).status).toBe(
+      204,
+    );
     expect(t.mailer.sent.length).toBe(before + 1);
   });
 });

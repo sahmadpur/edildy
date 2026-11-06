@@ -41,12 +41,15 @@ describe('templates', () => {
     const s = await signupTenant(t);
     const api = as(t, s.accessToken);
     const tpl = (await api.get(`${T}/global/${globalId}`)).body;
-    const created = (await api.post(C, { name: 'Mətbəx', from: { kind: 'global', templateId: globalId } })).body;
+    const created = (await api.post(C, { name: 'Mətbəx', from: { kind: 'global', templateId: globalId } }))
+      .body;
     expect(created.source).toEqual({ kind: 'global', id: globalId });
     const draft = (await api.get(`${C}/${created.id}/draft`)).body.content;
     expect(draft.sections[0].items[0].id).not.toBe(tpl.content.sections[0].items[0].id);
     expect((await api.post(`${C}/${created.id}/publish`, { revision: 1 })).status).toBe(200);
-    expect((await api.post(C, { name: 'X', from: { kind: 'global', templateId: hiddenId } })).status).toBe(422);
+    expect((await api.post(C, { name: 'X', from: { kind: 'global', templateId: hiddenId } })).status).toBe(
+      422,
+    );
   });
 
   it('saves a published version as a tenant template and uses it', async () => {
@@ -55,10 +58,14 @@ describe('templates', () => {
     const c = (await api.post(C, { name: 'X' })).body;
     await api.put(`${C}/${c.id}/draft`, { content: sampleContent(), revision: 1 });
     const v1 = (await api.post(`${C}/${c.id}/publish`, { revision: 2 })).body;
-    const tpl = await api.post(`${C}/${c.id}/versions/${v1.id}/save-as-template`, { name: 'Bizim', category: 'safety' });
+    const tpl = await api.post(`${C}/${c.id}/versions/${v1.id}/save-as-template`, {
+      name: 'Bizim',
+      category: 'safety',
+    });
     expect(tpl.status, JSON.stringify(tpl.body)).toBe(201);
     expect(tpl.body).toMatchObject({ source: 'tenant', category: 'safety', itemCount: 2 });
-    const fromTpl = (await api.post(C, { name: 'Y', from: { kind: 'tenant', templateId: tpl.body.id } })).body;
+    const fromTpl = (await api.post(C, { name: 'Y', from: { kind: 'tenant', templateId: tpl.body.id } }))
+      .body;
     expect(fromTpl.source).toEqual({ kind: 'tenant', id: tpl.body.id });
     expect((await api.get(`${C}/${fromTpl.id}/draft`)).body.content.sections[0].items).toHaveLength(1);
   });
@@ -67,20 +74,38 @@ describe('templates', () => {
     const s = await signupTenant(t);
     const api = as(t, s.accessToken);
     const tpl = (await api.post(T, { name: 'A', category: 'other' })).body;
-    expect((await api.put(`${T}/${tpl.id}/content`, { content: sampleContent(), revision: 1 })).body).toEqual({ revision: 2, issues: [] });
-    expect((await api.put(`${T}/${tpl.id}/content`, { content: blankContent(), revision: 1 })).body.error).toMatchObject({ code: 'TEMPLATE_CONFLICT', currentRevision: 2 });
+    expect((await api.put(`${T}/${tpl.id}/content`, { content: sampleContent(), revision: 1 })).body).toEqual(
+      { revision: 2, issues: [] },
+    );
+    expect(
+      (await api.put(`${T}/${tpl.id}/content`, { content: blankContent(), revision: 1 })).body.error,
+    ).toMatchObject({ code: 'TEMPLATE_CONFLICT', currentRevision: 2 });
     expect((await api.get(`${T}/tenant/${tpl.id}`)).body.itemCount).toBe(2);
     expect((await api.post(`${T}/${tpl.id}/deactivate`)).body.status).toBe('deactivated');
-    expect((await api.post(C, { name: 'Z', from: { kind: 'tenant', templateId: tpl.id } })).body.error.code).toBe('TEMPLATE_DEACTIVATED');
+    expect(
+      (await api.post(C, { name: 'Z', from: { kind: 'tenant', templateId: tpl.id } })).body.error.code,
+    ).toBe('TEMPLATE_DEACTIVATED');
     expect((await api.patch(`${T}/${tpl.id}`, { name: 'B' })).body.error.code).toBe('TEMPLATE_DEACTIVATED');
     expect((await api.post(`${T}/${tpl.id}/reactivate`)).body.status).toBe('active');
-    const audit = await ownerQuery<{ action: string }>('select action from audit_log where entity_id = $1 order by occurred_at, id', [tpl.id]);
-    expect(audit.rows.map((r) => r.action)).toEqual(['template.created', 'template.updated', 'template.deactivated', 'template.reactivated']);
+    const audit = await ownerQuery<{ action: string }>(
+      'select action from audit_log where entity_id = $1 order by occurred_at, id',
+      [tpl.id],
+    );
+    expect(audit.rows.map((r) => r.action)).toEqual([
+      'template.created',
+      'template.updated',
+      'template.deactivated',
+      'template.reactivated',
+    ]);
   });
 
   it('requires templates.manage to change templates; manage is enough to browse', async () => {
     const s = await signupTenant(t);
-    const mgr = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'manager', emailVerified: true });
+    const mgr = await createUserDirect(t, s.tenantId, {
+      kind: 'staff',
+      roleKey: 'manager',
+      emailVerified: true,
+    });
     const api = as(t, (await loginStaff(t, mgr.email!, mgr.secret)).accessToken);
     expect((await api.get(T)).status).toBe(200);
     expect((await api.post(T, { name: 'A', category: 'other' })).status).toBe(403);

@@ -3,7 +3,16 @@ import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
 import { ownerQuery } from './owner-db';
 import { MONDAY_0800 } from './scheduling-fixtures';
-import { act, auditActions, captureTaskEvents, createTask, newTaskBody, taskHistory, taskRow, taskWorld } from './task-fixtures';
+import {
+  act,
+  auditActions,
+  captureTaskEvents,
+  createTask,
+  newTaskBody,
+  taskHistory,
+  taskRow,
+  taskWorld,
+} from './task-fixtures';
 
 const T = (hhmm: string) => `2026-11-02T${hhmm}:00.000Z`;
 
@@ -23,7 +32,13 @@ describe('accepting and starting tasks', () => {
     const events = captureTaskEvents(t);
     const res = await act(w.workers[0].api, task.id, 'accept', T('04:10'));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body).toMatchObject({ status: 'accepted', acceptedAt: T('04:10'), startedAt: null, rev: 2, assignee: { id: w.workers[0].id } });
+    expect(res.body).toMatchObject({
+      status: 'accepted',
+      acceptedAt: T('04:10'),
+      startedAt: null,
+      rev: 2,
+      assignee: { id: w.workers[0].id },
+    });
     const again = await act(w.workers[0].api, task.id, 'accept', T('04:11'));
     expect([again.status, again.body.acceptedAt, again.body.rev]).toEqual([200, T('04:10'), 2]);
     events.stop();
@@ -32,7 +47,7 @@ describe('accepting and starting tasks', () => {
       [null, 'new', w.manager.id, null],
       ['new', 'accepted', w.workers[0].id, null],
     ]);
-    expect(await auditActions(task.id)).toEqual(['task.created']);
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted']);
   });
 
   it('start on a new task accepts and starts it in one step; repeating start or accept afterwards is a no-op', async () => {
@@ -41,14 +56,28 @@ describe('accepting and starting tasks', () => {
     clock.set(T('04:20'));
     const res = await act(w.workers[0].api, task.id, 'start', T('04:12'));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body).toMatchObject({ status: 'in_progress', acceptedAt: T('04:12'), startedAt: T('04:12'), rev: 3 });
+    expect(res.body).toMatchObject({
+      status: 'in_progress',
+      acceptedAt: T('04:12'),
+      startedAt: T('04:12'),
+      rev: 3,
+    });
     expect(await taskHistory(task.id)).toEqual([
       [null, 'new', w.manager.id, null],
       ['new', 'accepted', w.workers[0].id, null],
       ['accepted', 'in_progress', w.workers[0].id, null],
     ]);
-    expect((await act(w.workers[0].api, task.id, 'accept', T('04:13'))).body).toMatchObject({ status: 'in_progress', rev: 3 });
-    expect((await act(w.workers[0].api, task.id, 'start', T('04:14'))).body).toMatchObject({ status: 'in_progress', startedAt: T('04:12'), rev: 3 });
+    expect((await act(w.workers[0].api, task.id, 'accept', T('04:13'))).body).toMatchObject({
+      status: 'in_progress',
+      rev: 3,
+    });
+    expect((await act(w.workers[0].api, task.id, 'start', T('04:14'))).body).toMatchObject({
+      status: 'in_progress',
+      startedAt: T('04:12'),
+      rev: 3,
+    });
+    // Two usage-log rows, like the two history rows; the replays add none.
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted', 'task.started']);
   });
 
   // Clients send device time − their last measured clock offset (Interfaces → Server behaviour), so `at` is already on
@@ -60,7 +89,10 @@ describe('accepting and starting tasks', () => {
     expect((await act(w.workers[0].api, task.id, 'accept', T('03:00'))).body.acceptedAt).toBe(T('04:00'));
     const ahead = await act(w.workers[0].api, task.id, 'start', '2026-11-02T04:22:00.001Z');
     expect([ahead.status, ahead.body.error.code]).toEqual([422, 'CLOCK_INVALID']);
-    expect((await act(w.workers[0].api, task.id, 'start', T('04:22'))).body).toMatchObject({ status: 'in_progress', startedAt: T('04:22') });
+    expect((await act(w.workers[0].api, task.id, 'start', T('04:22'))).body).toMatchObject({
+      status: 'in_progress',
+      startedAt: T('04:22'),
+    });
   });
 
   it('gives a team task to the first accept; a teammate’s later accept or start gets TASK_ALREADY_TAKEN', async () => {
@@ -85,7 +117,10 @@ describe('accepting and starting tasks', () => {
     const w = await taskWorld(t);
     const task = await createTask(w.manager.api, newTaskBody({ teamId: w.teamId }));
     clock.set(T('04:20'));
-    const [a, b] = await Promise.all([act(w.workers[0].api, task.id, 'accept', T('04:19')), act(w.workers[1].api, task.id, 'accept', T('04:19'))]);
+    const [a, b] = await Promise.all([
+      act(w.workers[0].api, task.id, 'accept', T('04:19')),
+      act(w.workers[1].api, task.id, 'accept', T('04:19')),
+    ]);
     expect([a.status, b.status].sort()).toEqual([200, 409]);
     const winner = a.status === 200 ? w.workers[0].id : w.workers[1].id;
     expect((await taskRow(task.id)).assignee_user_id).toBe(winner);
@@ -99,7 +134,12 @@ describe('accepting and starting tasks', () => {
     clock.set(T('04:20'));
     await act(w.workers[0].api, direct.id, 'accept', T('04:10'));
     await ownerQuery("update tasks set status = 'cancelled' where id = any($1)", [[direct.id, team.id]]);
-    for (const [id, action] of [[direct.id, 'accept'], [direct.id, 'start'], [team.id, 'accept'], [team.id, 'start']] as const) {
+    for (const [id, action] of [
+      [direct.id, 'accept'],
+      [direct.id, 'start'],
+      [team.id, 'accept'],
+      [team.id, 'start'],
+    ] as const) {
       const res = await act(w.workers[0].api, id, action, T('04:15'));
       expect([res.status, res.body.error.code], action).toEqual([409, 'TASK_STATE_INVALID']);
     }

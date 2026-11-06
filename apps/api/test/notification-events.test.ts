@@ -34,13 +34,25 @@ describe('notification outbox', () => {
     const task = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }));
     const [assigned] = await eventRows(w.s.tenantId);
     expect(assigned).toMatchObject({
-      type: 'task.assigned', payload: { taskId: task.id }, actor_user_id: w.manager.id, dedupe_key: null,
-      processed_at: null, outcome: null, attempts: 0, created_at: new Date(MONDAY_0800),
+      type: 'task.assigned',
+      payload: { taskId: task.id },
+      actor_user_id: w.manager.id,
+      dedupe_key: null,
+      processed_at: null,
+      outcome: null,
+      attempts: 0,
+      created_at: new Date(MONDAY_0800),
     });
-    expect(send).toHaveBeenCalledWith('notifications.fanout', { tenantId: w.s.tenantId, eventId: assigned!.id });
+    expect(send).toHaveBeenCalledWith('notifications.fanout', {
+      tenantId: w.s.tenantId,
+      eventId: assigned!.id,
+    });
     clock.set(T('04:20'));
     await act(w.workers[0].api, task.id, 'start', T('04:10'));
-    const done = await w.workers[0].api.post(`/api/v1/tasks/${task.id}/submissions`, { id: uuidv7(), submittedAt: T('04:15') });
+    const done = await w.workers[0].api.post(`/api/v1/tasks/${task.id}/submissions`, {
+      id: uuidv7(),
+      submittedAt: T('04:15'),
+    });
     expect(done.body.status).toBe('completed');
     // No review: task.submitted is not notified (Spec decision 23); task.accepted never is.
     expect((await eventRows(w.s.tenantId)).map((r) => [r.type, r.actor_user_id])).toEqual([
@@ -51,24 +63,52 @@ describe('notification outbox', () => {
 
   it('records task.submitted when the task waits for review, then rejection and cancellation', async () => {
     const w = await taskWorld(t);
-    const task = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }, { requiresReview: true }));
+    const task = await createTask(
+      w.manager.api,
+      newTaskBody({ userId: w.workers[0].id }, { requiresReview: true }),
+    );
     clock.set(T('04:20'));
     await act(w.workers[0].api, task.id, 'start', T('04:10'));
-    expect((await w.workers[0].api.post(`/api/v1/tasks/${task.id}/submissions`, { id: uuidv7(), submittedAt: T('04:15') })).body.status).toBe('awaiting_review');
-    expect((await w.manager.api.post(`/api/v1/tasks/${task.id}/review`, { decision: 'reject', comment: 'Foto yoxdur' })).status).toBe(200);
-    expect((await w.manager.api.post(`/api/v1/tasks/${task.id}/cancel`, { reason: 'Lazım deyil' })).status).toBe(200);
-    expect((await eventRows(w.s.tenantId)).map((r) => r.type)).toEqual(['task.assigned', 'task.submitted', 'task.rejected', 'task.cancelled']);
+    expect(
+      (
+        await w.workers[0].api.post(`/api/v1/tasks/${task.id}/submissions`, {
+          id: uuidv7(),
+          submittedAt: T('04:15'),
+        })
+      ).body.status,
+    ).toBe('awaiting_review');
+    expect(
+      (
+        await w.manager.api.post(`/api/v1/tasks/${task.id}/review`, {
+          decision: 'reject',
+          comment: 'Foto yoxdur',
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (await w.manager.api.post(`/api/v1/tasks/${task.id}/cancel`, { reason: 'Lazım deyil' })).status,
+    ).toBe(200);
+    expect((await eventRows(w.s.tenantId)).map((r) => r.type)).toEqual([
+      'task.assigned',
+      'task.submitted',
+      'task.rejected',
+      'task.cancelled',
+    ]);
   });
 
   it('keeps the business change when recording fails', async () => {
     const w = await taskWorld(t);
     const constraint = `test_fail_${w.s.tenantId.replace(/-/g, '')}`;
     // Fails every insert for this tenant only; NOT VALID leaves existing rows alone. Other test files keep working.
-    await ownerQuery(`alter table notification_events add constraint ${constraint} check (tenant_id <> '${w.s.tenantId}') not valid`);
+    await ownerQuery(
+      `alter table notification_events add constraint ${constraint} check (tenant_id <> '${w.s.tenantId}') not valid`,
+    );
     try {
       const task = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }));
       expect((await ownerQuery('select 1 from tasks where id = $1', [task.id])).rowCount).toBe(1);
-      expect((await ownerQuery('select 1 from task_status_history where task_id = $1', [task.id])).rowCount).toBe(1);
+      expect(
+        (await ownerQuery('select 1 from task_status_history where task_id = $1', [task.id])).rowCount,
+      ).toBe(1);
     } finally {
       await ownerQuery(`alter table notification_events drop constraint ${constraint}`);
     }
@@ -97,9 +137,19 @@ describe('notification outbox', () => {
     const events = t.app.get(NotificationEvents);
     const occurrenceId = uuidv7();
     const key = `checklist.overdue:${occurrenceId}`;
-    const first = await db.withTenant(w.s.tenantId, null, () => events.create('checklist.overdue', { occurrenceId }, null, key));
-    expect(await db.withTenant(w.s.tenantId, null, () => events.record('checklist.overdue', { occurrenceId }, null, key))).toBe(false);
-    expect(await db.withTenant(w.s.tenantId, null, () => events.create('checklist.overdue', { occurrenceId }, null, key))).toBeNull();
+    const first = await db.withTenant(w.s.tenantId, null, () =>
+      events.create('checklist.overdue', { occurrenceId }, null, key),
+    );
+    expect(
+      await db.withTenant(w.s.tenantId, null, () =>
+        events.record('checklist.overdue', { occurrenceId }, null, key),
+      ),
+    ).toBe(false);
+    expect(
+      await db.withTenant(w.s.tenantId, null, () =>
+        events.create('checklist.overdue', { occurrenceId }, null, key),
+      ),
+    ).toBeNull();
     expect((await eventRows(w.s.tenantId, 'checklist.overdue')).map((r) => r.id)).toEqual([first]);
   });
 
@@ -112,7 +162,11 @@ describe('notification outbox', () => {
     await jobs.sweepAll([w.s.tenantId]);
     await jobs.sweepAll([w.s.tenantId]);
     const rows = await eventRows(w.s.tenantId);
-    expect(rows.filter((r) => r.type.startsWith('checklist.') && r.type !== 'checklist.assigned').map((r) => [r.type, r.dedupe_key, r.actor_user_id, r.payload])).toEqual([
+    expect(
+      rows
+        .filter((r) => r.type.startsWith('checklist.') && r.type !== 'checklist.assigned')
+        .map((r) => [r.type, r.dedupe_key, r.actor_user_id, r.payload]),
+    ).toEqual([
       ['checklist.overdue', `checklist.overdue:${today.id}`, null, { occurrenceId: today.id }],
       ['checklist.missed', `checklist.missed:${today.id}`, null, { occurrenceId: today.id }],
     ]);
@@ -122,15 +176,29 @@ describe('notification outbox', () => {
     const w = await schedulingWorld(t);
     const a = await createAssignment(w);
     const [assigned] = await eventRows(w.s.tenantId, 'checklist.assigned');
-    expect(assigned).toMatchObject({ actor_user_id: w.s.ownerId, dedupe_key: null, payload: { assignmentId: a.id } });
+    expect(assigned).toMatchObject({
+      actor_user_id: w.s.ownerId,
+      dedupe_key: null,
+      payload: { assignmentId: a.id },
+    });
     expect([...(assigned!.payload.addedUserIds as string[])].sort()).toEqual([...w.workers].sort());
 
     const run = await closedRunWithProblems(t, clock);
     const problems = (await eventRows(run.w.s.tenantId)).filter((r) => r.type.startsWith('problem.'));
     expect(problems.map((r) => [r.type, r.dedupe_key, r.actor_user_id, r.payload]).sort()).toEqual(
       [
-        ['problem.critical', `problem:${run.manualProblemId}`, run.w.workers[0].id, { problemId: run.manualProblemId, occurrenceId: run.w.occurrenceId }],
-        ['problem.recorded', `problem:${run.ruleProblemId}`, run.w.workers[0].id, { problemId: run.ruleProblemId, occurrenceId: run.w.occurrenceId }],
+        [
+          'problem.critical',
+          `problem:${run.manualProblemId}`,
+          run.w.workers[0].id,
+          { problemId: run.manualProblemId, occurrenceId: run.w.occurrenceId },
+        ],
+        [
+          'problem.recorded',
+          `problem:${run.ruleProblemId}`,
+          run.w.workers[0].id,
+          { problemId: run.ruleProblemId, occurrenceId: run.w.occurrenceId },
+        ],
       ].sort(),
     );
   });
@@ -150,7 +218,10 @@ describe('notification outbox', () => {
     const rows = await eventRows(w.s.tenantId, 'task.overdue');
     expect(rows).toHaveLength(1);
     expect(send).toHaveBeenCalledTimes(1);
-    expect(send).toHaveBeenCalledWith('notifications.fanout', { tenantId: w.s.tenantId, eventId: rows[0]!.id });
+    expect(send).toHaveBeenCalledWith('notifications.fanout', {
+      tenantId: w.s.tenantId,
+      eventId: rows[0]!.id,
+    });
   });
 
   it('record returns false when the insert fails, and the surrounding transaction still commits', async () => {
@@ -158,9 +229,13 @@ describe('notification outbox', () => {
     const db = t.app.get(DbService);
     const events = t.app.get(NotificationEvents);
     const constraint = `test_fail_${w.s.tenantId.replace(/-/g, '')}`;
-    await ownerQuery(`alter table notification_events add constraint ${constraint} check (tenant_id <> '${w.s.tenantId}') not valid`);
+    await ownerQuery(
+      `alter table notification_events add constraint ${constraint} check (tenant_id <> '${w.s.tenantId}') not valid`,
+    );
     try {
-      const recorded = await db.withTenant(w.s.tenantId, null, () => events.record('task.overdue', { taskId: uuidv7() }, null));
+      const recorded = await db.withTenant(w.s.tenantId, null, () =>
+        events.record('task.overdue', { taskId: uuidv7() }, null),
+      );
       expect(recorded).toBe(false);
     } finally {
       await ownerQuery(`alter table notification_events drop constraint ${constraint}`);
@@ -169,11 +244,15 @@ describe('notification outbox', () => {
 
   it('keeps the business change when queueing the fan-out job fails', async () => {
     const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    const send = vi.spyOn(t.app.get(JobsService), 'send').mockRejectedValue(new Error('jobs failed to start'));
+    const send = vi
+      .spyOn(t.app.get(JobsService), 'send')
+      .mockRejectedValue(new Error('jobs failed to start'));
     const w = await taskWorld(t);
     const task = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }));
     await vi.waitFor(() => expect(send).toHaveBeenCalled());
-    await vi.waitFor(() => expect(error.mock.calls.some((c) => String(c[1]).includes('Queueing fan-out'))).toBe(true));
+    await vi.waitFor(() =>
+      expect(error.mock.calls.some((c) => String(c[1]).includes('Queueing fan-out'))).toBe(true),
+    );
     expect((await ownerQuery('select 1 from tasks where id = $1', [task.id])).rowCount).toBe(1);
     expect((await eventRows(w.s.tenantId)).map((r) => r.type)).toEqual(['task.assigned']);
   });
@@ -185,12 +264,17 @@ describe('notification outbox', () => {
     const task = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }));
     expect((await ownerQuery('select 1 from tasks where id = $1', [task.id])).rowCount).toBe(1);
     expect(await eventRows(w.s.tenantId)).toEqual([]);
-    expect(error.mock.calls.some((c) => String(c[1]).includes('Notification listener for task.assigned failed'))).toBe(true);
+    expect(
+      error.mock.calls.some((c) => String(c[1]).includes('Notification listener for task.assigned failed')),
+    ).toBe(true);
   });
 
   it('keeps the submission when the listener’s status read fails', async () => {
     const w = await taskWorld(t);
-    const task = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }, { requiresReview: true }));
+    const task = await createTask(
+      w.manager.api,
+      newTaskBody({ userId: w.workers[0].id }, { requiresReview: true }),
+    );
     clock.set(T('04:20'));
     await act(w.workers[0].api, task.id, 'start', T('04:10'));
     const error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
@@ -206,16 +290,35 @@ describe('notification outbox', () => {
             return typeof v === 'function' ? v.bind(target) : v;
           }
           return (fn: (sp: unknown) => Promise<unknown>) =>
-            target.transaction((sp) => fn(new Proxy(sp, { get: (o, k) => (k === 'select' ? () => { throw new Error('status read failed'); } : Reflect.get(o, k, o)) })));
+            target.transaction((sp) =>
+              fn(
+                new Proxy(sp, {
+                  get: (o, k) =>
+                    k === 'select'
+                      ? () => {
+                          throw new Error('status read failed');
+                        }
+                      : Reflect.get(o, k, o),
+                }),
+              ),
+            );
         },
       });
     });
-    const res = await w.workers[0].api.post(`/api/v1/tasks/${task.id}/submissions`, { id: uuidv7(), submittedAt: T('04:15') });
+    const res = await w.workers[0].api.post(`/api/v1/tasks/${task.id}/submissions`, {
+      id: uuidv7(),
+      submittedAt: T('04:15'),
+    });
     vi.restoreAllMocks();
     expect(res.body.status).toBe('awaiting_review');
-    expect((await ownerQuery<{ status: string }>('select status from tasks where id = $1', [task.id])).rows[0]!.status).toBe('awaiting_review');
+    expect(
+      (await ownerQuery<{ status: string }>('select status from tasks where id = $1', [task.id])).rows[0]!
+        .status,
+    ).toBe('awaiting_review');
     expect((await eventRows(w.s.tenantId)).map((r) => r.type)).toEqual(['task.assigned']);
-    expect(error.mock.calls.some((c) => String(c[1]).includes('Notification listener for task.submitted failed'))).toBe(true);
+    expect(
+      error.mock.calls.some((c) => String(c[1]).includes('Notification listener for task.submitted failed')),
+    ).toBe(true);
   });
 });
 
@@ -228,25 +331,38 @@ describe('failureText', () => {
   }
 
   it('reports a Postgres error by SQLSTATE and constraint, never its message', () => {
-    expect(failureText(pgError({ code: '23505', constraint: 'notification_events_dedupe_uq' }))).toBe('Database error 23505 (notification_events_dedupe_uq)');
+    expect(failureText(pgError({ code: '23505', constraint: 'notification_events_dedupe_uq' }))).toBe(
+      'Database error 23505 (notification_events_dedupe_uq)',
+    );
     expect(failureText(pgError({ code: '57014' }))).toBe('Database error 57014');
   });
 
   it('finds the Postgres error behind a Drizzle wrapper, which carries the SQL', () => {
-    const wrapped = new Error(`Failed query: ${sqlText}\nparams: secret-token`, { cause: pgError({ code: '40001' }) });
+    const wrapped = new Error(`Failed query: ${sqlText}\nparams: secret-token`, {
+      cause: pgError({ code: '40001' }),
+    });
     expect(failureText(wrapped)).toBe('Database error 40001');
     expect(failureText(new Error(`Failed query: ${sqlText}`))).toBe('Database error');
   });
 
   it('recognises a pg-shaped object that is not a DatabaseError instance', () => {
-    expect(failureText({ code: '23503', severity: 'ERROR', routine: 'ri_ReportViolation', constraint: 'fk' })).toBe('Database error 23503 (fk)');
+    expect(
+      failureText({ code: '23503', severity: 'ERROR', routine: 'ri_ReportViolation', constraint: 'fk' }),
+    ).toBe('Database error 23503 (fk)');
   });
 
   it('keeps the message of Node, system and SMTP errors even when their code has five characters', () => {
-    for (const [code, message] of [['EAUTH', 'Invalid login: 535 authentication failed'], ['EPIPE', 'write EPIPE'], ['ECONNRESET', 'read ECONNRESET'], ['ETIMEDOUT', 'connect ETIMEDOUT 10.0.0.1:587']] as const) {
+    for (const [code, message] of [
+      ['EAUTH', 'Invalid login: 535 authentication failed'],
+      ['EPIPE', 'write EPIPE'],
+      ['ECONNRESET', 'read ECONNRESET'],
+      ['ETIMEDOUT', 'connect ETIMEDOUT 10.0.0.1:587'],
+    ] as const) {
       expect(failureText(Object.assign(new Error(message), { code }))).toBe(message);
     }
-    expect(failureText(Object.assign(new Error('Greeting never received'), { code: 'ETIMEDOUT' }))).toBe('Greeting never received');
+    expect(failureText(Object.assign(new Error('Greeting never received'), { code: 'ETIMEDOUT' }))).toBe(
+      'Greeting never received',
+    );
   });
 
   it('truncates long messages to 500 characters and accepts non-errors', () => {

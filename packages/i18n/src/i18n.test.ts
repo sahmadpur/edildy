@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ALL_PERMISSIONS,
   AUDIT_FLOW_AUDIT_ACTIONS,
+  EXECUTION_AUDIT_ACTIONS,
   AUDIT_ISSUE_CODES,
   AUDIT_QUEUES,
   AUDIT_REPORT_STATUSES,
@@ -851,6 +852,10 @@ describe('audit and correction translations', () => {
     expect(az.audit.entityTypes.audit).toBe('Audit');
     expect(az.audit.entityTypes.execution).toBe('İcra');
     for (const a of AUDIT_FLOW_AUDIT_ACTIONS) expect(az.audit.actions[a], a).toBeTypeOf('string');
+    for (const a of [...EXECUTION_AUDIT_ACTIONS, 'task.accepted', 'task.started', 'task.submitted'] as const)
+      expect(az.audit.actions[a], a).toBeTypeOf('string');
+    expect(az.audit.clients).toEqual({ web: 'Veb', mobile: 'Mobil' });
+    expect(az.audit.filters.client).toBe('Mənbə');
   });
 
   it('has the notification labels, filters and templates of the three audit types', () => {

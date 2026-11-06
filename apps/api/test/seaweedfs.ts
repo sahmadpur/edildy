@@ -1,17 +1,30 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { type CORSConfiguration, CreateBucketCommand, PutBucketCorsCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  type CORSConfiguration,
+  CreateBucketCommand,
+  PutBucketCorsCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { GenericContainer, Wait } from 'testcontainers';
 
 const ACCESS_KEY = 'taskop-test';
 const SECRET_KEY = 'taskop-test-secret';
 const BUCKET = 'taskop-media';
 const S3_JSON = JSON.stringify({
-  identities: [{ name: 'taskop', credentials: [{ accessKey: ACCESS_KEY, secretKey: SECRET_KEY }], actions: ['Admin', 'Read', 'Write', 'List', 'Tagging'] }],
+  identities: [
+    {
+      name: 'taskop',
+      credentials: [{ accessKey: ACCESS_KEY, secretKey: SECRET_KEY }],
+      actions: ['Admin', 'Read', 'Write', 'List', 'Tagging'],
+    },
+  ],
 });
 
 /** The bucket CORS rule of local dev (docker-compose's seaweedfs-init applies the same file). */
-const CORS = JSON.parse(readFileSync(path.resolve(__dirname, '../../../docker/seaweedfs/cors.json'), 'utf8')) as CORSConfiguration;
+const CORS = JSON.parse(
+  readFileSync(path.resolve(__dirname, '../../../docker/seaweedfs/cors.json'), 'utf8'),
+) as CORSConfiguration;
 
 export interface Seaweed {
   /** The S3_* overrides for createTestApp / testEnv. */
@@ -29,7 +42,12 @@ export async function startSeaweedfs(): Promise<Seaweed> {
     .withStartupTimeout(120_000)
     .start();
   const endpoint = `http://${container.getHost()}:${container.getMappedPort(8333)}`;
-  const s3 = new S3Client({ endpoint, region: 'us-east-1', forcePathStyle: true, credentials: { accessKeyId: ACCESS_KEY, secretAccessKey: SECRET_KEY } });
+  const s3 = new S3Client({
+    endpoint,
+    region: 'us-east-1',
+    forcePathStyle: true,
+    credentials: { accessKeyId: ACCESS_KEY, secretAccessKey: SECRET_KEY },
+  });
   // The S3 port opens before the master and volume server are ready: retry until the bucket exists.
   const deadline = Date.now() + 60_000;
   for (;;) {
@@ -46,7 +64,14 @@ export async function startSeaweedfs(): Promise<Seaweed> {
   await s3.send(new PutBucketCorsCommand({ Bucket: BUCKET, CORSConfiguration: CORS }));
   s3.destroy();
   return {
-    env: { S3_ENDPOINT: endpoint, S3_PUBLIC_ENDPOINT: endpoint, S3_BUCKET: BUCKET, S3_ACCESS_KEY: ACCESS_KEY, S3_SECRET_KEY: SECRET_KEY, S3_FORCE_PATH_STYLE: 'true' },
+    env: {
+      S3_ENDPOINT: endpoint,
+      S3_PUBLIC_ENDPOINT: endpoint,
+      S3_BUCKET: BUCKET,
+      S3_ACCESS_KEY: ACCESS_KEY,
+      S3_SECRET_KEY: SECRET_KEY,
+      S3_FORCE_PATH_STYLE: 'true',
+    },
     stop: async () => {
       await container.stop();
     },

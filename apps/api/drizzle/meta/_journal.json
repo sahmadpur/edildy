@@ -127,6 +127,13 @@
       "when": 1792127724573,
       "tag": "0017_user_locale",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793974499847,
+      "tag": "0018_audit_log_client",
+      "breakpoints": true
     }
   ]
 }

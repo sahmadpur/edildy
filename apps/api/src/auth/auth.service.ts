@@ -3,6 +3,7 @@ import type { LoginResult } from '@taskop/contracts';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';
+import { setRequestClient } from '../common/request-context';
 import type { Principal } from '../common/request';
 import { currentRequestMeta } from '../common/request-context';
 import { APP_CONFIG, type AppConfig } from '../config/config';
@@ -63,13 +64,21 @@ export class AuthService {
   ) {}
 
   async signup(input: SignupDto): Promise<IssuedLogin> {
-    await this.rateLimit.consume(`signup:ip:${currentRequestMeta().ip}`, this.config.RL_SIGNUP_IP_PER_HOUR, 3600);
+    setRequestClient(input.client);
+    await this.rateLimit.consume(
+      `signup:ip:${currentRequestMeta().ip}`,
+      this.config.RL_SIGNUP_IP_PER_HOUR,
+      3600,
+    );
     const tenantId = uuidv7();
     const userId = uuidv7();
     const credentialHash = await this.hasher.hash(input.password);
     let verifyToken = '';
     const issued = await this.db.withTenant(tenantId, userId, async (tx) => {
-      const [tenant] = await tx.insert(tenants).values({ id: tenantId, name: input.orgName, orgCode: input.orgCode }).returning();
+      const [tenant] = await tx
+        .insert(tenants)
+        .values({ id: tenantId, name: input.orgName, orgCode: input.orgCode })
+        .returning();
       const roleIds = await seedTenantDefaults(tx, tenantId);
       await tx.insert(users).values({
         id: userId,
@@ -83,7 +92,12 @@ export class AuthService {
         status: 'active',
       });
       verifyToken = await this.oneTime.create({ tenantId, userId, purpose: 'email_verify' });
-      await this.audit.record({ action: 'tenant.created', entityType: 'tenant', entityId: tenantId, after: tenant });
+      await this.audit.record({
+        action: 'tenant.created',
+        entityType: 'tenant',
+        entityId: tenantId,
+        after: tenant,
+      });
       await this.audit.record({
         action: 'user.created',
         entityType: 'user',
@@ -93,7 +107,15 @@ export class AuthService {
       return this.issueLogin({ id: userId, tenantId, roleId: roleIds.owner, kind: 'staff' }, input.client);
     });
     // A new tenant has the default locale and its owner no choice yet.
-    await this.sendMail(verifyEmailMail({ to: input.email, fullName: input.fullName, webUrl: this.config.WEB_URL, token: verifyToken, locale: pickLanguage() }));
+    await this.sendMail(
+      verifyEmailMail({
+        to: input.email,
+        fullName: input.fullName,
+        webUrl: this.config.WEB_URL,
+        token: verifyToken,
+        locale: pickLanguage(),
+      }),
+    );
     return issued;
   }
 
@@ -102,8 +124,16 @@ export class AuthService {
     if (!parsed) throw new AppError('TOKEN_INVALID');
     await this.db.withTenant(parsed.tenantId, null, async (tx) => {
       const { userId } = await this.oneTime.consume(token, 'email_verify');
-      await tx.update(users).set({ emailVerifiedAt: new Date(), updatedAt: new Date() }).where(eq(users.id, userId));
-      await this.audit.record({ action: 'user.email_verified', entityType: 'user', entityId: userId, actorUserId: userId });
+      await tx
+        .update(users)
+        .set({ emailVerifiedAt: new Date(), updatedAt: new Date() })
+        .where(eq(users.id, userId));
+      await this.audit.record({
+        action: 'user.email_verified',
+        entityType: 'user',
+        entityId: userId,
+        actorUserId: userId,
+      });
     });
   }
 
@@ -114,7 +144,11 @@ export class AuthService {
 
   async loginWorker(input: LoginWorkerDto): Promise<IssuedLogin> {
     await this.limitLogin(`worker:${input.orgCode}:${input.username}`);
-    return this.completeLogin(await this.lookup.worker(input.orgCode, input.username), input.secret, input.client);
+    return this.completeLogin(
+      await this.lookup.worker(input.orgCode, input.username),
+      input.secret,
+      input.client,
+    );
   }
 
   async refresh(rawToken: string | undefined): Promise<IssuedLogin> {
@@ -145,7 +179,14 @@ export class AuthService {
       }
       if (session.revokedAt || session.expiresAt.getTime() <= now) return null;
       const [user] = await tx
-        .select({ id: users.id, tenantId: users.tenantId, roleId: users.roleId, kind: users.kind, status: users.status, tenantStatus: tenants.status })
+        .select({
+          id: users.id,
+          tenantId: users.tenantId,
+          roleId: users.roleId,
+          kind: users.kind,
+          status: users.status,
+          tenantStatus: tenants.status,
+        })
         .from(users)
         .innerJoin(tenants, eq(tenants.id, users.tenantId))
         .where(eq(users.id, session.userId));
@@ -153,8 +194,12 @@ export class AuthService {
         await tx.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.id, session.id));
         return null;
       }
+      setRequestClient(session.client);
       const issued = await this.issueLogin(user, session.client, session.familyId);
-      await tx.update(sessions).set({ revokedAt: new Date(), replacedBy: issued.sessionId }).where(eq(sessions.id, session.id));
+      await tx
+        .update(sessions)
+        .set({ revokedAt: new Date(), replacedBy: issued.sessionId })
+        .where(eq(sessions.id, session.id));
       return issued;
     });
     if (!outcome) throw new AppError('UNAUTHENTICATED');
@@ -167,7 +212,12 @@ export class AuthService {
     await this.rateLimit.consume(`login:acct:${accountKey}`, this.config.RL_LOGIN_ACCOUNT_PER_MIN, 60);
   }
 
-  private async completeLogin(row: LoginCandidate | null, secret: string, client: Client): Promise<IssuedLogin> {
+  private async completeLogin(
+    row: LoginCandidate | null,
+    secret: string,
+    client: Client,
+  ): Promise<IssuedLogin> {
+    setRequestClient(client);
     if (!row) {
       await this.hasher.verify(null, secret);
       throw new AppError('INVALID_CREDENTIALS');
@@ -183,8 +233,16 @@ export class AuthService {
     }
     if (row.tenantStatus !== 'active') throw new AppError('TENANT_SUSPENDED');
     return this.db.withTenant(row.tenantId, row.id, async (tx) => {
-      await tx.update(users).set({ failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() }).where(eq(users.id, row.id));
-      await this.audit.record({ action: 'auth.login_succeeded', entityType: 'user', entityId: row.id, after: { client } });
+      await tx
+        .update(users)
+        .set({ failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() })
+        .where(eq(users.id, row.id));
+      await this.audit.record({
+        action: 'auth.login_succeeded',
+        entityType: 'user',
+        entityId: row.id,
+        after: { client },
+      });
       return this.issueLogin(row, client);
     });
   }
@@ -221,8 +279,16 @@ export class AuthService {
   /** Creates a session and access token. Must run inside the subject's tenant transaction. */
   async issueLogin(subject: LoginSubject, client: Client, familyId?: string): Promise<IssuedLogin> {
     const tx = this.db.tx();
-    const [role] = await tx.select({ version: roles.version }).from(roles).where(eq(roles.id, subject.roleId));
-    const { sessionId, refreshToken } = await this.sessions.create({ tenantId: subject.tenantId, userId: subject.id, client, familyId });
+    const [role] = await tx
+      .select({ version: roles.version })
+      .from(roles)
+      .where(eq(roles.id, subject.roleId));
+    const { sessionId, refreshToken } = await this.sessions.create({
+      tenantId: subject.tenantId,
+      userId: subject.id,
+      client,
+      familyId,
+    });
     const { token, expiresAt } = await this.tokens.signAccess({
       sub: subject.id,
       tid: subject.tenantId,
@@ -230,6 +296,7 @@ export class AuthService {
       rv: role?.version ?? 1,
       kind: subject.kind,
       sid: sessionId,
+      client,
     });
     const me = await this.me.load(subject.id);
     return {
@@ -259,10 +326,25 @@ export class AuthService {
     if (p.emailVerified) return;
     await this.rateLimit.consume(`verify-resend:${p.userId}`, 3, 3600);
     const tx = this.db.tx();
-    const [user] = await tx.select({ email: users.email, fullName: users.fullName }).from(users).where(eq(users.id, p.userId));
+    const [user] = await tx
+      .select({ email: users.email, fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, p.userId));
     if (!user?.email) return;
-    const token = await this.oneTime.create({ tenantId: p.tenantId, userId: p.userId, purpose: 'email_verify' });
-    await this.sendMail(verifyEmailMail({ to: user.email, fullName: user.fullName, webUrl: this.config.WEB_URL, token, locale: await userLanguage(tx, p.userId) }));
+    const token = await this.oneTime.create({
+      tenantId: p.tenantId,
+      userId: p.userId,
+      purpose: 'email_verify',
+    });
+    await this.sendMail(
+      verifyEmailMail({
+        to: user.email,
+        fullName: user.fullName,
+        webUrl: this.config.WEB_URL,
+        token,
+        locale: await userLanguage(tx, p.userId),
+      }),
+    );
   }
 
   /** Mail failures are logged, never surfaced: the user-facing action already succeeded. */

@@ -16,7 +16,10 @@ describe('DbService.withTenant', () => {
   beforeAll(async () => {
     db = new DbService(loadConfig(testEnv()));
     await ownerQuery("insert into tenants (id, name, org_code) values ($1, 'A', $2), ($3, 'B', $4)", [
-      A, `ctx-a-${A.slice(-8)}`, B, `ctx-b-${B.slice(-8)}`,
+      A,
+      `ctx-a-${A.slice(-8)}`,
+      B,
+      `ctx-b-${B.slice(-8)}`,
     ]);
   });
   afterAll(() => db.onModuleDestroy());
@@ -38,7 +41,9 @@ describe('DbService.withTenant', () => {
   });
 
   it('refuses to nest a different tenant', async () => {
-    await expect(db.withTenant(A, null, () => db.withTenant(B, null, async () => 1))).rejects.toThrow(/different tenant/);
+    await expect(db.withTenant(A, null, () => db.withTenant(B, null, async () => 1))).rejects.toThrow(
+      /different tenant/,
+    );
   });
 
   it('rolls back on error', async () => {
@@ -48,7 +53,9 @@ describe('DbService.withTenant', () => {
         throw new Error('fail');
       }),
     ).rejects.toThrow('fail');
-    const rows = await db.withTenant(A, null, (tx) => tx.select().from(siteTypes).where(eq(siteTypes.name, 'rolled back')));
+    const rows = await db.withTenant(A, null, (tx) =>
+      tx.select().from(siteTypes).where(eq(siteTypes.name, 'rolled back')),
+    );
     expect(rows).toEqual([]);
   });
 
@@ -70,21 +77,38 @@ describe('AuditService', () => {
   beforeAll(async () => {
     db = new DbService(loadConfig(testEnv()));
     audit = new AuditService(db);
-    await ownerQuery("insert into tenants (id, name, org_code) values ($1, 'A', $2)", [A, `aud-${A.slice(-8)}`]);
+    await ownerQuery("insert into tenants (id, name, org_code) values ($1, 'A', $2)", [
+      A,
+      `aud-${A.slice(-8)}`,
+    ]);
   });
   afterAll(() => db.onModuleDestroy());
 
   it('records an entry in the current tenant with the current user as actor', async () => {
     const actor = uuidv7();
     await db.withTenant(A, actor, () =>
-      audit.record({ action: 'thing.done', entityType: 'thing', entityId: actor, after: { name: 'x', credentialHash: 'h' } }),
+      audit.record({
+        action: 'thing.done',
+        entityType: 'thing',
+        entityId: actor,
+        after: { name: 'x', credentialHash: 'h' },
+      }),
     );
-    const [row] = await db.withTenant(A, null, (tx) => tx.select().from(auditLog).where(eq(auditLog.action, 'thing.done')));
+    const [row] = await db.withTenant(A, null, (tx) =>
+      tx.select().from(auditLog).where(eq(auditLog.action, 'thing.done')),
+    );
     expect(row).toMatchObject({ tenantId: A, actorUserId: actor, entityType: 'thing', after: { name: 'x' } });
   });
 
   it('redacts secret-looking keys recursively', () => {
-    expect(redactSecrets({ a: 1, password: 'p', nested: { refreshToken: 't', ok: true }, list: [{ secret: 's' }] })).toEqual({
+    expect(
+      redactSecrets({
+        a: 1,
+        password: 'p',
+        nested: { refreshToken: 't', ok: true },
+        list: [{ secret: 's' }],
+      }),
+    ).toEqual({
       a: 1,
       nested: { ok: true },
       list: [{}],

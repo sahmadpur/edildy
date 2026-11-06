@@ -11,11 +11,14 @@ describe('platform admin', () => {
 
   beforeAll(async () => {
     t = await createTestApp();
-    await ownerQuery("insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')", [
-      email,
-      await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 }),
-    ]);
-    const res = await t.http().post('/api/v1/platform/auth/login').send({ email, password: 'platform password 1' });
+    await ownerQuery(
+      "insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')",
+      [email, await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 })],
+    );
+    const res = await t
+      .http()
+      .post('/api/v1/platform/auth/login')
+      .send({ email, password: 'platform password 1' });
     expect(res.status).toBe(200);
     token = res.body.accessToken;
   });
@@ -35,7 +38,9 @@ describe('platform admin', () => {
   it('lists tenants with user counts and search', async () => {
     const s = await signupTenant(t);
     const res = await as(t, token).get(`/api/v1/platform/tenants?q=${s.orgCode}`);
-    expect(res.body.items).toEqual([expect.objectContaining({ id: s.tenantId, orgCode: s.orgCode, status: 'active', userCount: 1 })]);
+    expect(res.body.items).toEqual([
+      expect.objectContaining({ id: s.tenantId, orgCode: s.orgCode, status: 'active', userCount: 1 }),
+    ]);
   });
 
   it('suspends and reactivates a tenant', async () => {
@@ -43,10 +48,16 @@ describe('platform admin', () => {
     const suspended = await as(t, token).post(`/api/v1/platform/tenants/${s.tenantId}/suspend`);
     expect(suspended.body.status).toBe('suspended');
     expect((await as(t, s.accessToken).get('/api/v1/me')).body.error.code).toBe('TENANT_SUSPENDED');
-    const audit = await ownerQuery("select actor_platform_admin_id from audit_log where tenant_id = $1 and action = 'tenant.suspended'", [s.tenantId]);
+    const audit = await ownerQuery(
+      "select actor_platform_admin_id from audit_log where tenant_id = $1 and action = 'tenant.suspended'",
+      [s.tenantId],
+    );
     expect(audit.rows[0]?.actor_platform_admin_id).toBeTruthy();
     await as(t, token).post(`/api/v1/platform/tenants/${s.tenantId}/reactivate`);
-    const login = await t.http().post('/api/v1/auth/login/staff').send({ email: s.email, password: s.password, client: 'web' });
+    const login = await t
+      .http()
+      .post('/api/v1/auth/login/staff')
+      .send({ email: s.email, password: s.password, client: 'web' });
     expect(login.status).toBe(200);
   });
 });

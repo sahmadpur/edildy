@@ -21,7 +21,8 @@ describe('run detail for report viewers (SP7 spec §5.6)', () => {
 
   const staff = async (role: { roleKey?: 'manager'; roleId?: string }, siteIds: string[] = []) => {
     const u = await createUserDirect(t, w.s.tenantId, { kind: 'staff', emailVerified: true, ...role });
-    if (siteIds.length) expect((await w.owner.put(`/api/v1/users/${u.id}/sites`, { siteIds })).status).toBe(200);
+    if (siteIds.length)
+      expect((await w.owner.put(`/api/v1/users/${u.id}/sites`, { siteIds })).status).toBe(200);
     return { id: u.id, api: as(t, (await loginStaff(t, u.email!, u.secret, 'web')).accessToken) };
   };
   const customRole = async (dataScope: string, permissions: string[]) => {
@@ -30,7 +31,10 @@ describe('run detail for report viewers (SP7 spec §5.6)', () => {
     return res.body.id as string;
   };
   /** [GET /executions/:id, GET /occurrences/:id] statuses. */
-  const reads = async (api: Api) => [(await api.get(`/api/v1/executions/${executionId}`)).status, (await api.get(`/api/v1/occurrences/${w.occurrenceId}`)).status];
+  const reads = async (api: Api) => [
+    (await api.get(`/api/v1/executions/${executionId}`)).status,
+    (await api.get(`/api/v1/occurrences/${w.occurrenceId}`)).status,
+  ];
 
   it('lets a site_subtree manager read runs at their site, and only there (already true)', async () => {
     expect(await reads((await staff({ roleKey: 'manager' }, [w.siteId])).api)).toEqual([200, 200]);
@@ -38,7 +42,9 @@ describe('run detail for report viewers (SP7 spec §5.6)', () => {
   });
 
   it('lets a subordinates manager read the runs of their people, and only theirs (already true)', async () => {
-    const boss = await staff({ roleId: await customRole('subordinates', ['assignments.view', 'reports.view']) });
+    const boss = await staff({
+      roleId: await customRole('subordinates', ['assignments.view', 'reports.view']),
+    });
     expect(await reads(boss.api)).toEqual([404, 404]);
     await ownerQuery('update users set manager_id = $1 where id = $2', [boss.id, w.workers[0].id]);
     expect(await reads(boss.api)).toEqual([200, 200]);

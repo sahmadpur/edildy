@@ -24,7 +24,9 @@ describe('occurrences', () => {
     const seen: string[] = [];
     let cursor: string | null = null;
     do {
-      const res = await w.api.get(`/api/v1/occurrences?${RANGE}&assignmentId=${a.id}&limit=4${cursor ? `&cursor=${cursor}` : ''}`);
+      const res = await w.api.get(
+        `/api/v1/occurrences?${RANGE}&assignmentId=${a.id}&limit=4${cursor ? `&cursor=${cursor}` : ''}`,
+      );
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       seen.push(...res.body.items.map((o: { localDate: string }) => o.localDate));
       cursor = res.body.nextCursor;
@@ -37,7 +39,8 @@ describe('occurrences', () => {
   it('filters by status, site, checklist and assignee, and limits the range', async () => {
     const w = await schedulingWorld(t);
     const a = await createAssignment(w, { assigneeIds: [w.workers[0]] });
-    const count = async (q: string) => (await w.api.get(`/api/v1/occurrences?${RANGE}&limit=200&${q}`)).body.items.length;
+    const count = async (q: string) =>
+      (await w.api.get(`/api/v1/occurrences?${RANGE}&limit=200&${q}`)).body.items.length;
     expect(await count(`assignmentId=${a.id}&status=pending,overdue`)).toBe(15);
     expect(await count(`assignmentId=${a.id}&status=missed`)).toBe(0);
     expect(await count(`siteId=${w.otherSiteId}`)).toBe(0);
@@ -55,15 +58,34 @@ describe('occurrences', () => {
     const detail = (await w.api.get(`/api/v1/occurrences/${id}`)).body;
     expect(detail.assignees.map((u: { fullName: string }) => u.fullName)).toEqual(['İşçi 1', 'İşçi 2']);
     expect(detail.history).toEqual([
-      { fromStatus: null, toStatus: 'pending', at: '2026-11-02T04:00:00.000Z', actor: { kind: 'user', name: 'Elvin Əhmədov' }, reason: null },
+      {
+        fromStatus: null,
+        toStatus: 'pending',
+        at: '2026-11-02T04:00:00.000Z',
+        actor: { kind: 'user', name: 'Elvin Əhmədov' },
+        reason: null,
+      },
     ]);
     expect((await w.api.post(`/api/v1/occurrences/${id}/cancel`, { reason: '' })).status).toBe(400);
     const cancelled = await w.api.post(`/api/v1/occurrences/${id}/cancel`, { reason: 'Bayram günü' });
     expect(cancelled.status, JSON.stringify(cancelled.body)).toBe(200);
-    expect(cancelled.body).toMatchObject({ status: 'cancelled', cancelReason: 'Bayram günü', unassigned: false });
-    expect(cancelled.body.history.at(-1)).toMatchObject({ fromStatus: 'pending', toStatus: 'cancelled', reason: 'Bayram günü', actor: { kind: 'user' } });
-    expect((await w.api.post(`/api/v1/occurrences/${id}/cancel`, { reason: 'x' })).body.error.code).toBe('OCCURRENCE_NOT_CANCELLABLE');
-    const audit = await ownerQuery<{ action: string }>('select action from audit_log where entity_id = $1', [id]);
+    expect(cancelled.body).toMatchObject({
+      status: 'cancelled',
+      cancelReason: 'Bayram günü',
+      unassigned: false,
+    });
+    expect(cancelled.body.history.at(-1)).toMatchObject({
+      fromStatus: 'pending',
+      toStatus: 'cancelled',
+      reason: 'Bayram günü',
+      actor: { kind: 'user' },
+    });
+    expect((await w.api.post(`/api/v1/occurrences/${id}/cancel`, { reason: 'x' })).body.error.code).toBe(
+      'OCCURRENCE_NOT_CANCELLABLE',
+    );
+    const audit = await ownerQuery<{ action: string }>('select action from audit_log where entity_id = $1', [
+      id,
+    ]);
     expect(audit.rows.map((r) => r.action)).toEqual(['occurrence.cancelled']);
   });
 
@@ -107,21 +129,45 @@ describe('occurrences', () => {
     const outsider = await createUserDirect(t, w.s.tenantId);
     const [first, second] = await occurrenceRows((await createAssignment(w)).id);
     await w.api.post(`/api/v1/occurrences/${second!.id}/cancel`, { reason: 'x' });
-    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id;
-    await w.api.put('/api/v1/roster', { siteId: w.siteId, from: TODAY, to: TODAY, rows: [{ userId: w0, shiftId: shift, date: TODAY }] });
-    const shiftFirst = (await occurrenceRows((await createAssignment(w, { timing: { mode: 'shift', shiftId: shift, graceMinutes: 0 } })).id))[0]!;
+    const shift = (
+      await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })
+    ).body.id;
+    await w.api.put('/api/v1/roster', {
+      siteId: w.siteId,
+      from: TODAY,
+      to: TODAY,
+      rows: [{ userId: w0, shiftId: shift, date: TODAY }],
+    });
+    const shiftFirst = (
+      await occurrenceRows(
+        (await createAssignment(w, { timing: { mode: 'shift', shiftId: shift, graceMinutes: 0 } })).id,
+      )
+    )[0]!;
     await ownerQuery('delete from shift_roster where user_id = $1', [w0]);
 
     const db = t.app.get(DbService);
     const elig = t.app.get(EligibilityService);
-    const check = (occurrenceId: string, userId: string, iso: string) => db.withTenant(w.s.tenantId, null, () => elig.canStart(occurrenceId, userId, new Date(iso)));
+    const check = (occurrenceId: string, userId: string, iso: string) =>
+      db.withTenant(w.s.tenantId, null, () => elig.canStart(occurrenceId, userId, new Date(iso)));
     expect(await check(first!.id, w0, '2026-11-02T04:30:00Z')).toEqual({ ok: true, late: false });
     expect(await check(first!.id, w0, '2026-11-02T06:30:00Z')).toEqual({ ok: true, late: true });
     expect(await check(first!.id, w0, '2026-11-02T07:00:00Z')).toEqual({ ok: false, reason: 'CLOSED' });
     expect(await check(first!.id, w0, '2026-11-02T03:00:00Z')).toEqual({ ok: false, reason: 'NOT_YET_OPEN' });
-    expect(await check(first!.id, outsider.id, '2026-11-02T04:30:00Z')).toEqual({ ok: false, reason: 'NOT_ASSIGNED' });
-    expect(await check(second!.id, w0, '2026-11-03T04:30:00Z')).toEqual({ ok: false, reason: 'NOT_STARTABLE' });
-    expect(await check(shiftFirst.id, w0, '2026-11-02T04:30:00Z')).toEqual({ ok: false, reason: 'NOT_ON_SHIFT' });
-    expect(await check('0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', w0, '2026-11-02T04:30:00Z')).toEqual({ ok: false, reason: 'NOT_FOUND' });
+    expect(await check(first!.id, outsider.id, '2026-11-02T04:30:00Z')).toEqual({
+      ok: false,
+      reason: 'NOT_ASSIGNED',
+    });
+    expect(await check(second!.id, w0, '2026-11-03T04:30:00Z')).toEqual({
+      ok: false,
+      reason: 'NOT_STARTABLE',
+    });
+    expect(await check(shiftFirst.id, w0, '2026-11-02T04:30:00Z')).toEqual({
+      ok: false,
+      reason: 'NOT_ON_SHIFT',
+    });
+    expect(await check('0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', w0, '2026-11-02T04:30:00Z')).toEqual({
+      ok: false,
+      reason: 'NOT_FOUND',
+    });
   });
 });

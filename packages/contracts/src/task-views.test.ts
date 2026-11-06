@@ -45,20 +45,62 @@ const detail = {
   cancelReason: null,
   media: [
     {
-      id: ID, role: 'response', submissionId: ID, kind: 'photo', source: 'camera', mime: 'image/jpeg', bytes: 1000,
-      width: 1600, height: 1200, durationMs: null, capturedAt: AT, capturedBy: user, status: 'uploaded', uploadedAt: AT,
+      id: ID,
+      role: 'response',
+      submissionId: ID,
+      kind: 'photo',
+      source: 'camera',
+      mime: 'image/jpeg',
+      bytes: 1000,
+      width: 1600,
+      height: 1200,
+      durationMs: null,
+      capturedAt: AT,
+      capturedBy: user,
+      status: 'uploaded',
+      uploadedAt: AT,
     },
   ],
   submissions: [
-    { id: ID, submittedBy: user, text: 'Hazırdır', mediaIds: [ID], submittedAt: AT, receivedAt: AT, reviewDecision: null, reviewComment: null, reviewedBy: null, reviewedAt: null },
+    {
+      id: ID,
+      submittedBy: user,
+      text: 'Hazırdır',
+      mediaIds: [ID],
+      submittedAt: AT,
+      receivedAt: AT,
+      reviewDecision: null,
+      reviewComment: null,
+      reviewedBy: null,
+      reviewedAt: null,
+    },
   ],
   problem: {
-    id: ID, executionId: ID, occurrenceId: ID, localDate: '2026-11-02', siteId: ID, siteName: 'Anbar №1', checklistId: ID,
-    checklistName: 'Açılış', itemId: ID, itemLabel: 'Temperatur', source: 'manual', severity: 'critical', note: 'Qapı bağlanmır',
-    mediaIds: [ID], media: [{ id: ID, kind: 'video', status: 'pending' }], executorName: 'Elvin', createdAt: AT, resolution: 'open',
-    taskId: ID, executionState: 'partial', clearedAt: null,
+    id: ID,
+    executionId: ID,
+    occurrenceId: ID,
+    localDate: '2026-11-02',
+    siteId: ID,
+    siteName: 'Anbar №1',
+    checklistId: ID,
+    checklistName: 'Açılış',
+    itemId: ID,
+    itemLabel: 'Temperatur',
+    source: 'manual',
+    severity: 'critical',
+    note: 'Qapı bağlanmır',
+    mediaIds: [ID],
+    media: [{ id: ID, kind: 'video', status: 'pending' }],
+    executorName: 'Elvin',
+    createdAt: AT,
+    resolution: 'open',
+    taskId: ID,
+    executionState: 'partial',
+    clearedAt: null,
   },
-  history: [{ id: ID, fromStatus: 'in_progress', toStatus: 'awaiting_review', at: AT, actor: user, comment: null }],
+  history: [
+    { id: ID, fromStatus: 'in_progress', toStatus: 'awaiting_review', at: AT, actor: user, comment: null },
+  ],
   canManage: true,
   canReview: true,
 };
@@ -72,9 +114,20 @@ describe('task read models', () => {
 
   it('adds tasks and removed ids to the sync response, and knownTaskIds to the query', () => {
     const { history: _h, canManage: _m, canReview: _r, ...phone } = detail;
-    const r = syncResponseSchema.parse({ serverTime: AT, occurrences: [], checklistVersions: [], executions: [], tasks: [phone], removedTaskIds: [ID], unreadNotifications: 0 });
+    const r = syncResponseSchema.parse({
+      serverTime: AT,
+      occurrences: [],
+      checklistVersions: [],
+      executions: [],
+      tasks: [phone],
+      removedTaskIds: [ID],
+      unreadNotifications: 0,
+    });
     expect(r.tasks[0]!.status).toBe('awaiting_review');
-    expect(syncQuerySchema.parse({ knownTaskIds: `${ID},${ID}` })).toEqual({ knownVersionIds: [], knownTaskIds: [ID, ID] });
+    expect(syncQuerySchema.parse({ knownTaskIds: `${ID},${ID}` })).toEqual({
+      knownVersionIds: [],
+      knownTaskIds: [ID, ID],
+    });
     expect(syncQuerySchema.safeParse({ knownTaskIds: Array(100).fill(ID).join(',') }).success).toBe(true);
     // Over the cap the ids are truncated, not refused (R20); knownVersionIds keeps failing the request.
     const over = syncQuerySchema.parse({ knownTaskIds: Array(101).fill(ID).join(',') });
@@ -83,14 +136,30 @@ describe('task read models', () => {
   });
 
   it('gives problems a resolution, a task link, the run state and each medium’s kind and status, with a resolution filter', () => {
-    expect(problemDtoSchema.parse(detail.problem)).toMatchObject({ resolution: 'open', taskId: ID, executionState: 'partial', media: [{ id: ID, kind: 'video', status: 'pending' }] });
-    expect(problemDtoSchema.safeParse({ ...detail.problem, media: [{ id: ID, kind: 'video', status: 'purged' }] }).success).toBe(false);
-    expect(problemListQuerySchema.parse({ from: '2026-11-01', to: '2026-11-30', resolution: 'none' })).toMatchObject({ resolution: 'none' });
-    expect(problemListQuerySchema.safeParse({ from: '2026-11-01', to: '2026-11-30', resolution: 'fixed' }).success).toBe(false);
+    expect(problemDtoSchema.parse(detail.problem)).toMatchObject({
+      resolution: 'open',
+      taskId: ID,
+      executionState: 'partial',
+      media: [{ id: ID, kind: 'video', status: 'pending' }],
+    });
+    expect(
+      problemDtoSchema.safeParse({ ...detail.problem, media: [{ id: ID, kind: 'video', status: 'purged' }] })
+        .success,
+    ).toBe(false);
+    expect(
+      problemListQuerySchema.parse({ from: '2026-11-01', to: '2026-11-30', resolution: 'none' }),
+    ).toMatchObject({ resolution: 'none' });
+    expect(
+      problemListQuerySchema.safeParse({ from: '2026-11-01', to: '2026-11-30', resolution: 'fixed' }).success,
+    ).toBe(false);
   });
 
   it('gives the assignee picker people, teams and the sites a task may name', () => {
-    const options = { users: [{ id: ID, fullName: 'Nigar', jobTitle: null, kind: 'worker' }], teams: [{ id: ID, name: 'Texniki xidmət', memberCount: 2 }], sites: [{ id: ID, name: 'Anbar №1' }] };
+    const options = {
+      users: [{ id: ID, fullName: 'Nigar', jobTitle: null, kind: 'worker' }],
+      teams: [{ id: ID, name: 'Texniki xidmət', memberCount: 2 }],
+      sites: [{ id: ID, name: 'Anbar №1' }],
+    };
     expect(taskAssigneeOptionsSchema.parse(options)).toEqual(options);
     expect(taskAssigneeOptionsSchema.safeParse({ users: [], teams: [] }).success).toBe(false);
   });
@@ -103,10 +172,22 @@ describe('task read models', () => {
     expect(ERROR_HTTP_STATUS.PROBLEM_ALREADY_HAS_TASK).toBe(409);
     expect(ERROR_HTTP_STATUS.EVIDENCE_REQUIRED).toBe(422);
     expect(ALL_PERMISSIONS).toEqual(expect.arrayContaining(['tasks.view', 'tasks.manage']));
-    expect(SYSTEM_ROLE_DEFAULTS.manager.permissions).toEqual(expect.arrayContaining(['tasks.view', 'tasks.manage']));
+    expect(SYSTEM_ROLE_DEFAULTS.manager.permissions).toEqual(
+      expect.arrayContaining(['tasks.view', 'tasks.manage']),
+    );
     expect(SYSTEM_ROLE_DEFAULTS.auditor.permissions).toContain('tasks.view');
     expect(SYSTEM_ROLE_DEFAULTS.auditor.permissions).not.toContain('tasks.manage');
     expect(SYSTEM_ROLE_DEFAULTS.worker.permissions).toEqual([]);
-    expect(TASK_AUDIT_ACTIONS).toEqual(['task.created', 'task.updated', 'task.reassigned', 'task.cancelled', 'task.approved', 'task.rejected']);
+    expect(TASK_AUDIT_ACTIONS).toEqual([
+      'task.created',
+      'task.updated',
+      'task.reassigned',
+      'task.cancelled',
+      'task.approved',
+      'task.rejected',
+      'task.accepted',
+      'task.started',
+      'task.submitted',
+    ]);
   });
 });

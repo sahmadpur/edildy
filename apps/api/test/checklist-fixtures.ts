@@ -1,4 +1,11 @@
-import { blankContent, type ChecklistContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import {
+  blankContent,
+  type ChecklistContent,
+  newItem,
+  newRule,
+  newSection,
+  type YesNoItem,
+} from '@taskop/contracts';
 
 /** One yes/no item; "yes" is a critical problem that requires a photo and asks a follow-up comment. */
 export function sampleContent(): ChecklistContent {

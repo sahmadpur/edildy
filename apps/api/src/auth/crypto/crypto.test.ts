@@ -7,9 +7,16 @@ import { PasswordHasher } from './password-hasher';
 import { generatePassword, generatePin } from './secret-generator';
 import { TokenService } from './token.service';
 
-
 const config = loadConfig(testEnv());
-const claims = { sub: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', tid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e60', rid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e61', rv: 3, kind: 'staff' as const, sid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e62' };
+const claims = {
+  sub: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f',
+  tid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e60',
+  rid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e61',
+  rv: 3,
+  kind: 'staff' as const,
+  sid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e62',
+  client: 'mobile' as const,
+};
 
 describe('PasswordHasher', () => {
   const hasher = new PasswordHasher(config);
@@ -30,6 +37,11 @@ describe('TokenService', () => {
     const { token, expiresAt } = await tokens.signAccess(claims);
     expect(expiresAt.getTime() - Date.now()).toBeGreaterThan(14 * 60_000);
     expect(await tokens.verifyAccess(token)).toEqual(claims);
+  });
+  it('still verifies a token issued before the client claim existed', async () => {
+    const { client: _client, ...legacy } = claims;
+    const { token } = await tokens.signAccess(legacy);
+    expect(await tokens.verifyAccess(token)).toEqual(legacy);
   });
   it('rejects tampered tokens', async () => {
     const { token } = await tokens.signAccess(claims);

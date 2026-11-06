@@ -7,7 +7,15 @@ import { NotificationJobs } from '../src/notifications/notification-jobs';
 import { JobsService } from '../src/scheduling/jobs.service';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
-import { addDevice, deliverAll, deliveriesOf, eventRows, fanOutAll, inboxOf, pushSender } from './notification-fixtures';
+import {
+  addDevice,
+  deliverAll,
+  deliveriesOf,
+  eventRows,
+  fanOutAll,
+  inboxOf,
+  pushSender,
+} from './notification-fixtures';
 import { ownerQuery } from './owner-db';
 import { MONDAY_0800 } from './scheduling-fixtures';
 import { createTask, newTaskBody, taskWorld } from './task-fixtures';
@@ -30,7 +38,10 @@ describe('notification crons', () => {
   /** İşçi 1 with two phones gets a task; both pushes are sent at 04:00. */
   async function sentPushes() {
     const w = await taskWorld(t);
-    const phones = [await addDevice(w.s.tenantId, w.workers[0].id), await addDevice(w.s.tenantId, w.workers[0].id)];
+    const phones = [
+      await addDevice(w.s.tenantId, w.workers[0].id),
+      await addDevice(w.s.tenantId, w.workers[0].id),
+    ];
     await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }));
     await fanOutAll(t, w.s.tenantId);
     await deliverAll(t, w.s.tenantId);
@@ -41,7 +52,9 @@ describe('notification crons', () => {
     const { w, phones } = await sentPushes();
     const [first, second] = await deliveriesOf(w.workers[0].id);
     pushSender(t).receiptFor = (id) =>
-      id === second!.provider_ref ? { ok: false, error: 'DeviceNotRegistered', message: 'gone' } : { ok: true };
+      id === second!.provider_ref
+        ? { ok: false, error: 'DeviceNotRegistered', message: 'gone' }
+        : { ok: true };
     clock.set('2026-11-02T04:14:59Z');
     expect(await jobs.receiptsAll([w.s.tenantId])).toBe(0);
     clock.set('2026-11-02T04:15:00Z');
@@ -50,7 +63,10 @@ describe('notification crons', () => {
       [first!.id, 'delivered', null],
       [second!.id, 'failed', 'DeviceNotRegistered: gone'],
     ]);
-    const disabled = await ownerQuery<{ id: string }>('select id from push_devices where user_id = $1 and disabled_at is not null', [w.workers[0].id]);
+    const disabled = await ownerQuery<{ id: string }>(
+      'select id from push_devices where user_id = $1 and disabled_at is not null',
+      [w.workers[0].id],
+    );
     expect(disabled.rows.map((r) => r.id)).toEqual([phones[1]!.id]);
     expect(await jobs.receiptsAll([w.s.tenantId])).toBe(0);
   });
@@ -58,7 +74,10 @@ describe('notification crons', () => {
   it('fails a row on any other receipt error, leaves rows without a receipt sent, and stops asking after 24 hours', async () => {
     const { w } = await sentPushes();
     const [first] = await deliveriesOf(w.workers[0].id);
-    pushSender(t).receiptFor = (id) => (id === first!.provider_ref ? { ok: false, error: 'MessageRateExceeded', message: 'slow down' } : undefined);
+    pushSender(t).receiptFor = (id) =>
+      id === first!.provider_ref
+        ? { ok: false, error: 'MessageRateExceeded', message: 'slow down' }
+        : undefined;
     clock.set('2026-11-02T05:00:00Z');
     expect(await jobs.receiptsAll([w.s.tenantId])).toBe(1);
     expect((await deliveriesOf(w.workers[0].id)).map((d) => [d.status, d.last_error])).toEqual([
@@ -66,7 +85,9 @@ describe('notification crons', () => {
       ['sent', null],
     ]);
     const asked: string[][] = [];
-    const receipts = vi.spyOn(pushSender(t), 'receipts').mockImplementation(async (ids) => (asked.push(ids), new Map()));
+    const receipts = vi
+      .spyOn(pushSender(t), 'receipts')
+      .mockImplementation(async (ids) => (asked.push(ids), new Map()));
     clock.set('2026-11-03T04:00:01Z');
     expect(await jobs.receiptsAll([w.s.tenantId])).toBe(0);
     expect(asked).toEqual([]);
@@ -116,7 +137,10 @@ describe('notification crons', () => {
     expect(await jobs.sweepAll([w.s.tenantId])).toBe(0);
     clock.set('2026-11-02T04:05:00Z');
     expect(await jobs.sweepAll([w.s.tenantId])).toBe(1);
-    expect(send).toHaveBeenCalledWith('notifications.deliver', { tenantId: w.s.tenantId, deliveryIds: [queued!.id] });
+    expect(send).toHaveBeenCalledWith('notifications.deliver', {
+      tenantId: w.s.tenantId,
+      deliveryIds: [queued!.id],
+    });
     await ownerQuery('update notification_deliveries set attempts = 5 where id = $1', [queued!.id]);
     send.mockClear();
     expect(await jobs.sweepAll([w.s.tenantId])).toBe(0);
@@ -131,21 +155,45 @@ describe('notification crons', () => {
     const [stale, staleTired, live, released] = await deliveriesOf(w.workers[0].id);
     // Rows were created at 04:00. A run that died after claiming at 04:00, one that already had 4 attempts, a run
     // still holding its 04:02 claim, and a row whose failed attempt released it at 04:03 (pg-boss retries it).
-    await ownerQuery("update notification_deliveries set claimed_at = '2026-11-02T04:00:00Z' where id = $1", [stale!.id]);
-    await ownerQuery("update notification_deliveries set claimed_at = '2026-11-02T04:00:00Z', attempts = 4 where id = $1", [staleTired!.id]);
-    await ownerQuery("update notification_deliveries set claimed_at = '2026-11-02T04:02:00Z' where id = $1", [live!.id]);
-    await ownerQuery("update notification_deliveries set attempts = 1, last_error = 'boom', updated_at = '2026-11-02T04:03:00Z' where id = $1", [released!.id]);
+    await ownerQuery("update notification_deliveries set claimed_at = '2026-11-02T04:00:00Z' where id = $1", [
+      stale!.id,
+    ]);
+    await ownerQuery(
+      "update notification_deliveries set claimed_at = '2026-11-02T04:00:00Z', attempts = 4 where id = $1",
+      [staleTired!.id],
+    );
+    await ownerQuery("update notification_deliveries set claimed_at = '2026-11-02T04:02:00Z' where id = $1", [
+      live!.id,
+    ]);
+    await ownerQuery(
+      "update notification_deliveries set attempts = 1, last_error = 'boom', updated_at = '2026-11-02T04:03:00Z' where id = $1",
+      [released!.id],
+    );
     const send = vi.spyOn(t.app.get(JobsService), 'send').mockResolvedValue(true);
     clock.set('2026-11-02T04:05:00Z');
     expect(await jobs.sweepAll([w.s.tenantId])).toBe(1);
-    expect(send.mock.calls).toEqual([['notifications.deliver', { tenantId: w.s.tenantId, deliveryIds: [stale!.id] }]]);
-    const rows = await ownerQuery<{ id: string; status: string; attempts: number; last_error: string | null; claimed: boolean }>(
+    expect(send.mock.calls).toEqual([
+      ['notifications.deliver', { tenantId: w.s.tenantId, deliveryIds: [stale!.id] }],
+    ]);
+    const rows = await ownerQuery<{
+      id: string;
+      status: string;
+      attempts: number;
+      last_error: string | null;
+      claimed: boolean;
+    }>(
       'select id, status, attempts, last_error, claimed_at is not null as claimed from notification_deliveries where id = any($1) order by device_id',
       [[stale!.id, staleTired!.id, live!.id, released!.id]],
     );
     expect(rows.rows).toEqual([
       { id: stale!.id, status: 'queued', attempts: 1, last_error: 'delivery interrupted', claimed: false },
-      { id: staleTired!.id, status: 'failed', attempts: 5, last_error: 'delivery interrupted', claimed: false },
+      {
+        id: staleTired!.id,
+        status: 'failed',
+        attempts: 5,
+        last_error: 'delivery interrupted',
+        claimed: false,
+      },
       { id: live!.id, status: 'queued', attempts: 0, last_error: null, claimed: true },
       { id: released!.id, status: 'queued', attempts: 1, last_error: 'boom', claimed: false },
     ]);
@@ -175,23 +223,38 @@ describe('notification crons', () => {
       "insert into notification_events (id, tenant_id, type, payload, created_at) values ($1, $2, 'task.overdue', '{}'::jsonb, '2026-01-01T00:00:00Z')",
       [unprocessed, w.s.tenantId],
     );
-    await ownerQuery("update notification_events set created_at = '2026-08-03T03:59:59Z' where id = $1", [old!.id]);
-    await ownerQuery("update notifications set created_at = '2026-08-03T03:59:59Z' where event_id = $1", [old!.id]);
-    await ownerQuery("update push_devices set last_seen_at = '2026-05-06T03:59:59Z' where id = $1", [idle.id]);
+    await ownerQuery("update notification_events set created_at = '2026-08-03T03:59:59Z' where id = $1", [
+      old!.id,
+    ]);
+    await ownerQuery("update notifications set created_at = '2026-08-03T03:59:59Z' where event_id = $1", [
+      old!.id,
+    ]);
+    await ownerQuery("update push_devices set last_seen_at = '2026-05-06T03:59:59Z' where id = $1", [
+      idle.id,
+    ]);
     // now − 90 days = 2026-08-04T04:00Z; now − 180 days = 2026-05-06T04:00Z.
     expect(await jobs.cleanupAll([w.s.tenantId])).toBe(3);
     expect(await inboxOf(w.workers[0].id)).toEqual([]);
     expect(await deliveriesOf(w.workers[0].id)).toEqual([]);
     expect((await inboxOf(w.workers[1].id)).map((n) => n.event_id)).toEqual([recent!.id]);
     expect((await eventRows(w.s.tenantId)).map((e) => e.id).sort()).toEqual([recent!.id, unprocessed].sort());
-    const devices = await ownerQuery<{ id: string; disabled: boolean }>('select id, disabled_at is not null as disabled from push_devices where id = any($1) order by id', [[idle.id, fresh.id]]);
-    expect(devices.rows).toEqual([{ id: idle.id, disabled: true }, { id: fresh.id, disabled: false }]);
+    const devices = await ownerQuery<{ id: string; disabled: boolean }>(
+      'select id, disabled_at is not null as disabled from push_devices where id = any($1) order by id',
+      [[idle.id, fresh.id]],
+    );
+    expect(devices.rows).toEqual([
+      { id: idle.id, disabled: true },
+      { id: fresh.id, disabled: false },
+    ]);
   });
 
   it('also deletes events that gave up after 5 attempts, never other unprocessed ones', async () => {
     const w = await taskWorld(t);
     const [gaveUp, retrying] = [uuidv7(), uuidv7()];
-    for (const [id, attempts] of [[gaveUp, 5], [retrying, 4]] as const) {
+    for (const [id, attempts] of [
+      [gaveUp, 5],
+      [retrying, 4],
+    ] as const) {
       await ownerQuery(
         "insert into notification_events (id, tenant_id, type, payload, attempts, created_at) values ($1, $2, 'task.overdue', '{}'::jsonb, $3, '2026-01-01T00:00:00Z')",
         [id, w.s.tenantId, attempts],

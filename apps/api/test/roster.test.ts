@@ -15,8 +15,17 @@ describe('roster', () => {
 
   async function world() {
     const w = await schedulingWorld(t, 2);
-    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id as string;
-    const night = (await w.api.post('/api/v1/shifts', { name: 'Gecə', startTime: '22:00', endTime: '06:00', siteId: w.otherSiteId })).body.id as string;
+    const morning = (
+      await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })
+    ).body.id as string;
+    const night = (
+      await w.api.post('/api/v1/shifts', {
+        name: 'Gecə',
+        startTime: '22:00',
+        endTime: '06:00',
+        siteId: w.otherSiteId,
+      })
+    ).body.id as string;
     return { w, morning, night };
   }
 
@@ -39,25 +48,40 @@ describe('roster', () => {
     expect(put.body.users.map((u: { fullName: string }) => u.fullName)).toEqual(['İşçi 1', 'İşçi 2']);
     expect(put.body.shifts.map((s: { name: string }) => s.name)).toEqual(['Səhər']);
 
-    const again = await w.api.put('/api/v1/roster', { ...body, rows: [{ userId: w1, shiftId: morning, date: '2026-11-04' }] });
+    const again = await w.api.put('/api/v1/roster', {
+      ...body,
+      rows: [{ userId: w1, shiftId: morning, date: '2026-11-04' }],
+    });
     expect(again.body.rows).toEqual([{ userId: w1, shiftId: morning, date: '2026-11-04' }]);
     const audit = await ownerQuery<{ action: string; after: { rowCount: number } }>(
       "select action, after from audit_log where entity_id = $1 and action like 'roster.%' order by occurred_at, id",
       [w.siteId],
     );
-    expect(audit.rows.map((r) => [r.action, r.after.rowCount])).toEqual([['roster.replaced', 3], ['roster.replaced', 1]]);
+    expect(audit.rows.map((r) => [r.action, r.after.rowCount])).toEqual([
+      ['roster.replaced', 3],
+      ['roster.replaced', 1],
+    ]);
   });
 
   it('rejects users not at the site, inactive or foreign shifts, and long ranges', async () => {
     const { w, morning, night } = await world();
     const outsider = await createUserDirect(t, w.s.tenantId, { fullName: 'Kənar' });
     const base = { siteId: w.siteId, from: '2026-11-02', to: '2026-11-08' };
-    const notAtSite = await w.api.put('/api/v1/roster', { ...base, rows: [{ userId: outsider.id, shiftId: morning, date: '2026-11-02' }] });
+    const notAtSite = await w.api.put('/api/v1/roster', {
+      ...base,
+      rows: [{ userId: outsider.id, shiftId: morning, date: '2026-11-02' }],
+    });
     expect(notAtSite.body.error).toMatchObject({ code: 'ROSTER_USER_NOT_AT_SITE', userIds: [outsider.id] });
-    const foreignShift = await w.api.put('/api/v1/roster', { ...base, rows: [{ userId: w.workers[0], shiftId: night, date: '2026-11-02' }] });
+    const foreignShift = await w.api.put('/api/v1/roster', {
+      ...base,
+      rows: [{ userId: w.workers[0], shiftId: night, date: '2026-11-02' }],
+    });
     expect(foreignShift.body.error.code).toBe('SHIFT_NOT_AT_SITE');
     await w.api.patch(`/api/v1/shifts/${morning}`, { active: false });
-    const inactive = await w.api.put('/api/v1/roster', { ...base, rows: [{ userId: w.workers[0], shiftId: morning, date: '2026-11-02' }] });
+    const inactive = await w.api.put('/api/v1/roster', {
+      ...base,
+      rows: [{ userId: w.workers[0], shiftId: morning, date: '2026-11-02' }],
+    });
     expect(inactive.body.error.code).toBe('SHIFT_INACTIVE');
     const long = await w.api.get(`/api/v1/roster?siteId=${w.siteId}&from=2026-11-01&to=2027-01-02`);
     expect(long.status).toBe(400);
@@ -77,20 +101,30 @@ describe('roster', () => {
       ],
     });
     // A stale row in a target week is replaced.
-    await w.api.put('/api/v1/roster', { siteId: w.siteId, from: '2026-11-16', to: '2026-11-22', rows: [{ userId: w1, shiftId: morning, date: '2026-11-17' }] });
+    await w.api.put('/api/v1/roster', {
+      siteId: w.siteId,
+      from: '2026-11-16',
+      to: '2026-11-22',
+      rows: [{ userId: w1, shiftId: morning, date: '2026-11-17' }],
+    });
     const changed: string[] = [];
     const off = t.app.get(DomainEvents).on('roster.changed', (e) => {
       if (e.siteId === w.siteId) changed.push(`${e.from}..${e.to}`);
     });
     try {
-      const res = await w.api.post('/api/v1/roster/copy', { siteId: w.siteId, sourceWeekStart: '2026-11-02', targetWeekStarts: ['2026-11-09', '2026-11-16'] });
+      const res = await w.api.post('/api/v1/roster/copy', {
+        siteId: w.siteId,
+        sourceWeekStart: '2026-11-02',
+        targetWeekStarts: ['2026-11-09', '2026-11-16'],
+      });
       expect(res.status, JSON.stringify(res.body)).toBe(201);
       expect(res.body).toEqual({ rowCount: 4 });
     } finally {
       off();
     }
     expect(changed).toEqual(['2026-11-09..2026-11-15', '2026-11-16..2026-11-22']);
-    const rows = (await w.api.get(`/api/v1/roster?siteId=${w.siteId}&from=2026-11-09&to=2026-11-22`)).body.rows;
+    const rows = (await w.api.get(`/api/v1/roster?siteId=${w.siteId}&from=2026-11-09&to=2026-11-22`)).body
+      .rows;
     expect(rows).toEqual([
       { userId: w0, shiftId: morning, date: '2026-11-09' },
       { userId: w1, shiftId: morning, date: '2026-11-13' },
@@ -113,7 +147,9 @@ describe('roster after access changes', () => {
   it('keeps stored rows of a person deactivated mid-week but refuses new ones', async () => {
     const w = await schedulingWorld(t, 2);
     const [w0, w1] = w.workers as [string, string];
-    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id as string;
+    const morning = (
+      await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })
+    ).body.id as string;
     const rows = [
       { userId: w0, shiftId: morning, date: '2026-11-02' },
       { userId: w1, shiftId: morning, date: '2026-11-02' },
@@ -126,24 +162,38 @@ describe('roster after access changes', () => {
     expect(got.users.map((u: { id: string }) => u.id)).toEqual([w0]);
     expect(got.rows).toHaveLength(3); // the row from today on was dropped
     const extra = { userId: w0, shiftId: morning, date: '2026-11-06' };
-    const saved = await w.api.put('/api/v1/roster', { siteId: w.siteId, ...week, rows: [...got.rows, extra] });
+    const saved = await w.api.put('/api/v1/roster', {
+      siteId: w.siteId,
+      ...week,
+      rows: [...got.rows, extra],
+    });
     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
     expect(saved.body.rows).toHaveLength(4);
-    const added = await w.api.put('/api/v1/roster', { siteId: w.siteId, ...week, rows: [...saved.body.rows, { userId: w1, shiftId: morning, date: '2026-11-06' }] });
+    const added = await w.api.put('/api/v1/roster', {
+      siteId: w.siteId,
+      ...week,
+      rows: [...saved.body.rows, { userId: w1, shiftId: morning, date: '2026-11-06' }],
+    });
     expect(added.body.error).toMatchObject({ code: 'ROSTER_USER_NOT_AT_SITE', userIds: [w1] });
   });
 
   it('keeps stored rows of a deactivated shift but refuses new ones', async () => {
     const w = await schedulingWorld(t, 2);
     const [w0, w1] = w.workers as [string, string];
-    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id as string;
+    const morning = (
+      await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })
+    ).body.id as string;
     const rows = [{ userId: w0, shiftId: morning, date: '2026-11-05' }];
     expect((await w.api.put('/api/v1/roster', { siteId: w.siteId, ...week, rows })).status).toBe(200);
     await w.api.patch(`/api/v1/shifts/${morning}`, { active: false });
     const kept = await w.api.put('/api/v1/roster', { siteId: w.siteId, ...week, rows });
     expect(kept.status, JSON.stringify(kept.body)).toBe(200);
     expect(kept.body.rows).toEqual(rows);
-    const added = await w.api.put('/api/v1/roster', { siteId: w.siteId, ...week, rows: [...rows, { userId: w1, shiftId: morning, date: '2026-11-06' }] });
+    const added = await w.api.put('/api/v1/roster', {
+      siteId: w.siteId,
+      ...week,
+      rows: [...rows, { userId: w1, shiftId: morning, date: '2026-11-06' }],
+    });
     expect(added.body.error.code).toBe('SHIFT_INACTIVE');
   });
 });

@@ -2,7 +2,14 @@ import { emptyRunCounts, type OccurrenceStatus, type RunCounts, type TaskStatus 
 import { uuidv7 } from 'uuidv7';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
-import { as, createUserDirect, loginStaff, type SignedUpTenant, signupTenant, siteTypeIdOf } from './fixtures';
+import {
+  as,
+  createUserDirect,
+  loginStaff,
+  type SignedUpTenant,
+  signupTenant,
+  siteTypeIdOf,
+} from './fixtures';
 import { staffAt } from './notification-fixtures';
 import { ownerQuery } from './owner-db';
 import { type Api, publishedChecklist } from './scheduling-fixtures';
@@ -29,11 +36,20 @@ export interface ReportBase {
 /** A fresh tenant with its owner logged in. */
 export async function reportBase(t: TestApp): Promise<ReportBase> {
   const s = await signupTenant(t);
-  return { s, owner: as(t, s.accessToken), branchTypeId: await siteTypeIdOf(s.tenantId, 'Filial'), zoneTypeId: await siteTypeIdOf(s.tenantId, 'Zona') };
+  return {
+    s,
+    owner: as(t, s.accessToken),
+    branchTypeId: await siteTypeIdOf(s.tenantId, 'Filial'),
+    zoneTypeId: await siteTypeIdOf(s.tenantId, 'Zona'),
+  };
 }
 
 export async function addSite(b: ReportBase, name: string, parentId: string | null = null): Promise<string> {
-  const res = await b.owner.post('/api/v1/sites', { parentId, typeId: parentId ? b.zoneTypeId : b.branchTypeId, name });
+  const res = await b.owner.post('/api/v1/sites', {
+    parentId,
+    typeId: parentId ? b.zoneTypeId : b.branchTypeId,
+    name,
+  });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   return res.body.id as string;
 }
@@ -45,7 +61,9 @@ export interface ChecklistRef {
 
 export async function addChecklist(b: ReportBase, name: string): Promise<ChecklistRef> {
   const id = await publishedChecklist(b.owner, name);
-  const r = await ownerQuery<{ v: string }>('select current_version_id as v from checklists where id = $1', [id]);
+  const r = await ownerQuery<{ v: string }>('select current_version_id as v from checklists where id = $1', [
+    id,
+  ]);
   return { id, versionId: r.rows[0]!.v };
 }
 
@@ -96,10 +114,26 @@ export async function addRun(b: ReportBase, r: RunSpec): Promise<AddedRun> {
   await ownerQuery(
     `insert into occurrences (id, tenant_id, assignment_id, checklist_id, site_id, local_date, starts_at, due_at, closes_at, status, cancel_reason, checklist_version_id)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [occurrenceId, b.s.tenantId, assignmentId, r.checklist.id, r.siteId, r.date, iso(starts), iso(due), iso(due + HOUR), r.status, r.status === 'cancelled' ? 'Test' : null, r.checklist.versionId],
+    [
+      occurrenceId,
+      b.s.tenantId,
+      assignmentId,
+      r.checklist.id,
+      r.siteId,
+      r.date,
+      iso(starts),
+      iso(due),
+      iso(due + HOUR),
+      r.status,
+      r.status === 'cancelled' ? 'Test' : null,
+      r.checklist.versionId,
+    ],
   );
   for (const userId of r.assignees) {
-    await ownerQuery('insert into occurrence_assignees (tenant_id, occurrence_id, user_id) values ($1, $2, $3)', [b.s.tenantId, occurrenceId, userId]);
+    await ownerQuery(
+      'insert into occurrence_assignees (tenant_id, occurrence_id, user_id) values ($1, $2, $3)',
+      [b.s.tenantId, occurrenceId, userId],
+    );
   }
   const executionIds: string[] = [];
   for (const x of r.executions ?? []) {
@@ -110,9 +144,19 @@ export async function addRun(b: ReportBase, r: RunSpec): Promise<AddedRun> {
        values ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $10, coalesce($10::timestamptz, $8::timestamptz), '{"answered":1,"total":1,"requiredMissing":0}'::jsonb, $11::jsonb, $12, $13,
                '{"platform":"android","osVersion":"15","appVersion":"1.0.0"}'::jsonb)`,
       [
-        id, b.s.tenantId, occurrenceId, r.checklist.versionId, x.executor, x.state, x.state === 'rejected' ? 'ALREADY_CLAIMED' : null, iso(starts + 10 * 60_000),
-        x.completedAt ?? null, x.completedReceivedAt ?? x.completedAt ?? null, JSON.stringify({ earned: 0, possible: 0, percent: x.score, problems: [] }),
-        x.late ?? false, x.clockSuspect ?? false,
+        id,
+        b.s.tenantId,
+        occurrenceId,
+        r.checklist.versionId,
+        x.executor,
+        x.state,
+        x.state === 'rejected' ? 'ALREADY_CLAIMED' : null,
+        iso(starts + 10 * 60_000),
+        x.completedAt ?? null,
+        x.completedReceivedAt ?? x.completedAt ?? null,
+        JSON.stringify({ earned: 0, possible: 0, percent: x.score, problems: [] }),
+        x.late ?? false,
+        x.clockSuspect ?? false,
       ],
     );
     executionIds.push(id);
@@ -136,7 +180,19 @@ export async function addProblem(b: ReportBase, p: ProblemSpec): Promise<string>
   await ownerQuery(
     `insert into execution_problems (id, tenant_id, execution_id, occurrence_id, site_id, checklist_id, item_id, source, severity, note, created_at, updated_at)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)`,
-    [id, b.s.tenantId, p.run.executionIds[0], p.run.occurrenceId, p.siteId, p.checklistId, uuidv7(), p.source ?? 'rule', p.severity, p.note ?? null, p.createdAt],
+    [
+      id,
+      b.s.tenantId,
+      p.run.executionIds[0],
+      p.run.occurrenceId,
+      p.siteId,
+      p.checklistId,
+      uuidv7(),
+      p.source ?? 'rule',
+      p.severity,
+      p.note ?? null,
+      p.createdAt,
+    ],
   );
   return id;
 }
@@ -160,8 +216,19 @@ export async function addTask(b: ReportBase, x: TaskSpec): Promise<string> {
     `insert into tasks (id, tenant_id, title, created_by_user_id, assignee_user_id, site_id, status, due_at, overdue_at, completed_at, cancelled_at, problem_id, created_at, updated_at)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $13)`,
     [
-      id, b.s.tenantId, x.title, b.s.ownerId, x.assigneeUserId, x.siteId ?? null, x.status, x.dueAt ?? null, x.overdueAt ?? null, x.completedAt ?? null,
-      x.status === 'cancelled' ? x.createdAt : null, x.problemId ?? null, x.createdAt,
+      id,
+      b.s.tenantId,
+      x.title,
+      b.s.ownerId,
+      x.assigneeUserId,
+      x.siteId ?? null,
+      x.status,
+      x.dueAt ?? null,
+      x.overdueAt ?? null,
+      x.completedAt ?? null,
+      x.status === 'cancelled' ? x.createdAt : null,
+      x.problemId ?? null,
+      x.createdAt,
     ],
   );
   return id;
@@ -173,7 +240,23 @@ export interface Worker {
   secret: string;
 }
 
-export type RunKey = 'r1' | 'r2' | 'r3' | 'r4' | 'r5' | 'r6' | 'r7' | 'r8' | 'r9' | 'r10' | 'r11' | 'r12' | 'r13' | 'r14' | 'r15' | 'r16';
+export type RunKey =
+  | 'r1'
+  | 'r2'
+  | 'r3'
+  | 'r4'
+  | 'r5'
+  | 'r6'
+  | 'r7'
+  | 'r8'
+  | 'r9'
+  | 'r10'
+  | 'r11'
+  | 'r12'
+  | 'r13'
+  | 'r14'
+  | 'r15'
+  | 'r16';
 export type TaskKey = 't1' | 't2' | 't3' | 't4' | 't5' | 't6' | 't7' | 't8' | 't9' | 't10';
 
 export interface ReportWorld extends ReportBase {
@@ -206,13 +289,32 @@ export async function reportWorld(t: TestApp): Promise<ReportWorld> {
   const stock = await addChecklist(b, 'Anbar sayımı');
 
   const leyla = await staffAt(t, b.s.tenantId, b.owner, 'manager', [branchA], 'Leyla Quliyeva');
-  const supervisor = await b.owner.post('/api/v1/roles', { name: 'Nəzarətçi', dataScope: 'subordinates', permissions: ['reports.view', 'assignments.view', 'tasks.view'] });
+  const supervisor = await b.owner.post('/api/v1/roles', {
+    name: 'Nəzarətçi',
+    dataScope: 'subordinates',
+    permissions: ['reports.view', 'assignments.view', 'tasks.view'],
+  });
   expect(supervisor.status, JSON.stringify(supervisor.body)).toBe(201);
-  const raufUser = await createUserDirect(t, b.s.tenantId, { kind: 'staff', roleId: supervisor.body.id as string, fullName: 'Rauf Kərimov', managerId: leyla.id, emailVerified: true });
-  const rauf = { id: raufUser.id, api: as(t, (await loginStaff(t, raufUser.email!, raufUser.secret, 'web')).accessToken) };
-  const worker = async (fullName: string, siteId: string | null, managerId: string | null, status: 'active' | 'deactivated' = 'active'): Promise<Worker> => {
+  const raufUser = await createUserDirect(t, b.s.tenantId, {
+    kind: 'staff',
+    roleId: supervisor.body.id as string,
+    fullName: 'Rauf Kərimov',
+    managerId: leyla.id,
+    emailVerified: true,
+  });
+  const rauf = {
+    id: raufUser.id,
+    api: as(t, (await loginStaff(t, raufUser.email!, raufUser.secret, 'web')).accessToken),
+  };
+  const worker = async (
+    fullName: string,
+    siteId: string | null,
+    managerId: string | null,
+    status: 'active' | 'deactivated' = 'active',
+  ): Promise<Worker> => {
     const u = await createUserDirect(t, b.s.tenantId, { fullName, managerId, status });
-    if (siteId) expect((await b.owner.put(`/api/v1/users/${u.id}/sites`, { siteIds: [siteId] })).status).toBe(200);
+    if (siteId)
+      expect((await b.owner.put(`/api/v1/users/${u.id}/sites`, { siteIds: [siteId] })).status).toBe(200);
     return { id: u.id, username: u.username!, secret: u.secret };
   };
   const aynur = await worker('Aynur Quliyeva', zoneA1, rauf.id);
@@ -220,57 +322,262 @@ export async function reportWorld(t: TestApp): Promise<ReportWorld> {
   const nigar = await worker('Nigar Həsənova', branchB, null);
   const samir = await worker('Samir Məmmədov', null, rauf.id, 'deactivated');
 
-  const done = (executor: Worker, score: number | null, completedAt: string, extra: Partial<ExecutionSpec> = {}): ExecutionSpec => ({ executor: executor.id, state: 'completed', score, completedAt, ...extra });
-  const run = (date: string, siteId: string, status: OccurrenceStatus, dueAt: string, assignees: Worker[], executions: ExecutionSpec[] = [], extra: Partial<RunSpec> = {}) =>
-    addRun(b, { date, siteId, checklist: opening, status, dueAt, assignees: assignees.map((a) => a.id), executions, ...extra });
+  const done = (
+    executor: Worker,
+    score: number | null,
+    completedAt: string,
+    extra: Partial<ExecutionSpec> = {},
+  ): ExecutionSpec => ({ executor: executor.id, state: 'completed', score, completedAt, ...extra });
+  const run = (
+    date: string,
+    siteId: string,
+    status: OccurrenceStatus,
+    dueAt: string,
+    assignees: Worker[],
+    executions: ExecutionSpec[] = [],
+    extra: Partial<RunSpec> = {},
+  ) =>
+    addRun(b, {
+      date,
+      siteId,
+      checklist: opening,
+      status,
+      dueAt,
+      assignees: assignees.map((a) => a.id),
+      executions,
+      ...extra,
+    });
 
   const runs: Record<RunKey, AddedRun> = {
     r1: await run('2026-11-02', zoneA1, 'completed', D02, [aynur], [done(aynur, 80, '2026-11-02T05:30:00Z')]),
-    r2: await run('2026-11-02', zoneA2, 'completed', D02, [aynur, kamran, samir], [done(kamran, 100, '2026-11-02T05:40:00Z')]),
+    r2: await run(
+      '2026-11-02',
+      zoneA2,
+      'completed',
+      D02,
+      [aynur, kamran, samir],
+      [done(kamran, 100, '2026-11-02T05:40:00Z')],
+    ),
     r3: await run('2026-11-02', zoneA1, 'missed', D02, [aynur, kamran, samir]),
-    r4: await run('2026-11-02', branchB, 'completed', D02, [nigar], [done(nigar, 60, '2026-11-02T05:50:00Z')]),
-    r5: await run('2026-11-02', zoneA2, 'partial', D02, [kamran], [{ executor: kamran.id, state: 'partial', score: null }], { checklist: stock }),
+    r4: await run(
+      '2026-11-02',
+      branchB,
+      'completed',
+      D02,
+      [nigar],
+      [done(nigar, 60, '2026-11-02T05:50:00Z')],
+    ),
+    r5: await run(
+      '2026-11-02',
+      zoneA2,
+      'partial',
+      D02,
+      [kamran],
+      [{ executor: kamran.id, state: 'partial', score: null }],
+      { checklist: stock },
+    ),
     r6: await run('2026-11-02', branchA, 'cancelled', D02, [aynur]),
     // Done on Monday, synced from the phone on Wednesday: it still belongs to Monday (FR-10.13).
-    r7: await run('2026-11-02', zoneA1, 'completed', D02, [aynur], [done(aynur, 90, '2026-11-02T07:00:00Z', { completedReceivedAt: '2026-11-04T05:00:00Z', late: true })]),
+    r7: await run(
+      '2026-11-02',
+      zoneA1,
+      'completed',
+      D02,
+      [aynur],
+      [done(aynur, 90, '2026-11-02T07:00:00Z', { completedReceivedAt: '2026-11-04T05:00:00Z', late: true })],
+    ),
     r8: await run('2026-11-03', zoneA1, 'missed', D03, []),
-    r9: await run('2026-11-03', zoneA2, 'completed', D03, [kamran], [done(kamran, 50, '2026-11-03T05:30:00Z', { clockSuspect: true })]),
+    r9: await run(
+      '2026-11-03',
+      zoneA2,
+      'completed',
+      D03,
+      [kamran],
+      [done(kamran, 50, '2026-11-03T05:30:00Z', { clockSuspect: true })],
+    ),
     r10: await run('2026-11-03', branchB, 'missed', D03, [nigar], [], { checklist: stock }),
-    r11: await run('2026-11-03', zoneA1, 'completed', D03, [samir], [done(samir, 70, '2026-11-03T05:30:00Z')]),
+    r11: await run(
+      '2026-11-03',
+      zoneA1,
+      'completed',
+      D03,
+      [samir],
+      [done(samir, 70, '2026-11-03T05:30:00Z')],
+    ),
     r12: await run('2026-11-04', zoneA1, 'overdue', D04, [aynur]),
-    r13: await run('2026-11-04', zoneA2, 'in_progress', '2026-11-04T10:00:00Z', [kamran], [{ executor: kamran.id, state: 'active', score: null }], { startsAt: '2026-11-04T07:00:00Z' }),
+    r13: await run(
+      '2026-11-04',
+      zoneA2,
+      'in_progress',
+      '2026-11-04T10:00:00Z',
+      [kamran],
+      [{ executor: kamran.id, state: 'active', score: null }],
+      { startsAt: '2026-11-04T07:00:00Z' },
+    ),
     r14: await run('2026-11-04', branchA, 'pending', '2026-11-04T10:00:00Z', [aynur]),
     // Finished before its due time: due and completed.
-    r15: await run('2026-11-04', zoneA1, 'completed', '2026-11-04T12:00:00Z', [aynur], [done(aynur, 100, '2026-11-04T07:30:00Z')], { startsAt: '2026-11-04T05:00:00Z' }),
+    r15: await run(
+      '2026-11-04',
+      zoneA1,
+      'completed',
+      '2026-11-04T12:00:00Z',
+      [aynur],
+      [done(aynur, 100, '2026-11-04T07:30:00Z')],
+      { startsAt: '2026-11-04T05:00:00Z' },
+    ),
     // Kamran's claim won; Aynur's lost claim (score 10) must never count.
-    r16: await run('2026-11-04', zoneA2, 'started', D04, [aynur, kamran], [
-      { executor: kamran.id, state: 'active', score: null },
-      { executor: aynur.id, state: 'rejected', score: 10 },
-    ]),
+    r16: await run(
+      '2026-11-04',
+      zoneA2,
+      'started',
+      D04,
+      [aynur, kamran],
+      [
+        { executor: kamran.id, state: 'active', score: null },
+        { executor: aynur.id, state: 'rejected', score: 10 },
+      ],
+    ),
   };
 
   const problems = {
-    p1: await addProblem(b, { run: runs.r1, siteId: zoneA1, checklistId: opening.id, severity: 'normal', note: 'Qapı sınıqdır', createdAt: '2026-11-02T05:00:00Z' }),
+    p1: await addProblem(b, {
+      run: runs.r1,
+      siteId: zoneA1,
+      checklistId: opening.id,
+      severity: 'normal',
+      note: 'Qapı sınıqdır',
+      createdAt: '2026-11-02T05:00:00Z',
+    }),
     // A comma, quotes and a line break: the CSV round trip.
-    p2: await addProblem(b, { run: runs.r4, siteId: branchB, checklistId: opening.id, severity: 'critical', source: 'manual', note: 'Kondisioner, "xarab"\nyenisi lazımdır', createdAt: '2026-11-02T05:10:00Z' }),
+    p2: await addProblem(b, {
+      run: runs.r4,
+      siteId: branchB,
+      checklistId: opening.id,
+      severity: 'critical',
+      source: 'manual',
+      note: 'Kondisioner, "xarab"\nyenisi lazımdır',
+      createdAt: '2026-11-02T05:10:00Z',
+    }),
     // Looks like a formula: CSV must neutralise it.
-    p3: await addProblem(b, { run: runs.r4, siteId: branchB, checklistId: opening.id, severity: 'normal', note: '=1+2', createdAt: '2026-11-02T05:20:00Z' }),
-    p4: await addProblem(b, { run: runs.r9, siteId: zoneA2, checklistId: opening.id, severity: 'critical', note: null, createdAt: '2026-11-03T05:00:00Z' }),
+    p3: await addProblem(b, {
+      run: runs.r4,
+      siteId: branchB,
+      checklistId: opening.id,
+      severity: 'normal',
+      note: '=1+2',
+      createdAt: '2026-11-02T05:20:00Z',
+    }),
+    p4: await addProblem(b, {
+      run: runs.r9,
+      siteId: zoneA2,
+      checklistId: opening.id,
+      severity: 'critical',
+      note: null,
+      createdAt: '2026-11-03T05:00:00Z',
+    }),
   };
 
   const tasks: Record<TaskKey, string> = {
-    t1: await addTask(b, { title: 'Qapını təmir et', status: 'new', assigneeUserId: aynur.id, siteId: zoneA1, dueAt: '2026-11-02T10:00:00Z', createdAt: '2026-11-01T08:00:00Z' }),
-    t2: await addTask(b, { title: 'Rəfləri say', status: 'accepted', assigneeUserId: kamran.id, siteId: zoneA2, dueAt: '2026-11-03T10:00:00Z', createdAt: '2026-11-01T08:00:00Z' }),
-    t3: await addTask(b, { title: 'Kondisioneri dəyiş', status: 'in_progress', assigneeUserId: nigar.id, siteId: branchB, dueAt: '2026-11-03T12:00:00Z', overdueAt: '2026-11-03T12:00:00Z', problemId: problems.p2, createdAt: '2026-11-02T08:00:00Z' }),
-    t4: await addTask(b, { title: 'Hesabatı yoxla', status: 'awaiting_review', assigneeUserId: aynur.id, siteId: zoneA1, createdAt: '2026-11-03T05:00:00Z' }),
-    t5: await addTask(b, { title: 'Ölçünü düzəlt', status: 'completed', assigneeUserId: nigar.id, siteId: branchB, dueAt: '2026-11-02T12:00:00Z', completedAt: '2026-11-02T11:00:00Z', problemId: problems.p3, createdAt: '2026-11-02T08:00:00Z' }),
-    t6: await addTask(b, { title: 'Soyuducunu yoxla', status: 'completed', assigneeUserId: kamran.id, siteId: zoneA2, dueAt: '2026-11-03T08:00:00Z', completedAt: '2026-11-03T09:00:00Z', overdueAt: '2026-11-03T08:00:00Z', createdAt: '2026-11-02T08:00:00Z' }),
-    t7: await addTask(b, { title: 'Termometri dəyiş', status: 'cancelled', assigneeUserId: kamran.id, siteId: zoneA2, dueAt: '2026-11-04T10:00:00Z', problemId: problems.p4, createdAt: '2026-11-03T08:00:00Z' }),
-    t8: await addTask(b, { title: 'Açarları təhvil ver', status: 'completed', assigneeUserId: aynur.id, completedAt: '2026-11-04T05:00:00Z', createdAt: '2026-11-04T04:00:00Z' }),
-    t9: await addTask(b, { title: 'Gələn həftə', status: 'new', assigneeUserId: aynur.id, siteId: zoneA1, dueAt: '2026-11-10T10:00:00Z', createdAt: '2026-11-03T08:00:00Z' }),
+    t1: await addTask(b, {
+      title: 'Qapını təmir et',
+      status: 'new',
+      assigneeUserId: aynur.id,
+      siteId: zoneA1,
+      dueAt: '2026-11-02T10:00:00Z',
+      createdAt: '2026-11-01T08:00:00Z',
+    }),
+    t2: await addTask(b, {
+      title: 'Rəfləri say',
+      status: 'accepted',
+      assigneeUserId: kamran.id,
+      siteId: zoneA2,
+      dueAt: '2026-11-03T10:00:00Z',
+      createdAt: '2026-11-01T08:00:00Z',
+    }),
+    t3: await addTask(b, {
+      title: 'Kondisioneri dəyiş',
+      status: 'in_progress',
+      assigneeUserId: nigar.id,
+      siteId: branchB,
+      dueAt: '2026-11-03T12:00:00Z',
+      overdueAt: '2026-11-03T12:00:00Z',
+      problemId: problems.p2,
+      createdAt: '2026-11-02T08:00:00Z',
+    }),
+    t4: await addTask(b, {
+      title: 'Hesabatı yoxla',
+      status: 'awaiting_review',
+      assigneeUserId: aynur.id,
+      siteId: zoneA1,
+      createdAt: '2026-11-03T05:00:00Z',
+    }),
+    t5: await addTask(b, {
+      title: 'Ölçünü düzəlt',
+      status: 'completed',
+      assigneeUserId: nigar.id,
+      siteId: branchB,
+      dueAt: '2026-11-02T12:00:00Z',
+      completedAt: '2026-11-02T11:00:00Z',
+      problemId: problems.p3,
+      createdAt: '2026-11-02T08:00:00Z',
+    }),
+    t6: await addTask(b, {
+      title: 'Soyuducunu yoxla',
+      status: 'completed',
+      assigneeUserId: kamran.id,
+      siteId: zoneA2,
+      dueAt: '2026-11-03T08:00:00Z',
+      completedAt: '2026-11-03T09:00:00Z',
+      overdueAt: '2026-11-03T08:00:00Z',
+      createdAt: '2026-11-02T08:00:00Z',
+    }),
+    t7: await addTask(b, {
+      title: 'Termometri dəyiş',
+      status: 'cancelled',
+      assigneeUserId: kamran.id,
+      siteId: zoneA2,
+      dueAt: '2026-11-04T10:00:00Z',
+      problemId: problems.p4,
+      createdAt: '2026-11-03T08:00:00Z',
+    }),
+    t8: await addTask(b, {
+      title: 'Açarları təhvil ver',
+      status: 'completed',
+      assigneeUserId: aynur.id,
+      completedAt: '2026-11-04T05:00:00Z',
+      createdAt: '2026-11-04T04:00:00Z',
+    }),
+    t9: await addTask(b, {
+      title: 'Gələn həftə',
+      status: 'new',
+      assigneeUserId: aynur.id,
+      siteId: zoneA1,
+      dueAt: '2026-11-10T10:00:00Z',
+      createdAt: '2026-11-03T08:00:00Z',
+    }),
     // 21:30Z on 1 November is 01:30 on 2 November in Baku: inside the period.
-    t10: await addTask(b, { title: 'Gecə yoxlaması', status: 'new', assigneeUserId: nigar.id, siteId: branchB, dueAt: '2026-11-01T21:30:00Z', createdAt: '2026-11-01T08:00:00Z' }),
+    t10: await addTask(b, {
+      title: 'Gecə yoxlaması',
+      status: 'new',
+      assigneeUserId: nigar.id,
+      siteId: branchB,
+      dueAt: '2026-11-01T21:30:00Z',
+      createdAt: '2026-11-01T08:00:00Z',
+    }),
   };
 
-  return { ...b, sites: { branchA, zoneA1, zoneA2, branchB }, checklists: { opening, stock }, leyla: { id: leyla.id, api: leyla.api }, rauf, aynur, kamran, nigar, samir, runs, problems, tasks };
+  return {
+    ...b,
+    sites: { branchA, zoneA1, zoneA2, branchB },
+    checklists: { opening, stock },
+    leyla: { id: leyla.id, api: leyla.api },
+    rauf,
+    aynur,
+    kamran,
+    nigar,
+    samir,
+    runs,
+    problems,
+    tasks,
+  };
 }

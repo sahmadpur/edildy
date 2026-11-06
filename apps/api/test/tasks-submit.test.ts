@@ -3,10 +3,26 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
 import { MONDAY_0800 } from './scheduling-fixtures';
-import { act, captureTaskEvents, createTask, newTaskBody, registerTaskMedia, taskHistory, type TaskWorld, taskWorld } from './task-fixtures';
+import {
+  act,
+  auditActions,
+  captureTaskEvents,
+  createTask,
+  newTaskBody,
+  registerTaskMedia,
+  taskHistory,
+  type TaskWorld,
+  taskWorld,
+} from './task-fixtures';
 
 const T = (hhmm: string) => `2026-11-02T${hhmm}:00.000Z`;
-const submitBody = (mediaIds: string[] = [], extra: Record<string, unknown> = {}) => ({ id: uuidv7(), text: 'Qapı təmir olundu', mediaIds, submittedAt: T('04:15'), ...extra });
+const submitBody = (mediaIds: string[] = [], extra: Record<string, unknown> = {}) => ({
+  id: uuidv7(),
+  text: 'Qapı təmir olundu',
+  mediaIds,
+  submittedAt: T('04:15'),
+  ...extra,
+});
 
 describe('task submissions', () => {
   const clock = new FakeClock(MONDAY_0800);
@@ -34,7 +50,12 @@ describe('task submissions', () => {
     const res = await w.workers[0].api.post(`/api/v1/tasks/${id}/submissions`, body);
     events.stop();
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body).toMatchObject({ status: 'completed', submittedAt: T('04:15'), completedAt: T('04:15'), rev: 4 });
+    expect(res.body).toMatchObject({
+      status: 'completed',
+      submittedAt: T('04:15'),
+      completedAt: T('04:15'),
+      rev: 4,
+    });
     expect(res.body.submissions).toEqual([
       {
         id: body.id,
@@ -49,8 +70,11 @@ describe('task submissions', () => {
         reviewedAt: null,
       },
     ]);
-    expect(res.body.media).toEqual([expect.objectContaining({ id: photo, role: 'response', submissionId: body.id })]);
+    expect(res.body.media).toEqual([
+      expect.objectContaining({ id: photo, role: 'response', submissionId: body.id }),
+    ]);
     expect((await taskHistory(id)).at(-1)).toEqual(['in_progress', 'completed', w.workers[0].id, null]);
+    expect((await auditActions(id)).at(-1)).toBe('task.submitted');
     expect(events.seen).toEqual([
       ['task.submitted', id, w.workers[0].id],
       ['task.completed', id, w.workers[0].id],
@@ -75,7 +99,11 @@ describe('task submissions', () => {
     const id = await startedTask(w, { evidence: { photo: 'required', video: 'optional', liveOnly: false } });
     const post = (body: object) => api.post(`/api/v1/tasks/${id}/submissions`, body);
     const missing = await post(submitBody());
-    expect([missing.status, missing.body.error.code, missing.body.error.fields]).toEqual([422, 'EVIDENCE_REQUIRED', { 'evidence.photo': 'tasks.issues.photoRequired' }]);
+    expect([missing.status, missing.body.error.code, missing.body.error.fields]).toEqual([
+      422,
+      'EVIDENCE_REQUIRED',
+      { 'evidence.photo': 'tasks.issues.photoRequired' },
+    ]);
 
     const other = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }));
     await act(api, other.id, 'start', T('04:20'));
@@ -84,7 +112,10 @@ describe('task submissions', () => {
     const photo = await registerTaskMedia(api, id, 'response');
     for (const mediaIds of [[foreign], [instruction], [photo, photo]]) {
       const res = await post(submitBody(mediaIds));
-      expect([res.status, res.body.error.fields], JSON.stringify(mediaIds)).toEqual([400, { mediaIds: 'tasks.issues.unknownMedia' }]);
+      expect([res.status, res.body.error.fields], JSON.stringify(mediaIds)).toEqual([
+        400,
+        { mediaIds: 'tasks.issues.unknownMedia' },
+      ]);
     }
     const eleven: string[] = [];
     for (let i = 0; i < 11; i++) eleven.push(await registerTaskMedia(api, id, 'response'));
@@ -102,6 +133,9 @@ describe('task submissions', () => {
     const ahead = await post(submitBody([photo], { submittedAt: '2026-11-02T04:22:00.001Z' }));
     expect([ahead.status, ahead.body.error.code]).toEqual([422, 'CLOCK_INVALID']);
     // Before the start: raised to the start time.
-    expect((await post(submitBody([photo], { submittedAt: T('04:00') }))).body).toMatchObject({ status: 'completed', submittedAt: T('04:10') });
+    expect((await post(submitBody([photo], { submittedAt: T('04:00') }))).body).toMatchObject({
+      status: 'completed',
+      submittedAt: T('04:10'),
+    });
   });
 });

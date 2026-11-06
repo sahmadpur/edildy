@@ -2,7 +2,18 @@ import type { Page, ReportRun } from '@taskop/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
-import { addChecklist, addRun, addSite, PERIOD, qs, REPORT_NOW, reportBase, type ReportWorld, reportWorld, type RunKey } from './report-fixtures';
+import {
+  addChecklist,
+  addRun,
+  addSite,
+  PERIOD,
+  qs,
+  REPORT_NOW,
+  reportBase,
+  type ReportWorld,
+  reportWorld,
+  type RunKey,
+} from './report-fixtures';
 import type { Api } from './scheduling-fixtures';
 
 describe('GET /reports/runs', () => {
@@ -32,9 +43,30 @@ describe('GET /reports/runs', () => {
     expect(await bucket('completed')).toEqual(runs('r15', 'r11', 'r9', 'r7', 'r4', 'r2', 'r1'));
     expect(await bucket('in_progress')).toEqual(runs('r13', 'r16'));
     // `planned` is every run that is not cancelled (r6 is the fixture's only cancelled run).
-    expect(await bucket('planned')).toEqual(runs('r15', 'r14', 'r13', 'r16', 'r12', 'r11', 'r10', 'r9', 'r8', 'r7', 'r5', 'r4', 'r3', 'r2', 'r1'));
+    expect(await bucket('planned')).toEqual(
+      runs('r15', 'r14', 'r13', 'r16', 'r12', 'r11', 'r10', 'r9', 'r8', 'r7', 'r5', 'r4', 'r3', 'r2', 'r1'),
+    );
     // `all` (the default) includes the cancelled r6.
-    expect(await bucket()).toEqual(runs('r15', 'r14', 'r13', 'r16', 'r12', 'r11', 'r10', 'r9', 'r8', 'r7', 'r6', 'r5', 'r4', 'r3', 'r2', 'r1'));
+    expect(await bucket()).toEqual(
+      runs(
+        'r15',
+        'r14',
+        'r13',
+        'r16',
+        'r12',
+        'r11',
+        'r10',
+        'r9',
+        'r8',
+        'r7',
+        'r6',
+        'r5',
+        'r4',
+        'r3',
+        'r2',
+        'r1',
+      ),
+    );
   });
 
   it('returns the run row with its people, both completion times and the flags', async () => {
@@ -60,17 +92,44 @@ describe('GET /reports/runs', () => {
       auditState: null,
       corrected: false,
     });
-    expect(completed.find((r) => r.occurrenceId === w.runs.r9.occurrenceId)).toMatchObject({ clockSuspect: true, problemCount: 1, criticalCount: 1 });
-    expect(completed.find((r) => r.occurrenceId === w.runs.r4.occurrenceId)).toMatchObject({ problemCount: 2, criticalCount: 1 });
+    expect(completed.find((r) => r.occurrenceId === w.runs.r9.occurrenceId)).toMatchObject({
+      clockSuspect: true,
+      problemCount: 1,
+      criticalCount: 1,
+    });
+    expect(completed.find((r) => r.occurrenceId === w.runs.r4.occurrenceId)).toMatchObject({
+      problemCount: 2,
+      criticalCount: 1,
+    });
     // The lost claim is never the run's execution.
-    const r16 = (await page(w.owner, { ...PERIOD, bucket: 'in_progress' })).items.find((r) => r.occurrenceId === w.runs.r16.occurrenceId)!;
-    expect([r16.executionId, r16.executor?.fullName, r16.assignees.map((a) => a.fullName)]).toEqual([w.runs.r16.executionIds[0], 'Kamran Əliyev', ['Aynur Quliyeva', 'Kamran Əliyev']]);
-    const r8 = (await page(w.owner, { ...PERIOD, bucket: 'missed' })).items.find((r) => r.occurrenceId === w.runs.r8.occurrenceId)!;
-    expect(r8).toMatchObject({ executionId: null, executor: null, assignees: [], startedAt: null, completedAt: null, completedReceivedAt: null, score: null, late: false, clockSuspect: false });
+    const r16 = (await page(w.owner, { ...PERIOD, bucket: 'in_progress' })).items.find(
+      (r) => r.occurrenceId === w.runs.r16.occurrenceId,
+    )!;
+    expect([r16.executionId, r16.executor?.fullName, r16.assignees.map((a) => a.fullName)]).toEqual([
+      w.runs.r16.executionIds[0],
+      'Kamran Əliyev',
+      ['Aynur Quliyeva', 'Kamran Əliyev'],
+    ]);
+    const r8 = (await page(w.owner, { ...PERIOD, bucket: 'missed' })).items.find(
+      (r) => r.occurrenceId === w.runs.r8.occurrenceId,
+    )!;
+    expect(r8).toMatchObject({
+      executionId: null,
+      executor: null,
+      assignees: [],
+      startedAt: null,
+      completedAt: null,
+      completedReceivedAt: null,
+      score: null,
+      late: false,
+      clockSuspect: false,
+    });
   });
 
   it('filters by employee with the spec §3.3 attribution', async () => {
-    expect(ids(await page(w.owner, { ...PERIOD, userId: w.kamran.id }))).toEqual(runs('r13', 'r16', 'r9', 'r5', 'r3', 'r2'));
+    expect(ids(await page(w.owner, { ...PERIOD, userId: w.kamran.id }))).toEqual(
+      runs('r13', 'r16', 'r9', 'r5', 'r3', 'r2'),
+    );
     expect(ids(await page(w.owner, { ...PERIOD, userId: w.aynur.id, bucket: 'in_progress' }))).toEqual([]);
   });
 
@@ -80,7 +139,18 @@ describe('GET /reports/runs', () => {
     const checklist = await addChecklist(b, 'Yoxlama');
     const created: string[] = [];
     for (let i = 0; i < 55; i++) {
-      created.push((await addRun(b, { date: '2026-11-03', siteId: site, checklist, status: 'missed', dueAt: '2026-11-03T06:00:00Z', assignees: [] })).occurrenceId);
+      created.push(
+        (
+          await addRun(b, {
+            date: '2026-11-03',
+            siteId: site,
+            checklist,
+            status: 'missed',
+            dueAt: '2026-11-03T06:00:00Z',
+            assignees: [],
+          })
+        ).occurrenceId,
+      );
     }
     const first = await page(b.owner, { ...PERIOD, bucket: 'missed' });
     expect(first.items).toHaveLength(50);

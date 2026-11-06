@@ -5,7 +5,14 @@ import { FakeClock } from './fake-clock';
 import { as, createUserDirect, loginStaff, uniq } from './fixtures';
 import { ownerQuery } from './owner-db';
 import { type Api, MONDAY_0800 } from './scheduling-fixtures';
-import { auditActions, captureTaskEvents, createTask, newTaskBody, taskHistory, taskWorld } from './task-fixtures';
+import {
+  auditActions,
+  captureTaskEvents,
+  createTask,
+  newTaskBody,
+  taskHistory,
+  taskWorld,
+} from './task-fixtures';
 
 describe('creating and reading tasks', () => {
   const clock = new FakeClock(MONDAY_0800);
@@ -19,7 +26,10 @@ describe('creating and reading tasks', () => {
   it('creates a task for a person in scope with history, audit and a task.assigned event', async () => {
     const w = await taskWorld(t);
     const events = captureTaskEvents(t);
-    const body = newTaskBody({ userId: w.workers[0].id }, { siteId: w.siteId, dueAt: '2026-11-03T14:00:00.000Z', priority: 'high' });
+    const body = newTaskBody(
+      { userId: w.workers[0].id },
+      { siteId: w.siteId, dueAt: '2026-11-03T14:00:00.000Z', priority: 'high' },
+    );
     const task = await createTask(w.manager.api, body);
     events.stop();
     expect(task).toMatchObject({
@@ -49,7 +59,14 @@ describe('creating and reading tasks', () => {
       canReview: true,
     });
     expect(task.history).toEqual([
-      { id: expect.any(String), fromStatus: null, toStatus: 'new', at: '2026-11-02T04:00:00.000Z', actor: { id: w.manager.id, fullName: 'Menecer' }, comment: null },
+      {
+        id: expect.any(String),
+        fromStatus: null,
+        toStatus: 'new',
+        at: '2026-11-02T04:00:00.000Z',
+        actor: { id: w.manager.id, fullName: 'Menecer' },
+        comment: null,
+      },
     ]);
     expect(await auditActions(task.id)).toEqual(['task.created']);
     expect(events.seen).toEqual([['task.assigned', task.id, w.manager.id]]);
@@ -71,7 +88,11 @@ describe('creating and reading tasks', () => {
     const w = await taskWorld(t);
     const refused = async (api: Api, assignee: { userId: string } | { teamId: string }) => {
       const res = await api.post('/api/v1/tasks', newTaskBody(assignee));
-      expect([res.status, res.body.error?.code, res.body.error?.fields], JSON.stringify(res.body)).toEqual([422, 'TASK_ASSIGNEE_INVALID', { assignee: 'errors.TASK_ASSIGNEE_INVALID' }]);
+      expect([res.status, res.body.error?.code, res.body.error?.fields], JSON.stringify(res.body)).toEqual([
+        422,
+        'TASK_ASSIGNEE_INVALID',
+        { assignee: 'errors.TASK_ASSIGNEE_INVALID' },
+      ]);
     };
     await refused(w.manager.api, { userId: w.workers[2].id });
     await createTask(w.owner, newTaskBody({ userId: w.workers[2].id }));
@@ -89,11 +110,17 @@ describe('creating and reading tasks', () => {
   it('validates the body and the site', async () => {
     const w = await taskWorld(t);
     const assignee = { userId: w.workers[0].id };
-    const both = await w.owner.post('/api/v1/tasks', newTaskBody({ userId: w.workers[0].id, teamId: w.teamId } as unknown as { userId: string }));
+    const both = await w.owner.post(
+      '/api/v1/tasks',
+      newTaskBody({ userId: w.workers[0].id, teamId: w.teamId } as unknown as { userId: string }),
+    );
     expect([both.status, both.body.error.code]).toEqual([400, 'VALIDATION_FAILED']);
     const long = await w.owner.post('/api/v1/tasks', newTaskBody(assignee, { title: 'x'.repeat(201) }));
     expect([long.status, long.body.error.fields]).toEqual([400, { title: 'errors.validation.tooLong' }]);
-    const outside = await w.manager.api.post('/api/v1/tasks', newTaskBody(assignee, { siteId: w.otherSiteId }));
+    const outside = await w.manager.api.post(
+      '/api/v1/tasks',
+      newTaskBody(assignee, { siteId: w.otherSiteId }),
+    );
     expect([outside.status, outside.body.error.code]).toEqual([403, 'SITE_OUT_OF_SCOPE']);
     expect((await w.owner.patch(`/api/v1/sites/${w.otherSiteId}`, { active: false })).status).toBe(200);
     const inactive = await w.owner.post('/api/v1/tasks', newTaskBody(assignee, { siteId: w.otherSiteId }));
@@ -104,7 +131,9 @@ describe('creating and reading tasks', () => {
 
   it('lets only tasks.manage holders create tasks and list assignees', async () => {
     const w = await taskWorld(t);
-    expect((await w.workers[0].api.post('/api/v1/tasks', newTaskBody({ userId: w.workers[0].id }))).status).toBe(403);
+    expect(
+      (await w.workers[0].api.post('/api/v1/tasks', newTaskBody({ userId: w.workers[0].id }))).status,
+    ).toBe(403);
     expect((await w.workers[0].api.get('/api/v1/tasks/assignees')).status).toBe(403);
   });
 
@@ -112,11 +141,23 @@ describe('creating and reading tasks', () => {
     const w = await taskWorld(t);
     const res = await w.manager.api.get('/api/v1/tasks/assignees');
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body.users.map((u: { fullName: string }) => u.fullName).sort()).toEqual(['Menecer', 'İşçi 1', 'İşçi 2']);
-    expect(res.body.users.find((u: { id: string }) => u.id === w.workers[0].id)).toEqual({ id: w.workers[0].id, fullName: 'İşçi 1', jobTitle: null, kind: 'worker' });
+    expect(res.body.users.map((u: { fullName: string }) => u.fullName).sort()).toEqual([
+      'Menecer',
+      'İşçi 1',
+      'İşçi 2',
+    ]);
+    expect(res.body.users.find((u: { id: string }) => u.id === w.workers[0].id)).toEqual({
+      id: w.workers[0].id,
+      fullName: 'İşçi 1',
+      jobTitle: null,
+      kind: 'worker',
+    });
     expect(res.body.teams).toEqual([{ id: w.teamId, name: 'Texniki xidmət', memberCount: 2 }]);
     const two = await w.manager.api.get('/api/v1/tasks/assignees?q=2');
-    expect([two.body.users.map((u: { fullName: string }) => u.fullName), two.body.teams]).toEqual([['İşçi 2'], []]);
+    expect([two.body.users.map((u: { fullName: string }) => u.fullName), two.body.teams]).toEqual([
+      ['İşçi 2'],
+      [],
+    ]);
   });
 
   it('offers the active sites a task may name, without sites.view and whatever the search', async () => {
@@ -124,14 +165,23 @@ describe('creating and reading tasks', () => {
     const names = (sites: Array<{ name: string }>) => sites.map((s) => s.name);
     // The site_subtree manager (no sites.view needed): Filial 1 only; the search narrows people, never sites.
     const mine = await w.manager.api.get('/api/v1/tasks/assignees?q=zzz');
-    expect([mine.body.users, mine.body.teams, mine.body.sites]).toEqual([[], [], [{ id: w.siteId, name: 'Filial 1' }]]);
+    expect([mine.body.users, mine.body.teams, mine.body.sites]).toEqual([
+      [],
+      [],
+      [{ id: w.siteId, name: 'Filial 1' }],
+    ]);
     // The owner (all): every active site, by name.
-    expect(names((await w.owner.get('/api/v1/tasks/assignees')).body.sites)).toEqual(expect.arrayContaining(['Filial 1', 'Filial 2']));
+    expect(names((await w.owner.get('/api/v1/tasks/assignees')).body.sites)).toEqual(
+      expect.arrayContaining(['Filial 1', 'Filial 2']),
+    );
     expect((await w.owner.patch(`/api/v1/sites/${w.otherSiteId}`, { active: false })).status).toBe(200);
     expect(names((await w.owner.get('/api/v1/tasks/assignees')).body.sites)).not.toContain('Filial 2');
     // Every offered site is one the create accepts.
     for (const site of mine.body.sites as Array<{ id: string }>) {
-      const res = await w.manager.api.post('/api/v1/tasks', newTaskBody({ userId: w.workers[0].id }, { siteId: site.id }));
+      const res = await w.manager.api.post(
+        '/api/v1/tasks',
+        newTaskBody({ userId: w.workers[0].id }, { siteId: site.id }),
+      );
       expect(res.status, JSON.stringify(res.body)).toBe(201);
     }
   });
@@ -161,27 +211,50 @@ describe('creating and reading tasks', () => {
 
   it('limits a subordinates-scope creator to people in their reporting chain, and an own-scope creator to themself', async () => {
     const w = await taskWorld(t);
-    const staffWith = async (dataScope: 'subordinates' | 'own', fullName: string, managerOf: string[] = []) => {
-      const role = await w.owner.post('/api/v1/roles', { name: uniq('Tapşırıq'), dataScope, permissions: ['tasks.manage'] });
+    const staffWith = async (
+      dataScope: 'subordinates' | 'own',
+      fullName: string,
+      managerOf: string[] = [],
+    ) => {
+      const role = await w.owner.post('/api/v1/roles', {
+        name: uniq('Tapşırıq'),
+        dataScope,
+        permissions: ['tasks.manage'],
+      });
       expect(role.status, JSON.stringify(role.body)).toBe(201);
-      const u = await createUserDirect(t, w.s.tenantId, { kind: 'staff', roleId: role.body.id as string, fullName, emailVerified: true });
-      for (const id of managerOf) await ownerQuery('update users set manager_id = $1 where id = $2', [u.id, id]);
+      const u = await createUserDirect(t, w.s.tenantId, {
+        kind: 'staff',
+        roleId: role.body.id as string,
+        fullName,
+        emailVerified: true,
+      });
+      for (const id of managerOf)
+        await ownerQuery('update users set manager_id = $1 where id = $2', [u.id, id]);
       return { id: u.id, api: as(t, (await loginStaff(t, u.email!, u.secret)).accessToken) };
     };
     const refused = async (api: Api, userId: string) => {
       const res = await api.post('/api/v1/tasks', newTaskBody({ userId }));
-      expect([res.status, res.body.error?.code], JSON.stringify(res.body)).toEqual([422, 'TASK_ASSIGNEE_INVALID']);
+      expect([res.status, res.body.error?.code], JSON.stringify(res.body)).toEqual([
+        422,
+        'TASK_ASSIGNEE_INVALID',
+      ]);
     };
     const lead = await staffWith('subordinates', 'Rəhbər', [w.workers[0].id]);
     await createTask(lead.api, newTaskBody({ userId: w.workers[0].id }));
     await createTask(lead.api, newTaskBody({ userId: lead.id }));
     await refused(lead.api, w.workers[1].id);
     await refused(lead.api, w.manager.id);
-    expect((await lead.api.get('/api/v1/tasks/assignees')).body.users.map((u: { fullName: string }) => u.fullName).sort()).toEqual(['Rəhbər', 'İşçi 1']);
+    expect(
+      (await lead.api.get('/api/v1/tasks/assignees')).body.users
+        .map((u: { fullName: string }) => u.fullName)
+        .sort(),
+    ).toEqual(['Rəhbər', 'İşçi 1']);
 
     const solo = await staffWith('own', 'Tək');
     await createTask(solo.api, newTaskBody({ userId: solo.id }));
     await refused(solo.api, w.workers[0].id);
-    expect((await solo.api.get('/api/v1/tasks/assignees')).body.users.map((u: { fullName: string }) => u.fullName)).toEqual(['Tək']);
+    expect(
+      (await solo.api.get('/api/v1/tasks/assignees')).body.users.map((u: { fullName: string }) => u.fullName),
+    ).toEqual(['Tək']);
   });
 });

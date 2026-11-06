@@ -1,7 +1,14 @@
 export default {
   title: 'Usage log',
-  filters: { action: 'Action (e.g. user.created)', entityType: 'Entity type', from: 'Start date', to: 'End date' },
-  columns: { time: 'Time', actor: 'Actor', action: 'Action', entity: 'Entity' },
+  filters: {
+    action: 'Action (e.g. user.created)',
+    entityType: 'Entity type',
+    from: 'Start date',
+    to: 'End date',
+    client: 'Source',
+  },
+  columns: { time: 'Time', actor: 'Actor', action: 'Action', entity: 'Entity', client: 'Source' },
+  clients: { web: 'Web', mobile: 'Mobile' },
   actorPlatform: 'Taskop support',
   actorSystem: 'System',
   before: 'Before',
@@ -23,8 +30,13 @@ export default {
     audit: 'Audit',
     execution: 'Run',
   },
-  /** The SP8 actions (AUDIT_FLOW_AUDIT_ACTIONS). Other actions are shown as their code. */
+  /** Run and task work (EXECUTION_AUDIT_ACTIONS, the worker's task actions) and the SP8 actions (AUDIT_FLOW_AUDIT_ACTIONS). Other actions are shown as their code. */
   actions: {
+    'execution.started': 'Run started',
+    'execution.completed': 'Run completed',
+    'task.accepted': 'Task accepted',
+    'task.started': 'Task started',
+    'task.submitted': 'Task submitted',
     'audit.started': 'Audit started',
     'audit.finished': 'Audit finished',
     'audit.cancelled': 'Audit cancelled',

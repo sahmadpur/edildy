@@ -77,10 +77,14 @@ describe('checklist tables', () => {
       [versionId, s.ownerId],
     );
     await asApp(s.tenantId, async (c) => {
-      await expect(c.query("update checklist_versions set change_note = 'x' where id = $1", [versionId])).rejects.toThrow(/immutable/);
+      await expect(
+        c.query("update checklist_versions set change_note = 'x' where id = $1", [versionId]),
+      ).rejects.toThrow(/immutable/);
     });
     await asApp(s.tenantId, async (c) => {
-      await expect(c.query('delete from checklist_versions where id = $1', [versionId])).rejects.toThrow(/immutable/);
+      await expect(c.query('delete from checklist_versions where id = $1', [versionId])).rejects.toThrow(
+        /immutable/,
+      );
     });
   });
 
@@ -104,8 +108,17 @@ describe('checklist tables', () => {
     const b = await signupTenant(t);
     await seedChecklist(a.tenantId, a.ownerId);
     await asApp(b.tenantId, async (c) => {
-      expect((await c.query('select count(*)::int as n from checklists where tenant_id = $1', [a.tenantId])).rows[0].n).toBe(0);
-      expect((await c.query('select count(*)::int as n from checklist_versions where tenant_id = $1', [a.tenantId])).rows[0].n).toBe(0);
+      expect(
+        (await c.query('select count(*)::int as n from checklists where tenant_id = $1', [a.tenantId]))
+          .rows[0].n,
+      ).toBe(0);
+      expect(
+        (
+          await c.query('select count(*)::int as n from checklist_versions where tenant_id = $1', [
+            a.tenantId,
+          ])
+        ).rows[0].n,
+      ).toBe(0);
     });
   });
 
@@ -126,10 +139,14 @@ describe('checklist tables', () => {
   });
 
   it('accepts platform-scope audit rows without a tenant', async () => {
-    await ownerQuery("insert into audit_log (id, tenant_id, actor_platform_admin_id, action, entity_type) values (gen_random_uuid(), null, gen_random_uuid(), 'x', 'x')");
-    await expect(ownerQuery("insert into audit_log (id, tenant_id, action, entity_type) values (gen_random_uuid(), null, 'x', 'x')")).rejects.toThrow(
-      /audit_log_scope_ck/,
+    await ownerQuery(
+      "insert into audit_log (id, tenant_id, actor_platform_admin_id, action, entity_type) values (gen_random_uuid(), null, gen_random_uuid(), 'x', 'x')",
     );
+    await expect(
+      ownerQuery(
+        "insert into audit_log (id, tenant_id, action, entity_type) values (gen_random_uuid(), null, 'x', 'x')",
+      ),
+    ).rejects.toThrow(/audit_log_scope_ck/);
   });
 
   it('backfilled the new permissions for admin roles', async () => {
@@ -138,19 +155,30 @@ describe('checklist tables', () => {
       "select rp.permission_key from role_permissions rp join roles r on r.id = rp.role_id where r.tenant_id = $1 and r.system_key = 'admin'",
       [s.tenantId],
     );
-    expect(r.rows.map((x) => x.permission_key)).toEqual(expect.arrayContaining(['checklists.publish', 'templates.manage']));
+    expect(r.rows.map((x) => x.permission_key)).toEqual(
+      expect.arrayContaining(['checklists.publish', 'templates.manage']),
+    );
   });
 
   it('re-running the permission backfill restores the admin keys and bumps the role version', async () => {
     const s = await signupTenant(t);
-    const admin = await ownerQuery<{ id: string; version: number }>("select id, version from roles where tenant_id = $1 and system_key = 'admin'", [s.tenantId]);
+    const admin = await ownerQuery<{ id: string; version: number }>(
+      "select id, version from roles where tenant_id = $1 and system_key = 'admin'",
+      [s.tenantId],
+    );
     const { id: roleId, version: before } = admin.rows[0]!;
-    const deleted = await ownerQuery('delete from role_permissions where role_id = $1 and permission_key = any($2)', [roleId, NEW_ADMIN_KEYS]);
+    const deleted = await ownerQuery(
+      'delete from role_permissions where role_id = $1 and permission_key = any($2)',
+      [roleId, NEW_ADMIN_KEYS],
+    );
     expect(deleted.rowCount).toBe(4);
 
     await runBackfill();
 
-    const keys = await ownerQuery<{ permission_key: string }>('select permission_key from role_permissions where role_id = $1', [roleId]);
+    const keys = await ownerQuery<{ permission_key: string }>(
+      'select permission_key from role_permissions where role_id = $1',
+      [roleId],
+    );
     expect(keys.rows.map((x) => x.permission_key)).toEqual(expect.arrayContaining(NEW_ADMIN_KEYS));
     const after = await ownerQuery<{ version: number }>('select version from roles where id = $1', [roleId]);
     expect(after.rows[0]!.version).toBeGreaterThan(before);

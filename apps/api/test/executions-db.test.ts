@@ -24,9 +24,16 @@ async function asApp<T>(tenantId: string, fn: (c: pg.PoolClient) => Promise<T>):
 /** A raw site, published version, assignment and occurrence (no API), so the execution tables can be exercised alone. */
 async function seedOccurrence(tenantId: string, ownerId: string) {
   const typeId = await siteTypeIdOf(tenantId);
-  const one = async (text: string, params: unknown[]) => (await ownerQuery<{ id: string }>(text, params)).rows[0]!.id;
-  const siteId = await one("insert into sites (id, tenant_id, type_id, name, path) values (gen_random_uuid(), $1, $2, 'S', 'x') returning id", [tenantId, typeId]);
-  const checklistId = await one("insert into checklists (id, tenant_id, name, created_by_user_id) values (gen_random_uuid(), $1, 'C', $2) returning id", [tenantId, ownerId]);
+  const one = async (text: string, params: unknown[]) =>
+    (await ownerQuery<{ id: string }>(text, params)).rows[0]!.id;
+  const siteId = await one(
+    "insert into sites (id, tenant_id, type_id, name, path) values (gen_random_uuid(), $1, $2, 'S', 'x') returning id",
+    [tenantId, typeId],
+  );
+  const checklistId = await one(
+    "insert into checklists (id, tenant_id, name, created_by_user_id) values (gen_random_uuid(), $1, 'C', $2) returning id",
+    [tenantId, ownerId],
+  );
   const versionId = await one(
     `insert into checklist_versions (id, tenant_id, checklist_id, state, number, content, created_by_user_id, published_by_user_id, published_at)
      values (gen_random_uuid(), $1, $2, 'published', 1, '{}'::jsonb, $3, $3, now()) returning id`,
@@ -66,7 +73,8 @@ describe('execution tables', () => {
       [TABLES],
     );
     expect(r.rows).toHaveLength(TABLES.length);
-    for (const row of r.rows) expect(row, row.relname).toMatchObject({ relrowsecurity: true, relforcerowsecurity: true });
+    for (const row of r.rows)
+      expect(row, row.relname).toMatchObject({ relrowsecurity: true, relforcerowsecurity: true });
   });
 
   it('allows one counted execution per occurrence but any number of rejected ones', async () => {
@@ -111,7 +119,16 @@ describe('execution tables', () => {
     const b = await signupTenant(t);
     const { occurrenceId } = await seedOccurrence(a.tenantId, a.ownerId);
     const foreign = await seedOccurrence(b.tenantId, b.ownerId);
-    const foreignVersion = (await ownerQuery<{ v: string }>('select checklist_version_id as v from occurrences where id = $1', [foreign.occurrenceId])).rows[0]!.v;
-    await expect(ownerQuery('update occurrences set checklist_version_id = $1 where id = $2', [foreignVersion, occurrenceId])).rejects.toThrow(/occurrences_version_fk/);
+    const foreignVersion = (
+      await ownerQuery<{ v: string }>('select checklist_version_id as v from occurrences where id = $1', [
+        foreign.occurrenceId,
+      ])
+    ).rows[0]!.v;
+    await expect(
+      ownerQuery('update occurrences set checklist_version_id = $1 where id = $2', [
+        foreignVersion,
+        occurrenceId,
+      ]),
+    ).rejects.toThrow(/occurrences_version_fk/);
   });
 });

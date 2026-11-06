@@ -6,7 +6,8 @@ import { type Api, MONDAY_0800 } from './scheduling-fixtures';
 import { act, createTask, newTaskBody, taskWorld } from './task-fixtures';
 
 const T = (hhmm: string) => `2026-11-02T${hhmm}:00.000Z`;
-const pull = (api: Api, known: string[] = []) => api.get(`/api/v1/me/sync${known.length ? `?knownTaskIds=${known.join(',')}` : ''}`);
+const pull = (api: Api, known: string[] = []) =>
+  api.get(`/api/v1/me/sync${known.length ? `?knownTaskIds=${known.join(',')}` : ''}`);
 const taskIds = (body: { tasks: Array<{ id: string }> }) => body.tasks.map((x) => x.id);
 
 describe('tasks in the download sync', () => {
@@ -29,7 +30,15 @@ describe('tasks in the download sync', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(taskIds(res.body)).toEqual([mine.id, team.id]);
     expect(res.body.removedTaskIds).toEqual([]);
-    expect(res.body.tasks[0]).toMatchObject({ id: mine.id, status: 'new', assignee: { id: w1.id }, instructions: 'Qapının rezinini dəyişin.', media: [], submissions: [], problem: null });
+    expect(res.body.tasks[0]).toMatchObject({
+      id: mine.id,
+      status: 'new',
+      assignee: { id: w1.id },
+      instructions: 'Qapının rezinini dəyişin.',
+      media: [],
+      submissions: [],
+      problem: null,
+    });
     expect(res.body.tasks[0]).not.toHaveProperty('history');
     expect(res.body.tasks[0]).not.toHaveProperty('canManage');
     expect(taskIds((await pull(w2.api)).body)).toEqual([team.id, theirs.id]);
@@ -54,7 +63,10 @@ describe('tasks in the download sync', () => {
     const moved = await createTask(w.manager.api, newTaskBody({ userId: w1.id }));
     clock.set(T('04:20'));
     await act(w1.api, done.id, 'start', T('04:10'));
-    expect((await w1.api.post(`/api/v1/tasks/${done.id}/submissions`, { id: uuidv7(), submittedAt: T('04:15') })).body.status).toBe('completed');
+    expect(
+      (await w1.api.post(`/api/v1/tasks/${done.id}/submissions`, { id: uuidv7(), submittedAt: T('04:15') }))
+        .body.status,
+    ).toBe('completed');
     await act(w2.api, team.id, 'accept', T('04:16'));
     await w.manager.api.patch(`/api/v1/tasks/${moved.id}`, { assignee: { userId: w2.id } });
     const known = [done.id, team.id, moved.id];

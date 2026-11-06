@@ -4,15 +4,32 @@ import { OccurrenceJobs } from '../src/scheduling/occurrence-jobs';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
 import { ownerQuery } from './owner-db';
-import { createAssignment, fixed, live, MONDAY_0800, occurrenceRows, schedulingWorld } from './scheduling-fixtures';
+import {
+  createAssignment,
+  fixed,
+  live,
+  MONDAY_0800,
+  occurrenceRows,
+  schedulingWorld,
+} from './scheduling-fixtures';
 
 const historyOf = async (occurrenceId: string) =>
   (
-    await ownerQuery<{ from_status: string | null; to_status: string; at: Date; actor_user_id: string | null }>(
+    await ownerQuery<{
+      from_status: string | null;
+      to_status: string;
+      at: Date;
+      actor_user_id: string | null;
+    }>(
       'select from_status, to_status, at, actor_user_id from occurrence_status_history where occurrence_id = $1 order by at, id',
       [occurrenceId],
     )
-  ).rows.map((r) => [r.from_status, r.to_status, r.at.toISOString(), r.actor_user_id === null ? 'system' : 'user']);
+  ).rows.map((r) => [
+    r.from_status,
+    r.to_status,
+    r.at.toISOString(),
+    r.actor_user_id === null ? 'system' : 'user',
+  ]);
 
 describe('occurrence jobs', () => {
   const clock = new FakeClock(MONDAY_0800);
@@ -40,7 +57,9 @@ describe('occurrence jobs', () => {
     const w = await schedulingWorld(t);
     const a = await createAssignment(w);
     const second = (await occurrenceRows(a.id))[1]!;
-    await ownerQuery("update occurrences set status = 'cancelled', cancel_reason = 'Bayram' where id = $1", [second.id]);
+    await ownerQuery("update occurrences set status = 'cancelled', cancel_reason = 'Bayram' where id = $1", [
+      second.id,
+    ]);
     clock.set('2026-11-03T04:00:00Z');
     await jobs.materializeAll([w.s.tenantId]);
     const rows = live(await occurrenceRows(a.id));
@@ -61,21 +80,32 @@ describe('occurrence jobs', () => {
       ['pending', 'overdue', '2026-11-02T06:00:00.000Z', 'system'],
       ['overdue', 'missed', '2026-11-02T07:00:00.000Z', 'system'],
     ]);
-    const row = await ownerQuery<{ status: string; status_changed_at: Date }>('select status, status_changed_at from occurrences where id = $1', [first.id]);
-    expect(row.rows[0]).toMatchObject({ status: 'missed', status_changed_at: new Date('2026-11-02T07:00:00Z') });
+    const row = await ownerQuery<{ status: string; status_changed_at: Date }>(
+      'select status, status_changed_at from occurrences where id = $1',
+      [first.id],
+    );
+    expect(row.rows[0]).toMatchObject({
+      status: 'missed',
+      status_changed_at: new Date('2026-11-02T07:00:00Z'),
+    });
   });
 
   it('never records a sweep transition before the occurrence was created', async () => {
     const w = await schedulingWorld(t);
     clock.set('2026-11-02T05:30:00Z'); // 09:30: today's window (due 09:00, closes 11:00) is already overdue
-    const first = (await occurrenceRows((await createAssignment(w, { timing: fixed('08:00', 60, 120) })).id))[0]!;
+    const first = (
+      await occurrenceRows((await createAssignment(w, { timing: fixed('08:00', 60, 120) })).id)
+    )[0]!;
     clock.set('2026-11-02T05:31:00Z');
     expect(await jobs.sweepAll([w.s.tenantId])).toBe(1);
     expect(await historyOf(first.id)).toEqual([
       [null, 'pending', '2026-11-02T05:30:00.000Z', 'user'],
       ['pending', 'overdue', '2026-11-02T05:30:00.000Z', 'system'],
     ]);
-    const row = await ownerQuery<{ status_changed_at: Date }>('select status_changed_at from occurrences where id = $1', [first.id]);
+    const row = await ownerQuery<{ status_changed_at: Date }>(
+      'select status_changed_at from occurrences where id = $1',
+      [first.id],
+    );
     expect(row.rows[0]!.status_changed_at).toEqual(new Date('2026-11-02T05:30:00Z'));
   });
 
@@ -94,10 +124,14 @@ describe('occurrence jobs', () => {
 
   it('records a single pending → missed when there is no grace period', async () => {
     const w = await schedulingWorld(t);
-    const first = (await occurrenceRows((await createAssignment(w, { timing: fixed('08:00', 120, 0) })).id))[0]!;
+    const first = (
+      await occurrenceRows((await createAssignment(w, { timing: fixed('08:00', 120, 0) })).id)
+    )[0]!;
     clock.set('2026-11-02T06:00:00Z');
     await jobs.sweepAll([w.s.tenantId]);
-    expect((await historyOf(first.id)).slice(1)).toEqual([['pending', 'missed', '2026-11-02T06:00:00.000Z', 'system']]);
+    expect((await historyOf(first.id)).slice(1)).toEqual([
+      ['pending', 'missed', '2026-11-02T06:00:00.000Z', 'system'],
+    ]);
   });
 
   it('emits occurrence.status_changed for every transition', async () => {

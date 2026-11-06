@@ -36,11 +36,17 @@ describe('login', () => {
       { orgCode: 'no-such-org', username: w.username, secret: w.secret },
     ];
     for (const a of attempts) {
-      const res = await t.http().post('/api/v1/auth/login/worker').send({ ...a, client: 'mobile' });
+      const res = await t
+        .http()
+        .post('/api/v1/auth/login/worker')
+        .send({ ...a, client: 'mobile' });
       expect(res.status).toBe(401);
       expect(res.body.error.code).toBe('INVALID_CREDENTIALS');
     }
-    const failed = await ownerQuery("select after from audit_log where tenant_id = $1 and action = 'auth.login_failed'", [s.tenantId]);
+    const failed = await ownerQuery(
+      "select after from audit_log where tenant_id = $1 and action = 'auth.login_failed'",
+      [s.tenantId],
+    );
     expect(failed.rows.map((r) => r.after.reason).sort()).toEqual(['bad_secret', 'inactive']);
   });
 
@@ -48,7 +54,10 @@ describe('login', () => {
     const s = await signupTenant(t);
     const w = await createUserDirect(t, s.tenantId);
     const attempt = (secret: string) =>
-      t.http().post('/api/v1/auth/login/worker').send({ orgCode: s.orgCode, username: w.username, secret, client: 'mobile' });
+      t
+        .http()
+        .post('/api/v1/auth/login/worker')
+        .send({ orgCode: s.orgCode, username: w.username, secret, client: 'mobile' });
     for (let i = 0; i < 4; i++) expect((await attempt('000001')).body.error.code).toBe('INVALID_CREDENTIALS');
     const fifth = await attempt('000001');
     expect(fifth.status).toBe(429);
@@ -66,7 +75,10 @@ describe('login', () => {
     const s = await signupTenant(t);
     const w = await createUserDirect(t, s.tenantId);
     const attempt = (secret: string) =>
-      t.http().post('/api/v1/auth/login/worker').send({ orgCode: s.orgCode, username: w.username, secret, client: 'mobile' });
+      t
+        .http()
+        .post('/api/v1/auth/login/worker')
+        .send({ orgCode: s.orgCode, username: w.username, secret, client: 'mobile' });
     await Promise.all(Array.from({ length: 6 }, () => attempt('000001')));
     const row = await ownerQuery('select failed_login_count, locked_until from users where id = $1', [w.id]);
     expect(row.rows[0]!.failed_login_count).toBeGreaterThanOrEqual(5);
@@ -77,8 +89,14 @@ describe('login', () => {
   it('an expired lock restarts the count', async () => {
     const s = await signupTenant(t);
     const w = await createUserDirect(t, s.tenantId);
-    await ownerQuery("update users set failed_login_count = 5, locked_until = now() - interval '1 second' where id = $1", [w.id]);
-    const res = await t.http().post('/api/v1/auth/login/worker').send({ orgCode: s.orgCode, username: w.username, secret: '000001', client: 'mobile' });
+    await ownerQuery(
+      "update users set failed_login_count = 5, locked_until = now() - interval '1 second' where id = $1",
+      [w.id],
+    );
+    const res = await t
+      .http()
+      .post('/api/v1/auth/login/worker')
+      .send({ orgCode: s.orgCode, username: w.username, secret: '000001', client: 'mobile' });
     expect(res.status).toBe(401);
     expect(res.body.error.code).toBe('INVALID_CREDENTIALS');
     const row = await ownerQuery('select failed_login_count, locked_until from users where id = $1', [w.id]);
@@ -88,7 +106,10 @@ describe('login', () => {
   it('refuses login for a suspended tenant after correct credentials', async () => {
     const s = await signupTenant(t);
     await ownerQuery("update tenants set status = 'suspended' where id = $1", [s.tenantId]);
-    const res = await t.http().post('/api/v1/auth/login/staff').send({ email: s.email, password: s.password, client: 'web' });
+    const res = await t
+      .http()
+      .post('/api/v1/auth/login/staff')
+      .send({ email: s.email, password: s.password, client: 'web' });
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe('TENANT_SUSPENDED');
   });
@@ -104,7 +125,11 @@ describe('login rate limiting', () => {
   it('limits attempts per IP', async () => {
     const ip = `10.${randomBytes(1)[0]}.${randomBytes(1)[0]}.${randomBytes(1)[0]}`;
     const attempt = () =>
-      t.http().post('/api/v1/auth/login/staff').set('X-Forwarded-For', ip).send({ email: 'x@y.az', password: 'x', client: 'web' });
+      t
+        .http()
+        .post('/api/v1/auth/login/staff')
+        .set('X-Forwarded-For', ip)
+        .send({ email: 'x@y.az', password: 'x', client: 'web' });
     for (let i = 0; i < 3; i++) expect((await attempt()).status).toBe(401);
     const blocked = await attempt();
     expect(blocked.status).toBe(429);
@@ -143,18 +168,27 @@ describe('refresh', () => {
     const s = await signupTenant(t);
     const first = await loginStaff(t, s.email, s.password);
     const second = await refresh(first.refreshToken!);
-    await ownerQuery("update sessions set revoked_at = now() - interval '60 seconds' where replaced_by is not null and user_id = $1", [s.ownerId]);
+    await ownerQuery(
+      "update sessions set revoked_at = now() - interval '60 seconds' where replaced_by is not null and user_id = $1",
+      [s.ownerId],
+    );
     const reuse = await refresh(first.refreshToken!);
     expect(reuse.status).toBe(401);
     expect(reuse.body.error.code).toBe('UNAUTHENTICATED');
     expect((await refresh(second.body.refreshToken)).status).toBe(401);
-    const audit = await ownerQuery("select 1 from audit_log where tenant_id = $1 and action = 'auth.refresh_reuse_detected'", [s.tenantId]);
+    const audit = await ownerQuery(
+      "select 1 from audit_log where tenant_id = $1 and action = 'auth.refresh_reuse_detected'",
+      [s.tenantId],
+    );
     expect(audit.rowCount).toBe(1);
   });
 
   it('works from the web cookie and sets a new cookie', async () => {
     const s = await signupTenant(t);
-    const login = await t.http().post('/api/v1/auth/login/staff').send({ email: s.email, password: s.password, client: 'web' });
+    const login = await t
+      .http()
+      .post('/api/v1/auth/login/staff')
+      .send({ email: s.email, password: s.password, client: 'web' });
     const cookie = String(login.headers['set-cookie']).split(';')[0]!;
     const res = await t.http().post('/api/v1/auth/refresh').set('Cookie', cookie).send({});
     expect(res.status).toBe(200);
@@ -170,7 +204,9 @@ describe('refresh', () => {
     expect((await refresh(a.refreshToken!)).status).toBe(401);
 
     const b = await loginStaff(t, s.email, s.password);
-    await ownerQuery("update sessions set expires_at = now() - interval '1 second' where user_id = $1", [s.ownerId]);
+    await ownerQuery("update sessions set expires_at = now() - interval '1 second' where user_id = $1", [
+      s.ownerId,
+    ]);
     expect((await refresh(b.refreshToken!)).status).toBe(401);
   });
 

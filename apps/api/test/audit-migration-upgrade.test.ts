@@ -64,7 +64,13 @@ describe('upgrading an existing database to the SP8 migrations (0015, 0016)', ()
       const applied = await before.query('select count(*)::int as n from drizzle.__drizzle_migrations');
       expect(applied.rows[0].n).toBe(15);
       expect((await before.query("select to_regclass('public.audits') as t")).rows[0].t).toBeNull();
-      expect((await before.query("select 1 from pg_enum e join pg_type t on t.oid = e.enumtypid where t.typname = 'occurrence_status' and e.enumlabel = 'correction_required'")).rowCount).toBe(0);
+      expect(
+        (
+          await before.query(
+            "select 1 from pg_enum e join pg_type t on t.oid = e.enumtypid where t.typname = 'occurrence_status' and e.enumlabel = 'correction_required'",
+          )
+        ).rowCount,
+      ).toBe(0);
     } finally {
       await before.end();
     }
@@ -76,14 +82,25 @@ describe('upgrading an existing database to the SP8 migrations (0015, 0016)', ()
     try {
       const applied = await after.query('select count(*)::int as n from drizzle.__drizzle_migrations');
       // Every migration in the journal, whatever has been added since 0016.
-      const journalEntries = (JSON.parse(readFileSync(path.join(DRIZZLE_DIR, 'meta', '_journal.json'), 'utf8')) as { entries: unknown[] }).entries.length;
+      const journalEntries = (
+        JSON.parse(readFileSync(path.join(DRIZZLE_DIR, 'meta', '_journal.json'), 'utf8')) as {
+          entries: unknown[];
+        }
+      ).entries.length;
       expect(applied.rows[0].n).toBe(journalEntries);
       const tables = await after.query(
         "select relname from pg_class where relname = any($1) and relkind = 'r' order by relname",
         [['audit_item_verdicts', 'audits', 'execution_corrections', 'execution_rework_requests']],
       );
-      expect(tables.rows.map((r) => r.relname)).toEqual(['audit_item_verdicts', 'audits', 'execution_corrections', 'execution_rework_requests']);
-      const triggers = await after.query("select 1 from pg_trigger where tgname = 'executions_original_immutable'");
+      expect(tables.rows.map((r) => r.relname)).toEqual([
+        'audit_item_verdicts',
+        'audits',
+        'execution_corrections',
+        'execution_rework_requests',
+      ]);
+      const triggers = await after.query(
+        "select 1 from pg_trigger where tgname = 'executions_original_immutable'",
+      );
       expect(triggers.rowCount).toBe(1);
     } finally {
       await after.end();

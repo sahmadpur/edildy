@@ -22,7 +22,11 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
   });
 
   const upload = (ticket: MediaUploadTicket, body: Buffer) =>
-    fetch(ticket.uploadUrl!, { method: 'PUT', body: new Uint8Array(body), headers: { 'Content-Type': ticket.headers['Content-Type']! } });
+    fetch(ticket.uploadUrl!, {
+      method: 'PUT',
+      body: new Uint8Array(body),
+      headers: { 'Content-Type': ticket.headers['Content-Type']! },
+    });
 
   it('registers, uploads through the presigned PUT and confirms', async () => {
     const { w, executionId, api } = await liveExecution(t);
@@ -34,7 +38,9 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
     expect(res.body).toMatchObject({ mediaId: id, status: 'uploaded' });
     expect((await api.post(`/api/v1/media/${id}/uploaded`)).body.uploadedAt).toBe(res.body.uploadedAt);
     expect((await mediaRow(id)).status).toBe('uploaded');
-    expect((await w.workers[1].api.post(`/api/v1/media/${id}/uploaded`)).body.error.code).toBe('NOT_EXECUTOR');
+    expect((await w.workers[1].api.post(`/api/v1/media/${id}/uploaded`)).body.error.code).toBe(
+      'NOT_EXECUTOR',
+    );
   });
 
   it('answers a replayed registration of an uploaded medium without a new PUT URL, so stored evidence cannot be overwritten', async () => {
@@ -44,9 +50,18 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
     expect((await upload(ticket, bytes)).status).toBe(200);
     expect((await api.post(`/api/v1/media/${id}/uploaded`)).body.status).toBe('uploaded');
     const now = new Date().toISOString();
-    const replay = await api.post(`/api/v1/executions/${executionId}/media`, photoBody(w.c.photo.id, { id, bytes: bytes.length, capturedAt: now, deviceTime: now }));
+    const replay = await api.post(
+      `/api/v1/executions/${executionId}/media`,
+      photoBody(w.c.photo.id, { id, bytes: bytes.length, capturedAt: now, deviceTime: now }),
+    );
     expect(replay.status, JSON.stringify(replay.body)).toBe(200);
-    expect(replay.body).toEqual({ mediaId: id, status: 'uploaded', uploadUrl: null, headers: {}, expiresAt: null });
+    expect(replay.body).toEqual({
+      mediaId: id,
+      status: 'uploaded',
+      uploadUrl: null,
+      headers: {},
+      expiresAt: null,
+    });
   });
 
   it('confirming before the PUT finished is refused and can be retried', async () => {
@@ -65,7 +80,9 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
     const { id, ticket } = await registerBytes(api, executionId, w.c.photo.id, 1000);
     // The signed Content-Length makes storage refuse the PUT (403); if it ever accepts it, the HEAD check still does.
     expect([200, 403]).toContain((await upload(ticket, Buffer.alloc(999, 3))).status);
-    expect((await api.post(`/api/v1/media/${id}/uploaded`)).body.error.code).toBe('MEDIA_NOT_FOUND_IN_STORAGE');
+    expect((await api.post(`/api/v1/media/${id}/uploaded`)).body.error.code).toBe(
+      'MEDIA_NOT_FOUND_IN_STORAGE',
+    );
   });
 
   it('issues view URLs to the executor and in-scope viewers only', async () => {
@@ -75,7 +92,11 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
     await upload(ticket, bytes);
     await api.post(`/api/v1/media/${id}/uploaded`);
     const manager = async (siteId: string) => {
-      const u = await createUserDirect(t, w.s.tenantId, { kind: 'staff', roleKey: 'manager', emailVerified: true });
+      const u = await createUserDirect(t, w.s.tenantId, {
+        kind: 'staff',
+        roleKey: 'manager',
+        emailVerified: true,
+      });
       await w.owner.put(`/api/v1/users/${u.id}/sites`, { siteIds: [siteId] });
       return as(t, (await loginStaff(t, u.email!, u.secret)).accessToken);
     };
@@ -87,7 +108,9 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
     expect((await (await manager(w.otherSiteId)).get(`/api/v1/media/${id}/url`)).status).toBe(404);
     expect((await w.workers[1].api.get(`/api/v1/media/${id}/url`)).status).toBe(404);
     const pending = await registerBytes(api, executionId, null, 10);
-    expect((await api.get(`/api/v1/media/${pending.id}/url`)).body.error.code).toBe('MEDIA_NOT_FOUND_IN_STORAGE');
+    expect((await api.get(`/api/v1/media/${pending.id}/url`)).body.error.code).toBe(
+      'MEDIA_NOT_FOUND_IN_STORAGE',
+    );
   });
 
   it('deletes the objects of media never confirmed after 14 days, once, and keeps the rows', async () => {
@@ -96,8 +119,12 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
     const recent = await registerBytes(api, executionId, null, 10);
     expect((await upload(old.ticket, Buffer.alloc(10))).status).toBe(200);
     expect((await upload(recent.ticket, Buffer.alloc(10))).status).toBe(200);
-    await ownerQuery("update execution_media set created_at = now() - interval '15 days' where id = $1", [old.id]);
-    await ownerQuery("update execution_media set created_at = now() - interval '13 days' where id = $1", [recent.id]);
+    await ownerQuery("update execution_media set created_at = now() - interval '15 days' where id = $1", [
+      old.id,
+    ]);
+    await ownerQuery("update execution_media set created_at = now() - interval '13 days' where id = $1", [
+      recent.id,
+    ]);
     const jobs = t.app.get(MediaJobs);
     const s3 = t.app.get(S3Service);
     expect(await jobs.cleanupAll([w.s.tenantId])).toBe(1);

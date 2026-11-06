@@ -6,7 +6,15 @@ import { as, roleIdOf, signupTenant } from './fixtures';
 import { staffAt } from './notification-fixtures';
 import { ownerQuery } from './owner-db';
 
-const full = { enabled: true, push: false, email: true, notifyAssignees: true, notifyCreator: true, roleIds: [] as string[], leadMinutes: null };
+const full = {
+  enabled: true,
+  push: false,
+  email: true,
+  notifyAssignees: true,
+  notifyCreator: true,
+  roleIds: [] as string[],
+  leadMinutes: null,
+};
 
 describe('notification rules API', () => {
   let t: TestApp;
@@ -23,7 +31,16 @@ describe('notification rules API', () => {
     const manager = await roleIdOf(s.tenantId, 'manager');
     const admin = await roleIdOf(s.tenantId, 'admin');
     expect(res.body.find((r: { type: string }) => r.type === 'problem.critical')).toEqual({
-      type: 'problem.critical', enabled: true, push: true, email: true, notifyAssignees: false, notifyCreator: false, roleIds: [manager, admin], leadMinutes: null, resultFilter: null, isDefault: true,
+      type: 'problem.critical',
+      enabled: true,
+      push: true,
+      email: true,
+      notifyAssignees: false,
+      notifyCreator: false,
+      roleIds: [manager, admin],
+      leadMinutes: null,
+      resultFilter: null,
+      isDefault: true,
     });
   });
 
@@ -31,19 +48,39 @@ describe('notification rules API', () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
     const manager = await roleIdOf(s.tenantId, 'manager');
-    const saved = await owner.put('/api/v1/notification-rules/task.overdue', { ...full, roleIds: [manager, manager] });
+    const saved = await owner.put('/api/v1/notification-rules/task.overdue', {
+      ...full,
+      roleIds: [manager, manager],
+    });
     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
-    expect(saved.body).toEqual({ type: 'task.overdue', ...full, roleIds: [manager], resultFilter: null, isDefault: false });
-    expect((await owner.get('/api/v1/notification-rules')).body.find((r: { type: string }) => r.type === 'task.overdue').isDefault).toBe(false);
+    expect(saved.body).toEqual({
+      type: 'task.overdue',
+      ...full,
+      roleIds: [manager],
+      resultFilter: null,
+      isDefault: false,
+    });
+    expect(
+      (await owner.get('/api/v1/notification-rules')).body.find(
+        (r: { type: string }) => r.type === 'task.overdue',
+      ).isDefault,
+    ).toBe(false);
     const reset = await owner.delete('/api/v1/notification-rules/task.overdue');
     expect(reset.status).toBe(200);
     expect(reset.body).toMatchObject({ type: 'task.overdue', push: true, email: false, isDefault: true });
     expect((await owner.delete('/api/v1/notification-rules/task.overdue')).status).toBe(200);
-    const audit = await ownerQuery<{ action: string; entity_type: string; entity_id: string | null; after: { type: string; isDefault: boolean } }>(
+    const audit = await ownerQuery<{
+      action: string;
+      entity_type: string;
+      entity_id: string | null;
+      after: { type: string; isDefault: boolean };
+    }>(
       "select action, entity_type, entity_id, after from audit_log where tenant_id = $1 and entity_type = 'notification_rule' order by occurred_at, id",
       [s.tenantId],
     );
-    expect(audit.rows.map((r) => [r.action, r.entity_type, r.entity_id, r.after.type, r.after.isDefault])).toEqual([
+    expect(
+      audit.rows.map((r) => [r.action, r.entity_type, r.entity_id, r.after.type, r.after.isDefault]),
+    ).toEqual([
       ['notification_rule.updated', 'notification_rule', null, 'task.overdue', false],
       ['notification_rule.reset', 'notification_rule', null, 'task.overdue', true],
     ]);
@@ -52,21 +89,38 @@ describe('notification rules API', () => {
   it('checks the lead time, the audiences and the roles', async () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
-    const bad = async (type: string, body: object) => (await owner.put(`/api/v1/notification-rules/${type}`, body)).body.error;
+    const bad = async (type: string, body: object) =>
+      (await owner.put(`/api/v1/notification-rules/${type}`, body)).body.error;
     expect(await bad('checklist.due_soon', { ...full, notifyCreator: false })).toMatchObject({
-      code: 'VALIDATION_FAILED', fields: { leadMinutes: 'notifications.issues.leadMinutesRequired' },
+      code: 'VALIDATION_FAILED',
+      fields: { leadMinutes: 'notifications.issues.leadMinutesRequired' },
     });
     expect(await bad('problem.recorded', { ...full, leadMinutes: 30 })).toMatchObject({
       code: 'VALIDATION_FAILED',
-      fields: { leadMinutes: 'notifications.issues.leadMinutesNotApplicable', notifyAssignees: 'notifications.issues.audienceNotApplicable', notifyCreator: 'notifications.issues.audienceNotApplicable' },
+      fields: {
+        leadMinutes: 'notifications.issues.leadMinutesNotApplicable',
+        notifyAssignees: 'notifications.issues.audienceNotApplicable',
+        notifyCreator: 'notifications.issues.audienceNotApplicable',
+      },
     });
-    expect(await bad('task.assigned', { ...full, leadMinutes: 45 })).toMatchObject({ code: 'VALIDATION_FAILED' });
-    expect(await bad('task.assigned', { ...full, roleIds: [uuidv7()] })).toMatchObject({ code: 'REFERENCE_NOT_FOUND', fields: { roleIds: 'errors.REFERENCE_NOT_FOUND' } });
+    expect(await bad('task.assigned', { ...full, leadMinutes: 45 })).toMatchObject({
+      code: 'VALIDATION_FAILED',
+    });
+    expect(await bad('task.assigned', { ...full, roleIds: [uuidv7()] })).toMatchObject({
+      code: 'REFERENCE_NOT_FOUND',
+      fields: { roleIds: 'errors.REFERENCE_NOT_FOUND' },
+    });
     const other = await signupTenant(t);
-    expect(await bad('task.assigned', { ...full, roleIds: [await roleIdOf(other.tenantId, 'manager')] })).toMatchObject({ code: 'REFERENCE_NOT_FOUND' });
+    expect(
+      await bad('task.assigned', { ...full, roleIds: [await roleIdOf(other.tenantId, 'manager')] }),
+    ).toMatchObject({ code: 'REFERENCE_NOT_FOUND' });
     expect((await owner.put('/api/v1/notification-rules/manual', full)).status).toBe(404);
     expect((await owner.get('/api/v1/notification-rules/nope')).status).toBe(404);
-    const ok = await owner.put('/api/v1/notification-rules/checklist.due_soon', { ...full, notifyCreator: false, leadMinutes: 120 });
+    const ok = await owner.put('/api/v1/notification-rules/checklist.due_soon', {
+      ...full,
+      notifyCreator: false,
+      leadMinutes: 120,
+    });
     expect(ok.body).toMatchObject({ leadMinutes: 120, isDefault: false });
   });
 
@@ -74,9 +128,24 @@ describe('notification rules API', () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
     const manager = await roleIdOf(s.tenantId, 'manager');
-    expect((await owner.put('/api/v1/notification-rules/task.completed', { ...full, notifyAssignees: false, roleIds: [manager] })).status).toBe(200);
-    await ownerQuery("update notification_rules set role_ids = role_ids || $2::uuid where tenant_id = $1 and type = 'task.completed'", [s.tenantId, uuidv7()]);
-    expect((await owner.get('/api/v1/notification-rules')).body.find((r: { type: string }) => r.type === 'task.completed').roleIds).toEqual([manager]);
+    expect(
+      (
+        await owner.put('/api/v1/notification-rules/task.completed', {
+          ...full,
+          notifyAssignees: false,
+          roleIds: [manager],
+        })
+      ).status,
+    ).toBe(200);
+    await ownerQuery(
+      "update notification_rules set role_ids = role_ids || $2::uuid where tenant_id = $1 and type = 'task.completed'",
+      [s.tenantId, uuidv7()],
+    );
+    expect(
+      (await owner.get('/api/v1/notification-rules')).body.find(
+        (r: { type: string }) => r.type === 'task.completed',
+      ).roleIds,
+    ).toEqual([manager]);
   });
 
   it('needs notifications.manage', async () => {
