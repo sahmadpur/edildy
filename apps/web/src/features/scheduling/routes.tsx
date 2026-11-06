@@ -8,8 +8,9 @@ import { OCCURRENCE_TABS, type OccurrenceTab } from './occurrence-dialog';
 import { RosterPage } from './roster-page';
 import { SchedulePage } from './schedule-page';
 import { ShiftsPage } from './shifts-page';
+import { WorkTabs } from './work-tabs';
 
-type TabPath = '/assignments' | '/schedule' | '/shifts' | '/roster';
+type TabPath = '/shifts' | '/roster';
 
 /** Two sibling routes shown as the tabs of one page; the tab strip is a nav of links, so each keeps its URL. */
 function RouteTabs({ label, tabs, active }: { label: string; tabs: readonly { to: TabPath; labelKey: string }[]; active: TabPath }) {
@@ -23,26 +24,18 @@ function RouteTabs({ label, tabs, active }: { label: string; tabs: readonly { to
   return <PageTabs label={label} tabs={tabs.map((tab) => ({ key: tab.to, label: t(tab.labelKey), href: tab.to, active: tab.to === active, onClick: go(tab.to) }))} />;
 }
 
-const ASSIGNMENT_TABS = [
-  { to: '/assignments', labelKey: 'nav.assignments' },
-  { to: '/schedule', labelKey: 'nav.schedule' },
-] as const;
 const SHIFT_TABS = [
   { to: '/shifts', labelKey: 'nav.shifts' },
   { to: '/roster', labelKey: 'nav.roster' },
 ] as const;
 
-function AssignmentTabs({ active }: { active: '/assignments' | '/schedule' }) {
-  const { t } = useTranslation();
-  return <RouteTabs label={t('scheduling.assignments.title')} tabs={ASSIGNMENT_TABS} active={active} />;
-}
 function ShiftTabs({ active }: { active: '/shifts' | '/roster' }) {
   const { t } = useTranslation();
   return <RouteTabs label={t('scheduling.shifts.title')} tabs={SHIFT_TABS} active={active} />;
 }
 
 export function AssignmentsRoute() {
-  return <AssignmentsPage tabs={<AssignmentTabs active="/assignments" />} />;
+  return <AssignmentsPage tabs={<WorkTabs active="/assignments" />} />;
 }
 
 export function ShiftsRoute() {
@@ -81,6 +74,6 @@ export function ScheduleRoute() {
   const s = useSearch({ strict: false }) as ScheduleSearch;
   // A new link remounts the page, so its week and drawer replace the current ones.
   return (
-    <SchedulePage key={`${s.date ?? ''}|${s.occurrence ?? ''}|${s.tab ?? ''}`} initialDate={s.date} initialOccurrenceId={s.occurrence} initialTab={s.tab} tabs={<AssignmentTabs active="/schedule" />} />
+    <SchedulePage key={`${s.date ?? ''}|${s.occurrence ?? ''}|${s.tab ?? ''}`} initialDate={s.date} initialOccurrenceId={s.occurrence} initialTab={s.tab} tabs={<WorkTabs active="/schedule" />} />
   );
 }

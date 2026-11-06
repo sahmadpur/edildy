@@ -40,9 +40,9 @@ export const scheduleSummary = (t: TFunction, r: Recurrence, timing: Timing, shi
 export const cancelReasonText = (t: TFunction, reason: string | null): string | null =>
   reason !== null && (CANCEL_REASON_CODES as readonly string[]).includes(reason) ? t(`scheduling.cancelReasons.${reason}`) : reason;
 
-/** 'YYYY-MM-DD' as a short date with the weekday, in the UI language; never shifted by a time zone. */
+/** 'YYYY-MM-DD' as a short date ("4 Noy 2026", no weekday), in the UI language; never shifted by a time zone. */
 export function formatLocalDate(date: string, locale = 'az'): string {
-  return formatLocalDateIn(date, locale, { weekday: true });
+  return formatLocalDateIn(date, locale);
 }
 
 export function useTimeFormat(): (iso: string) => string {

@@ -38,7 +38,7 @@ export function TemplatesPage() {
 
   return (
     <div>
-      <PageHeader title={t('checklists.title')} actions={ws.can.templates && <Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
+      <PageHeader title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} actions={ws.can.templates && <Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
       <ChecklistTabs active="templates" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         {/* Pills: a filter inside the Şablonlar tab, not another row of page tabs. */}

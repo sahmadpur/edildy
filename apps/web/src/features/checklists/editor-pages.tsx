@@ -89,6 +89,21 @@ export function ChecklistDraftPage({ checklistId }: { checklistId: string }) {
         setReloadKey((k) => k + 1);
       }}
       onBack={() => ws.go(`/checklists/${checklistId}`)}
+      onCancel={
+        ws.can.manage
+          ? async () => {
+              try {
+                await ws.checklists.discardDraft(checklistId);
+                // A checklist that was never published is nothing without its draft: it leaves the active list too.
+                if (c.currentVersionId === null) await ws.checklists.deactivate(checklistId);
+                await qc.invalidateQueries({ queryKey: [ws.scope, 'checklists'] });
+                ws.go(c.currentVersionId === null ? '/checklists' : `/checklists/${checklistId}`);
+              } catch (e) {
+                toast.error(errorText(t, e));
+              }
+            }
+          : undefined
+      }
     />
   );
 }

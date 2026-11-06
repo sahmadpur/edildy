@@ -11,6 +11,8 @@ export interface ChecklistWorkspace {
   can: { manage: boolean; publish: boolean; templates: boolean };
   /** Route prefix: '' for tenant users, `/platform/tenants/<id>` for platform admins. */
   base: string;
+  /** Where the checklist pages sit: as tabs of the tenant's Yoxlamalar page ('work'), or on their own two tabs ('own'). */
+  tabs: 'work' | 'own';
   /** Query-key scope so tenant and platform caches never mix. */
   scope: string;
   timeZone: string;
@@ -42,6 +44,7 @@ export function TenantWorkspace({ children }: { children: ReactNode }) {
       templates: api.templates,
       can: { manage, publish, templates },
       base: '',
+      tabs: 'work',
       scope: 'tenant',
       timeZone: me.tenant.timezone,
       go: (to) => void navigate({ to: to as '/' }),
@@ -59,6 +62,7 @@ export function PlatformTenantWorkspace({ tenantId, children }: { tenantId: stri
       ...platformApi.inTenant(tenantId),
       can: { manage: true, publish: true, templates: true },
       base,
+      tabs: 'own',
       scope: `platform:${tenantId}`,
       timeZone: 'Asia/Baku',
       go: (to) => void navigate({ to: `${base}${to}` as '/' }),

@@ -10,17 +10,15 @@ import { Button } from '@/components/ui/button';
 import { isSingleDay, percentText } from '@/features/reports/labels';
 import { reportKeys, summaryQueryOptions } from '@/features/reports/queries';
 import { RunsTab } from '@/features/reports/runs-tab';
-import { TrendChart } from '@/features/reports/trend-chart';
 import { formatLocalDate, useTenantToday, useTimeFormat } from '@/features/scheduling/labels';
 import { errorText } from '@/lib/errors';
 import { useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { StatusBreakdown } from './status-breakdown';
 
 /** The four boxes, left to right. */
 export const HOME_PERIODS: readonly PeriodPreset[] = ['today', 'yesterday', 'last_7', 'last_30'];
 export const DEFAULT_HOME_PERIOD: PeriodPreset = 'today';
-export const DEFAULT_HOME_BUCKET: RunBucket = 'planned';
+export const DEFAULT_HOME_BUCKET: RunBucket = 'all';
 
 /** A figure is a toggle: a saffron rule under the number says which list is open; hover and focus show the same rule faintly. */
 const PRESSABLE = 'border-b-2 border-transparent transition-colors group-hover:border-saffron/40 hover:border-saffron/40 group-focus-visible:border-saffron focus-visible:border-saffron';
@@ -38,8 +36,8 @@ const OUTCOMES: readonly BoxStat[] = [
 /**
  * The web home page for reports.view holders. Four boxes (today, yesterday, the last 7 and 30 days) each carry the
  * period's planned, completed, with-problems and late counts, all live at once. One box is selected (today on
- * arrival); the status breakdown, the trend (for a span of days) and the runs of that period sit under the boxes. A
- * count inside a box selects its period and opens that count's runs. Nothing here leaves the page. The numbers are
+ * arrival); its completion %, average score and runs table sit under the boxes. A count inside a box selects its
+ * period and opens that count's runs. Nothing here leaves the page. The numbers are
  * polled every minute while visible; "today" is read on every render, so a page left open past midnight moves on
  * with the next poll (reports decision 10).
  */
@@ -192,38 +190,31 @@ function PeriodDetail({
   const label = t(`reports.periods.${period}`);
   const range = useRangeText(filters);
   const summary = query.data;
-  const multiDay = !isSingleDay(filters);
+  const measures = [
+    { key: 'completionPercent', name: t('reports.measures.completionPercent'), value: summary?.completionPercent ?? null, hint: t('reports.measures.completionHint') },
+    { key: 'averageScore', name: t('reports.measures.averageScore'), value: summary?.averageScore ?? null, hint: undefined },
+  ] as const;
   return (
     <section aria-label={label} className="grid gap-4">
-      <h2 className="flex flex-wrap items-baseline gap-x-3 px-1 text-lg font-semibold">
-        {label}
-        <span className="text-muted-foreground text-sm font-normal tabular-nums">{range}</span>
-      </h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 px-1">
+        <h2 className="flex flex-wrap items-baseline gap-x-3 text-lg font-semibold">
+          {label}
+          <span className="text-muted-foreground text-sm font-normal tabular-nums">{range}</span>
+        </h2>
+        {summary && (
+          <dl className="flex flex-wrap gap-x-6 gap-y-1">
+            {measures.map((m) => (
+              <div key={m.key} role="group" aria-label={m.name} title={m.hint} className="flex items-baseline gap-2">
+                <dt className="text-muted-foreground text-sm">{m.name}</dt>
+                <dd className="text-lg leading-none font-semibold tabular-nums">{percentText(t, m.value, locale)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
       {query.error && <p className="text-destructive">{errorText(t, query.error)}</p>}
       {!summary && !query.error && <LoadingState />}
-      {summary && (
-        <div className={cn('grid gap-4', multiDay && 'lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]')}>
-          <div className="bg-card shadow-card grid content-start gap-5 rounded-xl p-5">
-            <StatusBreakdown counts={summary.counts} />
-            <dl className="grid grid-cols-2 gap-4 border-t pt-4">
-              {(
-                [
-                  ['completionPercent', t('reports.measures.completionPercent'), summary.completionPercent, t('reports.measures.completionHint')],
-                  ['averageScore', t('reports.measures.averageScore'), summary.averageScore, null],
-                ] as const
-              ).map(([key, name, value, hint]) => (
-                <div key={key} role="group" aria-label={name} title={hint ?? undefined} className="grid gap-1">
-                  <dt className="text-muted-foreground text-sm">{name}</dt>
-                  <dd className="text-2xl leading-none font-semibold tabular-nums">{percentText(t, value, locale)}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          {multiDay && <TrendChart trend={summary.trend} />}
-        </div>
-      )}
       <div className="bg-card shadow-card grid gap-4 rounded-xl p-5">
-        <h3 className="font-semibold">{t('reports.home.runs')}</h3>
         <RunsTab filters={filters} bucket={bucket} onBucket={onBucket} />
       </div>
     </section>

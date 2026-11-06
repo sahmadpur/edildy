@@ -1,7 +1,7 @@
 export default {
   title: 'Employees',
-  newWorker: 'New worker',
-  invite: 'Invite staff',
+  newWorker: 'Create',
+  invite: 'Invite',
   search: 'Name, username or email',
   kinds: { worker: 'Worker (mobile)', staff: 'Staff (web)' },
   statuses: { active: 'Active', deactivated: 'Deactivated', invited: 'Invited' },

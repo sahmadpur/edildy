@@ -12,7 +12,8 @@ export interface FormatOptions {
   timeZone: string;
 }
 
-const AZ_MONTHS_SHORT = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avq', 'sen', 'okt', 'noy', 'dek'];
+/** Capitalised, as the owner wants dates to read "8 Okt 2026". */
+const AZ_MONTHS_SHORT = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn', 'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek'];
 const AZ_MONTHS_LONG = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avqust', 'sentyabr', 'oktyabr', 'noyabr', 'dekabr'];
 /** Sunday first, as `getUTCDay()` counts. CLDR's abbreviated forms. */
 const AZ_WEEKDAYS_SHORT = ['B.', 'B.e.', 'Ç.a.', 'Ç.', 'C.a.', 'C.', 'Ş.'];
@@ -52,7 +53,7 @@ function azDate(p: Parts, { weekday = false, long = false }: { weekday?: boolean
   return `${(long ? AZ_WEEKDAYS_LONG : AZ_WEEKDAYS_SHORT)[p.weekday]}, ${base}`;
 }
 
-/** "15 okt 2026, 14:00" in the tenant's time zone. */
+/** "15 Okt 2026, 14:00" in the tenant's time zone. */
 export function formatDateTime(iso: string, { locale, timeZone }: FormatOptions): string {
   const date = new Date(iso);
   if (locale === 'az') {
@@ -62,7 +63,7 @@ export function formatDateTime(iso: string, { locale, timeZone }: FormatOptions)
   return new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: 'medium', timeStyle: 'short', hourCycle: 'h23', timeZone }).format(date);
 }
 
-/** "15 okt 2026" in the tenant's time zone. */
+/** "15 Okt 2026" in the tenant's time zone. */
 export function formatDate(iso: string, { locale, timeZone }: FormatOptions): string {
   const date = new Date(iso);
   if (locale === 'az') return azDate(partsOf(date, timeZone));
@@ -80,7 +81,7 @@ export function formatTime(iso: string, { locale, timeZone }: FormatOptions): st
 }
 
 export interface LocalDateOptions {
-  /** Prefix the weekday: "Ç., 15 okt 2026". */
+  /** Prefix the weekday: "Ç., 15 Okt 2026". */
   weekday?: boolean;
   /** Spell the month (and weekday) out: "çərşənbə, 15 oktyabr 2026". */
   long?: boolean;
@@ -100,7 +101,7 @@ export function formatLocalDate(date: string, locale: string, { weekday = false,
   }).format(utc);
 }
 
-/** "15 okt": a chart tick or a compact list date, for a 'YYYY-MM-DD' calendar date. */
+/** "15 Okt": a chart tick or a compact list date, for a 'YYYY-MM-DD' calendar date. */
 export function formatShortDate(date: string, locale: string): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
   if (locale === 'az') return `${d} ${AZ_MONTHS_SHORT[m - 1]}`;

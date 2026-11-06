@@ -1,14 +1,14 @@
 export default {
   home: 'Ana səhifə',
-  users: 'İşçilər',
+  users: 'Əməkdaşlar',
   roles: 'Rollar',
   sites: 'Obyektlər',
   teams: 'Komandalar',
   audit: 'İstifadə jurnalı',
   settings: 'Parametrlər',
-  checklists: 'Yoxlamalar',
+  checklists: 'Yoxlama vərəqələri',
   templates: 'Şablonlar',
-  assignments: 'Təyinatlar',
+  assignments: 'Yoxlamalar',
   schedule: 'İcra cədvəli',
   shifts: 'Növbələr',
   roster: 'Növbə cədvəli',
@@ -22,5 +22,5 @@ export default {
   welcome: 'Xoş gəlmisiniz, {{name}}!',
   intro:
     'Təşkilatınızı, obyektləri, komandaları və əməkdaşları qurun, yoxlama vərəqələrini yaradın və dərc edin. Planlaşdırma və icra növbəti mərhələlərdə əlavə olunacaq.',
-  groups: { overview: 'Ümumi', operations: 'Əməliyyatlar', audit: 'Audit', admin: 'İdarəetmə' },
+  groups: { overview: 'Ümumi', operations: 'Əməliyyatlar', admin: 'İdarəetmə', other: 'Digər' },
 } as const;

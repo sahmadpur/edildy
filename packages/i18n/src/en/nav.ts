@@ -8,7 +8,7 @@ export default {
   settings: 'Settings',
   checklists: 'Checklists',
   templates: 'Templates',
-  assignments: 'Assignments',
+  assignments: 'Checks',
   schedule: 'Schedule',
   shifts: 'Shifts',
   roster: 'Roster',
@@ -22,5 +22,5 @@ export default {
   welcome: 'Welcome, {{name}}!',
   intro:
     'Set up your organisation, sites, teams and people, then create and publish checklists. Scheduling and runs come in the next stages.',
-  groups: { overview: 'Overview', operations: 'Operations', audit: 'Audit', admin: 'Administration' },
+  groups: { overview: 'Overview', operations: 'Operations', admin: 'Administration', other: 'Other' },
 } as const;

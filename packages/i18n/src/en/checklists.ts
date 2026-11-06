@@ -106,6 +106,8 @@ export default {
     template: 'Template',
   },
   builder: {
+    cancel: 'Cancel',
+    confirmCancel: 'Cancel this checklist? The draft will be discarded.',
     outline: 'Outline',
     settings: 'General settings',
     addSection: 'Add section',

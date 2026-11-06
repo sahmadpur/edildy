@@ -8,7 +8,7 @@ export default {
   settings: 'Настройки',
   checklists: 'Чек-листы',
   templates: 'Шаблоны',
-  assignments: 'Назначения',
+  assignments: 'Проверки',
   schedule: 'Расписание',
   shifts: 'Смены',
   roster: 'График смен',
@@ -22,5 +22,5 @@ export default {
   welcome: 'Добро пожаловать, {{name}}!',
   intro:
     'Настройте организацию, объекты, команды и сотрудников, создайте и опубликуйте чек-листы. Планирование и выполнение появятся на следующих этапах.',
-  groups: { overview: 'Обзор', operations: 'Операции', audit: 'Аудит', admin: 'Администрирование' },
+  groups: { overview: 'Обзор', operations: 'Операции', admin: 'Администрирование', other: 'Другое' },
 } as const;

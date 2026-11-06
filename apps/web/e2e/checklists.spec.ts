@@ -13,7 +13,7 @@ test('owner builds a checklist from a template, publishes v1 and v2, and v1 stay
   await page.getByRole('button', { name: 'Qeydiyyatdan keç' }).click();
   await expect(page.getByRole('heading', { name: 'Ana səhifə' })).toBeVisible();
 
-  // Create from a Taskop template: the Şablonlar tab of the checklists page.
+  // Create from a Taskop template: the Şablonlar tab of the Yoxlamalar page.
   await page.getByRole('link', { name: 'Yoxlamalar' }).click();
   await page.getByRole('link', { name: 'Şablonlar' }).click();
   const card = page.locator('[data-slot="card"]', { hasText: 'Gündəlik təmizlik yoxlaması' });

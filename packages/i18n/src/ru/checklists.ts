@@ -106,6 +106,8 @@ export default {
     template: 'Шаблон',
   },
   builder: {
+    cancel: 'Отменить',
+    confirmCancel: 'Отменить чек-лист? Черновик будет удалён.',
     outline: 'Структура',
     settings: 'Общие параметры',
     addSection: 'Добавить раздел',

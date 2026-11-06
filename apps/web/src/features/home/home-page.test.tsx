@@ -3,7 +3,6 @@ import { focusManager, QueryClient } from '@tanstack/react-query';
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fixedSizeCharts } from '@/features/reports/chart-test-setup';
 import { meWith, page, reportRun, reportSummary, TODAY, VIEWER } from '@/features/reports/fixtures';
 import { queryClient as appQueryClient } from '@/lib/query';
 import { renderWithRouter } from '@/test/router';
@@ -19,8 +18,6 @@ vi.mock('@/lib/session', () => ({
   useMe: () => mocks.me.current,
   useCan: (...keys: string[]) => keys.every((k) => (mocks.me.current as { permissions: string[] }).permissions.includes(k)),
 }));
-
-vi.mock('recharts', async (original) => fixedSizeCharts(await original<object>()));
 
 /** The app's own query defaults (30 s stale, no focus refetch), so these tests pin the home page's overrides. */
 const appClient = () => new QueryClient({ defaultOptions: { ...appQueryClient.getDefaultOptions(), queries: { ...appQueryClient.getDefaultOptions().queries, retry: false } } });
@@ -80,40 +77,42 @@ describe('HomeDashboard', () => {
     // Only the four figures: no in-progress tile, no percentages inside a box.
     expect(week.queryByRole('button', { name: /Davam edir/ })).not.toBeInTheDocument();
     expect(week.queryByText('Tamamlanma faizi')).not.toBeInTheDocument();
-    expect(week.getByRole('heading', { level: 2 })).toHaveTextContent(/^Son 7 gün.*29 okt 2026 – .*4 noy 2026$/);
+    expect(week.getByRole('heading', { level: 2 })).toHaveTextContent(/^Son 7 gün.*29 Okt 2026 – .*4 Noy 2026$/);
   });
 
-  it('selects today on arrival and shows its breakdown, measures and runs under the boxes, with no trend for one day', async () => {
+  it('selects today on arrival and shows its measures and runs under the boxes, every run first', async () => {
     renderWithRouter(<HomeDashboard today={TODAY} />);
     const today = await box('Bu gün');
     expect(await today.findByRole('button', { name: 'Bu gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
     expect((await box('Dünən')).getByRole('button', { name: 'Dünən dövrünü seç' })).toHaveAttribute('aria-pressed', 'false');
 
     const panel = detail('Bu gün');
-    expect(panel.getByRole('heading', { level: 2 })).toHaveTextContent(/^Bu gün.*Ç\., 4 noy 2026$/);
-    const breakdown = await panel.findByRole('figure', { name: 'İcraların vəziyyəti' });
-    expect(within(breakdown).getByText('Tamamlanıb').closest('div')).toHaveTextContent('Tamamlanıb7');
-    expect(within(breakdown).getByText('Gecikib').closest('div')).toHaveTextContent('Gecikib1');
-    expect(panel.getByRole('group', { name: 'Tamamlanma faizi' })).toHaveTextContent('70%');
+    expect(panel.getByRole('heading', { level: 2 })).toHaveTextContent(/^Bu gün.*4 Noy 2026$/);
+    expect(await panel.findByRole('group', { name: 'Tamamlanma faizi' })).toHaveTextContent('70%');
     expect(panel.getByRole('group', { name: 'Orta bal' })).toHaveTextContent('87,5%');
-    expect(panel.queryByRole('figure', { name: 'Gündəlik icra' })).not.toBeInTheDocument();
+    // No charts on the home page.
+    expect(panel.queryByRole('figure')).not.toBeInTheDocument();
+    expect(screen.queryByText('İcraların vəziyyəti')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gündəlik icra')).not.toBeInTheDocument();
 
-    // The runs table of the planned bucket, for today.
-    expect(panel.getByRole('group', { name: 'İcralar' }).querySelector('[aria-pressed="true"]')).toHaveTextContent('Planlaşdırılmış');
+    // The runs table: Hamısı is the first chip and the one open on arrival.
+    const chips = within(panel.getByRole('group', { name: 'İcralar' })).getAllByRole('button');
+    expect(chips[0]).toHaveTextContent('Hamısı');
+    expect(chips[0]).toHaveAttribute('aria-pressed', 'true');
     expect(await panel.findByRole('row', { name: /Açılış yoxlaması/ })).toBeInTheDocument();
-    expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'planned' });
+    expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'all' });
     expect(screen.queryByRole('region', { name: 'Son 7 gün' })).not.toBeInTheDocument();
   });
 
-  it('switches the details to the clicked box and shows the trend for a span of days; the URL stays on /', async () => {
+  it('switches the details to the clicked box; the URL stays on /', async () => {
     const router = renderWithRouter(<HomeDashboard today={TODAY} />);
     await userEvent.click(await (await box('Son 7 gün')).findByRole('button', { name: 'Son 7 gün dövrünü seç' }));
     expect((await box('Son 7 gün')).getByRole('button', { name: 'Son 7 gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
     expect((await box('Bu gün')).getByRole('button', { name: 'Bu gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'false');
     const panel = detail('Son 7 gün');
-    expect(await panel.findByRole('figure', { name: 'Gündəlik icra' })).toBeInTheDocument();
+    expect(await panel.findByRole('group', { name: 'Tamamlanma faizi' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Bu gün' })).not.toBeInTheDocument();
-    await waitFor(() => expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: '2026-10-29', to: TODAY, bucket: 'planned' }));
+    await waitFor(() => expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: '2026-10-29', to: TODAY, bucket: 'all' }));
     expect(router.state.location.pathname).toBe('/');
   });
 

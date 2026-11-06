@@ -65,8 +65,8 @@ describe('ChecklistsPage', () => {
     const ws = fakeWorkspace({ base: '/platform/tenants/t1' });
     ws.checklists.list.mockResolvedValue({ items: [], nextCursor: null });
     renderInWorkspace(<ChecklistsPage />, ws);
-    const tabs = within(await screen.findByRole('navigation', { name: 'Yoxlamalar' }));
-    expect(tabs.getByRole('link', { name: 'Yoxlamalar' })).toHaveAttribute('aria-current', 'page');
+    const tabs = within(await screen.findByRole('navigation', { name: 'Yoxlama vərəqələri' }));
+    expect(tabs.getByRole('link', { name: 'Yoxlama vərəqələri' })).toHaveAttribute('aria-current', 'page');
     const templates = tabs.getByRole('link', { name: 'Şablonlar' });
     expect(templates).toHaveAttribute('href', '/platform/tenants/t1/templates');
     await userEvent.click(templates);

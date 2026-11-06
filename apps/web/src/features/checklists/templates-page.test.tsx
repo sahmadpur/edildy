@@ -11,14 +11,14 @@ const tpl = (id: string, source: 'global' | 'tenant', name: string, status: 'act
 beforeEach(() => vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} }));
 
 describe('TemplatesPage', () => {
-  it('is the Şablonlar tab of the checklists page', async () => {
+  it('is the Şablonlar tab of the checklists page (platform admins inside a tenant)', async () => {
     const ws = fakeWorkspace();
     ws.templates.list.mockResolvedValue([]);
     renderInWorkspace(<TemplatesPage />, ws);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlamalar' })).toBeInTheDocument();
-    const tabs = within(screen.getByRole('navigation', { name: 'Yoxlamalar' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlama vərəqələri' })).toBeInTheDocument();
+    const tabs = within(screen.getByRole('navigation', { name: 'Yoxlama vərəqələri' }));
     expect(tabs.getByRole('link', { name: 'Şablonlar' })).toHaveAttribute('aria-current', 'page');
-    const checklists = tabs.getByRole('link', { name: 'Yoxlamalar' });
+    const checklists = tabs.getByRole('link', { name: 'Yoxlama vərəqələri' });
     expect(checklists).toHaveAttribute('href', '/checklists');
     await userEvent.click(checklists);
     expect(ws.go).toHaveBeenCalledWith('/checklists');

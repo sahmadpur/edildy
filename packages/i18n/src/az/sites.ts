@@ -8,7 +8,7 @@ export default {
   },
   tree: {
     title: 'Obyekt strukturu',
-    addRoot: 'Əsas obyekt əlavə et',
+    addRoot: 'Əlavə et',
     addChild: 'Alt obyekt',
     move: 'Köçür',
     moveTitle: '«{{name}}» obyektini köçür',

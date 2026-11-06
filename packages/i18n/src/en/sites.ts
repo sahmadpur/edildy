@@ -8,7 +8,7 @@ export default {
   },
   tree: {
     title: 'Site structure',
-    addRoot: 'Add top-level site',
+    addRoot: 'Add',
     addChild: 'Add sub-site',
     move: 'Move',
     moveTitle: 'Move "{{name}}"',

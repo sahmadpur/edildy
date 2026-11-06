@@ -29,7 +29,7 @@ export function ChecklistsPage() {
 
   return (
     <div>
-      <PageHeader title={t('checklists.title')} actions={ws.can.manage && <Button onClick={() => setCreating(true)}>{t('checklists.new')}</Button>} />
+      <PageHeader title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} actions={ws.can.manage && <Button onClick={() => setCreating(true)}>{t('checklists.new')}</Button>} />
       <ChecklistTabs active="checklists" />
       <div className="mb-4 flex flex-wrap gap-2">
         <Input type="search" className="max-w-xs" placeholder={t('checklists.filters.search')} value={search} onChange={(e) => setSearch(e.target.value)} />

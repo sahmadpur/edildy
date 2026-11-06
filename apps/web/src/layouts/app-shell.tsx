@@ -1,6 +1,6 @@
 import type { PermissionKey } from '@taskop/contracts';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Building2, CalendarCheck, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, Shield, ShieldCheck, TriangleAlert, Users, UsersRound, X } from 'lucide-react';
+import { Building2, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, Shield, ShieldCheck, TriangleAlert, Users, UsersRound, X } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageMenu } from '@/components/language-menu';
@@ -15,12 +15,14 @@ import { VerifyEmailBanner } from './verify-email-banner';
 
 export interface NavItem {
   to: '/' | '/users' | '/roles' | '/sites' | '/teams' | '/audit' | '/settings' | '/checklists' | '/assignments' | '/problems' | '/tasks' | '/audits' | '/reports' | '/shifts';
+  /** When the user may not open `to`, the first of these they may open is linked instead (a merged page's other tab). */
+  fallbacks?: readonly { to: NavItem['to']; permission: PermissionKey }[];
   labelKey: string;
   icon: LucideIcon;
   /** One key, or a list of which any one suffices. */
   permission?: PermissionKey | readonly PermissionKey[];
   /** The sidebar group (nav.groups.*). */
-  group: 'overview' | 'operations' | 'audit' | 'admin';
+  group: 'overview' | 'operations' | 'admin' | 'other';
   /** Other pages this item stands for: a merged page's second tab (e.g. /schedule under Təyinatlar). */
   also?: readonly string[];
 }
@@ -29,10 +31,17 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/', labelKey: 'nav.home', icon: Home, group: 'overview' },
   { to: '/problems', labelKey: 'nav.problems', icon: TriangleAlert, permission: 'assignments.view', group: 'overview' },
   { to: '/reports', labelKey: 'nav.reports', icon: ChartColumn, permission: 'reports.view', group: 'overview' },
-  { to: '/assignments', labelKey: 'nav.assignments', icon: CalendarCheck, permission: 'assignments.view', group: 'operations', also: ['/schedule'] },
-  { to: '/checklists', labelKey: 'nav.checklists', icon: ListChecks, permission: 'checklists.view', group: 'operations', also: ['/templates'] },
+  {
+    to: '/assignments',
+    labelKey: 'nav.assignments',
+    icon: ListChecks,
+    permission: ['assignments.view', 'checklists.view'],
+    fallbacks: [{ to: '/checklists', permission: 'checklists.view' }],
+    group: 'operations',
+    also: ['/schedule', '/checklists', '/templates'],
+  },
   { to: '/tasks', labelKey: 'nav.tasks', icon: ClipboardCheck, permission: ['tasks.view', 'tasks.manage'], group: 'operations' },
-  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'audit' },
+  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'other' },
   { to: '/users', labelKey: 'nav.users', icon: Users, permission: 'users.view', group: 'admin' },
   { to: '/sites', labelKey: 'nav.sites', icon: Building2, permission: 'sites.view', group: 'admin' },
   { to: '/teams', labelKey: 'nav.teams', icon: UsersRound, permission: 'teams.view', group: 'admin' },
@@ -42,7 +51,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/settings', labelKey: 'nav.settings', icon: Settings, group: 'admin' },
 ];
 
-const GROUPS: NavItem['group'][] = ['overview', 'operations', 'audit', 'admin'];
+const GROUPS: NavItem['group'][] = ['overview', 'operations', 'admin', 'other'];
 
 /** The home item matches only its own path; every other item also owns its sub-pages and `also` aliases. */
 export function isNavItemActive(item: NavItem, pathname: string): boolean {
@@ -118,6 +127,12 @@ export function AppShell() {
   if (s.status !== 'authenticated') return null;
   const { me } = s;
   const allowed = (p: NavItem['permission']) => !p || (typeof p === 'string' ? [p] : p).some((k) => me.permissions.includes(k));
+  // A merged page links to its first tab the user may open: /assignments, or /checklists without assignments.view.
+  const target = (item: NavItem): NavItem['to'] => {
+    const primary = typeof item.permission === 'string' ? item.permission : item.permission?.[0];
+    if (!item.fallbacks || !primary || me.permissions.includes(primary)) return item.to;
+    return item.fallbacks.find((f) => me.permissions.includes(f.permission))?.to ?? item.to;
+  };
   const items = NAV_ITEMS.filter((i) => allowed(i.permission));
   const groups = GROUPS.map((g) => [g, items.filter((i) => i.group === g)] as const).filter(([, list]) => list.length > 0);
   const activeGroup = items.find((i) => isNavItemActive(i, pathname))?.group;
@@ -159,7 +174,7 @@ export function AppShell() {
                   return (
                     <Link
                       key={item.to}
-                      to={item.to as '/'}
+                      to={target(item) as '/'}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
                         'text-on-deep-muted relative flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/8 hover:text-white focus-visible:outline-saffron',

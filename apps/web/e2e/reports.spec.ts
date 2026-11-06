@@ -136,8 +136,6 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   const detail = page.getByRole('region', { name: 'Son 7 gün' });
   await expect(detail.getByRole('group', { name: 'Tamamlanma faizi' })).toContainText('50%');
   await expect(detail.getByRole('group', { name: 'Orta bal' })).toContainText(/87[,.]5%/);
-  await expect(detail.getByRole('figure', { name: 'İcraların vəziyyəti' })).toBeVisible();
-  await expect(detail.getByRole('figure', { name: 'Gündəlik icra' })).toBeVisible();
   await expect(detail.getByRole('group', { name: 'İcralar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
   const homeRows = detail.getByRole('table').getByRole('row');
   await expect(homeRows).toHaveCount(2);

@@ -34,7 +34,7 @@ export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
   return (
     <div>
       <PageHeader
-        title={t('scheduling.assignments.title')}
+        title={t(tabs ? 'nav.assignments' : 'scheduling.assignments.title')}
         actions={
           canManage && (
             <Link to="/assignments/new" className={buttonVariants()}>

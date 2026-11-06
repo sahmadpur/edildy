@@ -40,7 +40,7 @@ export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?
   return (
     <div className="grid gap-4">
       <div>
-        <PageHeader title={t('scheduling.assignments.title')} />
+        <PageHeader title={t('nav.assignments')} />
         {props.tabs}
       </div>
       <div className="flex flex-wrap items-center gap-2">

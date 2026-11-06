@@ -128,22 +128,22 @@ describe('languages', () => {
 describe('formatting', () => {
   const baku = { timeZone: 'Asia/Baku' };
   it('formats in the tenant timezone', () => {
-    expect(formatDateTime('2026-10-07T10:00:00Z', { locale: 'az', ...baku })).toBe('7 okt 2026, 14:00');
+    expect(formatDateTime('2026-10-07T10:00:00Z', { locale: 'az', ...baku })).toBe('7 Okt 2026, 14:00');
     expect(formatDateTime('2026-10-07T10:00:00Z', { locale: 'en', ...baku })).toBe('7 Oct 2026, 14:00');
     expect(formatDateTime('2026-10-07T10:00:00Z', { locale: 'ru', ...baku })).toContain('14:00');
   });
   it('formats dates and times', () => {
-    expect(formatDate('2026-10-07T22:30:00Z', { locale: 'az', ...baku })).toBe('8 okt 2026');
+    expect(formatDate('2026-10-07T22:30:00Z', { locale: 'az', ...baku })).toBe('8 Okt 2026');
     expect(formatDate('2026-10-07T22:30:00Z', { locale: 'en', ...baku })).toBe('8 Oct 2026');
     expect(formatTime('2026-10-07T22:30:00Z', { locale: 'az', ...baku })).toBe('02:30');
     expect(formatTime('2026-10-07T22:30:00Z', { locale: 'ru', ...baku })).toBe('02:30');
   });
   it('formats calendar dates without shifting the day', () => {
-    expect(formatLocalDate('2026-10-15', 'az', { weekday: true })).toBe('C.a., 15 okt 2026');
+    expect(formatLocalDate('2026-10-15', 'az', { weekday: true })).toBe('C.a., 15 Okt 2026');
     expect(formatLocalDate('2026-10-15', 'az', { weekday: true, long: true })).toBe('cümə axşamı, 15 oktyabr 2026');
     expect(formatLocalDate('2026-10-15', 'en', { weekday: true })).toBe('Thu, 15 Oct 2026');
     expect(formatLocalDate('2026-10-15', 'ru')).toContain('2026');
-    expect(formatShortDate('2026-01-05', 'az')).toBe('5 yan');
+    expect(formatShortDate('2026-01-05', 'az')).toBe('5 Yan');
     expect(formatShortDate('2026-01-05', 'en')).toBe('5 Jan');
   });
   it('formats numbers and percentages per language', () => {

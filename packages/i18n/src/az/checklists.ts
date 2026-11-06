@@ -41,7 +41,7 @@ export default {
     video: 'Video',
     datetime: 'Tarix və vaxt',
   },
-  title: 'Yoxlamalar',
+  title: 'Yoxlama vərəqələri',
   new: 'Yeni yoxlama vərəqəsi',
   empty: 'Hələ yoxlama vərəqəsi yoxdur.',
   name: 'Ad',
@@ -106,6 +106,8 @@ export default {
     template: 'Şablon',
   },
   builder: {
+    cancel: 'Ləğv et',
+    confirmCancel: 'Yoxlama vərəqəsi ləğv edilsin? Qaralama silinəcək.',
     outline: 'Struktur',
     settings: 'Ümumi parametrlər',
     addSection: 'Bölmə əlavə et',
