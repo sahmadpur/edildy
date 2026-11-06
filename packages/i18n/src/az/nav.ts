@@ -6,7 +6,7 @@ export default {
   teams: 'Komandalar',
   audit: 'İstifadə jurnalı',
   settings: 'Parametrlər',
-  checklists: 'Yoxlama vərəqələri',
+  checklists: 'Yoxlamalar',
   templates: 'Şablonlar',
   assignments: 'Təyinatlar',
   schedule: 'İcra cədvəli',
@@ -22,5 +22,5 @@ export default {
   welcome: 'Xoş gəlmisiniz, {{name}}!',
   intro:
     'Təşkilatınızı, obyektləri, komandaları və əməkdaşları qurun, yoxlama vərəqələrini yaradın və dərc edin. Planlaşdırma və icra növbəti mərhələlərdə əlavə olunacaq.',
-  groups: { overview: 'Ümumi', operations: 'Əməliyyatlar', admin: 'İdarəetmə' },
+  groups: { overview: 'Ümumi', operations: 'Əməliyyatlar', audit: 'Audit', admin: 'İdarəetmə' },
 } as const;

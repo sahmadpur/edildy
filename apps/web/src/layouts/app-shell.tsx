@@ -20,29 +20,29 @@ export interface NavItem {
   /** One key, or a list of which any one suffices. */
   permission?: PermissionKey | readonly PermissionKey[];
   /** The sidebar group (nav.groups.*). */
-  group: 'overview' | 'operations' | 'admin';
+  group: 'overview' | 'operations' | 'audit' | 'admin';
   /** Other pages this item stands for: a merged page's second tab (e.g. /schedule under Təyinatlar). */
   also?: readonly string[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', labelKey: 'nav.home', icon: Home, group: 'overview' },
+  { to: '/problems', labelKey: 'nav.problems', icon: TriangleAlert, permission: 'assignments.view', group: 'overview' },
   { to: '/reports', labelKey: 'nav.reports', icon: ChartColumn, permission: 'reports.view', group: 'overview' },
   { to: '/assignments', labelKey: 'nav.assignments', icon: CalendarCheck, permission: 'assignments.view', group: 'operations', also: ['/schedule'] },
   { to: '/checklists', labelKey: 'nav.checklists', icon: ListChecks, permission: 'checklists.view', group: 'operations', also: ['/templates'] },
-  { to: '/problems', labelKey: 'nav.problems', icon: TriangleAlert, permission: 'assignments.view', group: 'operations' },
   { to: '/tasks', labelKey: 'nav.tasks', icon: ClipboardCheck, permission: ['tasks.view', 'tasks.manage'], group: 'operations' },
-  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'operations' },
-  { to: '/shifts', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'operations', also: ['/roster'] },
+  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'audit' },
   { to: '/users', labelKey: 'nav.users', icon: Users, permission: 'users.view', group: 'admin' },
   { to: '/sites', labelKey: 'nav.sites', icon: Building2, permission: 'sites.view', group: 'admin' },
   { to: '/teams', labelKey: 'nav.teams', icon: UsersRound, permission: 'teams.view', group: 'admin' },
+  { to: '/shifts', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'admin', also: ['/roster'] },
   { to: '/roles', labelKey: 'nav.roles', icon: Shield, permission: 'roles.view', group: 'admin' },
   { to: '/audit', labelKey: 'nav.audit', icon: ClipboardList, permission: 'audit.view', group: 'admin' },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings, group: 'admin' },
 ];
 
-const GROUPS: NavItem['group'][] = ['overview', 'operations', 'admin'];
+const GROUPS: NavItem['group'][] = ['overview', 'operations', 'audit', 'admin'];
 
 /** The home item matches only its own path; every other item also owns its sub-pages and `also` aliases. */
 export function isNavItemActive(item: NavItem, pathname: string): boolean {

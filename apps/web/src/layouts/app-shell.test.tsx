@@ -60,13 +60,20 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Parametrlər' })).toBeInTheDocument();
   });
 
-  it('groups the menu into Ümumi, Əməliyyatlar and İdarəetmə, with no people group', async () => {
-    state.current = { status: 'authenticated', me: me(['users.view', 'shifts.view', 'reports.view']) };
+  it('groups the menu into Ümumi, Əməliyyatlar, Audit and İdarəetmə, with no people group', async () => {
+    state.current = { status: 'authenticated', me: me(['users.view', 'shifts.view', 'reports.view', 'assignments.view', 'audits.perform']) };
     renderShell();
     const nav = within(await screen.findByRole('navigation', { name: 'Menyu' }));
-    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ümumi', 'Əməliyyatlar', 'İdarəetmə']);
-    // Növbələr is operational; İşçilər is administration.
-    expect(nav.getAllByRole('link').map((l) => l.textContent)).toEqual(['Ana səhifə', 'Hesabatlar', 'Növbələr', 'İşçilər', 'Parametrlər']);
+    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ümumi', 'Əməliyyatlar', 'Audit', 'İdarəetmə']);
+    // Problemlər sits right under Ana səhifə; Audit is a group of its own; Növbələr and İşçilər are administration.
+    expect(nav.getAllByRole('link').map((l) => l.textContent)).toEqual(['Ana səhifə', 'Problemlər', 'Hesabatlar', 'Təyinatlar', 'Audit', 'İşçilər', 'Növbələr', 'Parametrlər']);
+  });
+
+  it('hides a group whose pages the user may not open', async () => {
+    state.current = { status: 'authenticated', me: me(['users.view']) };
+    renderShell();
+    const nav = within(await screen.findByRole('navigation', { name: 'Menyu' }));
+    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ümumi', 'İdarəetmə']);
   });
 
   it('collapses a group on its heading and remembers that', async () => {
@@ -76,7 +83,8 @@ describe('AppShell', () => {
     expect(heading).toHaveAttribute('aria-expanded', 'true');
     await userEvent.click(heading);
     expect(heading).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('link', { name: 'Problemlər' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Təyinatlar' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Problemlər' })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual(['operations']);
   });
 

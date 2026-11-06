@@ -41,7 +41,7 @@ export default {
     video: 'Video',
     datetime: 'Tarix və vaxt',
   },
-  title: 'Yoxlama vərəqələri',
+  title: 'Yoxlamalar',
   new: 'Yeni yoxlama vərəqəsi',
   empty: 'Hələ yoxlama vərəqəsi yoxdur.',
   name: 'Ad',

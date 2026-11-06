@@ -15,10 +15,10 @@ describe('TemplatesPage', () => {
     const ws = fakeWorkspace();
     ws.templates.list.mockResolvedValue([]);
     renderInWorkspace(<TemplatesPage />, ws);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlama vərəqələri' })).toBeInTheDocument();
-    const tabs = within(screen.getByRole('navigation', { name: 'Yoxlama vərəqələri' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlamalar' })).toBeInTheDocument();
+    const tabs = within(screen.getByRole('navigation', { name: 'Yoxlamalar' }));
     expect(tabs.getByRole('link', { name: 'Şablonlar' })).toHaveAttribute('aria-current', 'page');
-    const checklists = tabs.getByRole('link', { name: 'Yoxlama vərəqələri' });
+    const checklists = tabs.getByRole('link', { name: 'Yoxlamalar' });
     expect(checklists).toHaveAttribute('href', '/checklists');
     await userEvent.click(checklists);
     expect(ws.go).toHaveBeenCalledWith('/checklists');
