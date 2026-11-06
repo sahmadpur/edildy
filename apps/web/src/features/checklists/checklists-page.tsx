@@ -24,22 +24,45 @@ export function ChecklistsPage() {
   const [status, setStatus] = useState<ChecklistStatus | ''>('active');
   const [category, setCategory] = useState<TemplateCategory | ''>('');
   const q = useDeferredValue(search.trim());
-  const pages = useChecklistPages({ q: q || undefined, status: status || undefined, category: category || undefined });
+  const pages = useChecklistPages({
+    q: q || undefined,
+    status: status || undefined,
+    category: category || undefined,
+  });
   const [creating, setCreating] = useState(false);
   const rows = pages.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
     <div>
-      <PageHeader title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} actions={ws.can.manage && <Button onClick={() => setCreating(true)}>{t('checklists.new')}</Button>} />
+      <PageHeader
+        title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')}
+        actions={ws.can.manage && <Button onClick={() => setCreating(true)}>{t('checklists.new')}</Button>}
+      />
       <ChecklistTabs active="checklists" />
       <div className="mb-4 flex flex-wrap gap-2">
-        <Input type="search" className="max-w-xs" placeholder={t('checklists.filters.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
-        <NativeSelect aria-label={t('checklists.filters.status')} className="w-44" value={status} onChange={(e) => setStatus(e.target.value as ChecklistStatus | '')}>
+        <Input
+          type="search"
+          className="max-w-xs"
+          placeholder={t('checklists.filters.search')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <NativeSelect
+          aria-label={t('checklists.filters.status')}
+          className="w-44"
+          value={status}
+          onChange={(e) => setStatus(e.target.value as ChecklistStatus | '')}
+        >
           <option value="">{t('checklists.filters.allStatuses')}</option>
           <option value="active">{t('checklists.statuses.active')}</option>
           <option value="deactivated">{t('checklists.statuses.deactivated')}</option>
         </NativeSelect>
-        <NativeSelect aria-label={t('checklists.filters.category')} className="w-52" value={category} onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}>
+        <NativeSelect
+          aria-label={t('checklists.filters.category')}
+          className="w-52"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}
+        >
           <option value="">{t('checklists.filters.allCategories')}</option>
           {TEMPLATE_CATEGORIES.map((c) => (
             <option key={c} value={c}>
@@ -54,11 +77,18 @@ export function ChecklistsPage() {
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center gap-2">
                 <WsLink to={`/checklists/${c.id}`}>{c.name}</WsLink>
-                {c.status !== 'active' && <Badge variant="secondary">{t(`checklists.statuses.${c.status}`)}</Badge>}
+                {c.status !== 'active' && (
+                  <Badge variant="secondary">{t(`checklists.statuses.${c.status}`)}</Badge>
+                )}
                 {c.draftRevision !== null && <Badge variant="outline">{t('checklists.draft')}</Badge>}
               </CardTitle>
               <CardDescription>
-                <span>{categoryLabel(t, c.category)}</span> · <span>{c.currentVersionNumber ? t('checklists.versionN', { n: c.currentVersionNumber }) : t('checklists.notPublished')}</span>
+                <span>{categoryLabel(t, c.category)}</span> ·{' '}
+                <span>
+                  {c.currentVersionNumber
+                    ? t('checklists.versionN', { n: c.currentVersionNumber })
+                    : t('checklists.notPublished')}
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
@@ -77,7 +107,12 @@ export function ChecklistsPage() {
       </div>
       {pages.isSuccess && rows.length === 0 && <EmptyState title={t('checklists.empty')} />}
       {pages.hasNextPage && (
-        <Button variant="outline" className="mt-3" disabled={pages.isFetchingNextPage} onClick={() => void pages.fetchNextPage()}>
+        <Button
+          variant="outline"
+          className="mt-3"
+          disabled={pages.isFetchingNextPage}
+          onClick={() => void pages.fetchNextPage()}
+        >
           {t('common.loadMore')}
         </Button>
       )}

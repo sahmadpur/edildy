@@ -17,19 +17,38 @@ const row = (over: Partial<ChecklistSummary> = {}): ChecklistSummary => ({
   ...over,
 });
 
-beforeEach(() => vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} }));
+beforeEach(() =>
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  ),
+);
 
 describe('ChecklistsPage', () => {
   it('lists checklists with version and draft badges and filters by search', async () => {
     const ws = fakeWorkspace();
-    ws.checklists.list.mockResolvedValue({ items: [row(), row({ id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e02', name: 'Anbar', currentVersionNumber: null })], nextCursor: null });
+    ws.checklists.list.mockResolvedValue({
+      items: [
+        row(),
+        row({ id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e02', name: 'Anbar', currentVersionNumber: null }),
+      ],
+      nextCursor: null,
+    });
     renderInWorkspace(<ChecklistsPage />, ws);
     expect(await screen.findByText('Gündəlik təmizlik')).toBeInTheDocument();
     expect(screen.getByText('v2')).toBeInTheDocument();
     expect(screen.getByText('Dərc edilməyib')).toBeInTheDocument();
     expect(screen.getAllByText('Qaralama')).toHaveLength(2);
     await userEvent.type(screen.getByRole('searchbox'), 'anb');
-    await waitFor(() => expect(ws.checklists.list).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'anb', status: 'active' })));
+    await waitFor(() =>
+      expect(ws.checklists.list).toHaveBeenLastCalledWith(
+        expect.objectContaining({ q: 'anb', status: 'active' }),
+      ),
+    );
   });
 
   it('shows each checklist as a card, like the templates tab, and opens it from the card button', async () => {
@@ -46,13 +65,23 @@ describe('ChecklistsPage', () => {
   it('creates a blank checklist and opens its draft', async () => {
     const ws = fakeWorkspace();
     ws.checklists.list.mockResolvedValue({ items: [], nextCursor: null });
-    ws.checklists.create.mockResolvedValue({ ...row(), id: 'new-id', versions: [], currentVersionId: null, source: null, requiresAudit: false, auditReportEmails: [] });
+    ws.checklists.create.mockResolvedValue({
+      ...row(),
+      id: 'new-id',
+      versions: [],
+      currentVersionId: null,
+      source: null,
+      requiresAudit: false,
+      auditReportEmails: [],
+    });
     renderInWorkspace(<ChecklistsPage />, ws);
     await userEvent.click(await screen.findByRole('button', { name: 'Yeni yoxlama vərəqəsi' }));
     await userEvent.type(screen.getByLabelText('Ad'), 'Mətbəx yoxlaması');
     await userEvent.selectOptions(screen.getByLabelText('Sahə'), 'restaurant');
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
-    await waitFor(() => expect(ws.checklists.create).toHaveBeenCalledWith({ name: 'Mətbəx yoxlaması', category: 'restaurant' }));
+    await waitFor(() =>
+      expect(ws.checklists.create).toHaveBeenCalledWith({ name: 'Mətbəx yoxlaması', category: 'restaurant' }),
+    );
     expect(ws.go).toHaveBeenCalledWith('/checklists/new-id/draft');
   });
 
@@ -60,16 +89,39 @@ describe('ChecklistsPage', () => {
     const ws = fakeWorkspace();
     ws.checklists.list.mockResolvedValue({ items: [], nextCursor: null });
     ws.templates.list.mockResolvedValue([
-      { id: 't1', source: 'global', name: 'Restoran mətbəxi', description: null, category: 'restaurant', status: 'active', itemCount: 11, updatedAt: '2026-10-08T08:00:00.000Z' },
+      {
+        id: 't1',
+        source: 'global',
+        name: 'Restoran mətbəxi',
+        description: null,
+        category: 'restaurant',
+        status: 'active',
+        itemCount: 11,
+        updatedAt: '2026-10-08T08:00:00.000Z',
+      },
     ]);
-    ws.checklists.create.mockResolvedValue({ ...row(), id: 'c9', versions: [], currentVersionId: null, source: null, requiresAudit: false, auditReportEmails: [] });
+    ws.checklists.create.mockResolvedValue({
+      ...row(),
+      id: 'c9',
+      versions: [],
+      currentVersionId: null,
+      source: null,
+      requiresAudit: false,
+      auditReportEmails: [],
+    });
     renderInWorkspace(<ChecklistsPage />, ws);
     await userEvent.click(await screen.findByRole('button', { name: 'Yeni yoxlama vərəqəsi' }));
     await userEvent.click(screen.getByRole('tab', { name: 'Şablondan' }));
     await userEvent.click(await screen.findByRole('radio', { name: /Restoran mətbəxi/ }));
     expect(screen.getByLabelText('Ad')).toHaveValue('Restoran mətbəxi');
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
-    await waitFor(() => expect(ws.checklists.create).toHaveBeenCalledWith({ name: 'Restoran mətbəxi', category: 'restaurant', from: { kind: 'global', templateId: 't1' } }));
+    await waitFor(() =>
+      expect(ws.checklists.create).toHaveBeenCalledWith({
+        name: 'Restoran mətbəxi',
+        category: 'restaurant',
+        from: { kind: 'global', templateId: 't1' },
+      }),
+    );
   });
 
   it('offers the Şablonlar tab to checklist managers, inside the current workspace', async () => {

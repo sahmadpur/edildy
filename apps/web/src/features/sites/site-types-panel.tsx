@@ -1,3 +1,4 @@
+import { Power, RotateCcw } from 'lucide-react';
 import type { SiteTypeDto } from '@taskop/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -37,8 +38,15 @@ export function SiteTypesPanel({ types, canManage }: { types: SiteTypeDto[]; can
             <div className="flex items-center gap-2">
               {!ty.active && <Badge variant="secondary">{t('common.inactive')}</Badge>}
               {canManage && (
-                <Button size="sm" variant="ghost" onClick={() => toggle.mutate(ty)}>
-                  {ty.active ? t('common.deactivate') : t('common.reactivate')}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  aria-label={ty.active ? t('common.deactivate') : t('common.reactivate')}
+                  title={ty.active ? t('common.deactivate') : t('common.reactivate')}
+                  onClick={() => toggle.mutate(ty)}
+                >
+                  {ty.active ? <Power className="size-4" /> : <RotateCcw className="size-4" />}
                 </Button>
               )}
             </div>
@@ -53,7 +61,12 @@ export function SiteTypesPanel({ types, canManage }: { types: SiteTypeDto[]; can
             if (name.trim()) create.mutate();
           }}
         >
-          <Input aria-label={t('sites.types.name')} placeholder={t('sites.types.name')} value={name} onChange={(e) => setName(e.target.value)} />
+          <Input
+            aria-label={t('sites.types.name')}
+            placeholder={t('sites.types.name')}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
           <Button type="submit" disabled={create.isPending}>
             {t('sites.types.add')}
           </Button>
