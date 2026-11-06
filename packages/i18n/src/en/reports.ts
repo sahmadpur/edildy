@@ -161,6 +161,18 @@ export default {
   chart: {
     table: 'Daily runs table',
   },
+  /** The web home page: four period boxes, then the selected period's charts and runs. */
+  home: {
+    periods: 'Periods',
+    late: 'Late',
+    problems: 'With problems',
+    selectPeriod: 'Select the period {{period}}',
+    breakdown: 'Run status',
+    breakdownHint: 'Planned runs by status',
+    noRuns: 'No runs in this period',
+    runs: 'Runs',
+    selected: 'Selected period',
+  },
   live: {
     refresh: 'Refresh',
     updatedAt: 'Last updated: {{time}}',

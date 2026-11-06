@@ -1,27 +1,47 @@
-import { PERIOD_PRESETS, type PeriodPreset, type ReportFilters, resolvePeriod } from '@taskop/contracts';
+import { type PeriodPreset, type ReportFilters, type ReportSummary, resolvePeriod, type RunBucket, type RunCountKey } from '@taskop/contracts';
+import { intlLocale } from '@taskop/i18n';
 import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-import type { ReportSummary } from '@taskop/contracts';
-import { RefreshCw, X } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/page-header';
 import { LoadingState } from '@/components/states';
 import { Button } from '@/components/ui/button';
-import { DASHBOARD_TILES, TILE_BUCKETS, type TileKey } from '@/features/reports/labels';
+import { isSingleDay, percentText } from '@/features/reports/labels';
 import { reportKeys, summaryQueryOptions } from '@/features/reports/queries';
-import { RunsTable } from '@/features/reports/runs-tab';
-import { SummaryView } from '@/features/reports/summary-view';
+import { RunsTab } from '@/features/reports/runs-tab';
+import { TrendChart } from '@/features/reports/trend-chart';
 import { formatLocalDate, useTenantToday, useTimeFormat } from '@/features/scheduling/labels';
 import { errorText } from '@/lib/errors';
 import { useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { StatusBreakdown } from './status-breakdown';
+
+/** The four boxes, left to right. */
+export const HOME_PERIODS: readonly PeriodPreset[] = ['today', 'yesterday', 'last_7', 'last_30'];
+export const DEFAULT_HOME_PERIOD: PeriodPreset = 'today';
+export const DEFAULT_HOME_BUCKET: RunBucket = 'planned';
+
+/** A figure is a toggle: a saffron rule under the number says which list is open; hover and focus show the same rule faintly. */
+const PRESSABLE = 'border-b-2 border-transparent transition-colors group-hover:border-saffron/40 hover:border-saffron/40 group-focus-visible:border-saffron focus-visible:border-saffron';
+const PRESSED = 'border-saffron! ';
+
+/** A box's figures: the count shown, the runs list it opens, and the colour of its number. */
+type BoxStat = { key: Extract<RunCountKey, 'planned' | 'completed' | 'withProblems' | 'overdue'>; bucket: RunBucket; labelKey: string; tone: string };
+const PLANNED: BoxStat = { key: 'planned', bucket: 'planned', labelKey: 'reports.counts.planned', tone: 'text-foreground' };
+const OUTCOMES: readonly BoxStat[] = [
+  { key: 'completed', bucket: 'completed', labelKey: 'reports.counts.completed', tone: 'text-status-ok-text' },
+  { key: 'withProblems', bucket: 'problems', labelKey: 'reports.home.problems', tone: 'text-status-bad-text' },
+  { key: 'overdue', bucket: 'overdue', labelKey: 'reports.home.late', tone: 'text-status-late-text' },
+];
 
 /**
- * The web home page for reports.view holders: one block of live tiles per period preset, from today down to the last
- * 30 days, on one scrolling page. No filters here, and no leaving the page: a tile unfolds that count's runs right
- * under its block (one list open at a time). The numbers are polled every minute while visible and refreshed on
- * demand. "Today" is read on every render, so a page left open past midnight moves to the new day once the next poll
- * re-renders it (reports decision 10).
+ * The web home page for reports.view holders. Four boxes (today, yesterday, the last 7 and 30 days) each carry the
+ * period's planned, completed, with-problems and late counts, all live at once. One box is selected (today on
+ * arrival); the status breakdown, the trend (for a span of days) and the runs of that period sit under the boxes. A
+ * count inside a box selects its period and opens that count's runs. Nothing here leaves the page. The numbers are
+ * polled every minute while visible; "today" is read on every render, so a page left open past midnight moves on
+ * with the next poll (reports decision 10).
  */
 export function HomeDashboard({ today: fixedToday }: { today?: string }) {
   const { t } = useTranslation();
@@ -29,15 +49,22 @@ export function HomeDashboard({ today: fixedToday }: { today?: string }) {
   const time = useTimeFormat();
   const tenantToday = useTenantToday();
   const today = fixedToday ?? tenantToday;
-  const blocks = PERIOD_PRESETS.map((period) => ({ period, filters: resolvePeriod(period, today) as ReportFilters }));
-  const results = useQueries({ queries: blocks.map((b) => summaryQueryOptions(b.filters, { live: true })) });
+  const boxes = HOME_PERIODS.map((period) => ({ period, filters: resolvePeriod(period, today) as ReportFilters }));
+  const results = useQueries({ queries: boxes.map((b) => summaryQueryOptions(b.filters, { live: true })) });
   const updatedAt = Math.max(0, ...results.map((r) => r.dataUpdatedAt));
   const fetching = results.some((r) => r.isFetching);
-  const [open, setOpen] = useState<{ period: PeriodPreset; tile: TileKey } | null>(null);
-  const toggle = (period: PeriodPreset, tile: TileKey | null) => setOpen(tile === null || (open?.period === period && open.tile === tile) ? null : { period, tile });
+  const [selected, setSelected] = useState<PeriodPreset>(DEFAULT_HOME_PERIOD);
+  const [bucket, setBucket] = useState<RunBucket>(DEFAULT_HOME_BUCKET);
+  const index = boxes.findIndex((b) => b.period === selected);
+  const current = boxes[index]!;
+  const currentQuery = results[index]!;
+  const pick = (period: PeriodPreset, b?: RunBucket) => {
+    setSelected(period);
+    if (b) setBucket(b);
+  };
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-5">
       <PageHeader
         title={t('nav.home')}
         actions={
@@ -50,51 +77,155 @@ export function HomeDashboard({ today: fixedToday }: { today?: string }) {
           </>
         }
       />
-      {blocks.map((b, i) => (
-        <PeriodBlock key={b.period} period={b.period} filters={b.filters} query={results[i]!} selected={open?.period === b.period ? open.tile : null} onSelect={(tile) => toggle(b.period, tile)} />
-      ))}
+      <div role="group" aria-label={t('reports.home.periods')} className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {boxes.map((b, i) => (
+          <PeriodBox key={b.period} period={b.period} filters={b.filters} query={results[i]!} selected={b.period === selected} bucket={bucket} onPick={pick} />
+        ))}
+      </div>
+      <PeriodDetail period={current.period} filters={current.filters} query={currentQuery} bucket={bucket} onBucket={setBucket} />
     </div>
   );
 }
 
-function PeriodBlock({
+function useRangeText(filters: ReportFilters): string {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  return isSingleDay(filters) ? formatLocalDate(filters.from, locale) : t('reports.range.label', { from: formatLocalDate(filters.from, locale), to: formatLocalDate(filters.to, locale) });
+}
+
+function PeriodBox({
   period,
   filters,
   query,
   selected,
-  onSelect,
+  bucket,
+  onPick,
 }: {
   period: PeriodPreset;
   filters: ReportFilters;
   query: UseQueryResult<ReportSummary>;
-  selected: TileKey | null;
-  onSelect: (tile: TileKey | null) => void;
+  selected: boolean;
+  bucket: RunBucket;
+  onPick: (period: PeriodPreset, bucket?: RunBucket) => void;
+}) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const number = new Intl.NumberFormat(intlLocale(locale));
+  const label = t(`reports.periods.${period}`);
+  const range = useRangeText(filters);
+  const counts = query.data?.counts;
+  const value = (key: BoxStat['key']) => (counts ? number.format(counts[key]) : t('reports.noValue'));
+  const statName = (s: BoxStat) => t('reports.tiles.link', { label: t(s.labelKey), value: value(s.key) });
+  const pressed = (s: BoxStat) => selected && bucket === s.bucket;
+  return (
+    <article
+      aria-label={label}
+      className={cn(
+        'bg-card shadow-card relative grid gap-4 rounded-xl p-4 pt-5 transition-shadow',
+        'before:absolute before:inset-x-4 before:top-0 before:h-0.75 before:rounded-b before:transition-colors',
+        selected
+          ? 'ring-primary before:bg-saffron shadow-raised ring-2 after:bg-card after:border-primary after:absolute after:-bottom-2 after:left-1/2 after:size-3.5 after:-translate-x-1/2 after:rotate-45 after:border-r-2 after:border-b-2'
+          : 'before:bg-transparent hover:shadow-raised',
+      )}
+    >
+      {/* The heading is the box's own button and stretches over the whole card; the counts below sit on top of it. */}
+      <h2 className="grid gap-0.5">
+        <button
+          type="button"
+          aria-pressed={selected}
+          aria-label={t('reports.home.selectPeriod', { period: label })}
+          onClick={() => onPick(period)}
+          className="focus-visible:ring-ring rounded-md text-left text-base leading-tight font-semibold after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2"
+        >
+          {label}
+        </button>
+        <span className="text-muted-foreground text-xs tabular-nums">{range}</span>
+      </h2>
+      {query.error && <p className="text-destructive relative text-sm">{errorText(t, query.error)}</p>}
+      <button
+        type="button"
+        aria-label={statName(PLANNED)}
+        aria-pressed={pressed(PLANNED)}
+        onClick={() => onPick(period, PLANNED.bucket)}
+        className="group relative grid w-fit justify-items-start gap-0.5 rounded-md text-left focus-visible:outline-none"
+      >
+        <span className={cn('text-[32px] leading-none font-semibold tabular-nums', !counts && 'text-muted-foreground', PRESSABLE, pressed(PLANNED) && PRESSED)}>{value(PLANNED.key)}</span>
+        <span className="text-muted-foreground text-xs">{t(PLANNED.labelKey)}</span>
+      </button>
+      <dl className="relative grid grid-cols-3 gap-2 border-t pt-3">
+        {OUTCOMES.map((s) => (
+          <div key={s.key} className="grid">
+            <dd className="order-1">
+              <button
+                type="button"
+                aria-label={statName(s)}
+                aria-pressed={pressed(s)}
+                onClick={() => onPick(period, s.bucket)}
+                className={cn('rounded-md text-xl leading-none font-semibold tabular-nums focus-visible:outline-none', counts ? s.tone : 'text-muted-foreground', PRESSABLE, pressed(s) && PRESSED)}
+              >
+                {value(s.key)}
+              </button>
+            </dd>
+            <dt className="text-muted-foreground order-2 mt-1 text-xs">{t(s.labelKey)}</dt>
+          </div>
+        ))}
+      </dl>
+    </article>
+  );
+}
+
+function PeriodDetail({
+  period,
+  filters,
+  query,
+  bucket,
+  onBucket,
+}: {
+  period: PeriodPreset;
+  filters: ReportFilters;
+  query: UseQueryResult<ReportSummary>;
+  bucket: RunBucket;
+  onBucket: (bucket: RunBucket) => void;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
   const label = t(`reports.periods.${period}`);
-  const range = filters.from === filters.to ? formatLocalDate(filters.from, locale) : t('reports.range.label', { from: formatLocalDate(filters.from, locale), to: formatLocalDate(filters.to, locale) });
+  const range = useRangeText(filters);
+  const summary = query.data;
+  const multiDay = !isSingleDay(filters);
   return (
-    <section aria-label={label} className="grid gap-3">
-      <h2 className="flex flex-wrap items-baseline gap-x-3 text-lg font-semibold">
-        {label}{' '}
+    <section aria-label={label} className="grid gap-4">
+      <h2 className="flex flex-wrap items-baseline gap-x-3 px-1 text-lg font-semibold">
+        {label}
         <span className="text-muted-foreground text-sm font-normal tabular-nums">{range}</span>
       </h2>
       {query.error && <p className="text-destructive">{errorText(t, query.error)}</p>}
-      {!query.data && !query.error && <LoadingState />}
-      {query.data && <SummaryView summary={query.data} search={{ period }} filters={filters} tiles={DASHBOARD_TILES} onSelectTile={onSelect} selectedTile={selected} />}
-      {selected && (
-        <section aria-label={t(`reports.counts.${selected}`)} className="bg-card shadow-card grid gap-3 rounded-xl p-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold">{t(`reports.counts.${selected}`)}</h3>
-            <Button variant="ghost" size="sm" onClick={() => onSelect(null)}>
-              <X aria-hidden />
-              {t('common.close')}
-            </Button>
+      {!summary && !query.error && <LoadingState />}
+      {summary && (
+        <div className={cn('grid gap-4', multiDay && 'lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]')}>
+          <div className="bg-card shadow-card grid content-start gap-5 rounded-xl p-5">
+            <StatusBreakdown counts={summary.counts} />
+            <dl className="grid grid-cols-2 gap-4 border-t pt-4">
+              {(
+                [
+                  ['completionPercent', t('reports.measures.completionPercent'), summary.completionPercent, t('reports.measures.completionHint')],
+                  ['averageScore', t('reports.measures.averageScore'), summary.averageScore, null],
+                ] as const
+              ).map(([key, name, value, hint]) => (
+                <div key={key} role="group" aria-label={name} title={hint ?? undefined} className="grid gap-1">
+                  <dt className="text-muted-foreground text-sm">{name}</dt>
+                  <dd className="text-2xl leading-none font-semibold tabular-nums">{percentText(t, value, locale)}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-          <RunsTable filters={filters} bucket={TILE_BUCKETS[selected]} />
-        </section>
+          {multiDay && <TrendChart trend={summary.trend} />}
+        </div>
       )}
+      <div className="bg-card shadow-card grid gap-4 rounded-xl p-5">
+        <h3 className="font-semibold">{t('reports.home.runs')}</h3>
+        <RunsTab filters={filters} bucket={bucket} onBucket={onBucket} />
+      </div>
     </section>
   );
 }

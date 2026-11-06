@@ -161,6 +161,18 @@ export default {
   chart: {
     table: 'Таблица выполнений по дням',
   },
+  /** The web home page: four period boxes, then the selected period's charts and runs. */
+  home: {
+    periods: 'Периоды',
+    late: 'Просрочено',
+    problems: 'С проблемами',
+    selectPeriod: 'Выбрать период {{period}}',
+    breakdown: 'Статус выполнений',
+    breakdownHint: 'Запланированные выполнения по статусам',
+    noRuns: 'В этом периоде выполнений нет',
+    runs: 'Выполнения',
+    selected: 'Выбранный период',
+  },
   live: {
     refresh: 'Обновить',
     updatedAt: 'Последнее обновление: {{time}}',

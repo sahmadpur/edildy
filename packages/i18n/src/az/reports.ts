@@ -161,6 +161,18 @@ export default {
   chart: {
     table: 'Gündəlik icra cədvəli',
   },
+  /** The web home page: four period boxes, then the selected period's charts and runs. */
+  home: {
+    periods: 'Dövrlər',
+    late: 'Gecikib',
+    problems: 'Problemli',
+    selectPeriod: '{{period}} dövrünü seç',
+    breakdown: 'İcraların vəziyyəti',
+    breakdownHint: 'Planlaşdırılmış icraların statuslar üzrə bölgüsü',
+    noRuns: 'Bu dövrdə icra yoxdur',
+    runs: 'İcralar',
+    selected: 'Seçilmiş dövr',
+  },
   live: {
     refresh: 'Yenilə',
     updatedAt: 'Son yenilənmə: {{time}}',
