@@ -1,11 +1,14 @@
-import { type Language, LANGUAGE_NAMES, LANGUAGES } from '@taskop/i18n';
+import { type Language, LANGUAGE_FLAGS, LANGUAGE_NAMES, LANGUAGES } from '@taskop/i18n';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { chooseLanguage, useLocale } from '@/lib/language';
 import { colors, font, radius, spacing, type } from '@/lib/theme';
 
-/** Three chips, each language named in itself; the choice is stored on the phone and, when signed in, on the profile. On the sign-in screen and in the profile. */
-export function LanguagePicker({ testID = 'language-picker' }: { testID?: string }) {
+/**
+ * Three chips, each language named in itself (`names`, the sign-in screen) or shown as its flag (`flags`, the profile);
+ * the choice is stored on the phone and, when signed in, on the profile. The accessibility label is always the name.
+ */
+export function LanguagePicker({ testID = 'language-picker', variant = 'names' }: { testID?: string; variant?: 'names' | 'flags' }) {
   const { t } = useTranslation();
   const current = useLocale();
   return (
@@ -20,9 +23,9 @@ export function LanguagePicker({ testID = 'language-picker' }: { testID?: string
             accessibilityState={{ selected: on, checked: on }}
             testID={`${testID}-${lng}`}
             onPress={() => void chooseLanguage(lng)}
-            style={[styles.chip, on && styles.chipOn]}
+            style={[styles.chip, variant === 'flags' && styles.flagChip, on && styles.chipOn]}
           >
-            <Text style={[styles.text, on && styles.textOn]}>{LANGUAGE_NAMES[lng]}</Text>
+            {variant === 'flags' ? <Text style={styles.flag}>{LANGUAGE_FLAGS[lng]}</Text> : <Text style={[styles.text, on && styles.textOn]}>{LANGUAGE_NAMES[lng]}</Text>}
           </Pressable>
         );
       })}
@@ -33,7 +36,9 @@ export function LanguagePicker({ testID = 'language-picker' }: { testID?: string
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: { minHeight: 44, paddingHorizontal: spacing.md, borderRadius: radius.control, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  flagChip: { width: 52, paddingHorizontal: 0 },
   chipOn: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
+  flag: { fontSize: type.xl, lineHeight: type.xl + 6 },
   text: { fontFamily: font, fontSize: type.base, fontWeight: '500', color: colors.text },
   textOn: { color: colors.primaryDeep, fontWeight: '600' },
 });

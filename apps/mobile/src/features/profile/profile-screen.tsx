@@ -138,7 +138,7 @@ export function ProfileScreen() {
       </View>
       <View style={styles.card}>
         <Text style={styles.section}>{t('common.language')}</Text>
-        <LanguagePicker />
+        <LanguagePicker variant="flags" />
       </View>
       <View style={styles.card}>
         {rows.map(([label, value]) => (
