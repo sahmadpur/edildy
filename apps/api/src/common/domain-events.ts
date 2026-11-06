@@ -27,6 +27,10 @@ export interface DomainEventMap {
   'execution.resubmitted': { tenantId: string; executionId: string; occurrenceId: string; round: number; actorUserId: string };
   /** SP8: an audit finished (spec §6.2). SP6 turns it into audit.finished. */
   'audit.finished': { tenantId: string; auditId: string; executionId: string; occurrenceId: string; result: AuditResult; actorUserId: string | null };
+  /** 2026-11-06 design §6.4: a problem report was created, closed by a manager, or resolved by its task completing. */
+  'problem_report.created': { tenantId: string; reportId: string; siteId: string; severity: ProblemSeverity; reporterUserId: string; actorUserId: string | null };
+  'problem_report.closed': { tenantId: string; reportId: string; reporterUserId: string; actorUserId: string | null };
+  'problem_report.resolved': { tenantId: string; reportId: string; reporterUserId: string; actorUserId: string | null };
   'task.assigned': TaskEvent;
   'task.accepted': TaskEvent;
   'task.submitted': TaskEvent;
