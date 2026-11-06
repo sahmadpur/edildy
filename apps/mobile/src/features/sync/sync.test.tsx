@@ -23,6 +23,16 @@ describe('sync indicator', () => {
     expect(mockPush).toHaveBeenCalledWith('/sync');
   });
 
+  it('compact: shows only the dot but keeps the label and opens the queue', async () => {
+    const t = await createTestServices({ online: true });
+    await t.seed();
+    await renderWithServices(t.services, <SyncIndicator compact />);
+    expect(screen.getByTestId('sync-indicator-synced')).toBeTruthy();
+    expect(screen.queryByText('Sinxronlaşdırılıb')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sinxronlaşdırılıb' }));
+    expect(mockPush).toHaveBeenCalledWith('/sync');
+  });
+
   it('is amber "Oflayn" with nothing waiting, then amber with the number of waiting changes', async () => {
     const t = await createTestServices();
     await t.seed();
