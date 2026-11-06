@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeWorkspace, renderInWorkspace } from '@/test/workspace';
@@ -11,6 +11,19 @@ const tpl = (id: string, source: 'global' | 'tenant', name: string, status: 'act
 beforeEach(() => vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} }));
 
 describe('TemplatesPage', () => {
+  it('is the Şablonlar tab of the checklists page', async () => {
+    const ws = fakeWorkspace();
+    ws.templates.list.mockResolvedValue([]);
+    renderInWorkspace(<TemplatesPage />, ws);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlama vərəqələri' })).toBeInTheDocument();
+    const tabs = within(screen.getByRole('navigation', { name: 'Yoxlama vərəqələri' }));
+    expect(tabs.getByRole('link', { name: 'Şablonlar' })).toHaveAttribute('aria-current', 'page');
+    const checklists = tabs.getByRole('link', { name: 'Yoxlama vərəqələri' });
+    expect(checklists).toHaveAttribute('href', '/checklists');
+    await userEvent.click(checklists);
+    expect(ws.go).toHaveBeenCalledWith('/checklists');
+  });
+
   it('uses a Taskop template to create a checklist', async () => {
     const ws = fakeWorkspace();
     ws.templates.list.mockImplementation(async (q: { source?: string }) => (q.source === 'global' ? [tpl('g1', 'global', 'Restoran mətbəxi')] : []));

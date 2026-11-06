@@ -1,5 +1,5 @@
 import type { ChecklistSummary } from '@taskop/contracts';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeWorkspace, renderInWorkspace } from '@/test/workspace';
@@ -61,11 +61,24 @@ describe('ChecklistsPage', () => {
     await waitFor(() => expect(ws.checklists.create).toHaveBeenCalledWith({ name: 'Restoran mətbəxi', category: 'restaurant', from: { kind: 'global', templateId: 't1' } }));
   });
 
-  it('hides the create button without checklists.manage', async () => {
+  it('offers the Şablonlar tab to checklist managers, inside the current workspace', async () => {
+    const ws = fakeWorkspace({ base: '/platform/tenants/t1' });
+    ws.checklists.list.mockResolvedValue({ items: [], nextCursor: null });
+    renderInWorkspace(<ChecklistsPage />, ws);
+    const tabs = within(await screen.findByRole('navigation', { name: 'Yoxlama vərəqələri' }));
+    expect(tabs.getByRole('link', { name: 'Yoxlama vərəqələri' })).toHaveAttribute('aria-current', 'page');
+    const templates = tabs.getByRole('link', { name: 'Şablonlar' });
+    expect(templates).toHaveAttribute('href', '/platform/tenants/t1/templates');
+    await userEvent.click(templates);
+    expect(ws.go).toHaveBeenCalledWith('/templates');
+  });
+
+  it('hides the Şablonlar tab and the create button without checklists.manage', async () => {
     const ws = fakeWorkspace({ can: { manage: false, publish: false, templates: false } });
     ws.checklists.list.mockResolvedValue({ items: [], nextCursor: null });
     renderInWorkspace(<ChecklistsPage />, ws);
     expect(await screen.findByText('Hələ yoxlama vərəqəsi yoxdur.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Yeni yoxlama vərəqəsi' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Şablonlar' })).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 import { ASSIGNMENT_STATUSES, type AssignmentStatus } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { useDeferredValue, useState } from 'react';
+import { type ReactNode, useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmButton } from '@/components/confirm-button';
@@ -20,7 +20,7 @@ import { useAssignment, useAssignments } from './queries';
 import { useLocale } from '@/lib/i18n';
 import { LoadingState } from '@/components/states';
 
-export function AssignmentsPage() {
+export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
   const { t } = useTranslation();
   const canManage = useCan('assignments.manage');
   const sites = useSites();
@@ -43,6 +43,7 @@ export function AssignmentsPage() {
           )
         }
       />
+      {tabs}
       <div className="mb-4 flex flex-wrap gap-3">
         <Input type="search" aria-label={t('common.search')} placeholder={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-64" />
         <NativeSelect aria-label={t('scheduling.assignments.site')} value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-56">

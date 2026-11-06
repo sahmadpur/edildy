@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { errorText } from '@/lib/errors';
+import { ChecklistTabs } from './checklist-tabs';
 import { DetailsDialog } from './checklist-dialogs';
 import { categoryLabel } from './labels';
 import { NewChecklistDialog } from './new-checklist-dialog';
@@ -37,10 +38,12 @@ export function TemplatesPage() {
 
   return (
     <div>
-      <PageHeader title={t('checklists.templates.title')} actions={ws.can.templates && <Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
+      <PageHeader title={t('checklists.title')} actions={ws.can.templates && <Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
+      <ChecklistTabs active="templates" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
+        {/* Pills: a filter inside the Şablonlar tab, not another row of page tabs. */}
         <Tabs value={source} onValueChange={(v) => setSource(v as TemplateSource)}>
-          <TabsList>
+          <TabsList variant="pill">
             <TabsTrigger value="global">{t('checklists.templates.taskop')}</TabsTrigger>
             <TabsTrigger value="tenant">{t('checklists.templates.ours')}</TabsTrigger>
           </TabsList>

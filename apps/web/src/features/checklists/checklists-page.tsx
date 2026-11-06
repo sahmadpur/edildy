@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ChecklistTabs } from './checklist-tabs';
 import { categoryLabel } from './labels';
 import { NewChecklistDialog } from './new-checklist-dialog';
 import { useChecklistPages } from './queries';
@@ -29,6 +30,7 @@ export function ChecklistsPage() {
   return (
     <div>
       <PageHeader title={t('checklists.title')} actions={ws.can.manage && <Button onClick={() => setCreating(true)}>{t('checklists.new')}</Button>} />
+      <ChecklistTabs active="checklists" />
       <div className="mb-4 flex flex-wrap gap-2">
         <Input type="search" className="max-w-xs" placeholder={t('checklists.filters.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
         <NativeSelect aria-label={t('checklists.filters.status')} className="w-44" value={status} onChange={(e) => setStatus(e.target.value as ChecklistStatus | '')}>

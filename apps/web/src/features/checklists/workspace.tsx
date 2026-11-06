@@ -1,6 +1,7 @@
 import type { ChecklistsApi, TemplatesApi } from '@taskop/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type MouseEvent, type ReactNode, useContext, useMemo } from 'react';
+import { isPlainClick } from '@/components/page-tabs';
 import { platformApi } from '@/features/platform/platform-session';
 import { api, useCan, useMe } from '@/lib/session';
 
@@ -66,16 +67,18 @@ export function PlatformTenantWorkspace({ tenantId, children }: { tenantId: stri
   return <WorkspaceProvider value={value}>{children}</WorkspaceProvider>;
 }
 
+/** The click handler of a workspace link: a plain click navigates in the app, anything else is left to the browser. */
+export const wsClick = (ws: Pick<ChecklistWorkspace, 'go'>, to: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+  if (!isPlainClick(e)) return;
+  e.preventDefault();
+  ws.go(to);
+};
+
 /** An <a> that navigates inside the current workspace (keeps cmd/ctrl-click working). */
 export function WsLink({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   const ws = useWorkspace();
-  const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    e.preventDefault();
-    ws.go(to);
-  };
   return (
-    <a href={`${ws.base}${to}`} onClick={onClick} className={className ?? 'font-medium hover:underline'}>
+    <a href={`${ws.base}${to}`} onClick={wsClick(ws, to)} className={className ?? 'font-medium hover:underline'}>
       {children}
     </a>
   );

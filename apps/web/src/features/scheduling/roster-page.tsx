@@ -1,6 +1,6 @@
 import { addDays, SCHEDULING_LIMITS } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NativeSelect } from '@/components/native-select';
@@ -27,7 +27,7 @@ import { parseKey, rowKey, toggleKey, weekDates, weekStartOf } from './roster-gr
 import { useLocale } from '@/lib/i18n';
 import { LoadingState } from '@/components/states';
 
-export function RosterPage({ initialDate }: { initialDate?: string }) {
+export function RosterPage({ initialDate, tabs }: { initialDate?: string; tabs?: ReactNode }) {
   const { t } = useTranslation();
   const locale = useLocale();
   const qc = useQueryClient();
@@ -95,7 +95,7 @@ export function RosterPage({ initialDate }: { initialDate?: string }) {
   return (
     <div className="grid gap-4">
       <PageHeader
-        title={t('scheduling.roster.title')}
+        title={t('scheduling.shifts.title')}
         actions={
           canManage &&
           siteId && (
@@ -110,6 +110,7 @@ export function RosterPage({ initialDate }: { initialDate?: string }) {
           )
         }
       />
+      {tabs}
       <div className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="roster-site">{t('scheduling.roster.site')}</Label>

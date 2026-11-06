@@ -1,6 +1,6 @@
 import type { ShiftDto } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/page-header';
@@ -13,7 +13,7 @@ import { api, useCan } from '@/lib/session';
 import { useShifts } from './queries';
 import { ShiftDialog } from './shift-dialog';
 
-export function ShiftsPage() {
+export function ShiftsPage({ tabs }: { tabs?: ReactNode } = {}) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const canManage = useCan('shifts.manage');
@@ -26,6 +26,7 @@ export function ShiftsPage() {
   return (
     <div>
       <PageHeader title={t('scheduling.shifts.title')} actions={canManage && <Button onClick={() => setEditing('new')}>{t('scheduling.shifts.add')}</Button>} />
+      {tabs}
       <Table>
         <TableHeader>
           <TableRow>

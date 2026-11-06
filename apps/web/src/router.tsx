@@ -34,12 +34,9 @@ import { messagesSearch } from '@/features/notifications/routes';
 import { ReportsPage } from '@/features/reports/reports-page';
 import { reportsPageSearch } from '@/features/reports/search';
 import { RolesPage } from '@/features/roles/roles-page';
-import { AssignmentsPage } from '@/features/scheduling/assignment-pages';
-import { AssignmentDetailRoute, NewAssignmentRoute, ScheduleRoute, scheduleSearch } from '@/features/scheduling/routes';
-import { RosterPage } from '@/features/scheduling/roster-page';
+import { AssignmentDetailRoute, AssignmentsRoute, NewAssignmentRoute, RosterRoute, ScheduleRoute, scheduleSearch, ShiftsRoute } from '@/features/scheduling/routes';
 import { tasksSearch } from '@/features/tasks/routes';
 import { TasksPage } from '@/features/tasks/tasks-page';
-import { ShiftsPage } from '@/features/scheduling/shifts-page';
 import { SettingsPage } from '@/features/settings/settings-page';
 import { SitesPage } from '@/features/sites/sites-page';
 import { TeamsPage } from '@/features/teams/teams-page';
@@ -113,12 +110,8 @@ const settingsRoute = createRoute({
 });
 const sitesRoute = createRoute({ getParentRoute: () => appLayout, path: '/sites', component: SitesPage });
 const teamsRoute = createRoute({ getParentRoute: () => appLayout, path: '/teams', component: TeamsPage });
-const rosterRoute = createRoute({
-  getParentRoute: () => appLayout,
-  path: '/roster',
-  component: () => <RosterPage />,
-});
-const shiftsRoute = createRoute({ getParentRoute: () => appLayout, path: '/shifts', component: ShiftsPage });
+const rosterRoute = createRoute({ getParentRoute: () => appLayout, path: '/roster', component: RosterRoute });
+const shiftsRoute = createRoute({ getParentRoute: () => appLayout, path: '/shifts', component: ShiftsRoute });
 const scheduleRoute = createRoute({ getParentRoute: () => appLayout, path: '/schedule', component: ScheduleRoute, validateSearch: scheduleSearch });
 const problemsRoute = createRoute({ getParentRoute: () => appLayout, path: '/problems', component: () => <ProblemsPage /> });
 const tasksRoute = createRoute({ getParentRoute: () => appLayout, path: '/tasks', component: TasksPage, validateSearch: tasksSearch });
@@ -128,7 +121,7 @@ const notificationsRoute = createRoute({ getParentRoute: () => appLayout, path: 
 const messagesRoute = createRoute({ getParentRoute: () => appLayout, path: '/messages', component: MessagesPage, validateSearch: messagesSearch });
 const reportsRoute = createRoute({ getParentRoute: () => appLayout, path: '/reports', component: () => <ReportsPage />, validateSearch: reportsPageSearch });
 
-const assignmentsRoute = createRoute({ getParentRoute: () => appLayout, path: '/assignments', component: AssignmentsPage });
+const assignmentsRoute = createRoute({ getParentRoute: () => appLayout, path: '/assignments', component: AssignmentsRoute });
 const newAssignmentRoute = createRoute({
   getParentRoute: () => appLayout,
   path: '/assignments/new',
