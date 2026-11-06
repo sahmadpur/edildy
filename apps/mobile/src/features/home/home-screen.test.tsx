@@ -55,13 +55,31 @@ describe('My checklists', () => {
     expect(screen.getByText('Murad Həsənov icra edir')).toBeTruthy();
     expect(within(screen.getByTestId(`occurrence-${OCC5}`)).getByText('Gecikir')).toBeTruthy();
     expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByRole('button', { name: 'Davam et: Açılış yoxlaması' })).toBeTruthy();
-    expect(within(screen.getByTestId(`occurrence-${OCC3}`)).getByText('18:00-da açılır')).toBeTruthy();
+    const upcoming = within(screen.getByTestId(`occurrence-${OCC3}`));
+    expect(upcoming.getByText(formatDateTime('2026-11-02T14:00:00.000Z', { locale: 'az', timeZone: 'Asia/Baku' }))).toBeTruthy(); // "2 noy 2026, 18:00"
+    expect(upcoming.queryByText(/açılır/)).toBeNull();
     expect(within(screen.getByTestId(`occurrence-${OCC3}`)).queryByRole('button')).toBeNull();
     expect(within(screen.getByTestId(`occurrence-${OCC2}`)).queryByRole('button')).toBeNull();
     expect(within(await screen.findByTestId('stat-myTasks')).getByText('2')).toBeTruthy();
     expect(within(screen.getByTestId('stat-overdue')).getByText('2')).toBeTruthy();
     expect(within(screen.getByTestId('stat-completed')).getByText('1')).toBeTruthy();
     expect(await within(screen.getByTestId('stat-issues')).findByText('1')).toBeTruthy();
+  });
+
+  it('keeps the site name whole and lets a long checklist name shrink', async () => {
+    const t = await createTestServices();
+    await t.seed(
+      syncResponse({
+        occurrences: [occurrence({ checklistName: 'Çox uzun adı olan gündəlik təmizlik və təhlükəsizlik yoxlaması', siteName: 'Nərimanov filialı' })],
+        checklistVersions: [versionOf(t.c.content)],
+      }),
+    );
+    await renderWithServices(t.services, <HomeScreen />);
+    const card = within(await screen.findByTestId(`occurrence-${OCC}`));
+    const name = card.getByText(/Çox uzun adı/);
+    expect(name.props.numberOfLines).toBe(1);
+    expect(StyleSheet.flatten(name.props.style).flexShrink).toBe(1);
+    expect(StyleSheet.flatten(card.getByText('Nərimanov filialı').props.style).flexShrink).toBe(0);
   });
 
   it('starts an open checklist and opens it by its occurrence id', async () => {
