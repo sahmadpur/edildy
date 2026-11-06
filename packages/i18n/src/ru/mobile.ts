@@ -14,7 +14,6 @@ export default {
   },
   home: {
     greeting: 'Здравствуйте, {{name}}!',
-    subtitle: 'Ваши чек-листы на сегодня',
     myTasks: 'Мои задачи',
     overdue: 'Просрочено',
     completed: 'Завершено (сегодня)',
@@ -39,7 +38,6 @@ export default {
     syncPending: 'Не отправлено',
     syncFailed: 'Не удалось отправить',
     online: 'Требуется подключение к интернету',
-    home: { title: 'Задачи', open: 'Открыто: {{count}}', overdue: 'Просрочено: {{count}}' },
     detail: {
       instructions: 'Инструкция',
       noInstructions: 'Инструкции нет.',
@@ -110,7 +108,6 @@ export default {
     start: 'Начать',
     continue: 'Продолжить',
     view: 'Открыть',
-    opensAt: 'Откроется в {{time}}',
     emptySection: 'Здесь пока ничего нет.',
     startBlocked: {
       notYetOpen: 'Время выполнения ещё не наступило.',

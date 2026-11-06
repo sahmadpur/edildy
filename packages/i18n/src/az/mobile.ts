@@ -14,7 +14,6 @@ export default {
   },
   home: {
     greeting: 'Salam, {{name}}!',
-    subtitle: 'Bugünkü yoxlamalarınız',
     myTasks: 'Mənim tapşırıqlarım',
     overdue: 'Gecikən',
     completed: 'Tamamlanan (bu gün)',
@@ -39,7 +38,6 @@ export default {
     syncPending: 'Göndərilməyib',
     syncFailed: 'Göndərilmədi',
     online: 'İnternet bağlantısı tələb olunur',
-    home: { title: 'Tapşırıqlar', open: 'Açıq: {{count}}', overdue: 'Gecikmiş: {{count}}' },
     detail: {
       instructions: 'Təlimat',
       noInstructions: 'Təlimat yazılmayıb.',
@@ -110,7 +108,6 @@ export default {
     start: 'Başla',
     continue: 'Davam et',
     view: 'Bax',
-    opensAt: '{{time}}-da açılır',
     emptySection: 'Burada heç nə yoxdur.',
     startBlocked: {
       notYetOpen: 'İcra vaxtı hələ başlamayıb.',

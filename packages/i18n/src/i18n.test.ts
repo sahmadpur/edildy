@@ -52,7 +52,7 @@ import {
   TASK_STATUSES,
   TEMPLATE_CATEGORIES,
 } from '@taskop/contracts';
-import { az, en, formatDate, formatDateTime, formatLocalDate, formatNumber, formatPercent, formatShortDate, formatTime, interpolate, LANGUAGE_NAMES, LANGUAGES, pickLanguage, resolveLanguage, resources, ru, translationsFor } from './index.js';
+import { az, en, formatDate, formatDateTime, formatLocalDate, formatNumber, formatPercent, formatShortDate, formatTime, interpolate, LANGUAGE_FLAGS, LANGUAGE_NAMES, LANGUAGES, pickLanguage, resolveLanguage, resources, ru, translationsFor } from './index.js';
 
 describe('az translations', () => {
   it('has a message for every API error code', () => {
@@ -117,6 +117,11 @@ describe('languages', () => {
       expect(LANGUAGE_NAMES[l]).toBeTypeOf('string');
       expect(resources[l].translation).toBeDefined();
     }
+  });
+
+  it('has one flag per language', () => {
+    expect(Object.keys(LANGUAGE_FLAGS).sort()).toEqual([...LANGUAGES].sort());
+    for (const l of LANGUAGES) expect(LANGUAGE_FLAGS[l]).toMatch(/^\p{Regional_Indicator}{2}$/u);
   });
   it('resolves the stored choice, then the preferred languages, then Azerbaijani', () => {
     expect(resolveLanguage('ru', ['en-GB'])).toBe('ru');
@@ -285,7 +290,6 @@ describe('mobile task translations', () => {
   it('labels the tasks tab, its sections, the task commands and every task screen', () => {
     expect(az.mobile.tabs.tasks).toBe('Tapşırıqlar');
     for (const k of ['accept', 'start', 'media', 'submit'] as const) expect(az.mobile.sync.kinds.task[k], k).toBeTypeOf('string');
-    for (const k of ['open', 'overdue', 'title'] as const) expect(az.mobile.tasks.home[k], k).toBeTypeOf('string');
     for (const k of [
       'instructions', 'noInstructions', 'problem', 'accept', 'start', 'response', 'responsePlaceholder', 'complete', 'submitted',
       'readOnly', 'rejected', 'cancelled', 'mediaOffline', 'mediaFailed', 'notFound',
@@ -309,7 +313,6 @@ describe('mobile task translations', () => {
     expect(az.mobile.tasks.detail.start).toBe('Başla');
     expect(az.mobile.tasks.detail.complete).toBe('Tamamla');
     expect(az.mobile.tasks.online).toBe('İnternet bağlantısı tələb olunur');
-    expect(az.mobile.tasks.home.open.replace('{{count}}', '2')).toBe('Açıq: 2');
     expect(az.mobile.tasks.create.teamOption.replace('{{name}}', 'Texniki xidmət').replace('{{count}}', '3')).toBe('Texniki xidmət (3 nəfər)');
   });
 });

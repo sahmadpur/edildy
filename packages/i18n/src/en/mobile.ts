@@ -14,7 +14,6 @@ export default {
   },
   home: {
     greeting: 'Hello, {{name}}!',
-    subtitle: 'Your checklists for today',
     myTasks: 'My tasks',
     overdue: 'Late',
     completed: 'Completed (today)',
@@ -39,7 +38,6 @@ export default {
     syncPending: 'Not sent',
     syncFailed: 'Failed to send',
     online: 'Internet connection required',
-    home: { title: 'Tasks', open: 'Open: {{count}}', overdue: 'Overdue: {{count}}' },
     detail: {
       instructions: 'Instructions',
       noInstructions: 'No instructions.',
@@ -110,7 +108,6 @@ export default {
     start: 'Start',
     continue: 'Continue',
     view: 'View',
-    opensAt: 'Opens at {{time}}',
     emptySection: 'Nothing here.',
     startBlocked: {
       notYetOpen: 'The run window has not opened yet.',

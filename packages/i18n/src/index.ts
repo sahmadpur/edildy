@@ -14,6 +14,8 @@ export type Language = (typeof LANGUAGES)[number];
 export const DEFAULT_LOCALE: Language = 'az';
 /** Each language's name in itself, which is how a selector should list them. */
 export const LANGUAGE_NAMES: Record<Language, string> = { az: 'Azərbaycan dili', en: 'English', ru: 'Русский' };
+/** Each language's flag, for a picker that shows no words (the mobile profile). */
+export const LANGUAGE_FLAGS: Record<Language, string> = { az: '🇦🇿', en: '🇬🇧', ru: '🇷🇺' };
 
 export const isLanguage = (value: unknown): value is Language => typeof value === 'string' && (LANGUAGES as readonly string[]).includes(value);
 
