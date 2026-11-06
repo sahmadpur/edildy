@@ -1,11 +1,9 @@
 import type { ChecklistSummary, ProblemSeverity, ReportFilters, RunAuditState, RunBucket } from '@taskop/contracts';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 
-/** Spec §6.1: the dashboard asks again every minute while it is visible. */
+/** Spec §6.1: the home page asks again every minute while it is visible. */
 export const DASHBOARD_REFETCH_MS = 60_000;
-/** "Needs attention" shows the first 10 of each list (Part 1 decision 13). */
-export const ATTENTION_LIMIT = 10;
 
 export const reportKeys = {
   /** Every report query: invalidated by "Yenilə" and when a report's drawer closes. */
@@ -16,21 +14,22 @@ export const reportKeys = {
   runs: (f: ReportFilters, bucket: RunBucket, auditState: RunAuditState | null = null) => ['reports', 'runs', f, bucket, auditState] as const,
   problems: (f: ReportFilters, severity: ProblemSeverity | null) => ['reports', 'problems', f, severity] as const,
   tasks: (f: ReportFilters) => ['reports', 'tasks', f] as const,
-  overdueNow: (f: ReportFilters) => ['reports', 'attention', 'overdue', f] as const,
-  critical: (f: ReportFilters) => ['reports', 'attention', 'critical', f] as const,
 };
 
 /** Polling only while the tab is visible, and once more when the window gets focus back (decision 10). */
 const LIVE = { refetchInterval: DASHBOARD_REFETCH_MS, refetchIntervalInBackground: false, refetchOnWindowFocus: true } as const;
 
-/** `filters` is null while the filter bar shows a range the API would refuse: nothing is asked. */
-export const useReportSummary = (filters: ReportFilters | null, o: { live?: boolean } = {}) =>
-  useQuery({
-    queryKey: reportKeys.summary(filters!),
-    queryFn: () => api.reports.summary(filters!),
-    enabled: filters !== null,
+/** One period's summary; the home page runs six of these side by side (useQueries). */
+export const summaryQueryOptions = (filters: ReportFilters, o: { live?: boolean } = {}) =>
+  queryOptions({
+    queryKey: reportKeys.summary(filters),
+    queryFn: () => api.reports.summary(filters),
     ...(o.live ? LIVE : {}),
   });
+
+/** `filters` is null while the filter bar shows a range the API would refuse: nothing is asked. */
+export const useReportSummary = (filters: ReportFilters | null, o: { live?: boolean } = {}) =>
+  useQuery({ ...summaryQueryOptions(filters!, o), enabled: filters !== null });
 
 export const useSiteReport = (filters: ReportFilters) => useQuery({ queryKey: reportKeys.sites(filters), queryFn: () => api.reports.sites(filters) });
 
@@ -61,28 +60,6 @@ export const useReportTasks = (filters: ReportFilters) =>
     queryFn: ({ pageParam }) => api.reports.tasks({ ...filters, ...(pageParam ? { cursor: pageParam } : {}) }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
-  });
-
-/** Runs overdue right now: today's, whatever the period, with the other filters (decision 9). */
-export function useOverdueNow(filters: ReportFilters | null, today: string) {
-  const query = filters ? { ...filters, from: today, to: today } : null;
-  return useQuery({
-    queryKey: reportKeys.overdueNow(query!),
-    queryFn: () => api.reports.runs({ ...query!, bucket: 'overdue' }),
-    enabled: query !== null,
-    select: (p) => p.items.slice(0, ATTENTION_LIMIT),
-    ...LIVE,
-  });
-}
-
-/** Critical problems of the period (Part 1 decision 5). */
-export const useCriticalProblems = (filters: ReportFilters | null) =>
-  useQuery({
-    queryKey: reportKeys.critical(filters!),
-    queryFn: () => api.reports.problems({ ...filters!, severity: 'critical' }),
-    enabled: filters !== null,
-    select: (p) => p.items.slice(0, ATTENTION_LIMIT),
-    ...LIVE,
   });
 
 /** The employee picker: the period's employee report without its own filter (decision 4); shares the tab's cache. */

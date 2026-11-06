@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { DashboardPage } from '@/features/reports/dashboard-page';
 import { useCan, useMe } from '@/lib/session';
+import { HomeDashboard } from './home-dashboard';
 
-/** Spec §6.1: the dashboard for reports.view holders; everyone else keeps the welcome page. */
+/** Spec §6.1: the live dashboard for reports.view holders; everyone else keeps the welcome page. */
 export function HomePage() {
   const canReport = useCan('reports.view');
-  return canReport ? <DashboardPage /> : <Welcome />;
+  return canReport ? <HomeDashboard /> : <Welcome />;
 }
 
 function Welcome() {
