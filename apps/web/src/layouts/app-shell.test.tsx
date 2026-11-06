@@ -65,16 +65,16 @@ describe('AppShell', () => {
     state.current = { status: 'authenticated', me: me(['users.view', 'shifts.view', 'reports.view', 'assignments.view', 'audits.perform']) };
     renderShell();
     const nav = within(await screen.findByRole('navigation', { name: 'Menyu' }));
-    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ümumi', 'Əməliyyatlar', 'İdarəetmə', 'Digər']);
-    // Problemlər sits right under Ana səhifə; Növbələr and Əməkdaşlar are administration; Audit is in Digər, last.
-    expect(nav.getAllByRole('link').map((l) => l.textContent)).toEqual(['Ana səhifə', 'Problemlər', 'Hesabatlar', 'Yoxlamalar', 'Əməkdaşlar', 'Növbələr', 'Parametrlər', 'Audit']);
+    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Əsas', 'Əməliyyatlar', 'İdarəetmə', 'Digər']);
+    // Problemlər sits right under Göstəricilər; Növbələr and Əməkdaşlar are administration; Audit is in Digər, last.
+    expect(nav.getAllByRole('link').map((l) => l.textContent)).toEqual(['Göstəricilər', 'Problemlər', 'Hesabatlar', 'Yoxlamalar', 'Əməkdaşlar', 'Növbələr', 'Parametrlər', 'Audit']);
   });
 
   it('hides a group whose pages the user may not open', async () => {
     state.current = { status: 'authenticated', me: me(['users.view']) };
     renderShell();
     const nav = within(await screen.findByRole('navigation', { name: 'Menyu' }));
-    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ümumi', 'İdarəetmə']);
+    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Əsas', 'İdarəetmə']);
   });
 
   it('collapses a group on its heading and remembers that', async () => {

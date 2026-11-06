@@ -46,13 +46,13 @@ describe('HomePage', () => {
     mocks.me.current = meWith(['tasks.view']);
     renderWithRouter(<HomePage />);
     expect(await screen.findByRole('heading', { name: 'Xoş gəlmisiniz, Leyla!' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Ana səhifə' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Göstəricilər' })).not.toBeInTheDocument();
     expect(mocks.api.reports.summary).not.toHaveBeenCalled();
   });
 
   it('shows the home dashboard to holders of reports.view', async () => {
     renderWithRouter(<HomePage />);
-    expect(await screen.findByRole('heading', { name: 'Ana səhifə' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Göstəricilər' })).toBeInTheDocument();
     await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledTimes(4));
     expect(screen.queryByRole('heading', { name: 'Xoş gəlmisiniz, Leyla!' })).not.toBeInTheDocument();
   });
@@ -61,7 +61,7 @@ describe('HomePage', () => {
 describe('HomeDashboard', () => {
   it('shows four boxes — today, yesterday, last 7 and last 30 days — each with planned, completed, problems and late', async () => {
     renderWithRouter(<HomeDashboard today={TODAY} />);
-    expect(await screen.findByRole('heading', { name: 'Ana səhifə' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Göstəricilər' })).toBeInTheDocument();
     expect((await boxes()).getAllByRole('article').map((a) => a.getAttribute('aria-label'))).toEqual(PERIODS);
     expect(screen.queryByLabelText('Dövr')).not.toBeInTheDocument();
 

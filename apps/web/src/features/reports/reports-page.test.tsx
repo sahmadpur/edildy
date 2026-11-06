@@ -45,7 +45,7 @@ describe('ReportsPage', () => {
     const router = renderWithRouter(<ReportsPage today={TODAY} />, `/reports?period=this_week&siteId=${IDS.zoneA}&inactive=true`);
     expect(await screen.findByRole('link', { name: 'Gecikib: 1' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Hesabatlar' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Xülasə' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Ümumi' })).toHaveAttribute('aria-selected', 'true');
     expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-11-02', to: TODAY, siteId: IDS.zoneA });
     // Summary adds the partial and missed tiles, and a multi-day period has its trend.
     expect(screen.getByRole('link', { name: 'Yarımçıq: 1' })).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('ReportsPage', () => {
 
   it('falls back to Summary without a broken site id from a hand-edited URL', async () => {
     renderWithRouter(<ReportsPage today={TODAY} />, '/reports?tab=audit&siteId=site-1&bucket=late');
-    expect(await screen.findByRole('tab', { name: 'Xülasə' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tab', { name: 'Ümumi' })).toHaveAttribute('aria-selected', 'true');
     await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: TODAY, to: TODAY }));
   });
 
@@ -87,7 +87,7 @@ describe('ReportsPage', () => {
     const router = renderWithRouter(<ReportsPage today={TODAY} />, '/reports?tab=sites&period=last_7');
     await userEvent.click(await screen.findByRole('button', { name: 'Zona A1' }));
     await waitFor(() => expect(router.state.location.search).toEqual({ period: 'last_7', tab: 'summary', siteId: IDS.zoneA }));
-    expect(screen.getByRole('tab', { name: 'Xülasə' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Ümumi' })).toHaveAttribute('aria-selected', 'true');
     await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenLastCalledWith({ from: '2026-10-29', to: TODAY, siteId: IDS.zoneA }));
     router.history.back();
     await waitFor(() => expect(router.state.location.search).toEqual({ tab: 'sites', period: 'last_7' }));

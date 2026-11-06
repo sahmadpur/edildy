@@ -39,7 +39,7 @@ describe('ChecklistsPage', () => {
     renderInWorkspace(<ChecklistsPage />, ws);
     await userEvent.click(await screen.findByRole('button', { name: 'Yeni yoxlama vərəqəsi' }));
     await userEvent.type(screen.getByLabelText('Ad'), 'Mətbəx yoxlaması');
-    await userEvent.selectOptions(screen.getByLabelText('Kateqoriya'), 'restaurant');
+    await userEvent.selectOptions(screen.getByLabelText('Sahə'), 'restaurant');
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
     await waitFor(() => expect(ws.checklists.create).toHaveBeenCalledWith({ name: 'Mətbəx yoxlaması', category: 'restaurant' }));
     expect(ws.go).toHaveBeenCalledWith('/checklists/new-id/draft');

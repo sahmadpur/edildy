@@ -59,7 +59,7 @@ export default {
     planned: 'Planned',
     all: 'All',
   },
-  tabs: { summary: 'Summary', sites: 'Sites', employees: 'Employees', runs: 'Runs', problems: 'Problems', tasks: 'Tasks' },
+  tabs: { summary: 'Overview', sites: 'Sites', employees: 'Employees', runs: 'Runs', problems: 'Problems', tasks: 'Tasks' },
   columns: {
     measure: 'Measure',
     value: 'Value',

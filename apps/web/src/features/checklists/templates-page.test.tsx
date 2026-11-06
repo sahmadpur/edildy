@@ -46,7 +46,7 @@ describe('TemplatesPage', () => {
     expect(ws.templates.reactivate).toHaveBeenCalledWith('t1');
     await userEvent.click(screen.getByRole('button', { name: 'Yeni şablon' }));
     await userEvent.type(screen.getByLabelText('Ad'), 'Növbə təhvili');
-    await userEvent.selectOptions(screen.getByLabelText('Kateqoriya'), 'other');
+    await userEvent.selectOptions(screen.getByLabelText('Sahə'), 'other');
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
     await waitFor(() => expect(ws.templates.create).toHaveBeenCalledWith({ name: 'Növbə təhvili', category: 'other' }));
     expect(ws.go).toHaveBeenCalledWith('/templates/tenant/t2');

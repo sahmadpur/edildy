@@ -59,7 +59,7 @@ export default {
     planned: 'Planlaşdırılmış',
     all: 'Hamısı',
   },
-  tabs: { summary: 'Xülasə', sites: 'Obyektlər', employees: 'Əməkdaşlar', runs: 'İcralar', problems: 'Problemlər', tasks: 'Tapşırıqlar' },
+  tabs: { summary: 'Ümumi', sites: 'Obyektlər', employees: 'Əməkdaşlar', runs: 'İcralar', problems: 'Problemlər', tasks: 'Tapşırıqlar' },
   columns: {
     measure: 'Göstərici',
     value: 'Dəyər',

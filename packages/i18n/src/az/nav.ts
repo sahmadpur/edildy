@@ -1,5 +1,5 @@
 export default {
-  home: 'Ana səhifə',
+  home: 'Göstəricilər',
   users: 'Əməkdaşlar',
   roles: 'Rollar',
   sites: 'Obyektlər',
@@ -22,5 +22,5 @@ export default {
   welcome: 'Xoş gəlmisiniz, {{name}}!',
   intro:
     'Təşkilatınızı, obyektləri, komandaları və əməkdaşları qurun, yoxlama vərəqələrini yaradın və dərc edin. Planlaşdırma və icra növbəti mərhələlərdə əlavə olunacaq.',
-  groups: { overview: 'Ümumi', operations: 'Əməliyyatlar', admin: 'İdarəetmə', other: 'Digər' },
+  groups: { overview: 'Əsas', operations: 'Əməliyyatlar', admin: 'İdarəetmə', other: 'Digər' },
 } as const;

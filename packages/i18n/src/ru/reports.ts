@@ -59,7 +59,7 @@ export default {
     planned: 'Запланированные',
     all: 'Все',
   },
-  tabs: { summary: 'Сводка', sites: 'Объекты', employees: 'Сотрудники', runs: 'Выполнения', problems: 'Проблемы', tasks: 'Задачи' },
+  tabs: { summary: 'Общее', sites: 'Объекты', employees: 'Сотрудники', runs: 'Выполнения', problems: 'Проблемы', tasks: 'Задачи' },
   columns: {
     measure: 'Показатель',
     value: 'Значение',

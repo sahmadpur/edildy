@@ -519,7 +519,7 @@ describe('report web translations', () => {
     expect(az.reports.table.openTask).toBe('Tapşırığı aç');
     expect(az.reports.table.receivedAt).toBe('Serverə çatıb: {{time}}');
     // Part 1's keys are untouched.
-    expect(az.nav.home).toBe('Ana səhifə');
+    expect(az.nav.home).toBe('Göstəricilər');
     expect(az.reports.export.thisTable).toBe('Bu cədvəl');
     expect(az.reports.measures.completionHint).toBe('Vaxtı çatmış icralardan tamamlananların payı');
     expect(az.nav.reports).toBe('Hesabatlar');

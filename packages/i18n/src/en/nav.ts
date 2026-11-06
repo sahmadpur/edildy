@@ -1,5 +1,5 @@
 export default {
-  home: 'Home',
+  home: 'Indicators',
   users: 'Employees',
   roles: 'Roles',
   sites: 'Sites',
@@ -22,5 +22,5 @@ export default {
   welcome: 'Welcome, {{name}}!',
   intro:
     'Set up your organisation, sites, teams and people, then create and publish checklists. Scheduling and runs come in the next stages.',
-  groups: { overview: 'Overview', operations: 'Operations', admin: 'Administration', other: 'Other' },
+  groups: { overview: 'Main', operations: 'Operations', admin: 'Administration', other: 'Other' },
 } as const;

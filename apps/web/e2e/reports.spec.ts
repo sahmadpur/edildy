@@ -121,7 +121,7 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   await page.getByLabel('E-poçt', { exact: true }).fill(email);
   await page.getByLabel('Şifrə', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Daxil ol' }).click();
-  await expect(page.getByRole('heading', { name: 'Ana səhifə' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Göstəricilər' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Bu gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
 
   // Last 7 days covers yesterday whatever the time of day (decision 18).
