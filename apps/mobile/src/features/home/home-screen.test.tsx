@@ -3,7 +3,7 @@ import { Alert, StyleSheet } from 'react-native';
 import { formatDateTime } from '@taskop/i18n';
 import i18n from '@/lib/i18n';
 import { colors } from '@/lib/theme';
-import { ME, OCC, OCC2, OCC3, OCC4, OCC5, occurrence, OTHER, OTHER_EXECUTION, REWORK_DUE, reworkSync, syncResponse, syncTask, T, TASK2, TASK3, TEAM, VERSION2, versionOf } from '@/offline/testing/fixtures';
+import { ME, OCC, OCC2, OCC3, OCC4, OCC5, occurrence, OTHER, OTHER_EXECUTION, REWORK_DUE, reworkSync, syncResponse, VERSION2, versionOf } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices, type TestServices } from '@/offline/testing/test-services';
 import { HomeScreen } from './home-screen';
@@ -82,6 +82,18 @@ describe('My checklists', () => {
     expect(StyleSheet.flatten(card.getByText('Nərimanov filialı').props.style).flexShrink).toBe(0);
   });
 
+  it('greets by full name under a date-only eyebrow, with the sync dot and the bell, and no tasks box', async () => {
+    const t = await world();
+    t.clock.set('2026-11-06T06:00:00.000Z');
+    await renderWithServices(t.services, <HomeScreen />);
+    expect(await screen.findByRole('header', { name: 'Salam, Aysel Əliyeva!' })).toBeTruthy();
+    expect(screen.getByText('6 noy 2026')).toBeTruthy(); // no weekday
+    expect(screen.queryByText('Bugünkü yoxlamalarınız')).toBeNull();
+    expect(screen.queryByTestId('home-tasks')).toBeNull();
+    expect(screen.getByTestId('sync-indicator-offline')).toBeTruthy(); // the test world is offline
+    expect(screen.queryByText('Oflayn')).toBeNull(); // a dot, no words
+  });
+
   it('starts an open checklist and opens it by its occurrence id', async () => {
     const t = await world();
     await renderWithServices(t.services, <HomeScreen />);
@@ -117,28 +129,6 @@ describe('My checklists', () => {
     await t.db.run(`UPDATE executions SET state = 'partial', sync_note = 'errors.EXECUTION_NOT_ACTIVE' WHERE id = ?`, [id]);
     await renderWithServices(t.services, <HomeScreen />);
     expect(await within(await screen.findByTestId(`occurrence-${OCC}`)).findByText('Server qəbul etmədi: Bu icra artıq bağlanıb və dəyişdirilə bilməz.')).toBeTruthy();
-  });
-});
-
-describe('Home task card', () => {
-  it('counts my open and overdue tasks, not my team’s offers, and opens the tasks tab', async () => {
-    const t = await createTestServices();
-    await t.seed(
-      syncResponse({
-        checklistVersions: [versionOf(t.c.content)],
-        tasks: [
-          syncTask({ dueAt: T.before }),
-          syncTask({ id: TASK2, dueAt: null }),
-          syncTask({ id: TASK3, assignee: null, team: { id: TEAM, name: 'Texniki xidmət' } }),
-        ],
-      }),
-    );
-    await renderWithServices(t.services, <HomeScreen />);
-    const card = await screen.findByTestId('home-tasks');
-    expect(await within(card).findByText('Açıq: 2')).toBeTruthy();
-    expect(within(card).getByText('Gecikmiş: 1')).toBeTruthy();
-    await fireEvent.press(card);
-    expect(mockPush).toHaveBeenCalledWith('/tasks');
   });
 });
 
