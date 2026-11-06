@@ -1,5 +1,5 @@
 import { type Language, LANGUAGE_NAMES, LANGUAGES } from '@taskop/i18n';
-import { Check, Languages } from 'lucide-react';
+import { Check, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -17,7 +17,7 @@ export function LanguageMenu({ compact = false, className }: { compact?: boolean
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size={compact ? 'icon' : 'default'} aria-label={`${t('common.language')}: ${LANGUAGE_NAMES[current]}`} className={className}>
-          <Languages aria-hidden />
+          <Globe aria-hidden />
           {!compact && <span>{LANGUAGE_NAMES[current]}</span>}
         </Button>
       </DropdownMenuTrigger>

@@ -1,5 +1,5 @@
 export default {
-  title: 'Audit jurnalı',
+  title: 'İstifadə jurnalı',
   filters: { action: 'Əməliyyat (məs. user.created)', entityType: 'Element növü', from: 'Başlanğıc tarixi', to: 'Son tarix' },
   columns: { time: 'Vaxt', actor: 'İcraçı', action: 'Əməliyyat', entity: 'Element' },
   actorPlatform: 'Taskop dəstəyi',

@@ -1,10 +1,10 @@
 export default {
   home: 'Home',
-  users: 'Users',
+  users: 'Employees',
   roles: 'Roles',
   sites: 'Sites',
   teams: 'Teams',
-  audit: 'Audit log',
+  audit: 'Usage log',
   settings: 'Settings',
   checklists: 'Checklists',
   templates: 'Templates',
@@ -17,10 +17,10 @@ export default {
   notifications: 'Notifications',
   messages: 'Messages',
   reports: 'Reports',
-  audits: 'Audits',
+  audits: 'Audit',
   logout: 'Log out',
   welcome: 'Welcome, {{name}}!',
   intro:
     'Set up your organisation, sites, teams and people, then create and publish checklists. Scheduling and runs come in the next stages.',
-  groups: { overview: 'Overview', operations: 'Operations', people: 'People and sites', admin: 'Administration' },
+  groups: { overview: 'Overview', operations: 'Operations', admin: 'Administration' },
 } as const;

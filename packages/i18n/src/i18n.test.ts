@@ -514,16 +514,12 @@ describe('report web translations', () => {
     expect(az.reports.chart.table).toBe('Gündəlik icra cədvəli');
     expect(az.reports.live.refresh).toBe('Yenilə');
     expect(az.reports.live.updatedAt).toBe('Son yenilənmə: {{time}}');
-    expect(az.reports.attention.title).toBe('Diqqət tələb edir');
-    expect(az.reports.attention.overdueNow).toBe('Hazırda gecikən icralar');
-    expect(az.reports.attention.critical).toBe('Kritik problemlər');
-    for (const k of ['noneOverdue', 'noneCritical'] as const) expect(az.reports.attention[k], k).toBeTypeOf('string');
     expect(az.reports.table.more).toBe('Daha çox göstər');
     expect(az.reports.table.sort).toBe('{{column}} üzrə sırala');
     expect(az.reports.table.openTask).toBe('Tapşırığı aç');
     expect(az.reports.table.receivedAt).toBe('Serverə çatıb: {{time}}');
     // Part 1's keys are untouched.
-    expect(az.reports.dashboard).toBe('İdarə paneli');
+    expect(az.nav.home).toBe('Ana səhifə');
     expect(az.reports.export.thisTable).toBe('Bu cədvəl');
     expect(az.reports.measures.completionHint).toBe('Vaxtı çatmış icralardan tamamlananların payı');
     expect(az.nav.reports).toBe('Hesabatlar');
@@ -579,8 +575,8 @@ describe('audit and correction translations', () => {
     expect(az.executions.states.rework).toBe('Düzəlişdə');
     expect(az.scheduling.statuses.audit_pending).toBe('Audit gözləyir');
     expect(az.scheduling.statuses.audited).toBe('Audit olunub');
-    expect(az.audits.title).toBe('Auditlər');
-    expect(az.nav.audits).toBe('Auditlər');
+    expect(az.audits.title).toBe('Audit');
+    expect(az.nav.audits).toBe('Audit');
     expect(az.corrections.title).toBe('Düzəlişlər');
     expect(az.corrections.kinds).toEqual({ manual: 'Rəhbər düzəlişi', rework: 'İcraçı düzəlişi' });
     expect(az.roles.groups.executions).toBeTypeOf('string');
@@ -671,7 +667,7 @@ describe('audit and correction web translations', () => {
     expect(az.audits.paused).toBe('İcraçıya düzəlişə qaytarılıb — yenidən təqdim gözlənilir');
     expect(az.corrections.original).toBe('İlkin');
     expect(az.corrections.emptyAnswer).toBe('Cavab yoxdur');
-    expect(az.nav.audits).toBe('Auditlər');
+    expect(az.nav.audits).toBe('Audit');
   });
 });
 

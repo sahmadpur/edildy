@@ -1,7 +1,7 @@
 import web from './audits-web.js';
 
 export default {
-  title: 'Аудиты',
+  title: 'Аудит',
   audit: 'Аудит',
   score: 'Балл аудита',
   paused: 'Возвращено сотруднику на доработку — ожидается повторная отправка',

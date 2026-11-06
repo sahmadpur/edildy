@@ -1,6 +1,5 @@
 export default {
   title: 'Hesabatlar',
-  dashboard: 'İdarə paneli',
   trend: 'Gündəlik icra',
   empty: 'Bu dövr üçün məlumat yoxdur.',
   inactive: 'Deaktiv',
@@ -165,13 +164,6 @@ export default {
   live: {
     refresh: 'Yenilə',
     updatedAt: 'Son yenilənmə: {{time}}',
-  },
-  attention: {
-    title: 'Diqqət tələb edir',
-    overdueNow: 'Hazırda gecikən icralar',
-    critical: 'Kritik problemlər',
-    noneOverdue: 'Hazırda gecikən icra yoxdur.',
-    noneCritical: 'Bu dövrdə kritik problem yoxdur.',
   },
   table: {
     more: 'Daha çox göstər',

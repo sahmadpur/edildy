@@ -1,10 +1,10 @@
 export default {
   home: 'Ana səhifə',
-  users: 'İstifadəçilər',
+  users: 'İşçilər',
   roles: 'Rollar',
   sites: 'Obyektlər',
   teams: 'Komandalar',
-  audit: 'Audit jurnalı',
+  audit: 'İstifadə jurnalı',
   settings: 'Parametrlər',
   checklists: 'Yoxlama vərəqələri',
   templates: 'Şablonlar',
@@ -17,10 +17,10 @@ export default {
   notifications: 'Bildirişlər',
   messages: 'Mesajlar',
   reports: 'Hesabatlar',
-  audits: 'Auditlər',
+  audits: 'Audit',
   logout: 'Çıxış',
   welcome: 'Xoş gəlmisiniz, {{name}}!',
   intro:
     'Təşkilatınızı, obyektləri, komandaları və əməkdaşları qurun, yoxlama vərəqələrini yaradın və dərc edin. Planlaşdırma və icra növbəti mərhələlərdə əlavə olunacaq.',
-  groups: { overview: 'Ümumi', operations: 'Əməliyyatlar', people: 'İnsanlar və obyektlər', admin: 'İdarəetmə' },
+  groups: { overview: 'Ümumi', operations: 'Əməliyyatlar', admin: 'İdarəetmə' },
 } as const;

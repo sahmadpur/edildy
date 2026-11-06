@@ -1,5 +1,5 @@
 export default {
-  title: 'Users',
+  title: 'Employees',
   newWorker: 'New worker',
   invite: 'Invite staff',
   search: 'Name, username or email',

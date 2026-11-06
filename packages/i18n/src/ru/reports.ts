@@ -1,6 +1,5 @@
 export default {
   title: 'Отчёты',
-  dashboard: 'Панель',
   trend: 'Выполнения по дням',
   empty: 'Нет данных за этот период.',
   inactive: 'Неактивен',
@@ -165,13 +164,6 @@ export default {
   live: {
     refresh: 'Обновить',
     updatedAt: 'Последнее обновление: {{time}}',
-  },
-  attention: {
-    title: 'Требует внимания',
-    overdueNow: 'Выполнения с опозданием сейчас',
-    critical: 'Критичные проблемы',
-    noneOverdue: 'Сейчас нет выполнений с опозданием.',
-    noneCritical: 'За этот период критичных проблем нет.',
   },
   table: {
     more: 'Показать ещё',

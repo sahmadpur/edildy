@@ -29,14 +29,16 @@ const { AppShell } = await import('./app-shell');
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+  localStorage.removeItem('taskop.nav.collapsed');
 });
 
 function renderShell(path = '/users') {
   const root = createRootRoute();
   const shell = createRoute({ getParentRoute: () => root, id: 'app', component: AppShell });
   const page = createRoute({ getParentRoute: () => shell, path: '/users', component: () => <p>users page</p> });
+  const schedule = createRoute({ getParentRoute: () => shell, path: '/schedule', component: () => <p>schedule page</p> });
   const login = createRoute({ getParentRoute: () => root, path: '/login', component: () => <p>login page</p> });
-  const router = createRouter({ routeTree: root.addChildren([shell.addChildren([page]), login]), history: createMemoryHistory({ initialEntries: [path] }) });
+  const router = createRouter({ routeTree: root.addChildren([shell.addChildren([page, schedule]), login]), history: createMemoryHistory({ initialEntries: [path] }) });
   renderWithProviders(<RouterProvider router={router} />);
   return router;
 }
@@ -45,24 +47,58 @@ describe('AppShell', () => {
   it('shows only the menu items the user may open', async () => {
     state.current = { status: 'authenticated', me: me(['users.view', 'sites.view']) };
     renderShell();
-    expect(await screen.findByRole('link', { name: 'İstifadəçilər' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'İşçilər' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Obyektlər' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Rollar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Audit jurnalı' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'İstifadə jurnalı' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Problemlər' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Tapşırıqlar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Mesajlar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Hesabatlar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Auditlər' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Audit' })).not.toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: 'Parametrlər' })).toBeInTheDocument();
+  });
+
+  it('groups the menu into Ümumi, Əməliyyatlar and İdarəetmə, with no people group', async () => {
+    state.current = { status: 'authenticated', me: me(['users.view', 'shifts.view', 'reports.view']) };
+    renderShell();
+    const nav = within(await screen.findByRole('navigation', { name: 'Menyu' }));
+    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Ümumi', 'Əməliyyatlar', 'İdarəetmə']);
+    // Növbələr is operational; İşçilər is administration.
+    expect(nav.getAllByRole('link').map((l) => l.textContent)).toEqual(['Ana səhifə', 'Hesabatlar', 'Növbələr', 'İşçilər', 'Parametrlər']);
+  });
+
+  it('collapses a group on its heading and remembers that', async () => {
+    state.current = { status: 'authenticated', me: me(['assignments.view']) };
+    renderShell();
+    const heading = await screen.findByRole('button', { name: 'Əməliyyatlar' });
+    expect(heading).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(heading);
+    expect(heading).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('link', { name: 'Problemlər' })).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual(['operations']);
+  });
+
+  it('keeps the group of the current page open even when it was collapsed', async () => {
+    localStorage.setItem('taskop.nav.collapsed', JSON.stringify(['admin']));
+    state.current = { status: 'authenticated', me: me(['users.view']) };
+    renderShell('/users');
+    expect(await screen.findByRole('link', { name: 'İşçilər' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('marks Təyinatlar current on the schedule page', async () => {
+    state.current = { status: 'authenticated', me: me(['assignments.view']) };
+    renderShell('/schedule');
+    expect(await screen.findByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.queryByRole('link', { name: 'İcra cədvəli' })).not.toBeInTheDocument();
   });
 
   it('shows the problems page to users who may view assignments', async () => {
     state.current = { status: 'authenticated', me: me(['assignments.view']) };
     renderShell();
     expect(await screen.findByRole('link', { name: 'Problemlər' })).toHaveAttribute('href', '/problems');
-    expect(screen.getByRole('link', { name: 'İcra cədvəli' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('href', '/assignments');
   });
 
   it('shows tasks to holders of tasks.view or tasks.manage', async () => {
@@ -77,10 +113,13 @@ describe('AppShell', () => {
     expect(await screen.findByRole('button', { name: 'Bildirişlər: 2 oxunmamış' })).toHaveTextContent('2');
   });
 
-  it('shows Mesajlar to holders of notifications.send', async () => {
+  it('shows Mesajlar in the header, not the menu, to holders of notifications.send', async () => {
     state.current = { status: 'authenticated', me: me(['notifications.send']) };
     renderShell();
-    expect(await screen.findByRole('link', { name: 'Mesajlar' })).toHaveAttribute('href', '/messages');
+    const link = await screen.findByRole('link', { name: 'Mesajlar' });
+    expect(link).toHaveAttribute('href', '/messages');
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Mesajlar' })).toBe(link);
+    expect(within(screen.getByRole('navigation', { name: 'Menyu' })).queryByRole('link', { name: 'Mesajlar' })).not.toBeInTheDocument();
   });
 
   it('shows Hesabatlar to holders of reports.view', async () => {
@@ -89,10 +128,10 @@ describe('AppShell', () => {
     expect(await screen.findByRole('link', { name: 'Hesabatlar' })).toHaveAttribute('href', '/reports');
   });
 
-  it('shows Auditlər to holders of audits.perform', async () => {
+  it('shows Audit to holders of audits.perform', async () => {
     state.current = { status: 'authenticated', me: me(['audits.perform']) };
     renderShell();
-    expect(await screen.findByRole('link', { name: 'Auditlər' })).toHaveAttribute('href', '/audits');
+    expect(await screen.findByRole('link', { name: 'Audit' })).toHaveAttribute('href', '/audits');
   });
 
   it('opens the notification settings from the user menu', async () => {

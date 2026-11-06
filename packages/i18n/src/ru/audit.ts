@@ -1,5 +1,5 @@
 export default {
-  title: 'Журнал аудита',
+  title: 'Журнал использования',
   filters: { action: 'Действие (напр. user.created)', entityType: 'Тип элемента', from: 'Дата начала', to: 'Дата окончания' },
   columns: { time: 'Время', actor: 'Кто', action: 'Действие', entity: 'Элемент' },
   actorPlatform: 'Поддержка Taskop',

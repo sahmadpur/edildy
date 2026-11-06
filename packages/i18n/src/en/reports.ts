@@ -1,6 +1,5 @@
 export default {
   title: 'Reports',
-  dashboard: 'Dashboard',
   trend: 'Daily runs',
   empty: 'No data for this period.',
   inactive: 'Inactive',
@@ -165,13 +164,6 @@ export default {
   live: {
     refresh: 'Refresh',
     updatedAt: 'Last updated: {{time}}',
-  },
-  attention: {
-    title: 'Needs attention',
-    overdueNow: 'Runs late right now',
-    critical: 'Critical problems',
-    noneOverdue: 'No runs are late right now.',
-    noneCritical: 'No critical problems in this period.',
   },
   table: {
     more: 'Show more',

@@ -1,10 +1,10 @@
 export default {
   home: 'Главная',
-  users: 'Пользователи',
+  users: 'Сотрудники',
   roles: 'Роли',
   sites: 'Объекты',
   teams: 'Команды',
-  audit: 'Журнал аудита',
+  audit: 'Журнал использования',
   settings: 'Настройки',
   checklists: 'Чек-листы',
   templates: 'Шаблоны',
@@ -17,10 +17,10 @@ export default {
   notifications: 'Уведомления',
   messages: 'Сообщения',
   reports: 'Отчёты',
-  audits: 'Аудиты',
+  audits: 'Аудит',
   logout: 'Выйти',
   welcome: 'Добро пожаловать, {{name}}!',
   intro:
     'Настройте организацию, объекты, команды и сотрудников, создайте и опубликуйте чек-листы. Планирование и выполнение появятся на следующих этапах.',
-  groups: { overview: 'Обзор', operations: 'Операции', people: 'Люди и объекты', admin: 'Администрирование' },
+  groups: { overview: 'Обзор', operations: 'Операции', admin: 'Администрирование' },
 } as const;

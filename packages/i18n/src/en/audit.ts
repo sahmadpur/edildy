@@ -1,5 +1,5 @@
 export default {
-  title: 'Audit log',
+  title: 'Usage log',
   filters: { action: 'Action (e.g. user.created)', entityType: 'Entity type', from: 'Start date', to: 'End date' },
   columns: { time: 'Time', actor: 'Actor', action: 'Action', entity: 'Entity' },
   actorPlatform: 'Taskop support',

@@ -1,5 +1,5 @@
 export default {
-  title: 'İstifadəçilər',
+  title: 'İşçilər',
   newWorker: 'Yeni işçi',
   invite: 'Əməkdaşı dəvət et',
   search: 'Ad, istifadəçi adı və ya e-poçt',
