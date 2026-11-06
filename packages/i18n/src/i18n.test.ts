@@ -29,6 +29,7 @@ import {
   NOTIFICATION_GROUPS,
   NOTIFICATION_ISSUE_CODES,
   NOTIFICATION_TYPES,
+  PROBLEM_REPORT_STATES,
   OCCURRENCE_STATUSES,
   PERIOD_PRESETS,
   PERMISSION_GROUPS,
@@ -283,6 +284,21 @@ describe('task translations', () => {
     expect(az.tasks.flags.overdue).toBe('Gecikib');
     expect(az.nav.tasks).toBe('Tapşırıqlar');
     expect(az.audit.entityTypes.task).toBe('Tapşırıq');
+  });
+});
+
+describe('problem report translations (2026-11-06 design)', () => {
+  it('labels the problems tab, its states, the location states and the new errors', () => {
+    expect(az.mobile.tabs.problems).toBe('Problemlər');
+    for (const k of PROBLEM_REPORT_STATES) expect(az.mobile.problems.states[k], k).toBeTypeOf('string');
+    for (const k of PROBLEM_REPORT_STATES) expect(az.executions.reportStates[k], k).toBeTypeOf('string');
+    for (const k of ['searching', 'found', 'notFound', 'retry', 'denied', 'openSettings', 'unknown', 'sendWithout', 'sendAnyway', 'wait'] as const) {
+      expect(az.mobile.problems.location[k], k).toBeTypeOf('string');
+    }
+    expect(az.mobile.problems.location.found.replace('{{m}}', '12')).toBe('Yer tapıldı (±12 m)');
+    for (const k of ['PROBLEM_REPORT_CLOSED', 'PROBLEM_REPORT_HAS_TASK', 'SITE_NOT_ALLOWED'] as const) expect(az.errors[k], k).toBeTypeOf('string');
+    expect(az.tasks.sources.report).toBe('Bildirilən problemdən');
+    expect(az.executions.problemsPage.tabs.reports).toBe('Bildirilən problemlər');
   });
 });
 
