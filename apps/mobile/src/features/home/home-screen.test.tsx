@@ -56,7 +56,7 @@ describe('My checklists', () => {
     expect(within(screen.getByTestId(`occurrence-${OCC5}`)).getByText('Gecikir')).toBeTruthy();
     expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByRole('button', { name: 'Davam et: Açılış yoxlaması' })).toBeTruthy();
     const upcoming = within(screen.getByTestId(`occurrence-${OCC3}`));
-    expect(upcoming.getByText(formatDateTime('2026-11-02T14:00:00.000Z', { locale: 'az', timeZone: 'Asia/Baku' }))).toBeTruthy(); // "2 noy 2026, 18:00"
+    expect(upcoming.getByText(formatDateTime('2026-11-02T14:00:00.000Z', { locale: 'az', timeZone: 'Asia/Baku' }))).toBeTruthy(); // "2 Noy 2026, 18:00"
     expect(upcoming.queryByText(/açılır/)).toBeNull();
     expect(within(screen.getByTestId(`occurrence-${OCC3}`)).queryByRole('button')).toBeNull();
     expect(within(screen.getByTestId(`occurrence-${OCC2}`)).queryByRole('button')).toBeNull();
@@ -91,7 +91,7 @@ describe('My checklists', () => {
     t.clock.set('2026-11-06T06:00:00.000Z');
     await renderWithServices(t.services, <HomeScreen />);
     expect(await screen.findByRole('header', { name: 'Salam, Aysel Əliyeva!' })).toBeTruthy();
-    expect(screen.getByText('6 noy 2026')).toBeTruthy(); // no weekday
+    expect(screen.getByText('6 Noy 2026')).toBeTruthy(); // no weekday; months are capitalised since PR #19
     expect(screen.queryByText('Bugünkü yoxlamalarınız')).toBeNull();
     expect(screen.queryByTestId('home-tasks')).toBeNull();
     expect(screen.getByTestId('sync-indicator-offline')).toBeTruthy(); // the test world is offline
