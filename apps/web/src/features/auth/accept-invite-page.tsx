@@ -34,8 +34,8 @@ export function AcceptInvitePage() {
   return (
     <form onSubmit={onSubmit} className="grid gap-4" noValidate>
       <h1 className="text-xl font-semibold">{t('auth.invite.title')}</h1>
-      <TextField form={form} name="password" label={t('auth.invite.password')} type="password" autoComplete="new-password" />
-      <TextField form={form} name="confirm" label={t('auth.invite.confirm')} type="password" autoComplete="new-password" />
+      <TextField form={form} name="password" label={t('auth.invite.password')} type="password" autoComplete="new-password" required />
+      <TextField form={form} name="confirm" label={t('auth.invite.confirm')} type="password" autoComplete="new-password" required />
       <FormError message={error} />
       <Button type="submit" disabled={!token || form.formState.isSubmitting}>
         {t('auth.invite.submit')}

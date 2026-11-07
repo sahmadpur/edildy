@@ -1,6 +1,5 @@
 export default {
   title: 'Hesabatlar',
-  dashboard: 'İdarə paneli',
   trend: 'Gündəlik icra',
   empty: 'Bu dövr üçün məlumat yoxdur.',
   inactive: 'Deaktiv',
@@ -60,7 +59,7 @@ export default {
     planned: 'Planlaşdırılmış',
     all: 'Hamısı',
   },
-  tabs: { summary: 'Xülasə', sites: 'Obyektlər', employees: 'Əməkdaşlar', runs: 'İcralar', problems: 'Problemlər', tasks: 'Tapşırıqlar' },
+  tabs: { summary: 'Ümumi', sites: 'Obyektlər', employees: 'Əməkdaşlar', runs: 'İcralar', problems: 'Problemlər', tasks: 'Tapşırıqlar' },
   columns: {
     measure: 'Göstərici',
     value: 'Dəyər',
@@ -162,16 +161,21 @@ export default {
   chart: {
     table: 'Gündəlik icra cədvəli',
   },
+  /** The web home page: four period boxes, then the selected period's charts and runs. */
+  home: {
+    periods: 'Dövrlər',
+    late: 'Gecikib',
+    problems: 'Problemli',
+    selectPeriod: '{{period}} dövrünü seç',
+    breakdown: 'İcraların vəziyyəti',
+    breakdownHint: 'Planlaşdırılmış icraların statuslar üzrə bölgüsü',
+    noRuns: 'Bu dövrdə icra yoxdur',
+    runs: 'İcralar',
+    selected: 'Seçilmiş dövr',
+  },
   live: {
     refresh: 'Yenilə',
     updatedAt: 'Son yenilənmə: {{time}}',
-  },
-  attention: {
-    title: 'Diqqət tələb edir',
-    overdueNow: 'Hazırda gecikən icralar',
-    critical: 'Kritik problemlər',
-    noneOverdue: 'Hazırda gecikən icra yoxdur.',
-    noneCritical: 'Bu dövrdə kritik problem yoxdur.',
   },
   table: {
     more: 'Daha çox göstər',

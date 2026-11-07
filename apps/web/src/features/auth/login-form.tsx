@@ -29,8 +29,8 @@ export function LoginForm({ onSuccess }: { onSuccess: (result: LoginResult) => v
   });
   return (
     <form onSubmit={onSubmit} className="grid gap-4" noValidate>
-      <TextField form={form} name="email" label={t('auth.login.email')} type="email" autoComplete="username" />
-      <TextField form={form} name="password" label={t('auth.login.password')} type="password" autoComplete="current-password" />
+      <TextField form={form} name="email" label={t('auth.login.email')} type="email" autoComplete="username" required />
+      <TextField form={form} name="password" label={t('auth.login.password')} type="password" autoComplete="current-password" required />
       <FormError message={error} />
       <Button type="submit" disabled={form.formState.isSubmitting}>
         {t('auth.login.submit')}

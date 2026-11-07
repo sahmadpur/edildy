@@ -47,7 +47,7 @@ describe('managing tasks', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toMatchObject({ status: 'new', assignee: { id: w2.id }, acceptedAt: null, startedAt: null });
     expect((await taskHistory(task.id)).at(-1)).toEqual(['in_progress', 'new', w.manager.id, null]);
-    expect(await auditActions(task.id)).toEqual(['task.created', 'task.reassigned']);
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted', 'task.started', 'task.reassigned']);
     expect(events.seen).toEqual([['task.assigned', task.id, w.manager.id]]);
     // İşçi 1's commands, queued while offline, arrive now.
     expect((await act(w1.api, task.id, 'start', T('04:15'))).status).toBe(404);
@@ -58,7 +58,7 @@ describe('managing tasks', () => {
     expect([borrowed.status, borrowed.body.error.fields]).toEqual([400, { mediaIds: 'tasks.issues.unknownMedia' }]);
     // Reassigning to the current assignee is not a change.
     expect((await w.manager.api.patch(`/api/v1/tasks/${task.id}`, { assignee: { userId: w2.id } })).body).toMatchObject({ status: 'in_progress' });
-    expect(await auditActions(task.id)).toEqual(['task.created', 'task.reassigned']);
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted', 'task.started', 'task.reassigned', 'task.accepted', 'task.started']);
   });
 
   it('clears overdue only when the due date moves past now', async () => {
@@ -86,7 +86,7 @@ describe('managing tasks', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toMatchObject({ status: 'cancelled', cancelledAt: T('04:20'), cancelReason: 'Artıq lazım deyil' });
     expect((await taskHistory(task.id)).at(-1)).toEqual(['in_progress', 'cancelled', w.manager.id, 'Artıq lazım deyil']);
-    expect(await auditActions(task.id)).toEqual(['task.created', 'task.cancelled']);
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted', 'task.started', 'task.cancelled']);
     expect(events.seen).toEqual([['task.cancelled', task.id, w.manager.id]]);
     const again = await w.manager.api.post(`/api/v1/tasks/${task.id}/cancel`, { reason: 'Yenə' });
     expect([again.status, again.body.error.code]).toEqual([409, 'TASK_STATE_INVALID']);
@@ -133,7 +133,7 @@ describe('managing tasks', () => {
       ['in_progress', 'awaiting_review', w1.id, null],
       ['awaiting_review', 'completed', w.manager.id, 'Əla'],
     ]);
-    expect(await auditActions(task.id)).toEqual(['task.created', 'task.rejected', 'task.approved']);
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted', 'task.started', 'task.submitted', 'task.rejected', 'task.submitted', 'task.approved']);
     expect(events.seen).toEqual([
       ['task.rejected', task.id, w.manager.id],
       ['task.submitted', task.id, w1.id],

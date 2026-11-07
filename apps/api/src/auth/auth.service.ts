@@ -3,6 +3,7 @@ import type { LoginResult } from '@taskop/contracts';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';
+import { setRequestClient } from '../common/request-context';
 import type { Principal } from '../common/request';
 import { currentRequestMeta } from '../common/request-context';
 import { APP_CONFIG, type AppConfig } from '../config/config';
@@ -63,6 +64,7 @@ export class AuthService {
   ) {}
 
   async signup(input: SignupDto): Promise<IssuedLogin> {
+    setRequestClient(input.client);
     await this.rateLimit.consume(`signup:ip:${currentRequestMeta().ip}`, this.config.RL_SIGNUP_IP_PER_HOUR, 3600);
     const tenantId = uuidv7();
     const userId = uuidv7();
@@ -128,6 +130,7 @@ export class AuthService {
         .where(eq(sessions.refreshTokenHash, hashOpaqueToken(rawToken)))
         .for('update');
       if (!session) return null;
+      setRequestClient(session.client);
       const now = Date.now();
       if (session.replacedBy) {
         if (session.revokedAt && now - session.revokedAt.getTime() < REFRESH_GRACE_MS) return null;
@@ -168,6 +171,7 @@ export class AuthService {
   }
 
   private async completeLogin(row: LoginCandidate | null, secret: string, client: Client): Promise<IssuedLogin> {
+    setRequestClient(client);
     if (!row) {
       await this.hasher.verify(null, secret);
       throw new AppError('INVALID_CREDENTIALS');
@@ -230,6 +234,7 @@ export class AuthService {
       rv: role?.version ?? 1,
       kind: subject.kind,
       sid: sessionId,
+      client,
     });
     const me = await this.me.load(subject.id);
     return {

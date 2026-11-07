@@ -1,9 +1,10 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronDown, ChevronRight, FolderInput, Pencil, Plus, Power, RotateCcw } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfirmButton } from '@/components/confirm-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { SiteNode } from './tree';
 
 interface Props {
@@ -16,9 +17,10 @@ interface Props {
   onToggleActive: (node: SiteNode) => Promise<void> | void;
 }
 
+/** Every site is a box; its sub-sites are smaller boxes nested inside it, so the hierarchy reads without indentation lines. */
 export function SiteTree(props: Props) {
   return (
-    <ul role="tree" className="grid gap-1">
+    <ul role="tree" className="grid gap-3">
       {props.nodes.map((n) => (
         <SiteTreeItem key={n.id} node={n} {...props} />
       ))}
@@ -26,56 +28,66 @@ export function SiteTree(props: Props) {
   );
 }
 
+const ICON = 'size-4';
+
 function SiteTreeItem({ node, ...props }: Props & { node: SiteNode }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const hasChildren = node.children.length > 0;
+  const nested = node.depth > 0;
+  const iconButton = (label: string, icon: ReactNode, onClick: () => void) => (
+    <Button variant="ghost" size="icon" className="size-7" aria-label={label} title={label} onClick={onClick}>
+      {icon}
+    </Button>
+  );
   return (
-    <li role="treeitem" aria-expanded={hasChildren ? open : undefined}>
-      <div className="hover:bg-muted/50 flex items-center gap-2 rounded-md px-2 py-1.5" style={{ paddingLeft: `${node.depth * 20 + 8}px` }}>
+    <li
+      role="treeitem"
+      aria-label={node.name}
+      aria-expanded={hasChildren ? open : undefined}
+      className={cn('rounded-xl border', nested ? 'bg-muted/30 p-2.5' : 'bg-card shadow-card p-3')}
+    >
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="text-muted-foreground size-5"
+          className="text-muted-foreground size-5 shrink-0"
           aria-label={open ? t('sites.tree.collapse') : t('sites.tree.expand')}
           disabled={!hasChildren}
           onClick={() => setOpen((o) => !o)}
         >
-          {hasChildren && (open ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />)}
+          {hasChildren && (open ? <ChevronDown className={ICON} /> : <ChevronRight className={ICON} />)}
         </button>
-        <span className={node.active ? 'font-medium' : 'text-muted-foreground line-through'}>{node.name}</span>
+        <span className={node.active ? 'font-medium' : 'text-muted-foreground line-through'}>
+          {node.name}
+        </span>
         <Badge variant="outline">{props.typeName(node.typeId)}</Badge>
         {!node.active && <Badge variant="secondary">{t('common.inactive')}</Badge>}
         {props.canManage && (
-          <div className="ml-auto flex gap-1">
-            <Button size="sm" variant="ghost" onClick={() => props.onAddChild(node)}>
-              {t('sites.tree.addChild')}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => props.onEdit(node)}>
-              {t('common.edit')}
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => props.onMove(node)}>
-              {t('sites.tree.move')}
-            </Button>
+          <div className="ml-auto flex gap-0.5">
+            {iconButton(t('sites.tree.addChild'), <Plus className={ICON} />, () => props.onAddChild(node))}
+            {iconButton(t('common.edit'), <Pencil className={ICON} />, () => props.onEdit(node))}
+            {iconButton(t('sites.tree.move'), <FolderInput className={ICON} />, () => props.onMove(node))}
             {node.active ? (
               // Spec §4.1: deactivating warns; descendants are not changed automatically and the admin decides.
               <ConfirmButton
-                size="sm"
+                size="icon"
                 variant="ghost"
+                icon={<Power className={ICON} />}
                 label={t('common.deactivate')}
                 title={t('common.deactivate')}
                 description={t('sites.tree.confirmDeactivate', { name: node.name })}
                 onConfirm={() => props.onToggleActive(node)}
               />
             ) : (
-              <Button size="sm" variant="ghost" onClick={() => props.onToggleActive(node)}>
-                {t('common.reactivate')}
-              </Button>
+              iconButton(t('common.reactivate'), <RotateCcw className={ICON} />, () =>
+                props.onToggleActive(node),
+              )
             )}
           </div>
         )}
       </div>
       {hasChildren && open && (
-        <ul role="group" className="grid gap-1">
+        <ul role="group" className="mt-2.5 grid gap-2 pl-4">
           {node.children.map((c) => (
             <SiteTreeItem key={c.id} node={c} {...props} />
           ))}

@@ -16,6 +16,7 @@ export function fakeWorkspace(overrides: Partial<ChecklistWorkspace> = {}): Chec
     templates: fns('list', 'get', 'create', 'update', 'saveContent', 'deactivate', 'reactivate'),
     can: { manage: true, publish: true, templates: true },
     base: '',
+    tabs: 'own',
     scope: 'test',
     timeZone: 'Asia/Baku',
     go: vi.fn(),

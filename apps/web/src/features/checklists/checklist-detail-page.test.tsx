@@ -65,7 +65,7 @@ describe('ChecklistDetailPage', () => {
     await userEvent.click(within(rows[2]!).getByRole('button', { name: 'Qaralama kimi bərpa et' }));
     await waitFor(() => expect(ws.checklists.startDraft).toHaveBeenCalledWith(ID, { fromVersionId: V1 }));
     await userEvent.click(within(rows[1]!).getByRole('button', { name: 'Şablon kimi saxla' }));
-    await userEvent.selectOptions(screen.getByLabelText('Kateqoriya'), 'safety');
+    await userEvent.selectOptions(screen.getByLabelText('Sahə'), 'safety');
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
     await waitFor(() => expect(ws.checklists.saveAsTemplate).toHaveBeenCalledWith(ID, V2, { name: 'Gündəlik təmizlik', category: 'safety', description: null }));
   });

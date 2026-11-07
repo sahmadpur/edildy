@@ -41,6 +41,7 @@ function toRow(e: AuditEvent, tenantId: string | null, actorUserId: string | nul
     after: e.after === undefined ? null : redactSecrets(e.after),
     ip: meta.ip,
     userAgent: meta.userAgent,
+    client: meta.client,
   };
 }
 

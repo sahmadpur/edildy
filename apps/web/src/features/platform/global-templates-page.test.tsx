@@ -71,7 +71,7 @@ describe('GlobalTemplatesPage', () => {
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Yeni şablon' }));
     await userEvent.type(screen.getByLabelText('Ad'), 'Anbar');
-    await userEvent.selectOptions(screen.getByLabelText('Kateqoriya'), 'warehouse');
+    await userEvent.selectOptions(screen.getByLabelText('Sahə'), 'warehouse');
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
     await waitFor(() =>
       expect(mocks.globalTemplates.create).toHaveBeenCalledWith({ name: 'Anbar', category: 'warehouse' }),

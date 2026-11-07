@@ -1,7 +1,7 @@
 import web from './audits-web.js';
 
 export default {
-  title: 'Audits',
+  title: 'Audit',
   audit: 'Audit',
   score: 'Audit score',
   paused: 'Sent back to the worker — waiting for resubmission',

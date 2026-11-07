@@ -34,4 +34,7 @@ export default {
   closeMenu: 'Close menu',
   skipToContent: 'Skip to content',
   errorTitle: 'Could not load',
+  requiredField: 'required',
+  emptyField: 'Empty',
+  requiredLegend: '* — required fields',
 } as const;

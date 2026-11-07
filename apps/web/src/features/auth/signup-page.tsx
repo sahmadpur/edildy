@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { z } from 'zod';
+import { RequiredLegend } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { TextField } from '@/components/text-field';
 import { Button } from '@/components/ui/button';
@@ -31,11 +32,12 @@ export function SignupPage() {
   return (
     <form onSubmit={onSubmit} className="grid gap-4" noValidate>
       <h1 className="text-xl font-semibold">{t('auth.signup.title')}</h1>
-      <TextField form={form} name="orgName" label={t('auth.signup.orgName')} autoComplete="organization" />
-      <TextField form={form} name="orgCode" label={t('auth.signup.orgCode')} description={t('auth.signup.orgCodeHint')} />
-      <TextField form={form} name="fullName" label={t('auth.signup.fullName')} autoComplete="name" />
-      <TextField form={form} name="email" label={t('auth.signup.email')} type="email" autoComplete="email" />
-      <TextField form={form} name="password" label={t('auth.signup.password')} type="password" autoComplete="new-password" description={t('auth.signup.passwordHint')} />
+      <RequiredLegend />
+      <TextField form={form} name="orgName" label={t('auth.signup.orgName')} autoComplete="organization" required />
+      <TextField form={form} name="orgCode" label={t('auth.signup.orgCode')} description={t('auth.signup.orgCodeHint')} required />
+      <TextField form={form} name="fullName" label={t('auth.signup.fullName')} autoComplete="name" required />
+      <TextField form={form} name="email" label={t('auth.signup.email')} type="email" autoComplete="email" required />
+      <TextField form={form} name="password" label={t('auth.signup.password')} type="password" autoComplete="new-password" description={t('auth.signup.passwordHint')} required />
       <FormError message={error} />
       <Button type="submit" disabled={form.formState.isSubmitting}>
         {t('auth.signup.submit')}

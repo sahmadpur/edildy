@@ -1,12 +1,14 @@
 import type { TeamDto } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
+import { Pencil, Power, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/states';
 import { errorText } from '@/lib/errors';
 import { api, useCan } from '@/lib/session';
 import { useActiveUsers, useTeams } from './queries';
@@ -24,36 +26,41 @@ export function TeamsPage() {
 
   return (
     <div>
-      <PageHeader title={t('teams.title')} actions={canManage && <Button onClick={() => setEditing('new')}>{t('teams.add')}</Button>} />
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('teams.name')}</TableHead>
-            <TableHead>{t('teams.members')}</TableHead>
-            <TableHead>{t('common.status')}</TableHead>
-            <TableHead />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {(teams.data ?? []).map((team) => (
-            <TableRow key={team.id}>
-              <TableCell>
-                <div className="font-medium">{team.name}</div>
-                {team.description && <div className="text-muted-foreground text-xs">{team.description}</div>}
-              </TableCell>
-              <TableCell>{t('teams.membersCount', { count: team.memberIds.length })}</TableCell>
-              <TableCell>
-                <Badge variant={team.active ? 'default' : 'secondary'}>{team.active ? t('common.active') : t('common.inactive')}</Badge>
-              </TableCell>
-              <TableCell className="text-right">
+      <PageHeader
+        title={t('teams.title')}
+        actions={canManage && <Button onClick={() => setEditing('new')}>{t('teams.add')}</Button>}
+      />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {(teams.data ?? []).map((team) => {
+          const toggleLabel = team.active ? t('common.deactivate') : t('common.reactivate');
+          return (
+            <Card key={team.id}>
+              <CardHeader>
+                <CardTitle className="flex flex-wrap items-center gap-2">
+                  {team.name}
+                  <Badge variant={team.active ? 'default' : 'secondary'}>
+                    {team.active ? t('common.active') : t('common.inactive')}
+                  </Badge>
+                </CardTitle>
+                <CardDescription>{t('teams.membersCount', { count: team.memberIds.length })}</CardDescription>
                 {canManage && (
-                  <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(team)}>
-                      {t('common.edit')}
+                  <CardAction className="flex gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      aria-label={t('common.edit')}
+                      title={t('common.edit')}
+                      onClick={() => setEditing(team)}
+                    >
+                      <Pencil className="size-4" />
                     </Button>
                     <Button
-                      size="sm"
                       variant="ghost"
+                      size="icon"
+                      className="size-7"
+                      aria-label={toggleLabel}
+                      title={toggleLabel}
                       onClick={async () => {
                         try {
                           await api.teams.update(team.id, { active: !team.active });
@@ -63,22 +70,21 @@ export function TeamsPage() {
                         }
                       }}
                     >
-                      {team.active ? t('common.deactivate') : t('common.reactivate')}
+                      {team.active ? <Power className="size-4" /> : <RotateCcw className="size-4" />}
                     </Button>
-                  </div>
+                  </CardAction>
                 )}
-              </TableCell>
-            </TableRow>
-          ))}
-          {teams.data?.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={4} className="text-muted-foreground text-center">
-                {t('teams.empty')}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+              </CardHeader>
+              {team.description && (
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">{team.description}</p>
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+      {teams.data?.length === 0 && <EmptyState title={t('teams.empty')} />}
       {editing && (
         <TeamDialog
           open
@@ -99,7 +105,8 @@ export function TeamsPage() {
               }
               if (canSeeUsers) {
                 const current = new Set(team.memberIds);
-                const changed = v.memberIds.length !== current.size || v.memberIds.some((id) => !current.has(id));
+                const changed =
+                  v.memberIds.length !== current.size || v.memberIds.some((id) => !current.has(id));
                 if (changed) await api.teams.setMembers(team.id, v.memberIds);
               }
             } finally {

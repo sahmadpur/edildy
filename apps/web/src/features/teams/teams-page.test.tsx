@@ -13,16 +13,29 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/session', () => ({ api: mocks.api, useCan: () => true }));
 
-const team = (over: Partial<TeamDto> = {}): TeamDto => ({
-  id: 't1', name: 'Alfa', description: null, active: true, memberIds: ['u1'], ...over,
-}) as TeamDto;
+const team = (over: Partial<TeamDto> = {}): TeamDto =>
+  ({
+    id: 't1',
+    name: 'Alfa',
+    description: null,
+    active: true,
+    memberIds: ['u1'],
+    ...over,
+  }) as TeamDto;
 const users = [
   { id: 'u1', fullName: 'Elvin' },
   { id: 'u2', fullName: 'Aysel' },
 ];
 
 beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
   vi.resetAllMocks();
   mocks.api.users.list.mockResolvedValue({ items: users });
 });
@@ -40,7 +53,9 @@ describe('TeamsPage saving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
     expect(await screen.findByText(/Gözlənilməz xəta/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
-    await waitFor(() => expect(mocks.api.teams.update).toHaveBeenCalledWith('new', { name: 'Yeni', description: null }));
+    await waitFor(() =>
+      expect(mocks.api.teams.update).toHaveBeenCalledWith('new', { name: 'Yeni', description: null }),
+    );
     expect(mocks.api.teams.create).toHaveBeenCalledTimes(1);
   });
 
@@ -53,7 +68,24 @@ describe('TeamsPage saving', () => {
     await userEvent.clear(name);
     await userEvent.type(name, 'Alfa2');
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
-    await waitFor(() => expect(mocks.api.teams.update).toHaveBeenCalledWith('t1', { name: 'Alfa2', description: null }));
+    await waitFor(() =>
+      expect(mocks.api.teams.update).toHaveBeenCalledWith('t1', { name: 'Alfa2', description: null }),
+    );
     expect(mocks.api.teams.setMembers).not.toHaveBeenCalled();
+  });
+
+  it('shows each team as a box with icon-only edit and deactivate actions', async () => {
+    mocks.api.teams.list.mockResolvedValue([team({ description: 'Səhər növbəsi' })]);
+    mocks.api.teams.update.mockResolvedValue(team({ active: false }));
+    renderWithProviders(<TeamsPage />);
+    expect(await screen.findByText('Alfa')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(screen.getByText('1 üzv')).toBeInTheDocument();
+    expect(screen.getByText('Səhər növbəsi')).toBeInTheDocument();
+    const edit = screen.getByRole('button', { name: 'Redaktə et' });
+    expect(edit).toHaveTextContent('');
+    expect(edit).toHaveAttribute('title', 'Redaktə et');
+    await userEvent.click(screen.getByRole('button', { name: 'Deaktiv et' }));
+    await waitFor(() => expect(mocks.api.teams.update).toHaveBeenCalledWith('t1', { active: false }));
   });
 });

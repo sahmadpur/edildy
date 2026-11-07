@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/session', () => ({
   api: mocks.api,
   useMe: () => mocks.me.current,
-  useCan: (...keys: string[]) => keys.every((k) => (mocks.me.current as { permissions: string[] }).permissions.includes(k)),
+  useCan: (...keys: string[]) =>
+    keys.every((k) => (mocks.me.current as { permissions: string[] }).permissions.includes(k)),
 }));
 
 /** The bar keeps no state of its own: the harness plays the page that stores it in the URL. */
@@ -39,7 +40,10 @@ function renderBar(initial: ReportSearch = {}) {
   return onChange;
 }
 
-const texts = (select: HTMLElement) => within(select).getAllByRole('option').map((o) => o.textContent);
+const texts = (select: HTMLElement) =>
+  within(select)
+    .getAllByRole('option')
+    .map((o) => o.textContent);
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -53,24 +57,45 @@ describe('ReportFilters', () => {
   it('switches between presets and a custom range pre-filled from the current period', async () => {
     const onChange = renderBar({ period: 'this_week', siteId: IDS.zoneA });
     const period = screen.getByLabelText('Dövr');
-    expect(texts(period)).toEqual(['Bu gün', 'Dünən', 'Bu həftə', 'Bu ay', 'Son 7 gün', 'Son 30 gün', 'Seçilmiş dövr']);
-    expect(screen.getByText(`${formatLocalDate('2026-11-02')} – ${formatLocalDate(TODAY)}`)).toBeInTheDocument();
+    expect(texts(period)).toEqual([
+      'Bu gün',
+      'Dünən',
+      'Bu həftə',
+      'Bu ay',
+      'Son 7 gün',
+      'Son 30 gün',
+      'Seçilmiş dövr',
+    ]);
+    expect(
+      screen.getByText(`${formatLocalDate('2026-11-02')} – ${formatLocalDate(TODAY)}`),
+    ).toBeInTheDocument();
 
     await userEvent.selectOptions(period, 'custom');
-    expect(onChange).toHaveBeenLastCalledWith({ period: 'custom', from: '2026-11-02', to: TODAY, siteId: IDS.zoneA });
+    expect(onChange).toHaveBeenLastCalledWith({
+      period: 'custom',
+      from: '2026-11-02',
+      to: TODAY,
+      siteId: IDS.zoneA,
+    });
     expect(screen.getByLabelText('Başlanğıc tarixi')).toHaveValue('2026-11-02');
     fireEvent.change(screen.getByLabelText('Başlanğıc tarixi'), { target: { value: '2026-10-01' } });
-    expect(onChange).toHaveBeenLastCalledWith({ period: 'custom', from: '2026-10-01', to: TODAY, siteId: IDS.zoneA });
+    expect(onChange).toHaveBeenLastCalledWith({
+      period: 'custom',
+      from: '2026-10-01',
+      to: TODAY,
+      siteId: IDS.zoneA,
+    });
 
     await userEvent.selectOptions(period, 'last_30');
-    expect(onChange).toHaveBeenLastCalledWith({ period: 'last_30', siteId: IDS.zoneA });
+    expect(onChange).toHaveBeenLastCalledWith({ siteId: IDS.zoneA });
     expect(screen.queryByLabelText('Başlanğıc tarixi')).not.toBeInTheDocument();
   });
 
-  it('drops the default period from the search instead of writing period=today', async () => {
-    const onChange = renderBar({ period: 'last_7', siteId: IDS.zoneA });
+  it('defaults to the last 30 days: that period is dropped from the search, today is written explicitly', async () => {
+    const onChange = renderBar({ siteId: IDS.zoneA });
+    expect(screen.getByLabelText('Dövr')).toHaveValue('last_30');
     await userEvent.selectOptions(screen.getByLabelText('Dövr'), 'today');
-    expect(onChange).toHaveBeenLastCalledWith({ siteId: IDS.zoneA });
+    expect(onChange).toHaveBeenLastCalledWith({ period: 'today', siteId: IDS.zoneA });
     expect(screen.getByLabelText('Dövr')).toHaveValue('today');
   });
 
@@ -100,8 +125,17 @@ describe('ReportFilters', () => {
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Deaktivləri göstər' }));
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true });
-    expect(texts(site)).toEqual(['Bütün obyektlər', 'Filial A', '\u00a0\u00a0Zona A1', '\u00a0\u00a0Zona B (köhnə) (Deaktiv)']);
-    expect(texts(checklist)).toEqual(['Bütün yoxlama vərəqələri', 'Açılış yoxlaması', 'Köhnə yoxlama (Deaktiv)']);
+    expect(texts(site)).toEqual([
+      'Bütün obyektlər',
+      'Filial A',
+      '\u00a0\u00a0Zona A1',
+      '\u00a0\u00a0Zona B (köhnə) (Deaktiv)',
+    ]);
+    expect(texts(checklist)).toEqual([
+      'Bütün yoxlama vərəqələri',
+      'Açılış yoxlaması',
+      'Köhnə yoxlama (Deaktiv)',
+    ]);
 
     await userEvent.selectOptions(site, IDS.zoneA);
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true, siteId: IDS.zoneA });
@@ -111,9 +145,17 @@ describe('ReportFilters', () => {
 
   it('fills the employee picker from the period’s employee report, without its own filter or the Unassigned row', async () => {
     const onChange = renderBar({ period: 'yesterday', userId: IDS.aynur, siteId: IDS.zoneA });
-    await waitFor(() => expect(mocks.api.reports.employees).toHaveBeenCalledWith({ from: '2026-11-03', to: '2026-11-03', siteId: IDS.zoneA }));
+    await waitFor(() =>
+      expect(mocks.api.reports.employees).toHaveBeenCalledWith({
+        from: '2026-11-03',
+        to: '2026-11-03',
+        siteId: IDS.zoneA,
+      }),
+    );
     const employee = screen.getByLabelText('Əməkdaş');
-    await waitFor(() => expect(texts(employee)).toEqual(['Bütün əməkdaşlar', 'Aynur Quliyeva', 'Kamran Əliyev']));
+    await waitFor(() =>
+      expect(texts(employee)).toEqual(['Bütün əməkdaşlar', 'Aynur Quliyeva', 'Kamran Əliyev']),
+    );
     expect(employee).toHaveValue(IDS.aynur);
     await userEvent.selectOptions(employee, IDS.kamran);
     expect(onChange).toHaveBeenLastCalledWith({ period: 'yesterday', userId: IDS.kamran, siteId: IDS.zoneA });
@@ -121,13 +163,23 @@ describe('ReportFilters', () => {
 
   it('keeps a selected inactive or unlisted site, employee and checklist visible', async () => {
     renderBar({ siteId: IDS.zoneB, userId: IDS.rauf, checklistId: IDS.oldChecklist });
-    await waitFor(() => expect(screen.getByLabelText('Obyekt')).toHaveDisplayValue('\u00a0\u00a0Zona B (köhnə) (Deaktiv)'));
-    await waitFor(() => expect(screen.getByLabelText('Əməkdaş')).toHaveDisplayValue('Rauf Həsənov (Deaktiv)'));
-    await waitFor(() => expect(screen.getByLabelText('Yoxlama vərəqəsi')).toHaveDisplayValue('Köhnə yoxlama (Deaktiv)'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Obyekt')).toHaveDisplayValue('\u00a0\u00a0Zona B (köhnə) (Deaktiv)'),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Əməkdaş')).toHaveDisplayValue('Rauf Həsənov (Deaktiv)'),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Yoxlama vərəqəsi')).toHaveDisplayValue('Köhnə yoxlama (Deaktiv)'),
+    );
     cleanup();
     // A person with no runs in the period is not in the report, but the filter still applies.
     renderBar({ userId: IDS.stranger });
-    await waitFor(() => expect(screen.getByLabelText('Əməkdaş')).toHaveDisplayValue('Seçilmiş əməkdaş (bu dövrdə icrası yoxdur)'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Əməkdaş')).toHaveDisplayValue(
+        'Seçilmiş əməkdaş (bu dövrdə icrası yoxdur)',
+      ),
+    );
   });
 
   it('never reads as "all" while the site list is loading or failed: the selected id shows as unlisted', async () => {
@@ -148,7 +200,9 @@ describe('ReportFilters', () => {
   it('shows a checklist id the list does not contain as selected', async () => {
     renderBar({ checklistId: IDS.stranger });
     await waitFor(() => expect(mocks.api.checklists.list).toHaveBeenCalled());
-    await waitFor(() => expect(screen.getByLabelText('Yoxlama vərəqəsi')).toHaveDisplayValue('Seçilmiş (siyahıda yoxdur)'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Yoxlama vərəqəsi')).toHaveDisplayValue('Seçilmiş (siyahıda yoxdur)'),
+    );
   });
 
   it('hides the site and checklist pickers without sites.view or checklists.view and does not ask for them', async () => {

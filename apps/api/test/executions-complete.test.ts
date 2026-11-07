@@ -46,6 +46,12 @@ describe('completion (POST /executions/:id/complete)', () => {
     });
     expect(await statusOf(w.occurrenceId)).toBe('completed');
     expect((await historyOf(w.occurrenceId)).at(-1)).toEqual(['started', 'completed', '2026-11-02T04:55:00.000Z', null, w.workers[0].id]);
+    const audit = await ownerQuery<{ action: string; client: string; before: unknown; after: unknown }>(
+      "select action, client, before, after from audit_log where entity_type = 'execution' and entity_id = $1 order by id",
+      [executionId],
+    );
+    expect(audit.rows.map((r) => r.action)).toEqual(['execution.started', 'execution.completed']);
+    expect(audit.rows[1]).toMatchObject({ client: 'mobile', before: { state: 'active' }, after: { state: 'completed', completedAt: '2026-11-02T04:55:00.000Z', late: false } });
     expect((await executionRow(executionId)).completed_received_at!.toISOString()).toBe('2026-11-02T05:00:00.000Z');
     expect((await ownerQuery('select item_id, source from execution_problems where execution_id = $1', [executionId])).rows).toEqual([{ item_id: w.c.temp.id, source: 'rule' }]);
 
@@ -71,6 +77,8 @@ describe('completion (POST /executions/:id/complete)', () => {
     expect(res.body).toMatchObject({ state: 'partial', completedAt: '2026-11-02T07:00:00.000Z', late: true });
     expect(await statusOf(w.occurrenceId)).toBe('partial');
     expect((await historyOf(w.occurrenceId)).at(-1)).toEqual(['started', 'partial', '2026-11-02T07:00:00.000Z', null, w.workers[0].id]);
+    const audit = await ownerQuery<{ after: { state: string; late: boolean } }>("select after from audit_log where action = 'execution.completed' and entity_id = $1", [executionId]);
+    expect(audit.rows.map((r) => r.after)).toEqual([{ state: 'partial', completedAt: '2026-11-02T07:00:00.000Z', late: true }]);
   });
 
   it('a stale answers command arriving after completion is ignored, not refused', async () => {
@@ -82,6 +90,9 @@ describe('completion (POST /executions/:id/complete)', () => {
     expect(late.body).toMatchObject({ rev: 3, stale: true, state: 'completed' });
     const newer = await api.put(`/api/v1/executions/${executionId}/answers`, answersBody(4, { [w.c.temp.id]: { number: 4 } }, '2026-11-02T04:20:00.000Z'));
     expect([newer.status, newer.body.error.code]).toEqual([409, 'EXECUTION_NOT_ACTIVE']);
+    // A repeated complete answers the stored result and writes no second usage-log row.
+    expect((await completeExecution(api, executionId, 3, fullAnswers(w, photo), '2026-11-02T04:20:00.000Z')).body).toMatchObject({ state: 'completed', completedAt: '2026-11-02T04:20:00.000Z' });
+    expect((await ownerQuery("select 1 from audit_log where action = 'execution.completed' and entity_id = $1", [executionId])).rows).toHaveLength(1);
   });
 
   it('a worker removed from the snapshot after starting can still answer and complete', async () => {

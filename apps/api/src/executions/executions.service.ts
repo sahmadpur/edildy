@@ -18,6 +18,7 @@ import {
 import { desc, eq, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
+import { AuditService } from '../db/audit.service';
 import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';
 import { checklists, checklistVersions, executions, occurrences } from '../db/schema';
@@ -51,6 +52,7 @@ export class ExecutionsService {
     private readonly problems: ProblemWriter,
     private readonly reworkRequests: ReworkRequests,
     private readonly auditLookup: AuditLookup,
+    private readonly audit: AuditService,
   ) {}
 
   /** First claim to reach the server wins (NFR-06.05); a loser is stored as rejected and answered with 200. */
@@ -116,6 +118,13 @@ export class ExecutionsService {
       await this.writer.applyTransitions([
         { occurrenceId: o.id, from: o.status, to: 'started', at: start.startedAt, reason: o.status === 'missed' ? 'late_sync' : null },
       ]);
+      // Only the claim that created the run reaches the usage log; replays and rejected claims returned earlier.
+      await this.audit.record({
+        action: 'execution.started',
+        entityType: 'execution',
+        entityId: row.id,
+        after: { occurrenceId: o.id, checklistVersionId: versionId, startedAt: start.startedAt.toISOString(), late: row.late },
+      });
     }
     return this.claimResult(row!);
   }
@@ -220,6 +229,13 @@ export class ExecutionsService {
       })
       .where(eq(executions.id, id))
       .returning();
+    await this.audit.record({
+      action: 'execution.completed',
+      entityType: 'execution',
+      entityId: id,
+      before: { state: e.state },
+      after: { state: row!.state, completedAt: completedAt.toISOString(), late: row!.late },
+    });
     await this.problems.rewrite(e, o, content, answers, receivedAt);
     if (inWindow) {
       const steps: Transition[] = [{ occurrenceId: o.id, from: o.status, to: 'completed', at: completedAt, reason: o.status === 'partial' ? 'late_sync' : null }];

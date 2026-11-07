@@ -6,6 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { Field } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { TextField } from '@/components/text-field';
@@ -39,28 +40,27 @@ export function OrgSettingsForm({ tenant, canEdit }: { tenant: TenantDto; canEdi
   return (
     <form onSubmit={form.handleSubmit((v) => save.mutate(v))} className="grid max-w-lg gap-4" noValidate>
       <fieldset disabled={!canEdit} className="grid gap-4">
-        <TextField form={form} name="name" label={t('settings.org.name')} />
+        <TextField form={form} name="name" label={t('settings.org.name')} required />
         <div className="grid gap-1.5">
           <Label htmlFor="orgCode">{t('settings.org.orgCode')}</Label>
           <Input id="orgCode" value={tenant.orgCode} readOnly disabled />
           <p className="text-muted-foreground text-xs">{t('settings.org.orgCodeHint')}</p>
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="timezone">{t('settings.org.timezone')}</Label>
-          <Controller
-            control={form.control}
-            name="timezone"
-            render={({ field }) => (
-              <NativeSelect id="timezone" {...field} value={field.value ?? ''}>
+        <Controller
+          control={form.control}
+          name="timezone"
+          render={({ field }) => (
+            <Field id="timezone" label={t('settings.org.timezone')} required empty={!field.value}>
+              <NativeSelect id="timezone" aria-required {...field} value={field.value ?? ''}>
                 {TIMEZONES.map((tz) => (
                   <option key={tz} value={tz}>
                     {tz}
                   </option>
                 ))}
               </NativeSelect>
-            )}
-          />
-        </div>
+            </Field>
+          )}
+        />
         <div className="grid gap-1.5">
           <Label htmlFor="locale">{t('settings.org.locale')}</Label>
           <Input id="locale" value={t('settings.org.localeAz')} readOnly disabled />

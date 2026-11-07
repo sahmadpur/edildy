@@ -1,6 +1,5 @@
 export default {
   title: 'Отчёты',
-  dashboard: 'Панель',
   trend: 'Выполнения по дням',
   empty: 'Нет данных за этот период.',
   inactive: 'Неактивен',
@@ -60,7 +59,7 @@ export default {
     planned: 'Запланированные',
     all: 'Все',
   },
-  tabs: { summary: 'Сводка', sites: 'Объекты', employees: 'Сотрудники', runs: 'Выполнения', problems: 'Проблемы', tasks: 'Задачи' },
+  tabs: { summary: 'Общее', sites: 'Объекты', employees: 'Сотрудники', runs: 'Выполнения', problems: 'Проблемы', tasks: 'Задачи' },
   columns: {
     measure: 'Показатель',
     value: 'Значение',
@@ -162,16 +161,21 @@ export default {
   chart: {
     table: 'Таблица выполнений по дням',
   },
+  /** The web home page: four period boxes, then the selected period's charts and runs. */
+  home: {
+    periods: 'Периоды',
+    late: 'Просрочено',
+    problems: 'С проблемами',
+    selectPeriod: 'Выбрать период {{period}}',
+    breakdown: 'Статус выполнений',
+    breakdownHint: 'Запланированные выполнения по статусам',
+    noRuns: 'В этом периоде выполнений нет',
+    runs: 'Выполнения',
+    selected: 'Выбранный период',
+  },
   live: {
     refresh: 'Обновить',
     updatedAt: 'Последнее обновление: {{time}}',
-  },
-  attention: {
-    title: 'Требует внимания',
-    overdueNow: 'Выполнения с опозданием сейчас',
-    critical: 'Критичные проблемы',
-    noneOverdue: 'Сейчас нет выполнений с опозданием.',
-    noneCritical: 'За этот период критичных проблем нет.',
   },
   table: {
     more: 'Показать ещё',

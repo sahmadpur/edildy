@@ -52,8 +52,8 @@ export function UserProfileForm({ user, roles, managers, isSelf, canManage, onSa
   return (
     <form onSubmit={submit} className="grid gap-4" noValidate>
       <fieldset disabled={!canManage} className="grid gap-4 sm:grid-cols-2">
-        <TextField form={form} name="fullName" label={t('users.form.fullName')} />
-        {user.kind === 'worker' && <TextField form={form} name="username" label={t('users.form.username')} />}
+        <TextField form={form} name="fullName" label={t('users.form.fullName')} required />
+        {user.kind === 'worker' && <TextField form={form} name="username" label={t('users.form.username')} required />}
         <div className="grid gap-1.5">
           <Label htmlFor="p-jobTitle">{t('users.form.jobTitle')}</Label>
           <input id="p-jobTitle" className="border-input h-9 rounded-md border px-3 text-sm" {...form.register('jobTitle', { setValueAs: emptyToNull })} />

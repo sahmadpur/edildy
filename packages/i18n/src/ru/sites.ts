@@ -8,7 +8,7 @@ export default {
   },
   tree: {
     title: 'Структура объектов',
-    addRoot: 'Добавить корневой объект',
+    addRoot: 'Добавить',
     addChild: 'Добавить подобъект',
     move: 'Переместить',
     moveTitle: 'Переместить объект «{{name}}»',

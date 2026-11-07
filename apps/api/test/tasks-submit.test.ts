@@ -3,7 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
 import { MONDAY_0800 } from './scheduling-fixtures';
-import { act, captureTaskEvents, createTask, newTaskBody, registerTaskMedia, taskHistory, type TaskWorld, taskWorld } from './task-fixtures';
+import { act, auditActions, captureTaskEvents, createTask, newTaskBody, registerTaskMedia, taskHistory, type TaskWorld, taskWorld } from './task-fixtures';
 
 const T = (hhmm: string) => `2026-11-02T${hhmm}:00.000Z`;
 const submitBody = (mediaIds: string[] = [], extra: Record<string, unknown> = {}) => ({ id: uuidv7(), text: 'Qapı təmir olundu', mediaIds, submittedAt: T('04:15'), ...extra });
@@ -51,6 +51,7 @@ describe('task submissions', () => {
     ]);
     expect(res.body.media).toEqual([expect.objectContaining({ id: photo, role: 'response', submissionId: body.id })]);
     expect((await taskHistory(id)).at(-1)).toEqual(['in_progress', 'completed', w.workers[0].id, null]);
+    expect((await auditActions(id)).at(-1)).toBe('task.submitted');
     expect(events.seen).toEqual([
       ['task.submitted', id, w.workers[0].id],
       ['task.completed', id, w.workers[0].id],

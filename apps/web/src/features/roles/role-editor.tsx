@@ -1,6 +1,7 @@
 import { DATA_SCOPES, type DataScope, type PermissionCatalog, type PermissionKey, type RoleDto } from '@taskop/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Field } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -45,15 +46,15 @@ export function RoleEditor({ role, catalog, held, canManage, onSave, onToggleAct
   return (
     <div className="grid gap-4">
       {role && !role.editable && <EmptyState title={t('roles.locked')} />}
-      <div className="grid gap-1.5">
-        <Label htmlFor="role-name">{t('roles.name')}</Label>
+      <Field id="role-name" label={t('roles.name')} required empty={!nameLocked && !draft.name.trim()}>
         <Input
           id="role-name"
           value={role?.systemKey ? roleDisplayName(t, role) : draft.name}
           disabled={nameLocked}
+          aria-required
           onChange={(e) => setDraft({ ...draft, name: e.target.value })}
         />
-      </div>
+      </Field>
       <div className="grid gap-1.5">
         <Label htmlFor="role-scope">{t('roles.scope')}</Label>
         <NativeSelect id="role-scope" value={draft.dataScope} disabled={locked} onChange={(e) => setDraft({ ...draft, dataScope: e.target.value as DataScope })}>

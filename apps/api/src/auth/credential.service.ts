@@ -3,7 +3,7 @@ import { secretSchemaFor } from '@taskop/contracts';
 import { and, eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
-import { currentRequestMeta } from '../common/request-context';
+import { currentRequestMeta, setRequestClient } from '../common/request-context';
 import { APP_CONFIG, type AppConfig } from '../config/config';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
@@ -87,6 +87,7 @@ export class CredentialService {
   }
 
   async acceptInvite(input: InviteAcceptDto): Promise<IssuedLogin> {
+    setRequestClient(input.client);
     const parsed = parseOpaqueToken(input.token);
     if (!parsed) throw new AppError('TOKEN_INVALID');
     const credentialHash = await this.hasher.hash(input.password);

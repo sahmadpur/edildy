@@ -1,7 +1,7 @@
 export default {
-  title: 'İstifadəçilər',
-  newWorker: 'Yeni işçi',
-  invite: 'Əməkdaşı dəvət et',
+  title: 'Əməkdaşlar',
+  newWorker: 'Yarat',
+  invite: 'Dəvət et',
   search: 'Ad, istifadəçi adı və ya e-poçt',
   kinds: { worker: 'İşçi (mobil)', staff: 'Əməkdaş (web)' },
   statuses: { active: 'Aktiv', deactivated: 'Deaktiv', invited: 'Dəvət göndərilib' },

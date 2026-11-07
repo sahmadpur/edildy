@@ -15,6 +15,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { uuidv7 } from 'uuidv7';
+import { Field, RequiredLegend } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -167,18 +168,18 @@ export function TaskDialog({ task: latest, problem, problemReport, onClose, onSa
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
+          <RequiredLegend />
           <fieldset disabled={locked} className="m-0 grid min-w-0 gap-4 border-0 p-0">
-            <div className="grid gap-1.5">
-              <Label htmlFor="task-title">{t('tasks.dialog.title')}</Label>
+            <Field id="task-title" label={t('tasks.dialog.title')} required empty={!values.title.trim()} error={errors.title ? t(errors.title) : null}>
               <Input
                 id="task-title"
                 value={values.title}
                 maxLength={TASK_LIMITS.titleMax}
+                aria-required
                 aria-invalid={Boolean(errors.title)}
                 onChange={(e) => set('title', e.target.value)}
               />
-              {fieldError('title')}
-            </div>
+            </Field>
             <div className="grid gap-1.5">
               <Label htmlFor="task-instructions">{t('tasks.dialog.instructions')}</Label>
               <Textarea
@@ -222,7 +223,7 @@ export function TaskDialog({ task: latest, problem, problemReport, onClose, onSa
               </div>
             </div>
             <div className="grid gap-1.5">
-              <AssigneePicker label={t('tasks.dialog.assignee')} value={values.assignee} onChange={(c) => set('assignee', c)} />
+              <AssigneePicker label={t('tasks.dialog.assignee')} value={values.assignee} onChange={(c) => set('assignee', c)} required />
               {fieldError('assignee')}
               {reassigning && <EmptyState title={t('tasks.dialog.reassignNote')} />}
             </div>

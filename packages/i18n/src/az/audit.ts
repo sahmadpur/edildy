@@ -1,7 +1,8 @@
 export default {
-  title: 'Audit jurnalı',
-  filters: { action: 'Əməliyyat (məs. user.created)', entityType: 'Element növü', from: 'Başlanğıc tarixi', to: 'Son tarix' },
-  columns: { time: 'Vaxt', actor: 'İcraçı', action: 'Əməliyyat', entity: 'Element' },
+  title: 'İstifadə jurnalı',
+  filters: { action: 'Əməliyyat (məs. user.created)', entityType: 'Element növü', from: 'Başlanğıc tarixi', to: 'Son tarix', client: 'Mənbə' },
+  columns: { time: 'Vaxt', actor: 'İcraçı', action: 'Əməliyyat', entity: 'Element', client: 'Mənbə' },
+  clients: { web: 'Veb', mobile: 'Mobil' },
   actorPlatform: 'Taskop dəstəyi',
   actorSystem: 'Sistem',
   before: 'Əvvəl',
@@ -23,8 +24,13 @@ export default {
     audit: 'Audit',
     execution: 'İcra',
   },
-  /** The SP8 actions (AUDIT_FLOW_AUDIT_ACTIONS). Other actions are shown as their code. */
+  /** Run and task work (EXECUTION_AUDIT_ACTIONS, the worker's task actions) and the SP8 actions (AUDIT_FLOW_AUDIT_ACTIONS). Other actions are shown as their code. */
   actions: {
+    'execution.started': 'İcra başladı',
+    'execution.completed': 'İcra tamamlandı',
+    'task.accepted': 'Tapşırıq qəbul edildi',
+    'task.started': 'Tapşırıq başladı',
+    'task.submitted': 'Tapşırıq təqdim edildi',
     'audit.started': 'Audit başladı',
     'audit.finished': 'Audit bitdi',
     'audit.cancelled': 'Audit ləğv edildi',

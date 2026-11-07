@@ -32,7 +32,7 @@ describe('accepting and starting tasks', () => {
       [null, 'new', w.manager.id, null],
       ['new', 'accepted', w.workers[0].id, null],
     ]);
-    expect(await auditActions(task.id)).toEqual(['task.created']);
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted']);
   });
 
   it('start on a new task accepts and starts it in one step; repeating start or accept afterwards is a no-op', async () => {
@@ -49,6 +49,8 @@ describe('accepting and starting tasks', () => {
     ]);
     expect((await act(w.workers[0].api, task.id, 'accept', T('04:13'))).body).toMatchObject({ status: 'in_progress', rev: 3 });
     expect((await act(w.workers[0].api, task.id, 'start', T('04:14'))).body).toMatchObject({ status: 'in_progress', startedAt: T('04:12'), rev: 3 });
+    // Two usage-log rows, like the two history rows; the replays add none.
+    expect(await auditActions(task.id)).toEqual(['task.created', 'task.accepted', 'task.started']);
   });
 
   // Clients send device time − their last measured clock offset (Interfaces → Server behaviour), so `at` is already on

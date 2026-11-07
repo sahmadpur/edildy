@@ -36,4 +36,27 @@ describe('GET /audit-log', () => {
     const w = await createUserDirect(t, s.tenantId);
     expect((await as(t, (await loginWorker(t, s.orgCode, w.username!, w.secret)).accessToken).get('/api/v1/audit-log')).status).toBe(403);
   });
+
+  it('stores the caller’s client on every entry and filters by it', async () => {
+    const s = await signupTenant(t, { client: 'web' });
+    const owner = as(t, s.accessToken);
+    await owner.post('/api/v1/teams', { name: 'From the web' });
+    const mobile = as(t, (await loginStaff(t, s.email, 'owner password 1', 'mobile')).accessToken);
+    await mobile.post('/api/v1/teams', { name: 'From the phone' });
+
+    const all = (await owner.get('/api/v1/audit-log')).body;
+    const byName = (name: string) => all.items.find((e: { after: { name?: string } | null }) => e.after?.name === name);
+    expect(byName('From the web').client).toBe('web');
+    expect(byName('From the phone').client).toBe('mobile');
+    // The login itself is tagged too: signup from the web, the second login from the phone.
+    expect(all.items.find((e: { action: string }) => e.action === 'tenant.created').client).toBe('web');
+    expect(all.items.find((e: { action: string }) => e.action === 'auth.login_succeeded').client).toBe('mobile');
+
+    const web = (await owner.get('/api/v1/audit-log?client=web')).body;
+    expect(web.items.every((e: { client: string }) => e.client === 'web')).toBe(true);
+    expect(web.items.map((e: { after: { name?: string } | null }) => e.after?.name)).toContain('From the web');
+    const phone = (await owner.get('/api/v1/audit-log?client=mobile')).body;
+    expect(phone.items.filter((e: { action: string }) => e.action === 'team.created').map((e: { after: { name?: string } | null }) => e.after?.name)).toEqual(['From the phone']);
+    expect((await owner.get('/api/v1/audit-log?client=desktop')).status).toBe(400);
+  });
 });

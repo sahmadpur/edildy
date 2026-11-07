@@ -1,7 +1,8 @@
 export default {
-  title: 'Журнал аудита',
-  filters: { action: 'Действие (напр. user.created)', entityType: 'Тип элемента', from: 'Дата начала', to: 'Дата окончания' },
-  columns: { time: 'Время', actor: 'Кто', action: 'Действие', entity: 'Элемент' },
+  title: 'Журнал использования',
+  filters: { action: 'Действие (напр. user.created)', entityType: 'Тип элемента', from: 'Дата начала', to: 'Дата окончания', client: 'Источник' },
+  columns: { time: 'Время', actor: 'Кто', action: 'Действие', entity: 'Элемент', client: 'Источник' },
+  clients: { web: 'Веб', mobile: 'Мобильное' },
   actorPlatform: 'Поддержка Taskop',
   actorSystem: 'Система',
   before: 'До',
@@ -23,8 +24,13 @@ export default {
     audit: 'Аудит',
     execution: 'Выполнение',
   },
-  /** The SP8 actions (AUDIT_FLOW_AUDIT_ACTIONS). Other actions are shown as their code. */
+  /** Run and task work (EXECUTION_AUDIT_ACTIONS, the worker's task actions) and the SP8 actions (AUDIT_FLOW_AUDIT_ACTIONS). Other actions are shown as their code. */
   actions: {
+    'execution.started': 'Выполнение начато',
+    'execution.completed': 'Выполнение завершено',
+    'task.accepted': 'Задача принята',
+    'task.started': 'Задача начата',
+    'task.submitted': 'Задача отправлена',
     'audit.started': 'Аудит начат',
     'audit.finished': 'Аудит завершён',
     'audit.cancelled': 'Аудит отменён',
