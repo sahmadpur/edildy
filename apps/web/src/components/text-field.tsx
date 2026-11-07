@@ -1,7 +1,7 @@
-import { type FieldValues, get, type Path, type UseFormReturn } from 'react-hook-form';
+import { type FieldValues, get, type Path, type UseFormReturn, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { Field, isEmptyValue } from '@/components/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 interface TextFieldProps<T extends FieldValues> {
   form: UseFormReturn<T>;
@@ -11,17 +11,17 @@ interface TextFieldProps<T extends FieldValues> {
   autoComplete?: string;
   description?: string;
   inputMode?: 'numeric' | 'text' | 'email';
+  /** Marks the field with an asterisk and tags it "Boş" while nothing is typed. */
+  required?: boolean;
 }
 
-export function TextField<T extends FieldValues>({ form, name, label, type = 'text', autoComplete, description, inputMode }: TextFieldProps<T>) {
+export function TextField<T extends FieldValues>({ form, name, label, type = 'text', autoComplete, description, inputMode, required = false }: TextFieldProps<T>) {
   const { t } = useTranslation();
   const error = get(form.formState.errors, name)?.message as string | undefined;
+  const value: unknown = useWatch({ control: form.control, name });
   return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={name}>{label}</Label>
-      <Input id={name} type={type} autoComplete={autoComplete} inputMode={inputMode} aria-invalid={Boolean(error)} {...form.register(name)} />
-      {description && !error && <p className="text-muted-foreground text-xs">{description}</p>}
-      {error && <p className="text-destructive text-sm">{t(error)}</p>}
-    </div>
+    <Field id={name} label={label} required={required} empty={isEmptyValue(value)} description={description} error={error ? t(error) : null}>
+      <Input id={name} type={type} autoComplete={autoComplete} inputMode={inputMode} aria-required={required || undefined} aria-invalid={Boolean(error)} {...form.register(name)} />
+    </Field>
   );
 }

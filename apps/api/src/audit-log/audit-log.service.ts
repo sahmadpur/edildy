@@ -20,6 +20,7 @@ export class AuditLogService {
     if (q.entityId) conditions.push(eq(auditLog.entityId, q.entityId));
     if (q.from) conditions.push(gte(auditLog.occurredAt, new Date(q.from)));
     if (q.to) conditions.push(lte(auditLog.occurredAt, new Date(q.to)));
+    if (q.client) conditions.push(eq(auditLog.client, q.client));
     if (q.cursor) conditions.push(lt(auditLog.id, q.cursor));
     const rows = await this.db
       .tx()
@@ -42,6 +43,7 @@ export class AuditLogService {
       before: entry.before ?? null,
       after: entry.after ?? null,
       ip: entry.ip,
+      client: entry.client,
       occurredAt: entry.occurredAt.toISOString(),
     }));
     return { items, nextCursor: rows.length > q.limit ? items[items.length - 1]!.id : null };

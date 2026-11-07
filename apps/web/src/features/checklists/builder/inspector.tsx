@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from './number-input';
 import { Label } from '@/components/ui/label';
+import { FieldLabel } from '@/components/field';
 import { Textarea } from '@/components/ui/textarea';
 import type { IssueIndex } from './issues';
 import type { BuilderAction } from './reducer';
@@ -22,10 +23,12 @@ interface Props {
   readOnly: boolean;
 }
 
-function Field({ id, label, children }: { id: string; label: string; children: ReactNode }) {
+function Field({ id, label, required, empty, children }: { id: string; label: string; required?: boolean; empty?: boolean; children: ReactNode }) {
   return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+    <div className="grid gap-1.5" data-field-empty={required && empty ? 'true' : undefined}>
+      <FieldLabel htmlFor={id} required={required} empty={empty}>
+        {label}
+      </FieldLabel>
       {children}
     </div>
   );
@@ -107,8 +110,8 @@ function ItemPanel({ item, depth, scoring, issues, dispatch, readOnly }: { item:
           </div>
         )}
       </div>
-      <Field id={`${id}-label`} label={t('checklists.builder.item.label')}>
-        <Textarea id={`${id}-label`} maxLength={500} disabled={readOnly} value={item.label} onChange={(e) => patch({ label: e.target.value })} />
+      <Field id={`${id}-label`} label={t('checklists.builder.item.label')} required empty={!item.label.trim()}>
+        <Textarea id={`${id}-label`} maxLength={500} disabled={readOnly} value={item.label} aria-required onChange={(e) => patch({ label: e.target.value })} />
       </Field>
       <Field id={`${id}-help`} label={t('checklists.builder.item.helpText')}>
         <Textarea id={`${id}-help`} maxLength={2000} disabled={readOnly} value={item.helpText ?? ''} onChange={(e) => patch({ helpText: e.target.value || null })} />

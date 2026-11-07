@@ -1,6 +1,7 @@
 import type { ChecklistsApi, TemplatesApi } from '@taskop/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type MouseEvent, type ReactNode, useContext, useMemo } from 'react';
+import { isPlainClick } from '@/components/page-tabs';
 import { platformApi } from '@/features/platform/platform-session';
 import { api, useCan, useMe } from '@/lib/session';
 
@@ -10,6 +11,8 @@ export interface ChecklistWorkspace {
   can: { manage: boolean; publish: boolean; templates: boolean };
   /** Route prefix: '' for tenant users, `/platform/tenants/<id>` for platform admins. */
   base: string;
+  /** Where the checklist pages sit: as tabs of the tenant's Yoxlamalar page ('work'), or on their own two tabs ('own'). */
+  tabs: 'work' | 'own';
   /** Query-key scope so tenant and platform caches never mix. */
   scope: string;
   timeZone: string;
@@ -41,6 +44,7 @@ export function TenantWorkspace({ children }: { children: ReactNode }) {
       templates: api.templates,
       can: { manage, publish, templates },
       base: '',
+      tabs: 'work',
       scope: 'tenant',
       timeZone: me.tenant.timezone,
       go: (to) => void navigate({ to: to as '/' }),
@@ -58,6 +62,7 @@ export function PlatformTenantWorkspace({ tenantId, children }: { tenantId: stri
       ...platformApi.inTenant(tenantId),
       can: { manage: true, publish: true, templates: true },
       base,
+      tabs: 'own',
       scope: `platform:${tenantId}`,
       timeZone: 'Asia/Baku',
       go: (to) => void navigate({ to: `${base}${to}` as '/' }),
@@ -66,16 +71,18 @@ export function PlatformTenantWorkspace({ tenantId, children }: { tenantId: stri
   return <WorkspaceProvider value={value}>{children}</WorkspaceProvider>;
 }
 
+/** The click handler of a workspace link: a plain click navigates in the app, anything else is left to the browser. */
+export const wsClick = (ws: Pick<ChecklistWorkspace, 'go'>, to: string) => (e: MouseEvent<HTMLAnchorElement>) => {
+  if (!isPlainClick(e)) return;
+  e.preventDefault();
+  ws.go(to);
+};
+
 /** An <a> that navigates inside the current workspace (keeps cmd/ctrl-click working). */
 export function WsLink({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   const ws = useWorkspace();
-  const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-    e.preventDefault();
-    ws.go(to);
-  };
   return (
-    <a href={`${ws.base}${to}`} onClick={onClick} className={className ?? 'font-medium hover:underline'}>
+    <a href={`${ws.base}${to}`} onClick={wsClick(ws, to)} className={className ?? 'font-medium hover:underline'}>
       {children}
     </a>
   );

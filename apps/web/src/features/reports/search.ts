@@ -20,7 +20,8 @@ import {
 /** The period picker: Part 1's presets, then the UI's own "custom" (Part 1: "Custom" is not a preset). */
 export type PeriodChoice = PeriodPreset | 'custom';
 export const PERIOD_CHOICES: readonly PeriodChoice[] = [...PERIOD_PRESETS, 'custom'];
-export const DEFAULT_PERIOD: PeriodPreset = 'today';
+/** Hesabatlar opens on the last 30 days; the home page keeps its own default (today). */
+export const DEFAULT_PERIOD: PeriodPreset = 'last_30';
 export const DEFAULT_TAB: ReportKind = 'summary';
 export const DEFAULT_BUCKET: RunBucket = 'all';
 
@@ -51,7 +52,8 @@ export interface ReportsPageSearch extends ReportSearch {
 
 const isId = (v: unknown): v is string => idSchema.safeParse(v).success;
 const isDate = (v: unknown): v is string => localDateSchema.safeParse(v).success;
-const isOneOf = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
+const isOneOf = <T extends string>(list: readonly T[], v: unknown): v is T =>
+  typeof v === 'string' && (list as readonly string[]).includes(v);
 
 function pick<T extends object, K extends keyof T>(o: T, keys: readonly K[]): Pick<T, K> {
   const out = {} as Pick<T, K>;
@@ -91,11 +93,15 @@ const PAGE_KEYS = ['tab', 'bucket', 'severity', 'auditState'] as const;
 
 /** The filters a tile or a page switch carries along. */
 export const filterSearch = (s: ReportSearch): ReportSearch => pick(s, FILTER_KEYS);
-export const pageExtras = (s: ReportsPageSearch): Pick<ReportsPageSearch, 'tab' | 'bucket' | 'severity' | 'auditState'> => pick(s, PAGE_KEYS);
+export const pageExtras = (
+  s: ReportsPageSearch,
+): Pick<ReportsPageSearch, 'tab' | 'bucket' | 'severity' | 'auditState'> => pick(s, PAGE_KEYS);
 
 /** Drops empty values: a select set back to "all", a cleared date field. */
 export function cleanSearch<T extends object>(s: T): T {
-  return Object.fromEntries(Object.entries(s).filter(([, v]) => v !== undefined && v !== '' && v !== null)) as T;
+  return Object.fromEntries(
+    Object.entries(s).filter(([, v]) => v !== undefined && v !== '' && v !== null),
+  ) as T;
 }
 
 export type FilterIssue = 'incomplete' | 'toBeforeFrom' | 'tooLong';
@@ -130,6 +136,8 @@ export function withPeriod(s: ReportSearch, choice: PeriodChoice, today: string)
   const rest = pick(s, ['siteId', 'userId', 'checklistId', 'inactive'] as const);
   if (choice !== 'custom') return { period: choice, ...rest };
   const current = resolveReportFilters(s, today);
-  const range = current.ok ? { from: current.filters.from, to: current.filters.to } : { from: today, to: today };
+  const range = current.ok
+    ? { from: current.filters.from, to: current.filters.to }
+    : { from: today, to: today };
   return { period: 'custom', ...range, ...rest };
 }

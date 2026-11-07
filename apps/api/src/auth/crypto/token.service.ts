@@ -1,4 +1,5 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { type Client, clientSchema } from '@taskop/contracts';
 import { importPKCS8, importSPKI, jwtVerify, SignJWT, type CryptoKey } from 'jose';
 import { z } from 'zod';
 import { APP_CONFIG, type AppConfig } from '../../config/config';
@@ -16,6 +17,8 @@ export interface AccessClaims {
   rv: number;
   kind: 'worker' | 'staff';
   sid: string;
+  /** The session's client. Optional so tokens issued before it existed still verify. */
+  client?: Client;
 }
 
 const accessPayload = z.object({
@@ -25,6 +28,7 @@ const accessPayload = z.object({
   rv: z.number().int(),
   kind: z.enum(['worker', 'staff']),
   sid: z.uuid(),
+  client: clientSchema.optional(),
 });
 
 @Injectable()
@@ -45,7 +49,7 @@ export class TokenService implements OnModuleInit {
   async signAccess(c: AccessClaims): Promise<{ token: string; expiresAt: Date }> {
     const { privateKey } = await this.keys;
     const expiresAt = new Date(Date.now() + ACCESS_TOKEN_TTL_MS);
-    const token = await new SignJWT({ tid: c.tid, rid: c.rid, rv: c.rv, kind: c.kind, sid: c.sid })
+    const token = await new SignJWT({ tid: c.tid, rid: c.rid, rv: c.rv, kind: c.kind, sid: c.sid, ...(c.client ? { client: c.client } : {}) })
       .setProtectedHeader({ alg: 'EdDSA' })
       .setSubject(c.sub)
       .setIssuer(ISSUER)

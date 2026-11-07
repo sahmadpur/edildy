@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FieldLabel } from '@/components/field';
 import { useDebounced } from '@/features/scheduling/labels';
 import { errorText } from '@/lib/errors';
 import { cn } from '@/lib/utils';
@@ -14,10 +14,12 @@ interface Props {
   value: AssigneeChoice | null;
   onChange: (choice: AssigneeChoice | null) => void;
   clearable?: boolean;
+  /** Asterisk on the label and a "Boş" tag while nothing is chosen. */
+  required?: boolean;
 }
 
 /** Person-or-team combobox (spec §8): GET /tasks/assignees, people and teams in two groups, searched by name. */
-export function AssigneePicker({ label, value, onChange, clearable = false }: Props) {
+export function AssigneePicker({ label, value, onChange, clearable = false, required = false }: Props) {
   const { t } = useTranslation();
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -84,8 +86,10 @@ export function AssigneePicker({ label, value, onChange, clearable = false }: Pr
   );
 
   return (
-    <div className="relative grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+    <div className="relative grid gap-1.5" data-field-empty={required && value === null ? 'true' : undefined}>
+      <FieldLabel htmlFor={id} required={required} empty={value === null}>
+        {label}
+      </FieldLabel>
       <div className="flex items-center gap-2">
         <Input
           ref={inputRef}

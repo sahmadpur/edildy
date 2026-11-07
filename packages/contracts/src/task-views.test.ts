@@ -107,6 +107,6 @@ describe('task read models', () => {
     expect(SYSTEM_ROLE_DEFAULTS.auditor.permissions).toContain('tasks.view');
     expect(SYSTEM_ROLE_DEFAULTS.auditor.permissions).not.toContain('tasks.manage');
     expect(SYSTEM_ROLE_DEFAULTS.worker.permissions).toEqual([]);
-    expect(TASK_AUDIT_ACTIONS).toEqual(['task.created', 'task.updated', 'task.reassigned', 'task.cancelled', 'task.approved', 'task.rejected']);
+    expect(TASK_AUDIT_ACTIONS).toEqual(['task.created', 'task.updated', 'task.reassigned', 'task.cancelled', 'task.approved', 'task.rejected', 'task.accepted', 'task.started', 'task.submitted']);
   });
 });

@@ -17,6 +17,9 @@ import { useReportRuns } from './queries';
 import { useLocale } from '@/lib/i18n';
 import { LoadingState, EmptyState } from '@/components/states';
 
+/** The bucket chips: Hamısı first, then the rest in the API's order. */
+const BUCKET_CHIPS: readonly RunBucket[] = ['all', ...RUN_BUCKETS.filter((b) => b !== 'all')];
+
 const COLUMNS = ['date', 'dueAt', 'checklist', 'site', 'status', 'executor', 'completedAt', 'score', 'problemCount'] as const;
 
 /**
@@ -38,17 +41,10 @@ export function RunsTab({
   onAuditState?: (state: RunAuditState | null) => void;
 }) {
   const { t } = useTranslation();
-  const locale = useLocale();
-  const time = useTimeFormat();
-  const formatDateTime = useFormatDateTime();
-  const runs = useReportRuns(filters, bucket, auditState);
-  const [open, setOpen] = useState<string | null>(null);
-  const items = runs.data?.pages.flatMap((p) => p.items) ?? [];
-
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <ChipGroup label={t('reports.filters.bucket')} options={RUN_BUCKETS.map((b) => ({ value: b, label: t(`reports.buckets.${b}`) }))} value={bucket} onChange={onBucket} />
+        <ChipGroup label={t('reports.filters.bucket')} options={BUCKET_CHIPS.map((b) => ({ value: b, label: t(`reports.buckets.${b}`) }))} value={bucket} onChange={onBucket} />
         {onAuditState && (
           <NativeSelect
             aria-label={t('audits.audit')}
@@ -65,6 +61,23 @@ export function RunsTab({
           </NativeSelect>
         )}
       </div>
+      <RunsTable filters={filters} bucket={bucket} auditState={auditState} />
+    </div>
+  );
+}
+
+/** The runs of one bucket: a paged table whose rows open the run drawer. Shared by the Runs tab and the home page's tiles. */
+export function RunsTable({ filters, bucket, auditState = null }: { filters: ReportFilters; bucket: RunBucket; auditState?: RunAuditState | null }) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const time = useTimeFormat();
+  const formatDateTime = useFormatDateTime();
+  const runs = useReportRuns(filters, bucket, auditState);
+  const [open, setOpen] = useState<string | null>(null);
+  const items = runs.data?.pages.flatMap((p) => p.items) ?? [];
+
+  return (
+    <div className="grid gap-4">
       {runs.error && <p className="text-destructive">{errorText(t, runs.error)}</p>}
       {runs.isPending && <LoadingState />}
       {runs.isSuccess && items.length === 0 && <EmptyState title={t('reports.empty')} />}

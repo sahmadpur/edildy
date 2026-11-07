@@ -54,8 +54,8 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await page.getByRole('button', { name: 'Yadda saxla' }).click();
   await expect(page.getByText('Növbə cədvəli yadda saxlanıldı')).toBeVisible();
 
-  // Assignment with shift timing and a live preview.
-  await page.getByRole('link', { name: 'Təyinatlar' }).click();
+  // Assignment with shift timing and a live preview (the Təyinatlar tab of Yoxlamalar).
+  await page.getByRole('link', { name: 'Yoxlamalar' }).click();
   await page.getByRole('link', { name: 'Yeni təyinat' }).click();
   await page.getByLabel('Yoxlama vərəqəsi').selectOption({ label: 'E2E açılış' });
   await page.getByLabel('Obyekt').selectOption({ label: 'Anbar №1' });
@@ -70,7 +70,10 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await expect(page.getByRole('heading', { name: 'E2E açılış' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Yaxın icralar' }).getByRole('listitem').first()).toBeVisible();
 
-  // The schedule page opens.
+  // The schedule is the second tab of Yoxlamalar.
+  await page.getByRole('link', { name: 'Yoxlamalar' }).click();
   await page.getByRole('link', { name: 'İcra cədvəli' }).click();
-  await expect(page.getByRole('heading', { name: 'İcra cədvəli' })).toBeVisible();
+  await expect(page).toHaveURL(/\/schedule$/);
+  await expect(page.getByRole('heading', { name: 'Yoxlamalar' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'İcra cədvəli' })).toHaveAttribute('aria-current', 'page');
 });

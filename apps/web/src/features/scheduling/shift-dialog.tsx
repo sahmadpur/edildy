@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { localTimeSchema, type ShiftDto, type SiteDto } from '@taskop/contracts';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
+import { Field } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { TextField } from '@/components/text-field';
@@ -39,7 +40,7 @@ export function ShiftDialog({ shift, sites, onClose, onSubmit }: Props) {
     resolver: zodResolver(schema),
     defaultValues: { name: shift?.name ?? '', startTime: shift?.startTime ?? '08:00', endTime: shift?.endTime ?? '16:00', siteId: shift?.siteId ?? '' },
   });
-  const [start, end] = form.watch(['startTime', 'endTime']);
+  const [start, end] = useWatch({ control: form.control, name: ['startTime', 'endTime'] });
   // The shift's own site is always an option, even when it is inactive or not loaded, so editing never clears it.
   const siteOptions =
     shift?.siteId && !sites.some((s) => s.id === shift.siteId)
@@ -62,14 +63,12 @@ export function ShiftDialog({ shift, sites, onClose, onSubmit }: Props) {
           <DialogTitle>{shift ? t('scheduling.shifts.editTitle') : t('scheduling.shifts.createTitle')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-4" noValidate>
-          <TextField form={form} name="name" label={t('scheduling.shifts.name')} />
+          <TextField form={form} name="name" label={t('scheduling.shifts.name')} required />
           <div className="grid grid-cols-2 gap-3">
             {(['startTime', 'endTime'] as const).map((name) => (
-              <div key={name} className="grid gap-1.5">
-                <Label htmlFor={name}>{name === 'startTime' ? t('scheduling.shifts.start') : t('scheduling.shifts.end')}</Label>
-                <Input id={name} type="time" aria-invalid={Boolean(fieldError(name))} {...form.register(name)} />
-                {fieldError(name) && <p className="text-destructive text-sm">{t(fieldError(name)!)}</p>}
-              </div>
+              <Field key={name} id={name} label={name === 'startTime' ? t('scheduling.shifts.start') : t('scheduling.shifts.end')} required empty={!(name === 'startTime' ? start : end)} error={fieldError(name) ? t(fieldError(name)!) : null}>
+                <Input id={name} type="time" aria-required aria-invalid={Boolean(fieldError(name))} {...form.register(name)} />
+              </Field>
             ))}
           </div>
           {start && end && end < start && <EmptyState title={t('scheduling.shifts.nextDay')} />}

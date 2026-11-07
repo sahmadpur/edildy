@@ -8,12 +8,27 @@ import type { ReportSearch } from './search';
 import { TrendChart } from './trend-chart';
 import { LoadingState, EmptyState } from '@/components/states';
 
-/** Tiles and trend: the dashboard and the Summary tab show the same components (spec §6.2). */
-export function SummaryView({ summary, search, filters, tiles }: { summary: ReportSummary; search: ReportSearch; filters: ReportFilters; tiles: readonly TileKey[] }) {
+/** Tiles and trend: the home page and the Summary tab show the same components (spec §6.2). */
+export function SummaryView({
+  summary,
+  search,
+  filters,
+  tiles,
+  onSelectTile,
+  selectedTile,
+}: {
+  summary: ReportSummary;
+  search: ReportSearch;
+  filters: ReportFilters;
+  tiles: readonly TileKey[];
+  /** Home page: tiles are toggles rather than links (see CountTiles). */
+  onSelectTile?: (key: TileKey) => void;
+  selectedTile?: TileKey | null;
+}) {
   const { t } = useTranslation();
   return (
     <div className="grid gap-4">
-      <CountTiles summary={summary} search={search} keys={tiles} />
+      <CountTiles summary={summary} search={search} keys={tiles} onSelect={onSelectTile} selected={selectedTile} />
       {summary.counts.planned === 0 && <EmptyState title={t('reports.empty')} />}
       {!isSingleDay(filters) && <TrendChart trend={summary.trend} />}
     </div>

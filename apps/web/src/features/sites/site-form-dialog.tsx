@@ -1,15 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { SiteDto, SiteTypeDto } from '@taskop/contracts';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
+import { Field } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { TextField } from '@/components/text-field';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { applyFieldErrors, errorText } from '@/lib/errors';
 
 const schema = z.object({
@@ -32,10 +32,21 @@ export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubm
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const activeTypes = types.filter((ty) => ty.active || ty.id === site?.typeId);
+  // The dialog is mounted only while open, so the defaults are read once; `values` would re-sync (and wipe) the form
+  // whenever the site types arrive after the user started typing.
   const form = useForm<z.input<typeof schema>, unknown, SiteFormValues>({
     resolver: zodResolver(schema),
-    values: { name: site?.name ?? '', typeId: site?.typeId ?? activeTypes[0]?.id ?? '', address: site?.address ?? '' },
+    defaultValues: {
+      name: site?.name ?? '',
+      typeId: site?.typeId ?? activeTypes[0]?.id ?? '',
+      address: site?.address ?? '',
+    },
   });
+  const typeId = useWatch({ control: form.control, name: 'typeId' });
+  const firstTypeId = activeTypes[0]?.id;
+  useEffect(() => {
+    if (firstTypeId && !form.getValues('typeId')) form.setValue('typeId', firstTypeId);
+  }, [firstTypeId, form]);
   const submit = form.handleSubmit(async (values) => {
     setError(null);
     try {
@@ -52,18 +63,30 @@ export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubm
           <DialogTitle>{site ? t('sites.form.editTitle') : t('sites.form.createTitle')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-4" noValidate>
-          {parent && <p className="text-muted-foreground text-sm">{t('sites.form.parent', { name: parent.name })}</p>}
-          <TextField form={form} name="name" label={t('sites.form.name')} />
-          <div className="grid gap-1.5">
-            <Label htmlFor="typeId">{t('sites.form.type')}</Label>
-            <NativeSelect id="typeId" {...form.register('typeId')}>
+          {parent && (
+            <p className="text-muted-foreground text-sm">{t('sites.form.parent', { name: parent.name })}</p>
+          )}
+          <TextField form={form} name="name" label={t('sites.form.name')} required />
+          <Field
+            id="typeId"
+            label={t('sites.form.type')}
+            required
+            empty={!typeId}
+            error={form.formState.errors.typeId?.message ? t(form.formState.errors.typeId.message) : null}
+          >
+            <NativeSelect
+              id="typeId"
+              aria-required
+              aria-invalid={Boolean(form.formState.errors.typeId)}
+              {...form.register('typeId')}
+            >
               {activeTypes.map((ty) => (
                 <option key={ty.id} value={ty.id}>
                   {ty.name}
                 </option>
               ))}
             </NativeSelect>
-          </div>
+          </Field>
           <TextField form={form} name="address" label={t('sites.form.address')} />
           <FormError message={error} />
           <DialogFooter>

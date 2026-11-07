@@ -1,11 +1,12 @@
 import type { PermissionKey } from '@taskop/contracts';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Building2, CalendarCheck, CalendarClock, CalendarDays, ChartColumn, ClipboardCheck, ClipboardList, Clock, Home, LayoutTemplate, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, Shield, ShieldCheck, TriangleAlert, Users, UsersRound, X } from 'lucide-react';
+import { Building2, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, Shield, ShieldCheck, TriangleAlert, Users, UsersRound, X } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageMenu } from '@/components/language-menu';
 import { Mark } from '@/components/logo';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { session } from '@/lib/session';
 import { cn } from '@/lib/utils';
@@ -13,44 +14,88 @@ import { UserMenu } from './user-menu';
 import { VerifyEmailBanner } from './verify-email-banner';
 
 export interface NavItem {
-  to: '/' | '/users' | '/roles' | '/sites' | '/teams' | '/audit' | '/settings' | '/checklists' | '/templates' | '/assignments' | '/schedule' | '/problems' | '/tasks' | '/audits' | '/messages' | '/reports' | '/shifts' | '/roster';
+  to: '/' | '/users' | '/roles' | '/sites' | '/teams' | '/audit' | '/settings' | '/checklists' | '/assignments' | '/problems' | '/tasks' | '/audits' | '/reports' | '/shifts';
+  /** When the user may not open `to`, the first of these they may open is linked instead (a merged page's other tab). */
+  fallbacks?: readonly { to: NavItem['to']; permission: PermissionKey }[];
   labelKey: string;
   icon: LucideIcon;
   /** One key, or a list of which any one suffices. */
   permission?: PermissionKey | readonly PermissionKey[];
   /** The sidebar group (nav.groups.*). */
-  group: 'overview' | 'operations' | 'people' | 'admin';
+  group: 'overview' | 'operations' | 'admin' | 'other';
+  /** Other pages this item stands for: a merged page's second tab (e.g. /schedule under Təyinatlar). */
+  also?: readonly string[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', labelKey: 'nav.home', icon: Home, group: 'overview' },
+  { to: '/problems', labelKey: 'nav.problems', icon: TriangleAlert, permission: 'assignments.view', group: 'overview' },
   { to: '/reports', labelKey: 'nav.reports', icon: ChartColumn, permission: 'reports.view', group: 'overview' },
-  { to: '/checklists', labelKey: 'nav.checklists', icon: ListChecks, permission: 'checklists.view', group: 'operations' },
-  { to: '/templates', labelKey: 'nav.templates', icon: LayoutTemplate, permission: 'checklists.manage', group: 'operations' },
-  { to: '/assignments', labelKey: 'nav.assignments', icon: CalendarCheck, permission: 'assignments.view', group: 'operations' },
-  { to: '/schedule', labelKey: 'nav.schedule', icon: CalendarClock, permission: 'assignments.view', group: 'operations' },
-  { to: '/problems', labelKey: 'nav.problems', icon: TriangleAlert, permission: 'assignments.view', group: 'operations' },
+  {
+    to: '/assignments',
+    labelKey: 'nav.assignments',
+    icon: ListChecks,
+    permission: ['assignments.view', 'checklists.view'],
+    fallbacks: [{ to: '/checklists', permission: 'checklists.view' }],
+    group: 'operations',
+    also: ['/schedule', '/checklists', '/templates'],
+  },
   { to: '/tasks', labelKey: 'nav.tasks', icon: ClipboardCheck, permission: ['tasks.view', 'tasks.manage'], group: 'operations' },
-  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'operations' },
-  { to: '/messages', labelKey: 'nav.messages', icon: Megaphone, permission: 'notifications.send', group: 'operations' },
-  { to: '/shifts', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'people' },
-  { to: '/roster', labelKey: 'nav.roster', icon: CalendarDays, permission: 'shifts.view', group: 'people' },
-  { to: '/users', labelKey: 'nav.users', icon: Users, permission: 'users.view', group: 'people' },
-  { to: '/roles', labelKey: 'nav.roles', icon: Shield, permission: 'roles.view', group: 'people' },
-  { to: '/sites', labelKey: 'nav.sites', icon: Building2, permission: 'sites.view', group: 'people' },
-  { to: '/teams', labelKey: 'nav.teams', icon: UsersRound, permission: 'teams.view', group: 'people' },
+  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'other' },
+  { to: '/users', labelKey: 'nav.users', icon: Users, permission: 'users.view', group: 'admin' },
+  { to: '/sites', labelKey: 'nav.sites', icon: Building2, permission: 'sites.view', group: 'admin' },
+  { to: '/teams', labelKey: 'nav.teams', icon: UsersRound, permission: 'teams.view', group: 'admin' },
+  { to: '/shifts', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'admin', also: ['/roster'] },
+  { to: '/roles', labelKey: 'nav.roles', icon: Shield, permission: 'roles.view', group: 'admin' },
   { to: '/audit', labelKey: 'nav.audit', icon: ClipboardList, permission: 'audit.view', group: 'admin' },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings, group: 'admin' },
 ];
 
-const GROUPS: NavItem['group'][] = ['overview', 'operations', 'people', 'admin'];
+const GROUPS: NavItem['group'][] = ['overview', 'operations', 'admin', 'other'];
+
+/** The home item matches only its own path; every other item also owns its sub-pages and `also` aliases. */
+export function isNavItemActive(item: NavItem, pathname: string): boolean {
+  if (item.to === '/') return pathname === '/';
+  return [item.to, ...(item.also ?? [])].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/** Which groups the user folded, kept across visits. */
+const COLLAPSED_KEY = 'taskop.nav.collapsed';
+function readCollapsed(): Set<string> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter((g): g is string => typeof g === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
 
 export function AppShell() {
   const { t } = useTranslation();
   const s = useSyncExternalStore(session.subscribe, session.get);
   const navigate = useNavigate();
   const href = useRouterState({ select: (r) => r.location.href });
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  // The group of the current page is shown open on arrival whatever was folded; it folds only when its heading is
+  // clicked on this very page, so the heading always does what it shows. Forgotten on every page change.
+  const [folded, setFolded] = useState<{ group: string; at: string } | null>(null);
+  const activeFolded = folded?.at === pathname ? folded.group : null;
+  const setGroupOpen = (group: string, open: boolean) => {
+    setFolded(open ? null : { group, at: pathname });
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (open) next.delete(group);
+      else next.add(group);
+      try {
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...next]));
+      } catch {
+        // Private mode or a full store: the fold still works for this visit.
+      }
+      return next;
+    });
+  };
 
   // Remember the last location seen while signed in, so the redirect target is the page the user was on
   // (not /login itself, which would loop).
@@ -82,8 +127,16 @@ export function AppShell() {
   if (s.status !== 'authenticated') return null;
   const { me } = s;
   const allowed = (p: NavItem['permission']) => !p || (typeof p === 'string' ? [p] : p).some((k) => me.permissions.includes(k));
+  // A merged page links to its first tab the user may open: /assignments, or /checklists without assignments.view.
+  const target = (item: NavItem): NavItem['to'] => {
+    const primary = typeof item.permission === 'string' ? item.permission : item.permission?.[0];
+    if (!item.fallbacks || !primary || me.permissions.includes(primary)) return item.to;
+    return item.fallbacks.find((f) => me.permissions.includes(f.permission))?.to ?? item.to;
+  };
   const items = NAV_ITEMS.filter((i) => allowed(i.permission));
   const groups = GROUPS.map((g) => [g, items.filter((i) => i.group === g)] as const).filter(([, list]) => list.length > 0);
+  const activeGroup = items.find((i) => isNavItemActive(i, pathname))?.group;
+  const isOpen = (group: string) => (group === activeGroup ? activeFolded !== group : !collapsed.has(group));
 
   return (
     <div className="flex min-h-screen">
@@ -108,25 +161,33 @@ export function AppShell() {
             <X />
           </Button>
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 pb-4">
+        <nav aria-label={t('common.menu')} className="flex-1 overflow-y-auto px-3 pb-4">
           {groups.map(([group, list]) => (
-            <div key={group} className="mt-3 first:mt-0">
-              <div className="text-on-deep-muted px-3 pb-1 text-[11px] font-medium">{t(`nav.groups.${group}`)}</div>
-              <div className="grid gap-0.5">
-                {list.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to as '/'}
-                    className="text-on-deep-muted relative flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/8 hover:text-white focus-visible:outline-saffron"
-                    activeProps={{ className: 'bg-white/10 text-white font-medium before:absolute before:inset-y-1.5 before:left-0 before:w-0.75 before:rounded-r before:bg-saffron' }}
-                    activeOptions={{ exact: item.to === '/' }}
-                  >
-                    <item.icon className="size-4" aria-hidden />
-                    {t(item.labelKey)}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <Collapsible key={group} open={isOpen(group)} onOpenChange={(open) => setGroupOpen(group, open)} className="mt-3 first:mt-0">
+              <CollapsibleTrigger className="text-on-deep-muted flex w-full items-center justify-between rounded-md px-3 pb-1 text-[11px] font-medium hover:text-white focus-visible:outline-saffron [&[data-state=open]>svg]:rotate-180">
+                {t(`nav.groups.${group}`)}
+                <ChevronDown className="size-3 transition-transform" aria-hidden />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="grid gap-0.5">
+                {list.map((item) => {
+                  const active = isNavItemActive(item, pathname);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={target(item) as '/'}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'text-on-deep-muted relative flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/8 hover:text-white focus-visible:outline-saffron',
+                        active && 'bg-white/10 text-white font-medium before:absolute before:inset-y-1.5 before:left-0 before:w-0.75 before:rounded-r before:bg-saffron',
+                      )}
+                    >
+                      <item.icon className="size-4" aria-hidden />
+                      {t(item.labelKey)}
+                    </Link>
+                  );
+                })}
+              </CollapsibleContent>
+            </Collapsible>
           ))}
         </nav>
       </aside>
@@ -137,6 +198,11 @@ export function AppShell() {
           </Button>
           <div className="ml-auto flex items-center gap-1">
             <LanguageMenu compact />
+            {allowed('notifications.send') && (
+              <Link to="/messages" aria-label={t('nav.messages')} className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+                <Megaphone className="size-4" aria-hidden />
+              </Link>
+            )}
             <NotificationBell />
             <UserMenu me={me} />
             <Button variant="ghost" size="icon" aria-label={t('nav.logout')} onClick={() => void session.signOut()}>

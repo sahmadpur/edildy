@@ -124,7 +124,8 @@ test('a closed run’s problem becomes a task on the web; the worker answers thr
   await expect(dialog.getByText('Obyekt problemdən götürülür: Anbar №1')).toBeVisible();
   // Wait for the filtered option and the search response before clicking (ruling W9).
   const assignees = page.waitForResponse((res) => res.url().includes('/tasks/assignees') && res.url().includes('q='));
-  await dialog.getByRole('combobox', { name: 'İcraçı', exact: true }).fill('Nigar');
+  // By label, like the fields above: the required asterisk (CSS) joins the accessible name in Chromium.
+  await dialog.getByLabel('İcraçı', { exact: true }).fill('Nigar');
   await assignees;
   const option = dialog.getByRole('option', { name: 'Nigar Səfərli' });
   await expect(option).toBeVisible();

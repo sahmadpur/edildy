@@ -12,22 +12,36 @@ import { useFormatDateTime } from '@/lib/format';
 import { api } from '@/lib/session';
 import { AuditDiff } from './audit-diff';
 
-const ENTITY_TYPES = ['user', 'role', 'site', 'site_type', 'team', 'tenant', 'session'] as const;
+const ENTITY_TYPES = [
+  'user',
+  'role',
+  'site',
+  'site_type',
+  'team',
+  'tenant',
+  'session',
+  'execution',
+  'task',
+] as const;
+const CLIENTS = ['web', 'mobile'] as const;
 
 /** `<input type="date">` gives a local day; convert to the UTC instant at its start/end. */
-const dayBoundary = (day: string, end: boolean) => (day ? new Date(`${day}T${end ? '23:59:59.999' : '00:00:00'}`).toISOString() : undefined);
+const dayBoundary = (day: string, end: boolean) =>
+  day ? new Date(`${day}T${end ? '23:59:59.999' : '00:00:00'}`).toISOString() : undefined;
 
 export function AuditPage() {
   const { t } = useTranslation();
   const formatDateTime = useFormatDateTime();
   const [action, setAction] = useState('');
   const [entityType, setEntityType] = useState('');
+  const [client, setClient] = useState<'' | (typeof CLIENTS)[number]>('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [open, setOpen] = useState<string | null>(null);
   const filters = {
     action: useDeferredValue(action.trim()) || undefined,
     entityType: entityType || undefined,
+    client: client || undefined,
     from: dayBoundary(from, false),
     to: dayBoundary(to, true),
   };
@@ -39,12 +53,16 @@ export function AuditPage() {
   });
   const rows = entries.data?.pages.flatMap((p) => p.items) ?? [];
   const actorName = (e: AuditEntryDto) =>
-    e.actor.type === 'platform_admin' ? t('audit.actorPlatform') : e.actor.type === 'system' ? t('audit.actorSystem') : (e.actor.name ?? '—');
+    e.actor.type === 'platform_admin'
+      ? t('audit.actorPlatform')
+      : e.actor.type === 'system'
+        ? t('audit.actorSystem')
+        : (e.actor.name ?? '—');
 
   return (
     <div>
       <PageHeader title={t('audit.title')} />
-      <div className="mb-4 grid gap-3 sm:grid-cols-4">
+      <div className="mb-4 grid gap-3 sm:grid-cols-5">
         <div className="grid gap-1.5">
           <Label htmlFor="f-action">{t('audit.filters.action')}</Label>
           <Input id="f-action" value={action} onChange={(e) => setAction(e.target.value)} />
@@ -56,6 +74,21 @@ export function AuditPage() {
             {ENTITY_TYPES.map((et) => (
               <option key={et} value={et}>
                 {t(`audit.entityTypes.${et}`)}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="f-client">{t('audit.filters.client')}</Label>
+          <NativeSelect
+            id="f-client"
+            value={client}
+            onChange={(e) => setClient(e.target.value as '' | (typeof CLIENTS)[number])}
+          >
+            <option value="">{t('common.all')}</option>
+            {CLIENTS.map((c) => (
+              <option key={c} value={c}>
+                {t(`audit.clients.${c}`)}
               </option>
             ))}
           </NativeSelect>
@@ -76,6 +109,7 @@ export function AuditPage() {
             <TableHead>{t('audit.columns.actor')}</TableHead>
             <TableHead>{t('audit.columns.action')}</TableHead>
             <TableHead>{t('audit.columns.entity')}</TableHead>
+            <TableHead>{t('audit.columns.client')}</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
@@ -85,17 +119,30 @@ export function AuditPage() {
               <TableRow>
                 <TableCell className="text-sm whitespace-nowrap">{formatDateTime(e.occurredAt)}</TableCell>
                 <TableCell>{actorName(e)}</TableCell>
-                <TableCell className="tabular-nums text-sm">{e.action}</TableCell>
-                <TableCell>{t(`audit.entityTypes.${e.entityType}`, { defaultValue: e.entityType })}</TableCell>
+                <TableCell className="text-sm">
+                  {t(`audit.actions.${e.action}`, { defaultValue: e.action })}
+                  {t(`audit.actions.${e.action}`, { defaultValue: '' }) && (
+                    <span className="text-muted-foreground block text-xs tabular-nums">{e.action}</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {t(`audit.entityTypes.${e.entityType}`, { defaultValue: e.entityType })}
+                </TableCell>
+                <TableCell>{e.client ? t(`audit.clients.${e.client}`) : '—'}</TableCell>
                 <TableCell className="text-right">
-                  <Button size="sm" variant="ghost" aria-expanded={open === e.id} onClick={() => setOpen(open === e.id ? null : e.id)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-expanded={open === e.id}
+                    onClick={() => setOpen(open === e.id ? null : e.id)}
+                  >
                     {t('audit.showChanges')}
                   </Button>
                 </TableCell>
               </TableRow>
               {open === e.id && (
                 <TableRow>
-                  <TableCell colSpan={5} className="bg-muted/30">
+                  <TableCell colSpan={6} className="bg-muted/30">
                     <AuditDiff before={e.before} after={e.after} />
                   </TableCell>
                 </TableRow>
@@ -104,7 +151,7 @@ export function AuditPage() {
           ))}
           {!entries.isLoading && rows.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-muted-foreground text-center">
+              <TableCell colSpan={6} className="text-muted-foreground text-center">
                 {t('common.noResults')}
               </TableCell>
             </TableRow>
@@ -113,7 +160,11 @@ export function AuditPage() {
       </Table>
       {entries.hasNextPage && (
         <div className="mt-4 flex justify-center">
-          <Button variant="outline" disabled={entries.isFetchingNextPage} onClick={() => void entries.fetchNextPage()}>
+          <Button
+            variant="outline"
+            disabled={entries.isFetchingNextPage}
+            onClick={() => void entries.fetchNextPage()}
+          >
             {t('common.loadMore')}
           </Button>
         </div>

@@ -255,6 +255,8 @@ export const auditLog = pgTable(
     after: jsonb('after'),
     ip: text('ip'),
     userAgent: text('user_agent'),
+    // The caller's app (the session's client); null for jobs and platform-admin requests.
+    client: sessionClient('client'),
     occurredAt: ts('occurred_at').notNull().defaultNow(),
   },
   (t) => [

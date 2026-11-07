@@ -1,4 +1,5 @@
 import { cleanup, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '@/test/router';
 import { CountTiles } from './count-tiles';
@@ -26,6 +27,16 @@ describe('CountTiles', () => {
     expect(target('Yarımçıq: 1').search).toEqual({ ...same, bucket: 'partial' });
     expect(target('Buraxılıb: 0').search).toEqual({ ...same, bucket: 'missed' });
     expect(target('Problemli: 2').search).toEqual({ ...same, bucket: 'problems' });
+  });
+
+  it('offers the counts as buttons that report the chosen tile, when asked to', async () => {
+    const onSelect = vi.fn();
+    renderWithRouter(<CountTiles summary={reportSummary()} search={{ period: 'last_7' }} keys={DASHBOARD_TILES} onSelect={onSelect} selected="overdue" />);
+    expect(await screen.findByRole('button', { name: 'Gecikib: 1' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Planlaşdırılıb: 12' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Planlaşdırılıb: 12' }));
+    expect(onSelect).toHaveBeenCalledWith('planned');
   });
 
   it('shows the completion and the average score, explains completion, and a dash when there is none', async () => {

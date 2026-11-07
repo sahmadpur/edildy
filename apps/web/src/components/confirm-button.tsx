@@ -1,7 +1,14 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Props {
   label: string;
@@ -9,18 +16,37 @@ interface Props {
   description: string;
   onConfirm: () => Promise<void> | void;
   variant?: 'default' | 'destructive' | 'outline' | 'ghost';
-  size?: 'default' | 'sm';
+  size?: 'default' | 'sm' | 'icon';
   disabled?: boolean;
+  /** With an icon the button shows only the icon; `label` becomes its accessible name and tooltip. */
+  icon?: ReactNode;
 }
 
-export function ConfirmButton({ label, title, description, onConfirm, variant = 'outline', size, disabled }: Props) {
+export function ConfirmButton({
+  label,
+  title,
+  description,
+  onConfirm,
+  variant = 'outline',
+  size,
+  disabled,
+  icon,
+}: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   return (
     <>
-      <Button variant={variant} size={size} disabled={disabled} onClick={() => setOpen(true)}>
-        {label}
+      <Button
+        variant={variant}
+        size={size}
+        className={icon ? 'size-7' : undefined}
+        disabled={disabled}
+        aria-label={icon ? label : undefined}
+        title={icon ? label : undefined}
+        onClick={() => setOpen(true)}
+      >
+        {icon ?? label}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

@@ -35,7 +35,7 @@ export function ForgotPasswordPage() {
         <p>{t('auth.forgot.sent')}</p>
       ) : (
         <>
-          <TextField form={form} name="email" label={t('auth.forgot.email')} type="email" autoComplete="email" />
+          <TextField form={form} name="email" label={t('auth.forgot.email')} type="email" autoComplete="email" required />
           <FormError message={error} />
           <Button type="submit" disabled={form.formState.isSubmitting}>
             {t('auth.forgot.submit')}

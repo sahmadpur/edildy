@@ -6,7 +6,9 @@ import { renderWithProviders } from '@/test/render';
 import { RolesPage } from './roles-page';
 
 const mocks = vi.hoisted(() => ({
-  api: { roles: { list: vi.fn(), catalog: vi.fn(), create: vi.fn(), update: vi.fn(), setPermissions: vi.fn() } },
+  api: {
+    roles: { list: vi.fn(), catalog: vi.fn(), create: vi.fn(), update: vi.fn(), setPermissions: vi.fn() },
+  },
 }));
 vi.mock('@/lib/session', () => ({
   api: mocks.api,
@@ -15,10 +17,27 @@ vi.mock('@/lib/session', () => ({
 }));
 
 const role = (over: Partial<RoleDto> = {}): RoleDto =>
-  ({ id: 'r1', name: 'Köhnə', systemKey: null, dataScope: 'own', permissions: ['users.view'], editable: true, active: true, userCount: 0, ...over }) as RoleDto;
+  ({
+    id: 'r1',
+    name: 'Köhnə',
+    systemKey: null,
+    dataScope: 'own',
+    permissions: ['users.view'],
+    editable: true,
+    active: true,
+    userCount: 0,
+    ...over,
+  }) as RoleDto;
 
 beforeEach(() => {
-  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
   vi.resetAllMocks();
   mocks.api.roles.catalog.mockResolvedValue([{ group: 'users', keys: ['users.view', 'users.manage'] }]);
 });
@@ -36,5 +55,13 @@ describe('RolesPage saving', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
     expect(await screen.findByText(/Gözlənilməz xəta/)).toBeInTheDocument();
     await waitFor(() => expect(mocks.api.roles.list.mock.calls.length).toBeGreaterThanOrEqual(2));
+  });
+
+  it('opens with the first role selected, so its editor shows without a click', async () => {
+    mocks.api.roles.list.mockResolvedValue([role(), role({ id: 'r2', name: 'İkinci' })]);
+    renderWithProviders(<RolesPage />);
+    expect(await screen.findByLabelText('Rolun adı')).toHaveValue('Köhnə');
+    expect(screen.getByRole('button', { name: /Köhnə/ })).toHaveClass('bg-muted');
+    expect(screen.queryByText('Redaktə etmək üçün rol seçin.')).toBeNull();
   });
 });

@@ -77,7 +77,7 @@ async function signIn(page: Page, t: Tenant): Promise<void> {
   await page.getByLabel('E-poçt', { exact: true }).fill(t.email);
   await page.getByLabel('Şifrə', { exact: true }).fill(t.password);
   await page.getByRole('button', { name: 'Daxil ol' }).click();
-  await expect(page.getByRole('heading', { name: 'İdarə paneli' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Göstəricilər' })).toBeVisible();
 }
 
 interface Run {
@@ -193,7 +193,8 @@ test('a checklist that requires audit: the run waits, the auditor fails it, the 
   expect(await t.owner('GET', `/occurrences/${run.occurrenceId}`)).toMatchObject({ status: 'audit_pending' });
 
   // The audit queue: Waiting has the run.
-  await page.getByRole('link', { name: az.nav.audits }).click();
+  // exact: the queue's own rows link to the assignment 'E2E audit'.
+  await page.getByRole('link', { name: az.nav.audits, exact: true }).click();
   await expect(page.getByRole('tab', { name: az.audits.queues.waiting })).toHaveAttribute('aria-selected', 'true');
   const row = page.getByRole('row').filter({ hasText: 'E2E audit' });
   for (const text of ['Anbar №1', 'Nigar Səfərli']) await expect(row).toContainText(text);

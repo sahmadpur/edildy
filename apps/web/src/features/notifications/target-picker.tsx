@@ -4,11 +4,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FieldLabel } from '@/components/field';
 import { useDebounced } from '@/features/scheduling/labels';
 import { errorText } from '@/lib/errors';
 import { cn } from '@/lib/utils';
-import { cappedKinds, type MessageTargets, OPTION_CAPS, TARGET_KINDS, type TargetKind } from './message-form';
+import { cappedKinds, type MessageTargets, OPTION_CAPS, TARGET_KINDS, targetCount, type TargetKind } from './message-form';
 import { useMessageTargetOptions } from './queries';
 
 interface Option {
@@ -97,8 +97,10 @@ export function TargetPicker({ value, onChange }: Props) {
 
   return (
     <div className="grid gap-1.5">
-      <div className="relative grid gap-1.5">
-        <Label htmlFor={id}>{label}</Label>
+      <div className="relative grid gap-1.5" data-field-empty={targetCount(value) === 0 ? 'true' : undefined}>
+        <FieldLabel htmlFor={id} required empty={targetCount(value) === 0}>
+          {label}
+        </FieldLabel>
         <Input
           ref={inputRef}
           id={id}

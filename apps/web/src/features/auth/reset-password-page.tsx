@@ -41,7 +41,7 @@ export function ResetPasswordPage() {
         </>
       ) : (
         <>
-          <TextField form={form} name="password" label={t('auth.reset.password')} type="password" autoComplete="new-password" />
+          <TextField form={form} name="password" label={t('auth.reset.password')} type="password" autoComplete="new-password" required />
           <FormError message={error} />
           <Button type="submit" disabled={!token || form.formState.isSubmitting}>
             {t('auth.reset.submit')}

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/render';
@@ -6,12 +6,28 @@ import { SiteTree } from './site-tree';
 import type { SiteNode } from './tree';
 
 const node = (id: string, name: string, active: boolean): SiteNode => ({
-  id, path: id, name, parentId: null, typeId: 't', address: null, active, depth: 0, children: [],
+  id,
+  path: id,
+  name,
+  parentId: null,
+  typeId: 't',
+  address: null,
+  active,
+  depth: 0,
+  children: [],
 });
 
 function renderTree(nodes: SiteNode[], onToggleActive = vi.fn()) {
   renderWithProviders(
-    <SiteTree nodes={nodes} typeName={() => 'Filial'} canManage onAddChild={vi.fn()} onEdit={vi.fn()} onMove={vi.fn()} onToggleActive={onToggleActive} />,
+    <SiteTree
+      nodes={nodes}
+      typeName={() => 'Filial'}
+      canManage
+      onAddChild={vi.fn()}
+      onEdit={vi.fn()}
+      onMove={vi.fn()}
+      onToggleActive={onToggleActive}
+    />,
   );
   return onToggleActive;
 }
@@ -21,7 +37,9 @@ describe('SiteTree', () => {
     const onToggleActive = renderTree([node('a', 'Alfa', true)]);
     await userEvent.click(screen.getByRole('button', { name: 'Deaktiv et' }));
     expect(onToggleActive).not.toHaveBeenCalled();
-    expect(screen.getByText('«Alfa» deaktiv edilsin? Alt obyektlər avtomatik dəyişməyəcək.')).toBeInTheDocument();
+    expect(
+      screen.getByText('«Alfa» deaktiv edilsin? Alt obyektlər avtomatik dəyişməyəcək.'),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
     expect(onToggleActive).toHaveBeenCalledWith(expect.objectContaining({ id: 'a' }));
   });
@@ -37,5 +55,16 @@ describe('SiteTree', () => {
     const onToggleActive = renderTree([node('b', 'Bravo', false)]);
     await userEvent.click(screen.getByRole('button', { name: 'Aktiv et' }));
     expect(onToggleActive).toHaveBeenCalledWith(expect.objectContaining({ id: 'b' }));
+  });
+
+  it('renders each site as a box with icon-only actions, sub-sites nested inside the parent box', () => {
+    const child: SiteNode = { ...node('b', 'Beta', true), parentId: 'a', depth: 1 };
+    renderTree([{ ...node('a', 'Alfa', true), children: [child] }]);
+    const alfa = screen.getByRole('treeitem', { name: 'Alfa' });
+    expect(within(alfa).getByRole('treeitem', { name: 'Beta' })).toBeInTheDocument();
+    const edit = within(alfa).getAllByRole('button', { name: 'Redaktə et' })[0]!;
+    expect(edit).toHaveTextContent('');
+    expect(edit).toHaveAttribute('title', 'Redaktə et');
+    expect(within(alfa).getAllByRole('button', { name: 'Deaktiv et' })[0]).toHaveTextContent('');
   });
 });

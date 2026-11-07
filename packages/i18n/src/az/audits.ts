@@ -1,7 +1,7 @@
 import web from './audits-web.js';
 
 export default {
-  title: 'Auditlər',
+  title: 'Audit',
   audit: 'Audit',
   score: 'Audit balı',
   paused: 'İcraçıya düzəlişə qaytarılıb — yenidən təqdim gözlənilir',

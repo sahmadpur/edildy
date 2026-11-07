@@ -231,6 +231,8 @@ Reports filter on `local_date`, so the plan adds `occurrences (tenant_id, local_
 
 Shown when the viewer has `reports.view`. Others keep the current welcome page.
 
+> **Superseded on 6 Nov 2026.** The home page ("Ana səhifə", `HomeDashboard` in `features/home`) no longer shares the filter bar or the URL search with `/reports`, and the "Needs attention" panel is gone. It shows one block per period preset (Today, Yesterday, This week, This month, Last 7 days, Last 30 days) stacked on one scrolling page: the period's count tiles and, for multi-day periods, the trend chart. A tile no longer leaves the page: it unfolds that count's runs (the shared `RunsTable`, rows open the run drawer) under its block, one list at a time; only the reports page's own tiles still link to `/reports?tab=runs&bucket=…`. Polling and the manual refresh are unchanged (six summary queries via `useQueries`). The description below is kept for the history of decisions 9–13 and 17.
+
 - **Filter bar**, shared component `ReportFilters`:
   - period preset (Today by default, Yesterday, This week, This month, Last 7 days, Last 30 days, Custom);
   - site picker (tree, includes the subtree);

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { EmptyTag } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -64,7 +65,10 @@ export function SendBackDialog({ detail, onClose }: { detail: ExecutionDetail; o
           <DialogDescription>{t('corrections.web.sendBack.hint')}</DialogDescription>
         </DialogHeader>
         <fieldset className="grid gap-2">
-          <legend className="mb-1 text-sm font-medium">{t('corrections.fields.items')}</legend>
+          <legend className="mb-1 flex w-full items-center justify-between gap-2 text-sm font-medium">
+            <span className="after:text-saffron after:ml-0.5 after:content-['*']">{t('corrections.fields.items')}</span>
+            {picked.length === 0 && <EmptyTag label={t('common.emptyField')} />}
+          </legend>
           <ul className="grid gap-2">
             {visible.map((v) => {
               const id = `send-back-${v.item.id}`;
@@ -79,6 +83,8 @@ export function SendBackDialog({ detail, onClose }: { detail: ExecutionDetail; o
                   </div>
                   {on && (
                     <Textarea
+                      data-field-empty={comments[v.item.id]?.trim() ? undefined : 'true'}
+                      aria-required
                       aria-label={t('corrections.web.sendBack.comment', { item: v.item.label })}
                       maxLength={AUDIT_LIMITS.reason}
                       value={comments[v.item.id]}

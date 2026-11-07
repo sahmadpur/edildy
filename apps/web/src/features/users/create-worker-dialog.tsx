@@ -1,10 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createWorkerInputSchema, type UserWithSecret } from '@taskop/contracts';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { z } from 'zod';
 import { CheckboxList } from '@/components/checkbox-list';
+import { Field, RequiredLegend } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { TextField } from '@/components/text-field';
@@ -61,7 +62,8 @@ export function CreateWorkerDialog({ open, onOpenChange, orgCode, onCreated }: P
     },
     resetOptions: { keepDirtyValues: true },
   });
-  const kind = form.watch('credentialKind');
+  const kind = useWatch({ control: form.control, name: 'credentialKind' });
+  const roleId = useWatch({ control: form.control, name: 'roleId' });
 
   const submit = form.handleSubmit(async (values) => {
     setError(null);
@@ -98,9 +100,10 @@ export function CreateWorkerDialog({ open, onOpenChange, orgCode, onCreated }: P
           </>
         ) : (
           <form onSubmit={submit} className="grid gap-4" noValidate>
+            <RequiredLegend />
             <div className="grid gap-4 sm:grid-cols-2">
-              <TextField form={form} name="fullName" label={t('users.form.fullName')} />
-              <TextField form={form} name="username" label={t('users.form.username')} description={t('users.form.usernameHint')} />
+              <TextField form={form} name="fullName" label={t('users.form.fullName')} required />
+              <TextField form={form} name="username" label={t('users.form.username')} description={t('users.form.usernameHint')} required />
               <div className="grid gap-1.5">
                 <Label htmlFor="jobTitle">{t('users.form.jobTitle')}</Label>
                 <input id="jobTitle" className="border-input h-9 rounded-md border px-3 text-sm" {...form.register('jobTitle', { setValueAs: emptyToNull })} />
@@ -110,16 +113,15 @@ export function CreateWorkerDialog({ open, onOpenChange, orgCode, onCreated }: P
                 <input id="phone" type="tel" className="border-input h-9 rounded-md border px-3 text-sm" {...form.register('phone', { setValueAs: emptyToNull })} />
               </div>
               {canSeeRoles && (
-                <div className="grid gap-1.5">
-                  <Label htmlFor="roleId">{t('users.form.role')}</Label>
-                  <NativeSelect id="roleId" {...form.register('roleId')}>
+                <Field id="roleId" label={t('users.form.role')} required empty={!roleId}>
+                  <NativeSelect id="roleId" aria-required {...form.register('roleId')}>
                     {activeRoles.map((r) => (
                       <option key={r.id} value={r.id}>
                         {roleDisplayName(t, r)}
                       </option>
                     ))}
                   </NativeSelect>
-                </div>
+                </Field>
               )}
               <div className="grid gap-1.5">
                 <Label htmlFor="managerId">{t('users.form.manager')}</Label>
@@ -132,13 +134,12 @@ export function CreateWorkerDialog({ open, onOpenChange, orgCode, onCreated }: P
                   ))}
                 </NativeSelect>
               </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="credentialKind">{t('users.form.credentialKind')}</Label>
-                <NativeSelect id="credentialKind" {...form.register('credentialKind')}>
+              <Field id="credentialKind" label={t('users.form.credentialKind')} required empty={!kind}>
+                <NativeSelect id="credentialKind" aria-required {...form.register('credentialKind')}>
                   <option value="pin">{t('users.form.pin')}</option>
                   <option value="password">{t('users.form.password')}</option>
                 </NativeSelect>
-              </div>
+              </Field>
               <div className="grid gap-1.5">
                 <Label htmlFor="secret">{t('users.form.secret')}</Label>
                 <input

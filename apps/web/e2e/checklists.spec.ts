@@ -11,9 +11,10 @@ test('owner builds a checklist from a template, publishes v1 and v2, and v1 stay
   await page.getByLabel('E-poçt', { exact: true }).fill(`cl-${suffix}@example.az`);
   await page.getByLabel('Şifrə', { exact: true }).fill('e2e owner password');
   await page.getByRole('button', { name: 'Qeydiyyatdan keç' }).click();
-  await expect(page.getByRole('heading', { name: 'İdarə paneli' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Göstəricilər' })).toBeVisible();
 
-  // Create from a Taskop template.
+  // Create from a Taskop template: the Şablonlar tab of the Yoxlamalar page.
+  await page.getByRole('link', { name: 'Yoxlamalar' }).click();
   await page.getByRole('link', { name: 'Şablonlar' }).click();
   const card = page.locator('[data-slot="card"]', { hasText: 'Gündəlik təmizlik yoxlaması' });
   await card.getByRole('button', { name: 'İstifadə et' }).click();

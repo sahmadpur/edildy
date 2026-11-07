@@ -34,8 +34,8 @@ export function PlatformLoginPage() {
       <Logo className="text-white" />
       <form onSubmit={onSubmit} className="bg-background grid w-full max-w-md gap-4 rounded-xl p-8" noValidate>
         <h1 className="text-xl font-semibold">{t('platform.login.title')}</h1>
-        <TextField form={form} name="email" label={t('platform.login.email')} type="email" autoComplete="username" />
-        <TextField form={form} name="password" label={t('platform.login.password')} type="password" autoComplete="current-password" />
+        <TextField form={form} name="email" label={t('platform.login.email')} type="email" autoComplete="username" required />
+        <TextField form={form} name="password" label={t('platform.login.password')} type="password" autoComplete="current-password" required />
         <FormError message={error} />
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {t('platform.login.submit')}

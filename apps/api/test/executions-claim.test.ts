@@ -41,6 +41,15 @@ describe('claims (POST /executions)', () => {
     const row = await executionRow(body.id);
     expect(row).toMatchObject({ state: 'active', executor_user_id: w0.id, late: false, answers_rev: 0, progress: { answered: 0, total: 4, requiredMissing: 3 } });
     expect(row.started_received_at.toISOString()).toBe('2026-11-02T04:10:00.000Z');
+    // The usage log sees the start, tagged with the phone that sent it.
+    const audit = await ownerQuery<{ action: string; client: string; after: Record<string, unknown> }>(
+      "select action, client, after from audit_log where entity_type = 'execution' and entity_id = $1",
+      [body.id],
+    );
+    expect(audit.rows).toEqual([{ action: 'execution.started', client: 'mobile', after: { occurrenceId: w.occurrenceId, checklistVersionId: w.versionId, startedAt: '2026-11-02T04:05:00.000Z', late: false } }]);
+    // A replay of the same claim adds nothing.
+    expect((await w0.api.post('/api/v1/executions', body)).status).toBe(200);
+    expect((await ownerQuery("select 1 from audit_log where entity_type = 'execution' and entity_id = $1", [body.id])).rows).toHaveLength(1);
   });
 
   it('lets exactly one of two concurrent claims win', async () => {
@@ -54,6 +63,9 @@ describe('claims (POST /executions)', () => {
     const states = await ownerQuery<{ state: string }>('select state from executions where occurrence_id = $1 order by state', [w.occurrenceId]);
     expect(states.rows.map((r) => r.state)).toEqual(['active', 'rejected']);
     expect((await historyOf(w.occurrenceId)).filter((h) => h[1] === 'started')).toHaveLength(1);
+    // Only the winner is in the usage log.
+    const started = await ownerQuery<{ entity_id: string }>("select entity_id from audit_log where action = 'execution.started' and entity_id in ($1, $2)", [a!.body.executionId, b!.body.executionId]);
+    expect(started.rows).toEqual([{ entity_id: winner.executionId }]);
   });
 
   it('stores a later offline claim as rejected, even when its device start was earlier', async () => {
@@ -93,6 +105,7 @@ describe('claims (POST /executions)', () => {
     const again = await w.workers[0].api.post('/api/v1/executions', body);
     expect(again.body).toEqual(first.body);
     expect((await historyOf(w.occurrenceId)).filter((h) => h[1] === 'started')).toHaveLength(1);
+    expect((await ownerQuery("select 1 from audit_log where action = 'execution.started' and entity_id = $1", [body.id])).rows).toHaveLength(1);
     const stolen = await w.workers[1].api.post('/api/v1/executions', body);
     expect([stolen.status, stolen.body.error.code]).toEqual([403, 'NOT_EXECUTOR']);
   });

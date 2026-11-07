@@ -18,7 +18,10 @@ export function RolesPage() {
   const canManage = useCan('roles.manage');
   const roles = useRoles();
   const catalog = useCatalog();
-  const [selected, setSelected] = useState<RoleDto | 'new' | null>(null);
+  const [picked, setPicked] = useState<RoleDto | 'new' | null>(null);
+  // Until the user picks one, the first role is open, so the page never starts on an empty editor.
+  const selected: RoleDto | 'new' | null = picked ?? roles.data?.[0] ?? null;
+  const setSelected = setPicked;
   const held = new Set(me.permissions);
   const refresh = async () => {
     const list = await qc.fetchQuery({ queryKey: ['roles'], queryFn: api.roles.list, staleTime: 0 });
@@ -28,7 +31,10 @@ export function RolesPage() {
 
   return (
     <div>
-      <PageHeader title={t('roles.title')} actions={canManage && <Button onClick={() => setSelected('new')}>{t('roles.add')}</Button>} />
+      <PageHeader
+        title={t('roles.title')}
+        actions={canManage && <Button onClick={() => setSelected('new')}>{t('roles.add')}</Button>}
+      />
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <Card>
           <CardContent className="grid gap-1 p-2">
@@ -39,10 +45,14 @@ export function RolesPage() {
                 onClick={() => setSelected(role)}
                 className={`hover:bg-muted flex items-center justify-between rounded-md px-3 py-2 text-left ${selected !== 'new' && selected?.id === role.id ? 'bg-muted' : ''}`}
               >
-                <span className={role.active ? '' : 'text-muted-foreground line-through'}>{roleDisplayName(t, role)}</span>
+                <span className={role.active ? '' : 'text-muted-foreground line-through'}>
+                  {roleDisplayName(t, role)}
+                </span>
                 <span className="flex items-center gap-2">
                   {role.systemKey && <Badge variant="outline">{t('roles.system')}</Badge>}
-                  <span className="text-muted-foreground text-xs">{t('roles.users', { count: role.userCount })}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {t('roles.users', { count: role.userCount })}
+                  </span>
                 </span>
               </button>
             ))}
@@ -50,7 +60,13 @@ export function RolesPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>{selected === 'new' ? t('roles.createTitle') : selected ? roleDisplayName(t, selected) : t('roles.title')}</CardTitle>
+            <CardTitle>
+              {selected === 'new'
+                ? t('roles.createTitle')
+                : selected
+                  ? roleDisplayName(t, selected)
+                  : t('roles.title')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {!selected || !catalog.data ? (
@@ -68,8 +84,10 @@ export function RolesPage() {
                     setSelected(created);
                   } else {
                     try {
-                      if (!selected.systemKey && draft.name !== selected.name) await api.roles.update(selected.id, { name: draft.name });
-                      if (draft.dataScope !== selected.dataScope) await api.roles.update(selected.id, { dataScope: draft.dataScope });
+                      if (!selected.systemKey && draft.name !== selected.name)
+                        await api.roles.update(selected.id, { name: draft.name });
+                      if (draft.dataScope !== selected.dataScope)
+                        await api.roles.update(selected.id, { dataScope: draft.dataScope });
                       await api.roles.setPermissions(selected.id, draft.permissions);
                     } finally {
                       await refresh();

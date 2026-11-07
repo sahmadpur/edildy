@@ -1,5 +1,5 @@
 import { addDays, type ExecutionBrief, OCCURRENCE_STATUSES, type OccurrenceDto } from '@taskop/contracts';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
 import { PageHeader } from '@/components/page-header';
@@ -15,7 +15,7 @@ import { weekStartOf } from './roster-grid';
 import { useLocale } from '@/lib/i18n';
 import { EmptyState } from '@/components/states';
 
-export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?: string; initialTab?: OccurrenceTab }) {
+export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?: string; initialTab?: OccurrenceTab; tabs?: ReactNode }) {
   const { t } = useTranslation();
   const locale = useLocale();
   const today = useTenantToday();
@@ -39,7 +39,10 @@ export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?
 
   return (
     <div className="grid gap-4">
-      <PageHeader title={t('scheduling.schedule.title')} />
+      <div>
+        <PageHeader title={t('nav.assignments')} />
+        {props.tabs}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         {(['day', 'week'] as const).map((v) => (
           <Button key={v} variant={view === v ? 'default' : 'outline'} aria-pressed={view === v} onClick={() => setView(v)}>

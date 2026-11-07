@@ -55,6 +55,7 @@ export class TaskWorkService {
       .set({ status: 'in_progress', startedAt: at, rev: sql`${tasks.rev} + 1`, updatedAt: receivedAt })
       .where(eq(tasks.id, id));
     await this.writer.history(t, [{ from: 'accepted', to: 'in_progress', at, actorUserId: p.userId }]);
+    await this.writer.record('task.started', id, { before: { status: 'accepted' }, after: { status: 'in_progress', startedAt: at.toISOString() } });
     return this.queries.detail(p, id);
   }
 
@@ -99,6 +100,10 @@ export class TaskWorkService {
       .where(eq(tasks.id, id))
       .returning();
     await this.writer.history(t, [{ from: t.status, to: next, at, actorUserId: p.userId }]);
+    await this.writer.record('task.submitted', id, {
+      before: { status: t.status },
+      after: { status: next, submissionId: cmd.id, submittedAt: at.toISOString(), mediaCount: cmd.mediaIds.length },
+    });
     await this.writer.emit('task.submitted', row!, p.userId);
     if (next === 'completed') await this.writer.emit('task.completed', row!, p.userId);
     return this.queries.detail(p, id);
@@ -149,6 +154,7 @@ export class TaskWorkService {
       .where(eq(tasks.id, t.id))
       .returning();
     await this.writer.history(t, [{ from: 'new', to: 'accepted', at, actorUserId: p.userId }]);
+    await this.writer.record('task.accepted', t.id, { before: { status: 'new' }, after: { status: 'accepted', assigneeUserId: p.userId, acceptedAt: at.toISOString() } });
     await this.writer.emit('task.accepted', row!, p.userId);
   }
 }

@@ -128,6 +128,13 @@
   }
 }
 
+/* A required field that is still empty: its control is tinted until something is entered (components/field.tsx). */
+[data-field-empty='true'] :is(input:not([type='checkbox']):not([type='radio']), select, textarea):not(:disabled),
+:is(input, select, textarea)[data-field-empty='true']:not(:disabled) {
+  border-color: var(--tp-late-solid);
+  background-color: var(--tp-late-soft);
+}
+
 @utility status-chip-* {
   background-color: --value(--color-status-*-soft);
   color: --value(--color-status-*-text);

@@ -1,6 +1,7 @@
 import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@taskop/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Field } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { Button } from '@/components/ui/button';
@@ -52,17 +53,15 @@ export function DetailsDialog(props: {
           <DialogTitle>{props.title}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor="details-name">{t('checklists.name')}</Label>
-            <Input id="details-name" maxLength={200} value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
+          <Field id="details-name" label={t('checklists.name')} required empty={!name.trim()}>
+            <Input id="details-name" maxLength={200} value={name} aria-required onChange={(e) => setName(e.target.value)} />
+          </Field>
           <div className="grid gap-1.5">
             <Label htmlFor="details-description">{t('checklists.description')}</Label>
             <Textarea id="details-description" maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="details-category">{t('checklists.category')}</Label>
-            <NativeSelect id="details-category" value={category} onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}>
+          <Field id="details-category" label={t('checklists.category')} required={props.categoryRequired} empty={!category}>
+            <NativeSelect id="details-category" value={category} aria-required={props.categoryRequired || undefined} onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}>
               <option value="">{props.categoryRequired ? '—' : t('checklists.noCategory')}</option>
               {TEMPLATE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -70,7 +69,7 @@ export function DetailsDialog(props: {
                 </option>
               ))}
             </NativeSelect>
-          </div>
+          </Field>
           <FormError message={error} />
         </div>
         <DialogFooter>

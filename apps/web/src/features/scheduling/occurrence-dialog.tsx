@@ -3,11 +3,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { Field } from '@/components/field';
 import { FormError } from '@/components/form-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { RunAuditTab } from '@/features/audits/run-audit-tab';
@@ -102,8 +102,9 @@ export function OccurrenceDialog({ id, onClose, initialTab }: { id: string; onCl
                 </div>
                 {canManage && (o.status === 'pending' || o.status === 'overdue') && (
                   <div className="grid gap-2">
-                    <Label htmlFor="cancel-reason">{t('scheduling.schedule.cancelReason')}</Label>
-                    <Textarea id="cancel-reason" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} />
+                    <Field id="cancel-reason" label={t('scheduling.schedule.cancelReason')} required empty={!reason.trim()}>
+                      <Textarea id="cancel-reason" value={reason} maxLength={500} aria-required onChange={(e) => setReason(e.target.value)} />
+                    </Field>
                     <FormError message={error} />
                     <Button variant="destructive" disabled={!reason.trim() || busy} onClick={() => void cancel()}>
                       {t('scheduling.schedule.cancel')}

@@ -1,6 +1,5 @@
 export default {
   title: 'Reports',
-  dashboard: 'Dashboard',
   trend: 'Daily runs',
   empty: 'No data for this period.',
   inactive: 'Inactive',
@@ -60,7 +59,7 @@ export default {
     planned: 'Planned',
     all: 'All',
   },
-  tabs: { summary: 'Summary', sites: 'Sites', employees: 'Employees', runs: 'Runs', problems: 'Problems', tasks: 'Tasks' },
+  tabs: { summary: 'Overview', sites: 'Sites', employees: 'Employees', runs: 'Runs', problems: 'Problems', tasks: 'Tasks' },
   columns: {
     measure: 'Measure',
     value: 'Value',
@@ -162,16 +161,21 @@ export default {
   chart: {
     table: 'Daily runs table',
   },
+  /** The web home page: four period boxes, then the selected period's charts and runs. */
+  home: {
+    periods: 'Periods',
+    late: 'Late',
+    problems: 'With problems',
+    selectPeriod: 'Select the period {{period}}',
+    breakdown: 'Run status',
+    breakdownHint: 'Planned runs by status',
+    noRuns: 'No runs in this period',
+    runs: 'Runs',
+    selected: 'Selected period',
+  },
   live: {
     refresh: 'Refresh',
     updatedAt: 'Last updated: {{time}}',
-  },
-  attention: {
-    title: 'Needs attention',
-    overdueNow: 'Runs late right now',
-    critical: 'Critical problems',
-    noneOverdue: 'No runs are late right now.',
-    noneCritical: 'No critical problems in this period.',
   },
   table: {
     more: 'Show more',

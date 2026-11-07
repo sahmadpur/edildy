@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ConfirmButton } from '@/components/confirm-button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
@@ -30,6 +31,8 @@ export interface BuilderProps {
   onPublish?: (revision: number, changeNote: string | null) => Promise<void>;
   onReload?: () => void;
   onBack: () => void;
+  /** Checklist drafts: "Ləğv et" discards the draft (after a confirmation) and leaves the editor. */
+  onCancel?: () => Promise<void>;
 }
 
 export function Builder(props: BuilderProps) {
@@ -117,6 +120,9 @@ export function Builder(props: BuilderProps) {
                 <Redo2 className="size-4" />
               </Button>
             </>
+          )}
+          {props.onCancel && !props.readOnly && (
+            <ConfirmButton size="sm" variant="ghost" label={t('checklists.builder.cancel')} title={t('checklists.builder.cancel')} description={t('checklists.builder.confirmCancel')} onConfirm={props.onCancel} />
           )}
           <Button variant="outline" size="sm" onClick={() => setPreview((p) => !p)}>
             {preview ? t('checklists.builder.closePreview') : t('checklists.builder.previewToggle')}

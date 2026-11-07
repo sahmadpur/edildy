@@ -117,11 +117,14 @@ export interface AuditLogDbRow {
   after: unknown;
 }
 
-/** The audit-log rows of one entity, oldest first. */
+/**
+ * The audit-log rows of one entity, oldest first, without the run's own lifecycle rows (execution.started / execution.completed,
+ * which every started run has): the audit and correction tests read what their own actions wrote.
+ */
 export const auditLogOf = async (entityId: string): Promise<AuditLogDbRow[]> =>
   (
     await ownerQuery<AuditLogDbRow>(
-      'select action, entity_type, actor_user_id, actor_platform_admin_id, before, after from audit_log where entity_id = $1 order by occurred_at, id',
+      "select action, entity_type, actor_user_id, actor_platform_admin_id, before, after from audit_log where entity_id = $1 and action not in ('execution.started', 'execution.completed') order by occurred_at, id",
       [entityId],
     )
   ).rows;
