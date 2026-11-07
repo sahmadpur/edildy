@@ -149,6 +149,12 @@ import {
   type ReportTasksQuery,
   reportTasksSchema,
   siteReportRowSchema,
+  type CloseProblemReportInput,
+  type CreateProblemReportInput,
+  type ProblemReportListQuery,
+  type ProblemReportMediaRegisterInput,
+  problemReportDtoSchema,
+  reportSiteSchema,
 } from '@taskop/contracts';
 import { z } from 'zod';
 import type { ApiClient, QueryParams } from './client.js';
@@ -221,6 +227,7 @@ export function createTaskopApi(c: ApiClient) {
     ...createSchedulingApi(c),
     ...createExecutionsApi(c),
     ...createTasksApi(c),
+    ...createProblemReportsApi(c),
     ...createNotificationsApi(c),
     ...createReportsApi(c),
     ...createAuditsApi(c),
@@ -326,9 +333,9 @@ export type SchedulingApi = ReturnType<typeof createSchedulingApi>;
 export function createExecutionsApi(c: ApiClient) {
   return {
     sync: {
-      pull: (knownVersionIds: string[] = [], knownTaskIds: string[] = []) =>
+      pull: (knownVersionIds: string[] = [], knownTaskIds: string[] = [], knownProblemReportIds: string[] = []) =>
         c.request('GET', '/me/sync', {
-          query: { knownVersionIds: knownVersionIds.join(','), knownTaskIds: knownTaskIds.join(',') },
+          query: { knownVersionIds: knownVersionIds.join(','), knownTaskIds: knownTaskIds.join(','), knownProblemReportIds: knownProblemReportIds.join(',') },
           schema: syncResponseSchema,
         }),
     },
@@ -369,6 +376,8 @@ export function createTasksApi(c: ApiClient) {
       registerMedia: (id: string, body: TaskMediaRegisterInput) => c.request('POST', `/tasks/${id}/media`, { body, schema: mediaUploadTicketSchema }),
       assignees: (query: TaskAssigneeQuery = {}) => c.request('GET', '/tasks/assignees', { query: q(query), schema: taskAssigneeOptionsSchema }),
       problemMediaUrl: (taskId: string, mediaId: string) => c.request('GET', `/tasks/${taskId}/problem-media/${mediaId}/url`, { schema: mediaUrlSchema }),
+      /** The source problem report's media, for task readers (2026-11-06 design §6.2). */
+      reportMediaUrl: (taskId: string, mediaId: string) => c.request('GET', `/tasks/${taskId}/report-media/${mediaId}/url`, { schema: mediaUrlSchema }),
     },
     taskMedia: {
       confirmUploaded: (id: string) => c.request('POST', `/task-media/${id}/uploaded`, { body: {}, schema: mediaConfirmResultSchema }),
@@ -377,6 +386,25 @@ export function createTasksApi(c: ApiClient) {
   };
 }
 export type TasksApi = ReturnType<typeof createTasksApi>;
+
+/** Problem reports (2026-11-06 design §6.2): workers report, managers in scope read, close and task them. */
+export function createProblemReportsApi(c: ApiClient) {
+  return {
+    problemReports: {
+      sites: () => c.request('GET', '/problem-reports/sites', { schema: z.array(reportSiteSchema) }),
+      list: (query: ProblemReportListQuery = {}) => c.request('GET', '/problem-reports', { query: q(query), schema: pageOf(problemReportDtoSchema) }),
+      get: (id: string) => c.request('GET', `/problem-reports/${id}`, { schema: problemReportDtoSchema }),
+      create: (body: CreateProblemReportInput) => c.request('POST', '/problem-reports', { body, schema: problemReportDtoSchema }),
+      close: (id: string, body: CloseProblemReportInput) => c.request('POST', `/problem-reports/${id}/close`, { body, schema: problemReportDtoSchema }),
+      registerMedia: (id: string, body: ProblemReportMediaRegisterInput) => c.request('POST', `/problem-reports/${id}/media`, { body, schema: mediaUploadTicketSchema }),
+    },
+    problemReportMedia: {
+      confirmUploaded: (id: string) => c.request('POST', `/problem-report-media/${id}/uploaded`, { body: {}, schema: mediaConfirmResultSchema }),
+      url: (id: string) => c.request('GET', `/problem-report-media/${id}/url`, { schema: mediaUrlSchema }),
+    },
+  };
+}
+export type ProblemReportsApi = ReturnType<typeof createProblemReportsApi>;
 
 /** Sub-project 6: the inbox, push devices and the email preference (everyone), rules (notifications.manage), messages (notifications.send). */
 export function createNotificationsApi(c: ApiClient) {

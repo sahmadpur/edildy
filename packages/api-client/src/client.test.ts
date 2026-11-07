@@ -436,6 +436,58 @@ describe('task endpoints', () => {
   });
 });
 
+describe('problem report endpoints (2026-11-06 design)', () => {
+  async function authed(handler: (url: string, init: RequestInit) => Response | Promise<Response>) {
+    const store = memoryTokenStore();
+    await store.save({ accessToken: 'a1', refreshToken: null });
+    return setup(handler, 'web', store);
+  }
+  const now = '2026-11-06T08:00:00.000Z';
+  const report = {
+    id, siteId: id, siteName: 'Filial 1', severity: 'normal', text: 'Qapı sınıb', location: null, reportedAt: now, createdAt: now,
+    reporter: { id, fullName: 'Aysel' }, media: [], state: 'open', taskId: null, taskStatus: null, closedAt: null, closedBy: null, closeComment: null,
+  };
+
+  it('builds every path, method and body, and sends the known report ids on sync', async () => {
+    const calls: string[] = [];
+    const { api } = await authed((url, init) => {
+      calls.push(`${init.method} ${url}`);
+      if (url.includes('/me/sync')) return json(200, { serverTime: now, occurrences: [], checklistVersions: [], executions: [], tasks: [], removedTaskIds: [], problemReports: [report], removedProblemReportIds: [id], reportSites: [{ id, name: 'Filial 1' }], unreadNotifications: 0 });
+      if (url.endsWith('/problem-reports/sites')) return json(200, [{ id, name: 'Filial 1' }]);
+      if (url.endsWith('/uploaded')) return json(200, { mediaId: id, status: 'uploaded', uploadedAt: now });
+      if (url.endsWith('/url')) return json(200, { url: 'http://files.test/x', expiresAt: now });
+      if (url.endsWith('/media')) return json(200, { mediaId: id, status: 'pending', uploadUrl: 'http://files.test/x', headers: {}, expiresAt: now });
+      if (init.method === 'GET' && url.includes('/problem-reports?')) return json(200, { items: [report], nextCursor: null });
+      return json(init.method === 'POST' && url.endsWith('/problem-reports') ? 201 : 200, report);
+    });
+    const t = createTaskopApi(api);
+    const pulled = await t.sync.pull([id], [], [id, id]);
+    expect(pulled.removedProblemReportIds).toEqual([id]);
+    expect(pulled.reportSites).toEqual([{ id, name: 'Filial 1' }]);
+    expect(await t.problemReports.sites()).toEqual([{ id, name: 'Filial 1' }]);
+    expect((await t.problemReports.list({ state: 'closed', siteId: id })).items[0]!.state).toBe('open');
+    await t.problemReports.get(id);
+    expect((await t.problemReports.create({ id, siteId: id, severity: 'normal', text: 'Qapı sınıb', location: null, reportedAt: now })).id).toBe(id);
+    await t.problemReports.close(id, { comment: 'Düzəldildi' });
+    await t.problemReports.registerMedia(id, { id, kind: 'photo', source: 'camera', mime: 'image/jpeg', bytes: 10, capturedAt: now });
+    await t.problemReportMedia.confirmUploaded(id);
+    await t.problemReportMedia.url(id);
+    await t.tasks.reportMediaUrl(id, id);
+    expect(calls).toEqual([
+      `GET /api/v1/me/sync?knownVersionIds=${id}&knownProblemReportIds=${id}%2C${id}`,
+      'GET /api/v1/problem-reports/sites',
+      `GET /api/v1/problem-reports?state=closed&siteId=${id}`,
+      `GET /api/v1/problem-reports/${id}`,
+      'POST /api/v1/problem-reports',
+      `POST /api/v1/problem-reports/${id}/close`,
+      `POST /api/v1/problem-reports/${id}/media`,
+      `POST /api/v1/problem-report-media/${id}/uploaded`,
+      `GET /api/v1/problem-report-media/${id}/url`,
+      `GET /api/v1/tasks/${id}/report-media/${id}/url`,
+    ]);
+  });
+});
+
 describe('notification endpoints', () => {
   async function authed(handler: (url: string, init: RequestInit) => Response | Promise<Response>) {
     const store = memoryTokenStore();
