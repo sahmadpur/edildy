@@ -2,6 +2,7 @@ import {
   type CreateTaskInput,
   DEFAULT_TASK_EVIDENCE,
   type ProblemDto,
+  type ProblemReportDto,
   TASK_LIMITS,
   type TaskAssignee,
   type TaskDetail,
@@ -35,9 +36,12 @@ export const choiceOf = (t: Pick<TaskDetail, 'assignee' | 'team'>): AssigneeChoi
 
 export const toAssignee = (c: AssigneeChoice): TaskAssignee => (c.type === 'user' ? { userId: c.id } : { teamId: c.id });
 
-/** Spec §8 pre-fill from a problem: title = item label, instructions = note, high for critical, review on. */
-export function initialValues(source: { task?: TaskDetail; problem?: ProblemDto }, timeZone: string): TaskFormValues {
-  const { task, problem } = source;
+/**
+ * Spec §8 pre-fill from a problem: title = item label, instructions = note, high for critical, review on.
+ * From a problem report (2026-11-06 design §8): title and instructions = its text, high for critical, review on.
+ */
+export function initialValues(source: { task?: TaskDetail; problem?: ProblemDto; problemReport?: ProblemReportDto }, timeZone: string): TaskFormValues {
+  const { task, problem, problemReport } = source;
   if (task) {
     const due = localDueParts(task.dueAt, timeZone);
     return {
@@ -50,6 +54,19 @@ export function initialValues(source: { task?: TaskDetail; problem?: ProblemDto 
       dueTime: due.time,
       requiresReview: task.requiresReview,
       evidence: { ...task.evidence },
+    };
+  }
+  if (problemReport) {
+    return {
+      title: problemReport.text.slice(0, TASK_LIMITS.titleMax),
+      instructions: problemReport.text,
+      priority: problemReport.severity === 'critical' ? 'high' : 'normal',
+      assignee: null,
+      siteId: problemReport.siteId,
+      dueDate: '',
+      dueTime: '',
+      requiresReview: true,
+      evidence: { ...DEFAULT_TASK_EVIDENCE },
     };
   }
   return {
@@ -83,19 +100,20 @@ export const fieldErrors = (fields: Record<string, string>): TaskFormErrors => (
   ...(fields.siteId ? { siteId: fields.siteId } : {}),
 });
 
-/** POST /tasks. A problem's site is the API's to take (Part 1 decision 19), so none is sent with one. */
-export function createBody(id: string, v: TaskFormValues, timeZone: string, problem?: ProblemDto): CreateTaskInput {
+/** POST /tasks. A problem's or a report's site is the API's to take (Part 1 decision 19), so none is sent with one. */
+export function createBody(id: string, v: TaskFormValues, timeZone: string, problem?: ProblemDto, problemReport?: ProblemReportDto): CreateTaskInput {
   return {
     id,
     title: v.title.trim(),
     instructions: v.instructions.trim(),
     priority: v.priority,
-    siteId: problem ? null : v.siteId || null,
+    siteId: problem || problemReport ? null : v.siteId || null,
     dueAt: dueAtFromLocal(v.dueDate, v.dueTime, timeZone),
     evidence: v.evidence,
     requiresReview: v.requiresReview,
     assignee: toAssignee(v.assignee!),
     problemId: problem?.id ?? null,
+    problemReportId: problemReport?.id ?? null,
   };
 }
 
@@ -109,7 +127,8 @@ export function changedFields(task: TaskDetail, v: TaskFormValues, timeZone: str
   if (v.title.trim() !== before.title) body.title = v.title.trim();
   if (v.instructions.trim() !== before.instructions) body.instructions = v.instructions.trim();
   if (v.priority !== before.priority) body.priority = v.priority;
-  if (task.source === 'adhoc' && v.siteId !== before.siteId) body.siteId = v.siteId || null;
+  // A report task's site is fixed like a problem task's, although its wire source is 'adhoc'.
+  if (task.source === 'adhoc' && !task.problemReportId && v.siteId !== before.siteId) body.siteId = v.siteId || null;
   if (v.dueDate !== before.dueDate || v.dueTime !== before.dueTime) body.dueAt = dueAtFromLocal(v.dueDate, v.dueTime, timeZone);
   if (v.requiresReview !== before.requiresReview) body.requiresReview = v.requiresReview;
   if (EVIDENCE_KEYS.some((k) => v.evidence[k] !== before.evidence[k])) body.evidence = v.evidence;

@@ -105,7 +105,10 @@ export class TaskWorkService {
       after: { status: next, submissionId: cmd.id, submittedAt: at.toISOString(), mediaCount: cmd.mediaIds.length },
     });
     await this.writer.emit('task.submitted', row!, p.userId);
-    if (next === 'completed') await this.writer.emit('task.completed', row!, p.userId);
+    if (next === 'completed') {
+      await this.writer.emit('task.completed', row!, p.userId);
+      await this.writer.emitReportResolved(row!, p.userId);
+    }
     return this.queries.detail(p, id);
   }
 

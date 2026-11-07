@@ -3,7 +3,8 @@ import type { TaskAuditAction, TaskStatus } from '@taskop/contracts';
 import { DomainEvents, type TaskEventName } from '../common/domain-events';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
-import { taskStatusHistory } from '../db/schema';
+import { eq } from 'drizzle-orm';
+import { problemReports, taskStatusHistory } from '../db/schema';
 import type { TaskRow } from './task-scope';
 
 export interface HistoryStep {
@@ -35,6 +36,17 @@ export class TaskWriter {
       .tx()
       .insert(taskStatusHistory)
       .values(steps.map((s) => ({ tenantId: t.tenantId, taskId: t.id, fromStatus: s.from, toStatus: s.to, at: s.at, actorUserId: s.actorUserId, comment: s.comment ?? null })));
+  }
+
+  /**
+   * A task made from a problem report completed (2026-11-06 design §6.4): the report is now resolved, and its reporter
+   * is told. Emitted after task.completed by whoever completes a task.
+   */
+  async emitReportResolved(t: Pick<TaskRow, 'id' | 'tenantId' | 'problemReportId'>, actorUserId: string | null): Promise<void> {
+    if (!t.problemReportId) return;
+    const [r] = await this.db.tx().select({ reporterUserId: problemReports.reporterUserId }).from(problemReports).where(eq(problemReports.id, t.problemReportId));
+    if (!r) return;
+    await this.events.emit('problem_report.resolved', { tenantId: t.tenantId, reportId: t.problemReportId, reporterUserId: r.reporterUserId, actorUserId });
   }
 
   /** `t` is the task after the change, so the payload names the current assignee. */

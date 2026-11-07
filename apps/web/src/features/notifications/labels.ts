@@ -2,9 +2,10 @@ import { DELIVERY_STATUSES, type DeliveryCounts, isProblemType, type Notificatio
 import type { TFunction } from 'i18next';
 import type { OccurrenceTab } from '@/features/scheduling/occurrence-dialog';
 import type { ScheduleSearch } from '@/features/scheduling/routes';
+import type { ProblemsSearch } from '@/features/problem-reports/routes';
 import type { TasksSearch } from '@/features/tasks/routes';
 
-export type NotificationLink = { to: '/schedule'; search: ScheduleSearch } | { to: '/tasks'; search: TasksSearch };
+export type NotificationLink = { to: '/schedule'; search: ScheduleSearch } | { to: '/tasks'; search: TasksSearch } | { to: '/problems'; search: ProblemsSearch };
 
 /** SP8: the run dialog tab an audit notification is about (decision 18). Problems open the execution tab. */
 const RUN_TABS: Partial<Record<NotificationType, OccurrenceTab>> = {
@@ -20,6 +21,8 @@ const RUN_TABS: Partial<Record<NotificationType, OccurrenceTab>> = {
 export function notificationLink(n: Pick<NotificationItem, 'type' | 'targetKind' | 'targetId' | 'targetDate'>): NotificationLink | null {
   if (!n.targetId) return null;
   if (n.targetKind === 'task') return { to: '/tasks', search: { task: n.targetId } };
+  // 2026-11-06 design §6.4: a problem report opens the Problems page's reports tab, highlighting its row.
+  if (n.targetKind === 'problem_report') return { to: '/problems', search: { tab: 'reports', report: n.targetId } };
   if (n.targetKind === 'occurrence') {
     const tab: OccurrenceTab | undefined = isProblemType(n.type) ? 'execution' : RUN_TABS[n.type];
     return {

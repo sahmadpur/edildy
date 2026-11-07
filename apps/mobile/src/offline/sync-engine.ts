@@ -1,6 +1,9 @@
 import {
   type ClaimCommand,
   type ClaimRejectionReason,
+  type CreateProblemReportInput,
+  type ProblemReportMediaRegisterInput,
+  problemReportDtoSchema,
   type ClaimResult,
   type CompleteCommand,
   type CompleteResult,
@@ -22,7 +25,8 @@ import { type Db, getMeta } from './db';
 import { type ExecutionRow, iso, normIso, toExecution } from './local-model';
 import type { MediaQueue } from './media-queue';
 import { ackCommand, appendCommand, nextCommand, noteAttempt, type OutboxCommand, outboxCounts, retryFailedCommands } from './outbox';
-import { discardFailedCommand, requeueRevision, resolveExecutionRefusal, resolveTaskRefusal } from './refusals';
+import { knownProblemReportIds, mergeReport } from './problem-report-records';
+import { discardFailedCommand, requeueRevision, resolveExecutionRefusal, resolveProblemReportRefusal, resolveTaskRefusal } from './refusals';
 import { classifyError, type SyncApi } from './sync-api';
 import { knownVersionIds, mergePull } from './sync-pull';
 import { knownTaskIds, mergeTask, type TaskRemoved } from './task-records';
@@ -239,6 +243,19 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         const b = cmd.payload as SubmissionInput;
         return api.tasks.submit(cmd.entityId, { ...b, submittedAt: serverTime(b.submittedAt, offset) });
       }
+      // Problem reports (2026-11-06 design §7.4): device times move onto the server's clock like task times.
+      case 'problem_report.create': {
+        const b = cmd.payload as CreateProblemReportInput;
+        return api.problemReports.create({
+          ...b,
+          reportedAt: serverTime(b.reportedAt, offset),
+          location: b.location ? { ...b.location, capturedAt: serverTime(b.location.capturedAt, offset) } : null,
+        });
+      }
+      case 'problem_report.media': {
+        const b = cmd.payload as ProblemReportMediaRegisterInput;
+        return api.problemReports.registerMedia(cmd.entityId, { ...b, capturedAt: serverTime(b.capturedAt, offset) });
+      }
     }
   }
 
@@ -269,7 +286,8 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         return null;
       }
       case 'media':
-      case 'task.media': {
+      case 'task.media':
+      case 'problem_report.media': {
         const ticket = result as MediaUploadTicket;
         await tx.run('UPDATE media SET registered_at = ? WHERE id = ?', [iso(now), cmd.refId]);
         // The server already holds the file (uploadUrl is null then): nothing is left for the media queue.
@@ -310,6 +328,14 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         else console.warn(`[sync] The answer to ${cmd.kind} was not a task; the next pull brings the server's copy`);
         return null;
       }
+      case 'problem_report.create': {
+        // The report may have been discarded while the command was in flight.
+        if (!(await tx.first('SELECT 1 AS one FROM problem_reports WHERE id = ?', [cmd.entityId]))) return null;
+        const parsed = problemReportDtoSchema.safeParse(result);
+        if (parsed.success) await mergeReport(tx, parsed.data, now, cmd.seq);
+        else console.warn('[sync] The answer to problem_report.create was not a report; the next pull brings the server\'s copy');
+        return null;
+      }
     }
   }
 
@@ -328,7 +354,9 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
           const outcome = await ownedTransaction(db, userId, async (tx): Promise<{ files: string[]; removed: TaskRemoved | null }> =>
             cmd.entityType === 'task'
               ? resolveTaskRefusal(tx, cmd, f.code, f.messageKey, now)
-              : { files: await resolveExecutionRefusal(tx, cmd, f.code, f.messageKey, now), removed: null },
+              : cmd.entityType === 'problem_report'
+                ? { files: await resolveProblemReportRefusal(tx, cmd, f.code, f.messageKey, now), removed: null }
+                : { files: await resolveExecutionRefusal(tx, cmd, f.code, f.messageKey, now), removed: null },
           );
           if (outcome === NOT_OWNER) return 'ok';
           outcome.files.forEach(removeFile);
@@ -359,10 +387,11 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   async function pull(): Promise<Outcome> {
     const known = await knownVersionIds(db);
     const taskIds = await knownTaskIds(db);
+    const reportIds = await knownProblemReportIds(db);
     const sentAt = clock.now();
     let res: SyncResponse;
     try {
-      res = await api.sync.pull(known, taskIds);
+      res = await api.sync.pull(known, taskIds, reportIds);
     } catch (e) {
       return classifyError(e).kind === 'auth' ? 'auth' : 'retry';
     }

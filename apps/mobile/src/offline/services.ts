@@ -7,6 +7,7 @@ import { createMediaQueue, type MediaQueue, type MediaTransport } from './media-
 import type { SyncApi } from './sync-api';
 import { type ClaimRejection, createSyncEngine, type SyncEngine, type SyncTrigger } from './sync-engine';
 import type { TaskRemoved } from './task-records';
+import { createProblemReportStore, type ProblemReportStore } from './problem-report-store';
 import { createTaskStore, type TaskStore } from './task-store';
 import { type AppStatePort, type NetworkPort, startSyncTriggers, type SyncTriggers } from './sync-triggers';
 import { clearLocalData, ensureUser, type FileRemover, NOT_OWNER, ownedTransaction } from './user-scope';
@@ -38,6 +39,8 @@ export interface OfflineServices {
   readonly feed: ChangeFeed;
   readonly store: ExecutionStore;
   readonly tasks: TaskStore;
+  /** The worker's own problem reports (2026-11-06 design §7.4). */
+  readonly reports: ProblemReportStore;
   /** Client UUIDv7s (a task created online, spec §6.2). */
   readonly newId: () => string;
   /** Deletes local files (photos taken for a task that was never created). */
@@ -64,6 +67,7 @@ export async function createOfflineServices(deps: ServiceDeps, userId: string, t
   const onWrite = (kind: WriteKind) => (kind === 'claim' ? void engine.run('claim') : triggers?.requestSoon());
   const store = createExecutionStore({ db, clock, newId: deps.newId, device: deps.device, files: transport, feed, onWrite });
   const tasks = createTaskStore({ db, clock, newId: deps.newId, files: transport, feed, onWrite });
+  const reports = createProblemReportStore({ db, clock, newId: deps.newId, feed, onWrite, userId });
   const engine = createSyncEngine({
     db,
     userId,
@@ -111,6 +115,7 @@ export async function createOfflineServices(deps: ServiceDeps, userId: string, t
     feed,
     store,
     tasks,
+    reports,
     newId: deps.newId,
     files: transport,
     engine,

@@ -67,6 +67,12 @@
           "photosPermission": "Taskop sübut kimi qalereyadan foto və video seçmək üçün icazə istəyir."
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Taskop bildirdiyiniz problemin yerini qeyd etmək üçün yerinizi istifadə edir."
+        }
+      ],
       "expo-video",
       [
         "expo-notifications",

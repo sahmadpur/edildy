@@ -7,7 +7,7 @@ import {
   TASK_HISTORY_REASONS,
   TASK_STATUSES,
   type TaskListQuery,
-  type TaskSource,
+  type TaskSourceFilter,
   type TaskStatus,
   type TaskSummary,
   timeToMinutes,
@@ -56,7 +56,7 @@ export interface TaskFilters {
   status: TaskStatus | '';
   siteId: string;
   assignee: AssigneeChoice | null;
-  source: TaskSource | '';
+  source: TaskSourceFilter | '';
   /** Tenant-local dates, YYYY-MM-DD or ''. */
   dueFrom: string;
   dueTo: string;

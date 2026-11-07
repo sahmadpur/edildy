@@ -16,6 +16,7 @@ import {
   type SyncResponse,
   type SyncTask,
   type YesNoItem,
+  type ProblemReportDto,
 } from '@taskop/contracts';
 import type { Clock } from '../clock';
 import { uuidv7 } from '../ids';
@@ -143,6 +144,9 @@ export const syncResponse = (over: Partial<SyncResponse> = {}): SyncResponse => 
   executions: [],
   tasks: [],
   removedTaskIds: [],
+  problemReports: [],
+  removedProblemReportIds: [],
+  reportSites: [{ id: SITE, name: 'Bakı filialı 1' }],
   unreadNotifications: 0,
   ...over,
 });
@@ -188,6 +192,7 @@ export const syncTask = (over: Partial<SyncTask> = {}): SyncTask => ({
   requiresReview: false,
   source: 'adhoc',
   problemId: null,
+  problemReportId: null,
   dueAt: '2026-11-03T14:00:00.000Z',
   overdueAt: null,
   rev: 1,
@@ -204,6 +209,31 @@ export const syncTask = (over: Partial<SyncTask> = {}): SyncTask => ({
   media: [],
   submissions: [],
   problem: null,
+  problemReport: null,
+  ...over,
+});
+
+export const REPORT = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4eb0';
+export const REPORT2 = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4eb1';
+
+/** A problem I reported at my site, open, as the server sends it (2026-11-06 design). */
+export const syncReport = (over: Partial<ProblemReportDto> = {}): ProblemReportDto => ({
+  id: REPORT,
+  siteId: SITE,
+  siteName: 'Bakı filialı 1',
+  severity: 'normal',
+  text: 'Anbarın qapısı bağlanmır',
+  location: { lat: 40.4093, lng: 49.8671, accuracyM: 12, capturedAt: T.open },
+  reportedAt: T.open,
+  createdAt: T.open,
+  reporter: ME_REF,
+  media: [],
+  state: 'open',
+  taskId: null,
+  taskStatus: null,
+  closedAt: null,
+  closedBy: null,
+  closeComment: null,
   ...over,
 });
 

@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { type AuditResult, type AuditScore, isAuditType, type NotificationType, type ProblemSeverity, type ReworkItem } from '@taskop/contracts';
 import { and, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { assignments, audits, checklists, executionProblems, executionReworkRequests, executions, occurrences, sites, tasks, tenants, users } from '../db/schema';
-import type { AssignedPayload, ManualPayload, OccurrencePayload, ProblemPayload, RunPayload, TaskPayload } from './payloads';
+import { assignments, audits, checklists, executionProblems, executionReworkRequests, executions, occurrences, problemReports, sites, tasks, tenants, users } from '../db/schema';
+import type { AssignedPayload, ManualPayload, OccurrencePayload, ProblemPayload, ProblemReportPayload, RunPayload, TaskPayload } from './payloads';
 
 export interface OccurrenceTarget {
   kind: 'occurrence';
@@ -24,6 +24,19 @@ export interface ProblemTarget {
   severity: ProblemSeverity;
   note: string | null;
   occurrence: OccurrenceTarget;
+}
+
+/** 2026-11-06 design §6.4: a problem a worker reported outside any checklist. */
+export interface ProblemReportTarget {
+  kind: 'problem_report';
+  reportId: string;
+  siteId: string;
+  siteName: string;
+  reporterUserId: string;
+  reporterName: string;
+  severity: ProblemSeverity;
+  text: string;
+  closeComment: string | null;
 }
 
 export interface AssignmentTarget {
@@ -64,7 +77,7 @@ export interface RunTarget {
 
 export type ManualTarget = ManualPayload & { kind: 'manual'; senderUserId: string | null };
 
-export type RuleTarget = OccurrenceTarget | ProblemTarget | AssignmentTarget | TaskTarget | RunTarget;
+export type RuleTarget = OccurrenceTarget | ProblemTarget | ProblemReportTarget | AssignmentTarget | TaskTarget | RunTarget;
 export type NotificationTarget = RuleTarget | ManualTarget;
 
 /** Spec §6.1 step 4: what an event is about, read in the fan-out's tenant transaction. Null when it no longer exists. */
@@ -78,6 +91,7 @@ export class NotificationTargets {
     if (type === 'checklist.assigned') return this.assignment(payload as AssignedPayload);
     if (type.startsWith('checklist.')) return this.occurrence((payload as OccurrencePayload).occurrenceId);
     if (type.startsWith('problem.')) return this.problem(payload as ProblemPayload);
+    if (type.startsWith('problem_report.')) return this.problemReport(payload as ProblemReportPayload);
     return this.task((payload as TaskPayload).taskId);
   }
 
@@ -126,6 +140,26 @@ export class NotificationTargets {
     if (!r) return null;
     const occurrence = await this.occurrence(p.occurrenceId);
     return occurrence ? { kind: 'problem', problemId: r.id, severity: r.severity, note: r.note, occurrence } : null;
+  }
+
+  private async problemReport(p: ProblemReportPayload): Promise<ProblemReportTarget | null> {
+    const [r] = await this.db
+      .tx()
+      .select({
+        id: problemReports.id,
+        siteId: problemReports.siteId,
+        siteName: sites.name,
+        reporterUserId: problemReports.reporterUserId,
+        reporterName: users.fullName,
+        severity: problemReports.severity,
+        text: problemReports.text,
+        closeComment: problemReports.closeComment,
+      })
+      .from(problemReports)
+      .innerJoin(sites, eq(sites.id, problemReports.siteId))
+      .innerJoin(users, eq(users.id, problemReports.reporterUserId))
+      .where(eq(problemReports.id, p.reportId));
+    return r ? { kind: 'problem_report', reportId: r.id, siteId: r.siteId, siteName: r.siteName, reporterUserId: r.reporterUserId, reporterName: r.reporterName, severity: r.severity, text: r.text, closeComment: r.closeComment } : null;
   }
 
   private async assignment(p: AssignedPayload): Promise<AssignmentTarget | null> {

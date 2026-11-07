@@ -2,6 +2,7 @@ import type { ProblemDto } from '@taskop/contracts';
 import { az } from '@taskop/i18n';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '@/test/router';
 import { ProblemsPage } from './problems-page';
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   canManageTasks: { current: true },
   api: {
     problems: { list: vi.fn() },
+    problemReports: { list: vi.fn(), close: vi.fn() },
     sites: { list: vi.fn() },
     checklists: { list: vi.fn() },
     tasks: { create: vi.fn(), assignees: vi.fn() },
@@ -39,10 +41,37 @@ beforeEach(() => {
   });
   mocks.canManageTasks.current = true;
   mocks.api.tasks.assignees.mockResolvedValue(assigneeOptions());
+  mocks.api.problemReports.list.mockResolvedValue({ items: [], nextCursor: null });
 });
 afterEach(() => vi.useRealTimers());
 
 describe('ProblemsPage', () => {
+  it('has two tabs: the checklist problems, and the reported problems (opened by ?tab=reports)', async () => {
+    renderWithRouter(<ProblemsPage today="2026-11-04" />, '/problems');
+    await screen.findByText('Kondisioner xarabdır');
+    expect(screen.getByRole('tab', { name: 'Yoxlama problemləri' })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(screen.getByRole('tab', { name: 'Bildirilən problemlər' }));
+    expect(await screen.findByText('Bildirilən problem yoxdur.')).toBeInTheDocument();
+    expect(mocks.api.problemReports.list).toHaveBeenCalled();
+    cleanup();
+    // A notification link while the page is open changes only the search: the tab must follow the prop (controlled).
+    function Linked() {
+      const [tab, setTab] = useState<'reports' | 'checklist'>('reports');
+      return (
+        <>
+          <button type="button" onClick={() => setTab('checklist')}>
+            link
+          </button>
+          <ProblemsPage today="2026-11-04" tab={tab} />
+        </>
+      );
+    }
+    renderWithRouter(<Linked />, '/problems');
+    expect(await screen.findByRole('tab', { name: 'Bildirilən problemlər' })).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'link' }));
+    expect(await screen.findByRole('tab', { name: 'Yoxlama problemləri' })).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('hides problems a correction cleared unless asked, and marks them', async () => {
     mocks.api.problems.list.mockImplementation(async (q: { includeCleared?: string }) => ({
       items: q.includeCleared === 'true' ? [problem(), problem({ id: 'p2', itemId: 'i2', itemLabel: 'Qapı', clearedAt: '2026-11-03T08:00:00.000Z' })] : [problem()],

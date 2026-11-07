@@ -52,6 +52,8 @@ const detail = {
   submissions: [
     { id: ID, submittedBy: user, text: 'Hazırdır', mediaIds: [ID], submittedAt: AT, receivedAt: AT, reviewDecision: null, reviewComment: null, reviewedBy: null, reviewedAt: null },
   ],
+  problemReportId: null,
+  problemReport: null,
   problem: {
     id: ID, executionId: ID, occurrenceId: ID, localDate: '2026-11-02', siteId: ID, siteName: 'Anbar №1', checklistId: ID,
     checklistName: 'Açılış', itemId: ID, itemLabel: 'Temperatur', source: 'manual', severity: 'critical', note: 'Qapı bağlanmır',
@@ -74,7 +76,7 @@ describe('task read models', () => {
     const { history: _h, canManage: _m, canReview: _r, ...phone } = detail;
     const r = syncResponseSchema.parse({ serverTime: AT, occurrences: [], checklistVersions: [], executions: [], tasks: [phone], removedTaskIds: [ID], unreadNotifications: 0 });
     expect(r.tasks[0]!.status).toBe('awaiting_review');
-    expect(syncQuerySchema.parse({ knownTaskIds: `${ID},${ID}` })).toEqual({ knownVersionIds: [], knownTaskIds: [ID, ID] });
+    expect(syncQuerySchema.parse({ knownTaskIds: `${ID},${ID}` })).toEqual({ knownVersionIds: [], knownTaskIds: [ID, ID], knownProblemReportIds: [] });
     expect(syncQuerySchema.safeParse({ knownTaskIds: Array(100).fill(ID).join(',') }).success).toBe(true);
     // Over the cap the ids are truncated, not refused (R20); knownVersionIds keeps failing the request.
     const over = syncQuerySchema.parse({ knownTaskIds: Array(101).fill(ID).join(',') });

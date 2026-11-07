@@ -1,4 +1,4 @@
-import { ApiError, type ExecutionsApi, type TasksApi } from '@taskop/api-client';
+import { ApiError, type ExecutionsApi, type ProblemReportsApi, type TasksApi } from '@taskop/api-client';
 
 /** The slice of the API client the offline layer uses. `api` from '@/lib/session' satisfies it. */
 export interface SyncApi {
@@ -7,6 +7,8 @@ export interface SyncApi {
   media: Pick<ExecutionsApi['media'], 'confirmUploaded'>;
   tasks: Pick<TasksApi['tasks'], 'accept' | 'start' | 'submit' | 'registerMedia'>;
   taskMedia: Pick<TasksApi['taskMedia'], 'confirmUploaded'>;
+  problemReports: Pick<ProblemReportsApi['problemReports'], 'create' | 'registerMedia'>;
+  problemReportMedia: Pick<ProblemReportsApi['problemReportMedia'], 'confirmUploaded'>;
 }
 
 export type Failure = { kind: 'retry' } | { kind: 'auth' } | { kind: 'permanent'; code: string; messageKey: string };

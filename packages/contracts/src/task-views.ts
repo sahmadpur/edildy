@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { idSchema, isoDateTimeSchema } from './common.js';
 import { problemDtoSchema } from './execution-views.js';
+import { problemReportDtoSchema } from './problem-reports.js';
 import { mediaKindSchema, mediaSourceSchema, mediaStatusSchema } from './executions.js';
 import { userRefSchema } from './occurrences.js';
 import { taskEvidenceSchema, taskMediaRoleSchema, taskPrioritySchema, taskReviewDecisionSchema, taskSourceSchema, taskStatusSchema } from './tasks.js';
@@ -24,6 +25,8 @@ export const taskSummarySchema = z.object({
   requiresReview: z.boolean(),
   source: taskSourceSchema,
   problemId: idSchema.nullable(),
+  /** Defaulted so a phone can read an older API's rows (2026-11-06 design). */
+  problemReportId: idSchema.nullable().default(null),
   dueAt: isoDateTimeSchema.nullable(),
   /** Set by the sweep once due; completion does not clear it (spec §3). */
   overdueAt: isoDateTimeSchema.nullable(),
@@ -95,6 +98,8 @@ export const taskDetailSchema = taskSummarySchema.extend({
   submissions: z.array(taskSubmissionDtoSchema),
   /** The source problem of a task created from one. */
   problem: problemDtoSchema.nullable(),
+  /** The source problem report of a task created from one. */
+  problemReport: problemReportDtoSchema.nullable().default(null),
   history: z.array(taskHistoryEntrySchema),
   /** The caller may edit, reassign and cancel (spec §6.1). */
   canManage: z.boolean(),

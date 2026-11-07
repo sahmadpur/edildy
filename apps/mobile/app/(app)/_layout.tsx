@@ -31,6 +31,7 @@ export default function AppLayout() {
       >
         <Tabs.Screen name="index" options={{ title: t('mobile.tabs.home'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} /> }} />
         <Tabs.Screen name="tasks" options={{ title: t('mobile.tabs.tasks'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'clipboard' : 'clipboard-outline'} color={color} size={size} /> }} />
+        <Tabs.Screen name="problems/index" options={{ title: t('mobile.tabs.problems'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'warning' : 'warning-outline'} color={color} size={size} /> }} />
         <Tabs.Screen
           name="team/index"
           options={{
@@ -46,6 +47,8 @@ export default function AppLayout() {
         <Tabs.Screen name="execution/[id]/finish" options={HIDDEN} />
         <Tabs.Screen name="task/[id]" options={HIDDEN} />
         <Tabs.Screen name="task/new" options={HIDDEN} />
+        <Tabs.Screen name="problems/new" options={HIDDEN} />
+        <Tabs.Screen name="problems/[id]" options={HIDDEN} />
         <Tabs.Screen name="review/[id]" options={HIDDEN} />
         <Tabs.Screen name="notifications" options={HIDDEN} />
         <Tabs.Screen name="team/run/[id]" options={HIDDEN} />

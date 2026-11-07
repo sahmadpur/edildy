@@ -14,6 +14,10 @@ export const NOTIFICATION_TYPES = [
   'checklist.missed',
   'problem.recorded',
   'problem.critical',
+  'problem_report.created',
+  'problem_report.critical',
+  'problem_report.closed',
+  'problem_report.resolved',
   'task.assigned',
   'task.submitted',
   'task.rejected',
@@ -52,6 +56,8 @@ export interface NotificationTypeMeta {
 
 const checklistMeta = (hasLeadTime = false): NotificationTypeMeta => ({ group: 'checklist', audiences: ['assignees'], hasLeadTime, hasResultFilter: false });
 const problemMeta: NotificationTypeMeta = { group: 'problem', audiences: [], hasLeadTime: false, hasResultFilter: false };
+/** Problem reports (2026-11-06 design §6.4): "creator" is the reporter. */
+const reportMeta = (audiences: readonly DirectAudience[]): NotificationTypeMeta => ({ group: 'problem', audiences, hasLeadTime: false, hasResultFilter: false });
 const taskMeta: NotificationTypeMeta = { group: 'task', audiences: ['assignees', 'creator'], hasLeadTime: false, hasResultFilter: false };
 /** SP8: for run.correction_required and audit.finished "assignees" is the executor; for run.resubmitted "creator" is who sent it back. */
 const auditMeta = (audiences: readonly DirectAudience[], hasResultFilter = false): NotificationTypeMeta => ({ group: 'audit', audiences, hasLeadTime: false, hasResultFilter });
@@ -64,6 +70,10 @@ export const NOTIFICATION_TYPE_META: Record<RuleType, NotificationTypeMeta> = {
   'checklist.missed': checklistMeta(),
   'problem.recorded': problemMeta,
   'problem.critical': problemMeta,
+  'problem_report.created': reportMeta([]),
+  'problem_report.critical': reportMeta([]),
+  'problem_report.closed': reportMeta(['creator']),
+  'problem_report.resolved': reportMeta(['creator']),
   'task.assigned': taskMeta,
   'task.submitted': taskMeta,
   'task.rejected': taskMeta,
@@ -117,6 +127,10 @@ export const DEFAULT_RULES: Record<RuleType, DefaultRule> = {
   'checklist.missed': rule(false, false, false, false, ['manager', 'admin']),
   'problem.recorded': rule(true, false, false, false, ['manager']),
   'problem.critical': rule(true, true, false, false, ['manager', 'admin']),
+  'problem_report.created': rule(true, false, false, false, ['manager']),
+  'problem_report.critical': rule(true, true, false, false, ['manager', 'admin']),
+  'problem_report.closed': rule(true, false, false, true),
+  'problem_report.resolved': rule(true, false, false, true),
   'task.assigned': rule(true, false, true, false),
   'task.submitted': rule(true, false, false, true),
   'task.rejected': rule(true, false, true, false),
@@ -130,6 +144,9 @@ export const DEFAULT_RULES: Record<RuleType, DefaultRule> = {
 
 /** The web opens a problem notification on the execution tab. */
 export const isProblemType = (t: NotificationType): boolean => t.startsWith('problem.');
+
+/** Problem report notifications open the report (phone: /problems/[id]; web: the Problems page's reports tab). */
+export const isProblemReportType = (t: NotificationType): boolean => t.startsWith('problem_report.');
 
 /** The SP8 types: their inbox items open the run, like checklist types. */
 export const isAuditType = (t: NotificationType): boolean => t === 'run.correction_required' || t === 'run.resubmitted' || t === 'audit.finished';
@@ -167,7 +184,7 @@ export const updateNotificationRuleSchema = z.object({
 export type UpdateNotificationRuleInput = z.input<typeof updateNotificationRuleSchema>;
 export type UpdateNotificationRuleOutput = z.output<typeof updateNotificationRuleSchema>;
 
-export const NOTIFICATION_TARGET_KINDS = ['occurrence', 'task', 'none'] as const;
+export const NOTIFICATION_TARGET_KINDS = ['occurrence', 'task', 'problem_report', 'none'] as const;
 export const notificationTargetKindSchema = z.enum(NOTIFICATION_TARGET_KINDS);
 export type NotificationTargetKind = z.infer<typeof notificationTargetKindSchema>;
 

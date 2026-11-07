@@ -1,4 +1,4 @@
-import { TASK_SOURCES, TASK_STATUSES, type TaskSource, type TaskStatus } from '@taskop/contracts';
+import { TASK_SOURCE_FILTERS, TASK_STATUSES, type TaskSourceFilter, type TaskStatus } from '@taskop/contracts';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -79,9 +79,9 @@ export function TasksPage() {
             <AssigneePicker label={t('tasks.page.assignee')} value={filters.assignee} onChange={(c) => set('assignee', c)} clearable />
           </div>
         )}
-        <NativeSelect aria-label={t('tasks.page.source')} value={filters.source} onChange={(e) => set('source', e.target.value as TaskSource | '')} className="w-44">
+        <NativeSelect aria-label={t('tasks.page.source')} value={filters.source} onChange={(e) => set('source', e.target.value as TaskSourceFilter | '')} className="w-44">
           <option value="">{t('tasks.page.allSources')}</option>
-          {TASK_SOURCES.map((s) => (
+          {TASK_SOURCE_FILTERS.map((s) => (
             <option key={s} value={s}>
               {t(`tasks.sources.${s}`)}
             </option>
@@ -127,7 +127,7 @@ export function TasksPage() {
                 <TableCell>{assigneeText(t, s)}</TableCell>
                 <TableCell>{s.site?.name ?? '—'}</TableCell>
                 <TableCell>{s.dueAt ? formatDateTime(s.dueAt) : '—'}</TableCell>
-                <TableCell>{t(`tasks.sources.${s.source}`)}</TableCell>
+                <TableCell>{t(`tasks.sources.${s.problemReportId ? 'report' : s.source}`)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

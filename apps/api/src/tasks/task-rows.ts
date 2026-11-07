@@ -41,8 +41,10 @@ export const toTaskSummary = (r: TaskSummaryRow): TaskSummary => ({
   assigneeInactive: r.t.assigneeUserId !== null && r.assigneeStatus !== 'active',
   createdBy: { id: r.t.createdByUserId, fullName: r.creatorName },
   requiresReview: r.t.requiresReview,
+  // 'adhoc' for a task from a problem report too: the wire enum is stable for older phones (contracts TASK_SOURCES).
   source: r.t.problemId ? 'problem' : 'adhoc',
   problemId: r.t.problemId,
+  problemReportId: r.t.problemReportId,
   dueAt: iso(r.t.dueAt),
   overdueAt: iso(r.t.overdueAt),
   rev: r.t.rev,
@@ -101,5 +103,6 @@ export const auditView = (t: TaskRow) => ({
   requiresReview: t.requiresReview,
   evidence: t.evidence,
   problemId: t.problemId,
+  problemReportId: t.problemReportId,
   status: t.status,
 });

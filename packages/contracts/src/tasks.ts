@@ -33,9 +33,19 @@ export const TASK_REVIEW_DECISIONS = ['approved', 'rejected'] as const;
 export const taskReviewDecisionSchema = z.enum(TASK_REVIEW_DECISIONS);
 export type TaskReviewDecision = z.infer<typeof taskReviewDecisionSchema>;
 
+/**
+ * The wire value: `problem` (from a checklist problem) or `adhoc`. A task from a problem report (2026-11-06 design) is
+ * `adhoc` here with `problemReportId` set: the enum stays as older phones know it, so their /me/sync keeps parsing;
+ * clients derive the "Bildirilən problem" badge from `problemReportId`.
+ */
 export const TASK_SOURCES = ['problem', 'adhoc'] as const;
 export const taskSourceSchema = z.enum(TASK_SOURCES);
 export type TaskSource = z.infer<typeof taskSourceSchema>;
+
+/** The list filter, where `report` means tasks made from problem reports. */
+export const TASK_SOURCE_FILTERS = ['problem', 'report', 'adhoc'] as const;
+export const taskSourceFilterSchema = z.enum(TASK_SOURCE_FILTERS);
+export type TaskSourceFilter = z.infer<typeof taskSourceFilterSchema>;
 
 /** A problem's resolution, derived from its task (spec §5). The strings are also i18n keys under tasks.resolutions. */
 export const PROBLEM_RESOLUTIONS = ['none', 'open', 'resolved', 'cancelled'] as const;
@@ -68,6 +78,8 @@ export const TASK_ISSUE_CODES = [
   'tasks.issues.tooManyMedia',
   'tasks.issues.photoRequired',
   'tasks.issues.videoRequired',
+  'tasks.issues.twoSources',
+  'tasks.issues.titleRequired',
 ] as const;
 export type TaskIssueCode = (typeof TASK_ISSUE_CODES)[number];
 
@@ -112,21 +124,29 @@ export type TaskAssignee = z.infer<typeof taskAssigneeSchema>;
 const titleSchema = z.string().trim().min(1).max(TASK_LIMITS.titleMax);
 const instructionsSchema = z.string().trim().max(TASK_LIMITS.instructionsMax);
 
-export const createTaskSchema = z.object({
-  /** Client-generated UUIDv7: repeating the request returns the stored task. */
-  id: idSchema,
-  title: titleSchema,
-  instructions: instructionsSchema.default(''),
-  priority: taskPrioritySchema.default('normal'),
-  /** Ignored when problemId is given: the problem's site is used. */
-  siteId: idSchema.nullable().default(null),
-  dueAt: isoDateTimeSchema.nullable().default(null),
-  evidence: taskEvidenceSchema.default(() => ({ ...DEFAULT_TASK_EVIDENCE })),
-  /** Defaults to true for a task created from a problem, false otherwise (spec §1). */
-  requiresReview: z.boolean().optional(),
-  assignee: taskAssigneeSchema,
-  problemId: idSchema.nullable().default(null),
-});
+export const createTaskSchema = z
+  .object({
+    /** Client-generated UUIDv7: repeating the request returns the stored task. */
+    id: idSchema,
+    /** Required unless the task comes from a problem report, whose text then supplies it. */
+    title: titleSchema.optional(),
+    instructions: instructionsSchema.default(''),
+    priority: taskPrioritySchema.default('normal'),
+    /** Ignored when problemId or problemReportId is given: the source's site is used. */
+    siteId: idSchema.nullable().default(null),
+    dueAt: isoDateTimeSchema.nullable().default(null),
+    evidence: taskEvidenceSchema.default(() => ({ ...DEFAULT_TASK_EVIDENCE })),
+    /** Defaults to true for a task created from a problem or a report, false otherwise (spec §1). */
+    requiresReview: z.boolean().optional(),
+    assignee: taskAssigneeSchema,
+    problemId: idSchema.nullable().default(null),
+    /** A problem report (2026-11-06 design §6.2); never together with problemId. */
+    problemReportId: idSchema.nullable().default(null),
+  })
+  .superRefine((v, ctx) => {
+    if (v.problemId && v.problemReportId) ctx.addIssue({ code: 'custom', path: ['problemReportId'], message: 'tasks.issues.twoSources' });
+    if (!v.title && !v.problemReportId) ctx.addIssue({ code: 'custom', path: ['title'], message: 'tasks.issues.titleRequired' });
+  });
 export type CreateTaskInput = z.input<typeof createTaskSchema>;
 
 /** Changing `assignee` reassigns: back to `new` (spec §3). */
@@ -193,7 +213,7 @@ export const taskListQuerySchema = cursorQuerySchema.extend({
   assigneeUserId: idSchema.optional(),
   teamId: idSchema.optional(),
   createdBy: idSchema.optional(),
-  source: taskSourceSchema.optional(),
+  source: taskSourceFilterSchema.optional(),
   /** Tasks in awaiting_review that the caller may review. */
   awaitingMyReview: z.stringbool().optional(),
   dueFrom: isoDateTimeSchema.optional(),

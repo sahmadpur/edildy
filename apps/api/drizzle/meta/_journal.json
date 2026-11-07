@@ -134,6 +134,20 @@
       "when": 1793974499847,
       "tag": "0018_audit_log_client",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794035901995,
+      "tag": "0019_problem_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794035902995,
+      "tag": "0020_problem_reports_security",
+      "breakpoints": true
     }
   ]
 }

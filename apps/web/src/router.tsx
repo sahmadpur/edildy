@@ -11,6 +11,7 @@ import {
 } from '@/features/checklists/routes';
 import { AuditPage } from '@/features/audit/audit-page';
 import { ProblemsPage } from '@/features/executions/problems-page';
+import { problemsSearch } from '@/features/problem-reports/routes';
 import { AuditRoute } from '@/features/audits/audit-screen';
 import { AuditsPage } from '@/features/audits/audits-page';
 import { auditsSearch } from '@/features/audits/labels';
@@ -113,7 +114,11 @@ const teamsRoute = createRoute({ getParentRoute: () => appLayout, path: '/teams'
 const rosterRoute = createRoute({ getParentRoute: () => appLayout, path: '/roster', component: RosterRoute });
 const shiftsRoute = createRoute({ getParentRoute: () => appLayout, path: '/shifts', component: ShiftsRoute });
 const scheduleRoute = createRoute({ getParentRoute: () => appLayout, path: '/schedule', component: ScheduleRoute, validateSearch: scheduleSearch });
-const problemsRoute = createRoute({ getParentRoute: () => appLayout, path: '/problems', component: () => <ProblemsPage /> });
+const problemsRoute = createRoute({ getParentRoute: () => appLayout, path: '/problems', component: ProblemsRoute, validateSearch: problemsSearch });
+function ProblemsRoute() {
+  const search = problemsRoute.useSearch();
+  return <ProblemsPage tab={search.tab} report={search.report} />;
+}
 const tasksRoute = createRoute({ getParentRoute: () => appLayout, path: '/tasks', component: TasksPage, validateSearch: tasksSearch });
 const auditsRoute = createRoute({ getParentRoute: () => appLayout, path: '/audits', component: AuditsPage, validateSearch: auditsSearch });
 const auditScreenRoute = createRoute({ getParentRoute: () => appLayout, path: '/audits/$auditId', component: AuditRoute });

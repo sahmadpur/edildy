@@ -28,6 +28,7 @@ export function useOpenNotification() {
       const link = notificationLink(n);
       if (link?.to === '/schedule') await navigate({ to: '/schedule', search: link.search });
       else if (link?.to === '/tasks') await navigate({ to: '/tasks', search: link.search });
+      else if (link?.to === '/problems') await navigate({ to: '/problems', search: link.search });
       else if (inboxFallback) await navigate({ to: '/notifications' });
     },
     [qc, navigate],

@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/render';
+import { problemReportDto } from '@/features/problem-reports/fixtures';
 import { assigneeOptions, problemDto, taskDetail, taskMediaDto } from './fixtures';
 import { TaskDialog } from './task-dialog';
 
@@ -54,6 +55,21 @@ async function paste(label: string, text: string) {
   await userEvent.paste(text);
 }
 
+describe('TaskDialog from a problem report (2026-11-06 design §8)', () => {
+  it('pre-fills from the report, fixes its site, and sends problemReportId without a site', async () => {
+    renderDialog({ problemReport: problemReportDto() });
+    expect(screen.getByRole('dialog', { name: 'Bildirilən problemdən tapşırıq' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Başlıq')).toHaveValue('Anbarın qapısı bağlanmır, kilid sınıb');
+    expect(screen.getByLabelText('Prioritet')).toHaveValue('high');
+    expect(screen.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' })).toBeChecked();
+    expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    await pickAssignee('Nigar Səfərli');
+    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await waitFor(() => expect(mocks.api.tasks.create).toHaveBeenCalled());
+    expect(mocks.api.tasks.create.mock.calls[0]![0]).toMatchObject({ problemReportId: 'r1', problemId: null, siteId: null, requiresReview: true });
+  });
+});
+
 async function fillMinimum() {
   await paste('Başlıq', 'Qapı');
   await pickAssignee('Nigar Səfərli');
@@ -92,6 +108,7 @@ describe('TaskDialog', () => {
       requiresReview: true,
       assignee: { userId: 'w1' },
       problemId: null,
+      problemReportId: null,
     });
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: mocks.api.tasks.create.mock.calls[0]![0].id }));
   }, 20_000);

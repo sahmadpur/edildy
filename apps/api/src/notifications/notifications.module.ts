@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_CONFIG, type AppConfig } from '../config/config';
 import { SchedulingModule } from '../scheduling/scheduling.module';
+import { ProblemReportsModule } from '../problem-reports/problem-reports.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { InboxService } from './inbox.service';
 import { MeNotificationsController } from './me-notifications.controller';
@@ -21,7 +22,7 @@ import { ScopeSubjects } from './scope-subjects';
 
 /** Sub-project 6: notifications. Reaches scheduling and tasks only through DomainEvents, their scope services and the DB. */
 @Module({
-  imports: [SchedulingModule, TasksModule],
+  imports: [SchedulingModule, TasksModule, ProblemReportsModule],
   controllers: [NotificationRulesController, MeNotificationsController, MessagesController],
   providers: [
     NotificationEvents,

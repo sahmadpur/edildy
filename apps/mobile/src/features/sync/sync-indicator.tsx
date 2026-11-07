@@ -12,8 +12,11 @@ const TONE: Record<Indicator, { dot: string; bg: string; fg: string }> = {
   failed: { dot: colors.danger, bg: colors.dangerSoft, fg: colors.dangerText },
 };
 
-/** Spec §7.3: green (all synced), amber "N gözləyir" (offline or pending), red (failed). Opens the queue. */
-export function SyncIndicator() {
+/**
+ * Spec §7.3: green (all synced), amber "N gözləyir" (offline or pending), red (failed). Opens the queue.
+ * `compact` (the Home header) shows only the dot; the words stay in the accessibility label.
+ */
+export function SyncIndicator({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useTranslation();
   const status = useSyncStatus();
   const state = indicatorOf(status);
@@ -25,6 +28,13 @@ export function SyncIndicator() {
         : state === 'offline'
           ? t('mobile.sync.offline')
           : t('mobile.sync.failed', { count: status.failed });
+  if (compact) {
+    return (
+      <Pressable accessibilityRole="button" accessibilityLabel={label} testID={`sync-indicator-${state}`} onPress={() => router.push('/sync')} style={styles.compact}>
+        <View style={[styles.bigDot, { backgroundColor: TONE[state].dot }]} />
+      </Pressable>
+    );
+  }
   return (
     <Pressable
       accessibilityRole="button"
@@ -42,5 +52,7 @@ export function SyncIndicator() {
 const styles = StyleSheet.create({
   pill: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, borderRadius: 22 },
   dot: { width: 10, height: 10, borderRadius: 5 },
+  compact: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  bigDot: { width: 12, height: 12, borderRadius: 6 },
   text: { fontFamily: font, fontSize: type.sm, fontWeight: '600' },
 });

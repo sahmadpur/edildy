@@ -4,6 +4,7 @@ import { clampOffset, type Clock, readOffset, serverTime } from './clock';
 import type { Db } from './db';
 import { mediaRegisterBody } from './execution-store';
 import { iso, type LocalMedia, type MediaRow, toMedia } from './local-model';
+import { problemReportMediaBody } from './problem-report-store';
 import { dropMedium } from './refusals';
 import { classifyError, type SyncApi } from './sync-api';
 import { taskMediaBody } from './task-records';
@@ -144,7 +145,9 @@ export function createMediaQueue(deps: {
       ticket =
         m.ownerType === 'task'
           ? await api.tasks.registerMedia(m.ownerId, { ...taskMediaBody(m, m.role ?? 'response'), capturedAt: serverTime(m.capturedAt, offset) })
-          : await api.executions.registerMedia(m.ownerId, { ...mediaRegisterBody(m), deviceTime: iso(clock.now()), clientOffsetMs: offset });
+          : m.ownerType === 'problem_report'
+            ? await api.problemReports.registerMedia(m.ownerId, { ...problemReportMediaBody(m), capturedAt: serverTime(m.capturedAt, offset) })
+            : await api.executions.registerMedia(m.ownerId, { ...mediaRegisterBody(m), deviceTime: iso(clock.now()), clientOffsetMs: offset });
     } catch (e) {
       const f = classifyError(e);
       return f.kind === 'permanent' ? refuse(m.id, f.messageKey) : f.kind;
@@ -161,7 +164,7 @@ export function createMediaQueue(deps: {
     }
     if (status < 200 || status >= 300) return countAttempt(m.id);
     try {
-      await (m.ownerType === 'task' ? api.taskMedia.confirmUploaded(m.id) : api.media.confirmUploaded(m.id));
+      await (m.ownerType === 'task' ? api.taskMedia.confirmUploaded(m.id) : m.ownerType === 'problem_report' ? api.problemReportMedia.confirmUploaded(m.id) : api.media.confirmUploaded(m.id));
     } catch (e) {
       const f = classifyError(e);
       if (f.kind === 'permanent' && f.code === 'MEDIA_NOT_FOUND_IN_STORAGE') return countAttempt(m.id);
@@ -189,7 +192,7 @@ export function createMediaQueue(deps: {
            LEFT JOIN executions e ON m.owner_type = 'execution' AND e.id = m.owner_id
            WHERE m.uploaded_at IS NOT NULL AND m.file_deleted_at IS NULL
              AND ((m.owner_type = 'execution' AND e.finished_synced_at IS NOT NULL AND e.finished_synced_at <= ?)
-               OR (m.owner_type = 'task' AND m.uploaded_at <= ?))`,
+               OR (m.owner_type IN ('task', 'problem_report') AND m.uploaded_at <= ?))`,
           [cutoff, cutoff],
         );
         // The file goes first: a row left unmarked (the transaction failed) is only removed again next time.
@@ -210,10 +213,11 @@ export function createMediaQueue(deps: {
     },
     async list() {
       const found = await db.all<{ id: string; kind: LocalMedia['kind']; title: string | null; failed_code: string | null; attempts: number }>(
-        `SELECT m.id, m.kind, coalesce(oc.checklist_name, json_extract(t.data, '$.title')) AS title, m.failed_code, m.attempts FROM media m
+        `SELECT m.id, m.kind, coalesce(oc.checklist_name, json_extract(t.data, '$.title'), substr(json_extract(pr.data, '$.text'), 1, 40)) AS title, m.failed_code, m.attempts FROM media m
          LEFT JOIN executions e ON m.owner_type = 'execution' AND e.id = m.owner_id
          LEFT JOIN occurrences oc ON oc.id = e.occurrence_id
          LEFT JOIN tasks t ON m.owner_type = 'task' AND t.id = m.owner_id
+         LEFT JOIN problem_reports pr ON m.owner_type = 'problem_report' AND pr.id = m.owner_id
          WHERE m.registered_at IS NOT NULL AND m.uploaded_at IS NULL AND m.file_deleted_at IS NULL
          ORDER BY CASE m.kind WHEN 'photo' THEN 0 ELSE 1 END, m.captured_at, m.id`,
       );

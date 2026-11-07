@@ -3,6 +3,7 @@ import type { Db } from './db';
 import { withoutMedia } from './execution-store';
 import { type ExecutionRow, iso, toExecution } from './local-model';
 import { ackCommand, appendCommand, failCommand, type OutboxCommand } from './outbox';
+import { dropReportMedium, forgetReport } from './problem-report-records';
 import { dropTaskMedium, forgetTask, revertTask, type TaskRemoved } from './task-records';
 
 /**
@@ -45,7 +46,7 @@ export async function requeueRevision(tx: Db, executionId: string, rev: number, 
  * finished one only forgets the medium locally (the server keeps its copy, nothing could change it).
  */
 export async function dropMedium(tx: Db, mediaId: string, now: number, errorKey: string | null): Promise<string | null> {
-  await tx.run(`DELETE FROM outbox WHERE kind IN ('media', 'task.media') AND ref_id = ?`, [mediaId]);
+  await tx.run(`DELETE FROM outbox WHERE kind IN ('media', 'task.media', 'problem_report.media') AND ref_id = ?`, [mediaId]);
   // The worker may have removed the medium meanwhile: removeMedia already dropped it from the answers.
   const medium = await tx.first<{ local_uri: string; owner_type: string; owner_id: string; item_id: string | null; file_deleted_at: string | null }>(
     'SELECT local_uri, owner_type, owner_id, item_id, file_deleted_at FROM media WHERE id = ?',
@@ -56,6 +57,10 @@ export async function dropMedium(tx: Db, mediaId: string, now: number, errorKey:
   const file = medium.file_deleted_at === null ? medium.local_uri : null;
   if (medium.owner_type === 'task') {
     await dropTaskMedium(tx, medium.owner_id, mediaId, now, errorKey);
+    return file;
+  }
+  if (medium.owner_type === 'problem_report') {
+    await dropReportMedium(tx, medium.owner_id, mediaId, now, errorKey);
     return file;
   }
   if (medium.owner_type !== 'execution') return file;
@@ -231,7 +236,31 @@ export async function discardFailedCommand(tx: Db, seq: number, now: number): Pr
       // The failed command goes with every queued status change of its task; the draft stays, unsubmitted.
       await revertTask(tx, row.entity_id, note, now);
       return [];
+    case 'problem_report.create':
+      // "Sil" on a report the server will never take: it leaves the phone with its media (2026-11-06 design §7.4).
+      return forgetReport(tx, row.entity_id);
+    case 'problem_report.media': {
+      await tx.run('DELETE FROM outbox WHERE seq = ?', [seq]);
+      const file = row.ref_id ? await dropMedium(tx, row.ref_id, now, note) : null;
+      return file ? [file] : [];
+    }
   }
+}
+
+/**
+ * The permanent-refusal path for a problem report command (2026-11-06 design §7.4). A refused create is parked with its
+ * reason on the report ("Göndərilmədi: …") and holds its media back; the worker retries or discards it. A refused medium
+ * goes like a task's; a clock problem on one is parked for the next retry.
+ */
+export async function resolveProblemReportRefusal(tx: Db, cmd: OutboxCommand, code: string, messageKey: string, now: number): Promise<string[]> {
+  if (cmd.kind === 'problem_report.media' && code !== 'CLOCK_INVALID') {
+    await ackCommand(tx, cmd.seq);
+    const uri = cmd.refId ? await dropMedium(tx, cmd.refId, now, messageKey) : null;
+    return uri ? [uri] : [];
+  }
+  await failCommand(tx, cmd.seq, code, messageKey);
+  if (cmd.kind === 'problem_report.create') await tx.run('UPDATE problem_reports SET sync_note = ?, updated_at = ? WHERE id = ?', [messageKey, iso(now), cmd.entityId]);
+  return [];
 }
 
 /** SP4's permanent-refusal path for an execution command: resolved when no retry can fix it, otherwise parked as failed. Returns files to delete. */

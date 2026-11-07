@@ -50,7 +50,8 @@ describe('notification catalogue', () => {
   });
 
   it('groups each type by its prefix, the SP8 types under audit, and keeps the lead time on due_soon and the result filter on audit.finished', () => {
-    for (const t of RULE_TYPES.filter((x) => !isAuditType(x))) expect(t.startsWith(`${NOTIFICATION_TYPE_META[t].group}.`)).toBe(true);
+    // problem_report.* sits under the problem group (2026-11-06 design §6.4).
+    for (const t of RULE_TYPES.filter((x) => !isAuditType(x))) expect(t.replace('problem_report.', 'problem.').startsWith(`${NOTIFICATION_TYPE_META[t].group}.`)).toBe(true);
     expect(RULE_TYPES.filter((t) => NOTIFICATION_TYPE_META[t].group === 'audit')).toEqual(['run.correction_required', 'run.resubmitted', 'audit.finished']);
     expect(RULE_TYPES.filter((t) => NOTIFICATION_TYPE_META[t].hasLeadTime)).toEqual(['checklist.due_soon']);
     expect(RULE_TYPES.filter((t) => NOTIFICATION_TYPE_META[t].hasResultFilter)).toEqual(['audit.finished']);

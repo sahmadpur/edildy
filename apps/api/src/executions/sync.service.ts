@@ -7,6 +7,7 @@ import { DbService } from '../db/db.service';
 import { checklistVersions, executions, occurrenceAssignees, occurrences } from '../db/schema';
 import { InboxService } from '../notifications/inbox.service';
 import { OccurrenceQueries } from '../scheduling/occurrence-queries';
+import { ProblemReportSync } from '../problem-reports/problem-report-sync';
 import { OccurrenceWriter } from '../scheduling/occurrence-writer';
 import { TaskSync } from '../tasks/task-sync';
 import type { SyncQueryDto } from './dto';
@@ -29,6 +30,7 @@ export class SyncService {
     private readonly taskSync: TaskSync,
     private readonly inbox: InboxService,
     private readonly reworkRequests: ReworkRequests,
+    private readonly reportSync: ProblemReportSync,
   ) {}
 
   async pull(p: Principal, q: SyncQueryDto): Promise<SyncResponse> {
@@ -127,6 +129,7 @@ export class SyncService {
         rework: rework.get(x.id) ?? null,
       })),
       ...(await this.taskSync.forUser(p, q.knownTaskIds, now)),
+      ...(await this.reportSync.forUser(p, q.knownProblemReportIds, now)),
       unreadNotifications: await this.inbox.unreadCount(p.userId),
     };
   }

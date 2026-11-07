@@ -5,6 +5,7 @@ import { QueryClient } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '@/test/router';
+import { problemReportDto } from '@/features/problem-reports/fixtures';
 import { assigneeOptions, AT, MANAGER, problemDto, submissionDto, taskDetail, taskMediaDto } from './fixtures';
 import { taskKeys } from './queries';
 import { TaskDrawer } from './task-drawer';
@@ -115,6 +116,15 @@ describe('TaskDrawer', () => {
     await userEvent.click(within(problem).getByRole('link', { name: 'İcraya bax' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
     expect(router.state.location.search).toEqual({ date: '2026-11-02', occurrence: 'o1', tab: 'execution' });
+  });
+
+  it('shows the source problem report of a report task (2026-11-06 design §8)', async () => {
+    mocks.api.tasks.get.mockResolvedValue(taskDetail({ problemReportId: 'r1', problemReport: problemReportDto() }));
+    renderWithRouter(<TaskDrawer id="t1" onClose={vi.fn()} />, '/tasks?task=t1');
+    const drawer = await screen.findByRole('dialog', { name: 'Soyuducunun qapısını təmir edin' });
+    const report = within(drawer).getByRole('region', { name: 'Bildirilən problem' });
+    for (const text of ['Kritik', 'Anbarın qapısı bağlanmır, kilid sınıb', 'Anbar №1', 'Fərid Hacıyev']) expect(report).toHaveTextContent(text);
+    expect(within(report).getByRole('link', { name: 'Xəritə' })).toHaveAttribute('href', 'https://www.google.com/maps?q=40.4093,49.8671');
   });
 
   it('approves, and rejects only with a comment', async () => {

@@ -14,6 +14,9 @@ export function StatusChip({ text, tone = 'neutral', testID }: { text: string; t
 /** The deep header block at the top of the main screens: a line above (the date, a subtitle), the title, and tools. */
 export const headerBlock = StyleSheet.create({
   block: { backgroundColor: colors.deep, borderRadius: radius.sheet, padding: spacing.md, paddingTop: spacing.lg, gap: spacing.xs },
+  /** The Home header: shorter, with the date row and a one-line greeting. */
+  compactBlock: { backgroundColor: colors.deep, borderRadius: radius.sheet, padding: spacing.md, gap: spacing.xs },
+  greeting: { fontFamily: font, color: colors.onDeep, fontSize: type.lg, fontWeight: '600' },
   eyebrow: { fontFamily: font, color: colors.onDeepMuted, fontSize: type.sm },
   title: { fontFamily: font, color: colors.onDeep, fontSize: type.display, fontWeight: '600', letterSpacing: -0.5 },
   subtitle: { fontFamily: font, color: colors.onDeepMuted, fontSize: type.base },

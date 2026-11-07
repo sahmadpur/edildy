@@ -126,4 +126,11 @@ export class TasksController {
   problemMediaUrl(@CurrentPrincipal() p: Principal, @Param('id', ParseIdPipe) id: string, @Param('mediaId', ParseIdPipe) mediaId: string): Promise<MediaUrl> {
     return this.media.problemMediaUrl(p, id, mediaId);
   }
+
+  /** The source problem report's photos and videos, for anyone who can read the task (2026-11-06 design §6.2). */
+  @Get(':id/report-media/:mediaId/url')
+  @ApiOkResponse({ type: MediaUrlResponse })
+  reportMediaUrl(@CurrentPrincipal() p: Principal, @Param('id', ParseIdPipe) id: string, @Param('mediaId', ParseIdPipe) mediaId: string): Promise<MediaUrl> {
+    return this.media.reportMediaUrl(p, id, mediaId);
+  }
 }

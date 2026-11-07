@@ -30,6 +30,16 @@ describe('LanguagePicker', () => {
     expect(screen.getByRole('radio', { name: 'Русский' })).toBeTruthy();
   });
 
+  it('flags variant shows only the flag but still names the language for assistive tech', async () => {
+    await render(<LanguagePicker variant="flags" />);
+    const az = screen.getByRole('radio', { name: 'Azərbaycan dili' });
+    expect(az.props.accessibilityState.selected).toBe(true);
+    expect(screen.getByText('🇦🇿')).toBeTruthy();
+    expect(screen.queryByText('English')).toBeNull();
+    fireEvent.press(screen.getByRole('radio', { name: 'English' }));
+    await waitFor(() => expect(i18n.language).toBe('en'));
+  });
+
   it('switches the UI language and stores the choice on the phone', async () => {
     await render(<LanguagePicker />);
     fireEvent.press(screen.getByRole('radio', { name: 'English' }));

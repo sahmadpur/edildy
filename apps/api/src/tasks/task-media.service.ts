@@ -5,7 +5,7 @@ import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
 import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';
-import { executionMedia, executionProblems, taskMedia, tasks } from '../db/schema';
+import { executionMedia, executionProblems, problemReportMedia, taskMedia, tasks } from '../db/schema';
 import { assertStored, signView, storageCap, tooLarge } from '../executions/media.service';
 import { S3Service } from '../storage/s3.service';
 import type { TaskMediaRegisterDto } from './dto';
@@ -106,6 +106,20 @@ export class TaskMediaService {
       .innerJoin(executionProblems, eq(executionProblems.id, tasks.problemId))
       .innerJoin(executionMedia, eq(executionMedia.executionId, executionProblems.executionId))
       .where(and(eq(tasks.id, taskId), eq(executionMedia.id, mediaId), sql`${executionMedia.id} = any(${executionProblems.mediaIds})`));
+    if (!m) throw new AppError('NOT_FOUND');
+    if (m.status !== 'uploaded') throw new AppError('MEDIA_NOT_FOUND_IN_STORAGE');
+    return signView(this.s3, m.storageKey);
+  }
+
+  /** GET /tasks/:id/report-media/:mediaId/url (2026-11-06 design §6.2): the source report's media, for task readers. */
+  async reportMediaUrl(p: Principal, taskId: string, mediaId: string): Promise<MediaUrl> {
+    if (!(await this.scope.access(p, taskId)).canRead) throw new AppError('NOT_FOUND');
+    const [m] = await this.db
+      .tx()
+      .select({ storageKey: problemReportMedia.storageKey, status: problemReportMedia.status })
+      .from(tasks)
+      .innerJoin(problemReportMedia, eq(problemReportMedia.reportId, tasks.problemReportId))
+      .where(and(eq(tasks.id, taskId), eq(problemReportMedia.id, mediaId)));
     if (!m) throw new AppError('NOT_FOUND');
     if (m.status !== 'uploaded') throw new AppError('MEDIA_NOT_FOUND_IN_STORAGE');
     return signView(this.s3, m.storageKey);

@@ -11,8 +11,9 @@ describe('local database version 4', () => {
        VALUES ('e', ?, ?, 'completed', 'accepted', ?, '{"a":{"number":1}}', 2, ?)`,
       [OCC, VERSION, T.open, T.open],
     );
-    expect(await migrate(db)).toBe(4);
-    expect(MIGRATIONS).toHaveLength(4);
+    // Later versions migrate on top: the v4 columns must survive them.
+    expect(await migrate(db)).toBe(MIGRATIONS.length);
+    expect(MIGRATIONS.length).toBeGreaterThanOrEqual(4);
     expect(await db.first('SELECT id, state, rev, answers, rework_round, rework FROM executions')).toEqual({
       id: 'e', state: 'completed', rev: 2, answers: '{"a":{"number":1}}', rework_round: 0, rework: null,
     });

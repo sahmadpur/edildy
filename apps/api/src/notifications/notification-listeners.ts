@@ -43,6 +43,18 @@ export class NotificationListeners implements OnModuleInit {
         this.notifications.record(e.severity === 'critical' ? 'problem.critical' : 'problem.recorded', { problemId: e.problemId, occurrenceId: e.occurrenceId }, e.actorUserId, `problem:${e.problemId}`),
       ),
     );
+    // 2026-11-06 design §6.4. Dedupe keys make a replayed create or close a no-op.
+    this.events.on('problem_report.created', (e) =>
+      this.guarded('problem_report.created', () =>
+        this.notifications.record(e.severity === 'critical' ? 'problem_report.critical' : 'problem_report.created', { reportId: e.reportId }, e.actorUserId, `problem_report:${e.reportId}`),
+      ),
+    );
+    this.events.on('problem_report.closed', (e) =>
+      this.guarded('problem_report.closed', () => this.notifications.record('problem_report.closed', { reportId: e.reportId }, e.actorUserId, `problem_report.closed:${e.reportId}`)),
+    );
+    this.events.on('problem_report.resolved', (e) =>
+      this.guarded('problem_report.resolved', () => this.notifications.record('problem_report.resolved', { reportId: e.reportId }, e.actorUserId)),
+    );
     for (const name of TASK_TYPES) this.events.on(name, (e) => this.guarded(name, () => this.notifications.record(name, { taskId: e.taskId }, e.actorUserId)));
     this.events.on('task.submitted', (e) => this.guarded('task.submitted', (sp) => this.onSubmitted(sp, e)));
     // SP8 spec §7.1. Dedupe keys make a replayed command's second event a no-op.

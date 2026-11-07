@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PlatformTenantInterceptor } from '../checklists/platform-tenant.interceptor';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PlatformModule } from '../platform/platform.module';
+import { ProblemReportsModule } from '../problem-reports/problem-reports.module';
 import { SchedulingModule } from '../scheduling/scheduling.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { AuditLookup } from './audit-lookup';
@@ -27,7 +28,7 @@ import { SyncService } from './sync.service';
 
 /** Sub-projects 4 and 8: execution, evidence, problems and corrections. Depends on scheduling, never the other way round. */
 @Module({
-  imports: [PlatformModule, SchedulingModule, TasksModule, NotificationsModule],
+  imports: [PlatformModule, SchedulingModule, TasksModule, NotificationsModule, ProblemReportsModule],
   controllers: [ExecutionsController, MediaController, ProblemsController, SyncController, TenantCorrectionsController, PlatformTenantCorrectionsController],
   providers: [
     ExecutionsService,
