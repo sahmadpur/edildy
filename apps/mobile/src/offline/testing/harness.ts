@@ -5,6 +5,7 @@ import { createExecutionStore, type ExecutionStore, type WriteKind } from '../ex
 import { createMediaQueue, type MediaQueue } from '../media-queue';
 import { type ClaimRejection, createSyncEngine, type SyncEngine } from '../sync-engine';
 import type { TaskRemoved } from '../task-records';
+import { createProblemReportStore, type ProblemReportStore } from '../problem-report-store';
 import { createTaskStore, type TaskStore } from '../task-store';
 import { applyPull } from '../sync-pull';
 import { ensureUser } from '../user-scope';
@@ -20,6 +21,7 @@ export interface Harness {
   transport: FakeTransport;
   store: ExecutionStore;
   tasks: TaskStore;
+  reports: ProblemReportStore;
   api: FakeApi;
   mediaQueue: MediaQueue;
   engine: SyncEngine;
@@ -43,6 +45,7 @@ export async function createHarness(o: { at?: string; db?: Db } = {}): Promise<H
   const writes: WriteKind[] = [];
   const store = createExecutionStore({ db, clock, newId: testIds(clock), device: DEVICE, files: transport, feed, onWrite: (kind) => writes.push(kind) });
   const tasks = createTaskStore({ db, clock, newId: testIds(clock), files: transport, feed, onWrite: (kind) => writes.push(kind) });
+  const reports = createProblemReportStore({ db, clock, newId: testIds(clock), feed, onWrite: (kind) => writes.push(kind), userId: ME });
   const api = createFakeApi();
   const net = { online: true };
   const mediaQueue = createMediaQueue({ db, userId: ME, api: api.api, clock, transport, feed, isOnline: () => net.online });
@@ -61,5 +64,5 @@ export async function createHarness(o: { at?: string; db?: Db } = {}): Promise<H
     feed.emit();
   };
   await seed();
-  return { db, clock, feed, transport, store, tasks, api, mediaQueue, engine, net, rejections, removedTasks, writes, c, seed };
+  return { db, clock, feed, transport, store, tasks, reports, api, mediaQueue, engine, net, rejections, removedTasks, writes, c, seed };
 }

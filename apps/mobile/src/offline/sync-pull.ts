@@ -1,6 +1,7 @@
 import type { MyExecution, SyncResponse } from '@taskop/contracts';
 import { type Db, setMeta } from './db';
 import { type ExecutionRow, iso, normIso } from './local-model';
+import { mergeReport, removeReports } from './problem-report-records';
 import { mergeTask, removeTasks } from './task-records';
 
 const PRUNE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
@@ -75,7 +76,11 @@ export async function mergePull(tx: Db, res: SyncResponse, offsetMs: number, now
   for (const x of res.executions) await mergeExecution(tx, x, now);
   await settleLeftRework(tx, res.executions.map((x) => x.id), now);
   for (const task of res.tasks) await mergeTask(tx, task, now);
-  return removeTasks(tx, res.removedTaskIds);
+  // The sites the user may report a problem at (2026-11-06 design §7.4): replaced on every pull.
+  await tx.run('DELETE FROM report_sites');
+  for (const s of res.reportSites) await tx.run('INSERT INTO report_sites (id, name) VALUES (?, ?)', [s.id, s.name]);
+  for (const r of res.problemReports) await mergeReport(tx, r, now);
+  return [...(await removeTasks(tx, res.removedTaskIds)), ...(await removeReports(tx, res.removedProblemReportIds))];
 }
 
 async function mergeExecution(tx: Db, x: MyExecution, now: number): Promise<void> {

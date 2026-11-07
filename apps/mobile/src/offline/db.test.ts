@@ -8,7 +8,7 @@ describe('local database', () => {
   it('creates every table on a fresh database and records the schema version', async () => {
     const db = createDb(nodeDriver());
     expect(await migrate(db)).toBe(MIGRATIONS.length);
-    expect(await tables(db)).toEqual(['checklist_versions', 'executions', 'media', 'media_refusals', 'meta', 'occurrences', 'outbox', 'task_drafts', 'tasks']);
+    expect(await tables(db)).toEqual(['checklist_versions', 'executions', 'media', 'media_refusals', 'meta', 'occurrences', 'outbox', 'problem_reports', 'report_sites', 'task_drafts', 'tasks']);
     expect(await db.first('PRAGMA user_version')).toEqual({ user_version: MIGRATIONS.length });
   });
 

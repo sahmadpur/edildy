@@ -650,7 +650,7 @@ describe('claims and the pull', () => {
       executions: [myExecution({ occurrenceId: OCC2, answersRev: 1, answers: { [h.c.temp.id]: { number: 5 } } })],
     });
     await h.engine.run('start');
-    expect(h.api.calls[0]).toEqual({ method: 'pull', id: null, body: { knownVersionIds: [VERSION], knownTaskIds: [] } });
+    expect(h.api.calls[0]).toEqual({ method: 'pull', id: null, body: { knownVersionIds: [VERSION], knownTaskIds: [], knownProblemReportIds: [] } });
     const views = await h.store.occurrences();
     expect(views.find((o) => o.id === OCC)!.claim).toEqual(claim);
     expect(views.find((o) => o.id === OCC2)!.execution).toMatchObject({ claim: 'accepted', rev: 1, answers: { [h.c.temp.id]: { number: 5 } } });

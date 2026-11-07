@@ -1,10 +1,13 @@
 import type { Db } from './db';
 
-export const COMMAND_KINDS = ['claim', 'media', 'answers', 'complete', 'resubmit', 'task.accept', 'task.start', 'task.media', 'task.submit'] as const;
+export const COMMAND_KINDS = [
+  'claim', 'media', 'answers', 'complete', 'resubmit', 'task.accept', 'task.start', 'task.media', 'task.submit',
+  'problem_report.create', 'problem_report.media',
+] as const;
 export type CommandKind = (typeof COMMAND_KINDS)[number];
 
-/** What a command or a medium belongs to (local database version 3). */
-export const ENTITY_TYPES = ['execution', 'task'] as const;
+/** What a command or a medium belongs to (local database version 3; problem reports since version 5). */
+export const ENTITY_TYPES = ['execution', 'task', 'problem_report'] as const;
 export type EntityType = (typeof ENTITY_TYPES)[number];
 
 interface OutboxRow {
@@ -25,7 +28,7 @@ interface OutboxRow {
 export interface OutboxCommand {
   seq: number;
   entityType: EntityType;
-  /** The execution or task the command belongs to. */
+  /** The execution, task or problem report the command belongs to. */
   entityId: string;
   kind: CommandKind;
   /** The medium ID of a media registration; the submission ID of a task submission. */
@@ -85,6 +88,7 @@ export async function appendCommand(tx: Db, c: AppendInput): Promise<void> {
  * The oldest pending command, so each execution's and each task's commands go in order (a medium's registration before
  * the submission that lists it). A failed claim, task accept or task start holds back the later commands of its entity:
  * without it they could only fail. So does a parked task photo registration for the task's submission, which would name an unknown medium.
+ * A problem report's media registrations wait behind a failed create of the report (the server does not know it yet).
  * A resubmit (SP8) goes only once no answers revision or media registration of its run is left, whatever their order:
  * an answers revision can be re-queued after it (a refused medium), and the server checks the answers it holds.
  */
@@ -94,6 +98,7 @@ export async function nextCommand(db: Db): Promise<OutboxCommand | null> {
      WHERE o.status = 'pending'
        AND NOT EXISTS (SELECT 1 FROM outbox c WHERE c.entity_type = o.entity_type AND c.entity_id = o.entity_id AND c.kind IN ('claim', 'task.accept', 'task.start') AND c.status = 'failed' AND c.seq < o.seq)
        AND NOT (o.kind = 'task.submit' AND EXISTS (SELECT 1 FROM outbox c WHERE c.entity_type = 'task' AND c.entity_id = o.entity_id AND c.kind = 'task.media' AND c.status = 'failed' AND c.seq < o.seq))
+       AND NOT (o.kind = 'problem_report.media' AND EXISTS (SELECT 1 FROM outbox c WHERE c.entity_type = 'problem_report' AND c.entity_id = o.entity_id AND c.kind = 'problem_report.create' AND c.seq < o.seq AND c.status = 'failed'))
        AND NOT (o.kind = 'resubmit' AND EXISTS (SELECT 1 FROM outbox c WHERE c.entity_type = 'execution' AND c.entity_id = o.entity_id AND c.kind IN ('answers', 'media')))
      ORDER BY o.seq LIMIT 1`,
   );
@@ -121,16 +126,17 @@ export async function outboxCounts(db: Db): Promise<OutboxCounts> {
 }
 
 export interface QueueEntry extends OutboxCommand {
-  /** The checklist or task the command belongs to, for the sync queue; null once it is gone from the phone. */
+  /** The checklist, task or problem report (its first 40 characters) the command belongs to, for the sync queue; null once it is gone from the phone. */
   title: string | null;
 }
 
 export async function listCommands(db: Db): Promise<QueueEntry[]> {
   const rows = await db.all<OutboxRow & { title: string | null }>(
-    `SELECT o.*, coalesce(oc.checklist_name, json_extract(t.data, '$.title')) AS title FROM outbox o
+    `SELECT o.*, coalesce(oc.checklist_name, json_extract(t.data, '$.title'), substr(json_extract(pr.data, '$.text'), 1, 40)) AS title FROM outbox o
      LEFT JOIN executions e ON o.entity_type = 'execution' AND e.id = o.entity_id
      LEFT JOIN occurrences oc ON oc.id = e.occurrence_id
      LEFT JOIN tasks t ON o.entity_type = 'task' AND t.id = o.entity_id
+     LEFT JOIN problem_reports pr ON o.entity_type = 'problem_report' AND pr.id = o.entity_id
      ORDER BY o.seq`,
   );
   return rows.map((r) => ({ ...toCommand(r), title: r.title }));

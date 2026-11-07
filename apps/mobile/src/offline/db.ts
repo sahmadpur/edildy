@@ -246,6 +246,85 @@ export const MIGRATIONS: readonly string[] = [
   ALTER TABLE executions ADD COLUMN rework_round INTEGER NOT NULL DEFAULT 0;
   ALTER TABLE executions ADD COLUMN rework TEXT;
   `,
+  // v5 (problem reports, 2026-11-06 design §7.4): commands and media may belong to a problem report. The CHECK lists are
+  // widened the way v3 did it (rebuild, keep every row, keep the outbox numbering); two new tables hold the reporter's own
+  // reports as the server sends them and the sites they may report at.
+  `
+  CREATE TABLE outbox_v5 (
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_type TEXT NOT NULL CHECK (entity_type IN ('execution', 'task', 'problem_report')),
+    entity_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    ref_id TEXT,
+    rev INTEGER,
+    payload TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    error_code TEXT,
+    error_key TEXT,
+    created_at TEXT NOT NULL
+  );
+  INSERT INTO outbox_v5 (seq, entity_type, entity_id, kind, ref_id, rev, payload, status, attempts, error_code, error_key, created_at)
+    SELECT seq, entity_type, entity_id, kind, ref_id, rev, payload, status, attempts, error_code, error_key, created_at FROM outbox ORDER BY seq;
+  DELETE FROM sqlite_sequence WHERE name = 'outbox_v5';
+  INSERT INTO sqlite_sequence (name, seq) SELECT 'outbox_v5', seq FROM sqlite_sequence WHERE name = 'outbox';
+  DROP TABLE outbox;
+  ALTER TABLE outbox_v5 RENAME TO outbox;
+  CREATE INDEX outbox_entity ON outbox (entity_type, entity_id, kind);
+  CREATE TABLE media_v5 (
+    id TEXT PRIMARY KEY,
+    owner_type TEXT NOT NULL CHECK (owner_type IN ('execution', 'task', 'problem_report')),
+    owner_id TEXT NOT NULL,
+    item_id TEXT,
+    role TEXT,
+    kind TEXT NOT NULL,
+    source TEXT NOT NULL,
+    mime TEXT NOT NULL,
+    bytes INTEGER NOT NULL,
+    width INTEGER,
+    height INTEGER,
+    duration_ms INTEGER,
+    captured_at TEXT NOT NULL,
+    local_uri TEXT NOT NULL,
+    registered_at TEXT,
+    uploaded_at TEXT,
+    failed_code TEXT,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    file_deleted_at TEXT
+  );
+  INSERT INTO media_v5 (id, owner_type, owner_id, item_id, role, kind, source, mime, bytes, width, height, duration_ms, captured_at, local_uri,
+      registered_at, uploaded_at, failed_code, attempts, file_deleted_at)
+    SELECT id, owner_type, owner_id, item_id, role, kind, source, mime, bytes, width, height, duration_ms, captured_at, local_uri,
+      registered_at, uploaded_at, failed_code, attempts, file_deleted_at FROM media;
+  DROP TABLE media;
+  ALTER TABLE media_v5 RENAME TO media;
+  CREATE INDEX media_owner ON media (owner_type, owner_id);
+  CREATE TABLE media_refusals_v5 (
+    media_id TEXT PRIMARY KEY,
+    owner_type TEXT NOT NULL CHECK (owner_type IN ('execution', 'task', 'problem_report')),
+    owner_id TEXT NOT NULL,
+    item_id TEXT,
+    error_key TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  INSERT INTO media_refusals_v5 (media_id, owner_type, owner_id, item_id, error_key, created_at)
+    SELECT media_id, owner_type, owner_id, item_id, error_key, created_at FROM media_refusals;
+  DROP TABLE media_refusals;
+  ALTER TABLE media_refusals_v5 RENAME TO media_refusals;
+  CREATE INDEX media_refusals_owner ON media_refusals (owner_type, owner_id, item_id);
+  CREATE TABLE problem_reports (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    local_status TEXT NOT NULL CHECK (local_status IN ('draft', 'sent')),
+    sync_note TEXT,
+    received_at TEXT,
+    updated_at TEXT NOT NULL
+  );
+  CREATE TABLE report_sites (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL
+  );
+  `,
 ];
 
 export async function migrate(db: Db, migrations: readonly string[] = MIGRATIONS): Promise<number> {

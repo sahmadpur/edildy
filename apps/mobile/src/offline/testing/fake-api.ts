@@ -5,6 +5,9 @@ import type {
   CompleteResult,
   MediaConfirmResult,
   MediaUploadTicket,
+  ProblemReportDto,
+  ProblemReportMediaRegisterInput,
+  CreateProblemReportInput,
   RegisterMediaCommand,
   ResubmitCommand,
   ResubmitResult,
@@ -18,10 +21,10 @@ import type {
   TaskMediaRegisterInput,
 } from '@taskop/contracts';
 import type { SyncApi } from '../sync-api';
-import { ME, ME_REF, syncResponse, syncTask, VERSION } from './fixtures';
+import { ME, ME_REF, syncReport, syncResponse, syncTask, VERSION } from './fixtures';
 
 export interface ApiHandlers {
-  pull(knownVersionIds: string[], knownTaskIds: string[]): Promise<SyncResponse>;
+  pull(knownVersionIds: string[], knownTaskIds: string[], knownProblemReportIds?: string[]): Promise<SyncResponse>;
   claim(body: ClaimCommand): Promise<ClaimResult>;
   saveAnswers(id: string, body: SaveAnswersCommand): Promise<SaveAnswersResult>;
   complete(id: string, body: CompleteCommand): Promise<CompleteResult>;
@@ -33,6 +36,9 @@ export interface ApiHandlers {
   taskSubmit(taskId: string, body: SubmissionInput): Promise<TaskDetail>;
   taskRegisterMedia(taskId: string, body: TaskMediaRegisterInput): Promise<MediaUploadTicket>;
   taskConfirmUploaded(id: string): Promise<MediaConfirmResult>;
+  reportCreate(body: CreateProblemReportInput): Promise<ProblemReportDto>;
+  reportRegisterMedia(reportId: string, body: ProblemReportMediaRegisterInput): Promise<MediaUploadTicket>;
+  reportConfirmUploaded(id: string): Promise<MediaConfirmResult>;
 }
 export type ApiMethod = keyof ApiHandlers;
 export interface ApiCall {
@@ -115,10 +121,18 @@ export function createFakeApi(): FakeApi {
         })),
       taskRegisterMedia: async (_taskId, b) => ticketFor(b),
       taskConfirmUploaded: async (id) => ({ mediaId: id, status: 'uploaded', uploadedAt: UPLOADED_AT }),
+      // The server's copy of a created report: the body as sent, with the media it knows (none yet) and the site's name.
+      reportCreate: async (b) => {
+        const dto = syncReport({ id: b.id, siteId: b.siteId, severity: b.severity, text: b.text, location: b.location ?? null, reportedAt: b.reportedAt, createdAt: b.reportedAt, media: [] });
+        fake.sync = { ...fake.sync, problemReports: [...fake.sync.problemReports.filter((r) => r.id !== b.id), dto] };
+        return dto;
+      },
+      reportRegisterMedia: async (_reportId, b) => ticketFor(b),
+      reportConfirmUploaded: async (id) => ({ mediaId: id, status: 'uploaded', uploadedAt: UPLOADED_AT }),
     },
     api: {
       sync: {
-        pull: async (known = [], taskIds = []) => call('pull', null, { knownVersionIds: known, knownTaskIds: taskIds })(known, taskIds),
+        pull: async (known = [], taskIds = [], reportIds = []) => call('pull', null, { knownVersionIds: known, knownTaskIds: taskIds, knownProblemReportIds: reportIds })(known, taskIds, reportIds),
       },
       executions: {
         claim: async (b) => call('claim', null, b)(b),
@@ -138,6 +152,13 @@ export function createFakeApi(): FakeApi {
       },
       taskMedia: {
         confirmUploaded: async (id) => call('taskConfirmUploaded', id, null)(id),
+      },
+      problemReports: {
+        create: async (b) => call('reportCreate', b.id, b)(b),
+        registerMedia: async (id, b) => call('reportRegisterMedia', id, b)(id, b),
+      },
+      problemReportMedia: {
+        confirmUploaded: async (id) => call('reportConfirmUploaded', id, null)(id),
       },
     },
     on: (method, handler) => {

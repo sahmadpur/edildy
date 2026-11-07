@@ -1,4 +1,5 @@
 import type { Answers, ClaimRef, ClaimRejectionReason, ExecutionState, MediaKind, MediaSource, OccurrenceStatus, ReworkRequest, SyncTask, TaskMediaRole, TaskStatus } from '@taskop/contracts';
+import type { ProblemReportDto } from '@taskop/contracts';
 import type { EntityType } from './outbox';
 
 export const iso = (ms: number): string => new Date(ms).toISOString();
@@ -156,7 +157,7 @@ export interface MediaRow {
 export interface LocalMedia {
   id: string;
   ownerType: EntityType;
-  /** The execution or task the medium belongs to. */
+  /** The execution, task or problem report the medium belongs to. */
   ownerId: string;
   itemId: string | null;
   /** A task medium's role (`instruction` | `response`); null for execution media. */
@@ -260,5 +261,35 @@ export const toDraft = (r: DraftRow): TaskDraft => ({
   text: r.text,
   mediaIds: JSON.parse(r.media_ids) as string[],
   submittedAt: r.submitted_at,
+  updatedAt: r.updated_at,
+});
+
+export interface ProblemReportRow {
+  id: string;
+  data: string;
+  local_status: string;
+  sync_note: string | null;
+  received_at: string | null;
+  updated_at: string;
+}
+
+/** A problem the worker reported (2026-11-06 design §7.4): the server's copy once acked, the phone's own until then. */
+export interface LocalProblemReport {
+  id: string;
+  server: ProblemReportDto;
+  /** `draft` until the server acknowledged the create; `sent` afterwards (the data is then the server's copy). */
+  localStatus: 'draft' | 'sent';
+  /** The i18n key of why the server refused the report for good ("Server qəbul etmədi: …"); null when none. */
+  syncNote: string | null;
+  receivedAt: string | null;
+  updatedAt: string;
+}
+
+export const toProblemReport = (r: ProblemReportRow): LocalProblemReport => ({
+  id: r.id,
+  server: JSON.parse(r.data) as ProblemReportDto,
+  localStatus: r.local_status as 'draft' | 'sent',
+  syncNote: r.sync_note,
+  receivedAt: r.received_at,
   updatedAt: r.updated_at,
 });
