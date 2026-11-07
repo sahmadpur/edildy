@@ -2,7 +2,7 @@ import { type ChecklistContent, type Correction, type ExecutionCorrections, type
 import { formatDateTime } from '@taskop/i18n';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { answerSummary } from './correction-format';
 import { useLocale } from '@/lib/language';
 
@@ -68,8 +68,8 @@ export function CorrectionsTimeline({ content, history, timeZone }: { content: C
 
 const styles = StyleSheet.create({
   list: { gap: spacing.sm },
-  card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
-  label: { fontSize: 16, fontWeight: '600', color: colors.text },
-  value: { fontSize: 16, color: colors.text },
-  muted: { color: colors.muted },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 4 },
+  label: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text },
+  value: { fontFamily: font, fontSize: type.base, color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
 });

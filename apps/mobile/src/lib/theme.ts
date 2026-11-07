@@ -10,7 +10,10 @@ export const colors = {
   primaryDeep: light.primaryDeep,
   primaryText: light.onPrimary,
   primarySoft: light.primarySoft,
-  background: light.canvas,
+  /** Minimal pass (Nov 2026): screens sit on plain white; grouping comes from hairlines and quiet fills, not tinted canvas. */
+  background: light.surface,
+  /** A quiet fill: secondary buttons, the segmented control, grouped rows. */
+  fill: '#F1F4F7',
   surface: light.surface,
   text: light.ink,
   muted: light.ink2,

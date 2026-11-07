@@ -8,7 +8,7 @@ import { LanguagePicker } from '@/components/language-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { api, session, useSession } from '@/lib/session';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { nativePush, openSettings, pushTokenStore } from '@/notifications/native';
 import { clearAppBadge, endPushSignOut, unregisterPush } from '@/notifications/push-registration';
 import { usePushPermission } from '@/notifications/use-push-permission';
@@ -130,62 +130,80 @@ export function ProfileScreen() {
   return (
     <Screen>
       <View style={headerBlock.block}>
-        <Text style={headerBlock.eyebrow}>{t('mobile.tabs.profile')}</Text>
         <Text accessibilityRole="header" style={headerBlock.title}>
           {me.user.fullName}
         </Text>
         {me.user.jobTitle ? <Text style={headerBlock.subtitle}>{me.user.jobTitle}</Text> : null}
       </View>
-      <View style={styles.card}>
-        <Text style={styles.section}>{t('common.language')}</Text>
-        <LanguagePicker variant="flags" />
-      </View>
-      <View style={styles.card}>
+
+      <View style={styles.group}>
+        <View style={[styles.row, styles.first]}>
+          <Text style={styles.label}>{t('common.language')}</Text>
+          <LanguagePicker variant="dropdown" />
+        </View>
         {rows.map(([label, value]) => (
           <View key={label} style={styles.row}>
-            <Text style={styles.muted}>{label}</Text>
+            <Text style={styles.label}>{label}</Text>
             <Text style={styles.value}>{value}</Text>
           </View>
         ))}
       </View>
-      <View style={styles.card}>
-        <Text style={styles.section}>{t('notifications.title')}</Text>
-        <View style={styles.switchRow}>
-          <Text style={styles.value}>{t('mobile.notifications.profile.email')}</Text>
+
+      <View style={styles.group}>
+        <Text style={styles.heading}>{t('notifications.title')}</Text>
+        <View style={[styles.row, styles.first]}>
+          <Text style={styles.label}>{t('mobile.notifications.profile.email')}</Text>
           <Switch
             accessibilityLabel={t('mobile.notifications.profile.email')}
             value={pending ?? me.user.emailNotifications}
             disabled={!online || isSaving}
+            trackColor={{ true: colors.primary, false: colors.border }}
             onValueChange={(next) => void changeEmail(next)}
           />
         </View>
-        {me.user.email ? null : <Text style={styles.muted}>{t('mobile.notifications.profile.noEmail')}</Text>}
-        {online ? null : <Text style={styles.muted}>{t('mobile.notifications.profile.online')}</Text>}
+        {me.user.email ? null : <Text style={styles.hint}>{t('mobile.notifications.profile.noEmail')}</Text>}
+        {online ? null : <Text style={styles.hint}>{t('mobile.notifications.profile.online')}</Text>}
         <FormError message={emailError} />
         <View style={styles.row}>
-          <Text style={styles.muted}>{t('mobile.notifications.profile.push')}</Text>
+          <Text style={styles.label}>{t('mobile.notifications.profile.push')}</Text>
           <Text testID="push-permission" style={styles.value}>
             {permission ? t(`mobile.notifications.profile.pushStates.${permission}`) : '—'}
           </Text>
         </View>
         {permission === 'denied' ? (
-          <>
-            <Text style={styles.muted}>{t('mobile.notifications.profile.deniedHint')}</Text>
+          <View style={styles.denied}>
+            <Text style={styles.hint}>{t('mobile.notifications.profile.deniedHint')}</Text>
             <PrimaryButton variant="outline" title={t('mobile.notifications.profile.openSettings')} onPress={() => void openSettings()} />
-          </>
+          </View>
         ) : null}
       </View>
-      <PrimaryButton variant="outline" title={t('mobile.profile.changeSecret')} onPress={() => router.push('/change-secret')} />
-      <PrimaryButton title={t('mobile.profile.logout')} disabled={isBusy} onPress={() => void logout()} />
+
+      <View style={styles.actions}>
+        <PrimaryButton variant="outline" title={t('mobile.profile.changeSecret')} onPress={() => router.push('/change-secret')} />
+        <PrimaryButton variant="danger" title={t('mobile.profile.logout')} disabled={isBusy} onPress={() => void logout()} />
+      </View>
     </Screen>
   );
 }
 
+/** Settings as plain rows on white: a label, the value on the right, hairlines between rows, no boxes. */
 const styles = StyleSheet.create({
-  muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
-  card: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1.5, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
-  row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
+  group: { gap: 0 },
+  heading: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, marginBottom: spacing.xs },
+  row: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderStrong,
+    paddingVertical: spacing.xs,
+  },
+  first: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.borderStrong },
+  label: { fontFamily: font, fontSize: type.base, color: colors.muted, flexShrink: 1, minWidth: '40%' },
   value: { fontFamily: font, fontSize: type.base, color: colors.text, fontWeight: '500', flexShrink: 1, textAlign: 'right' },
-  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
-  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, minHeight: 44 },
+  hint: { fontFamily: font, fontSize: type.sm, lineHeight: 18, color: colors.muted, paddingVertical: spacing.sm },
+  denied: { gap: spacing.sm, paddingBottom: spacing.sm },
+  actions: { gap: spacing.sm, marginTop: spacing.sm },
 });

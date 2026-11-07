@@ -4,17 +4,18 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { headerBlock } from '@/components/chip';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
-import { Choice } from '@/features/execution/parts';
 import { useSession } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { useNow, useSyncStatus } from '@/offline/hooks';
 import { CountTiles } from './count-tiles';
 import { EmployeePicker } from './employee-picker';
 import { teamKeys, useRefreshMeOnForbidden, useTeamEmployees, useTeamRuns, useTeamSummary } from './queries';
 import { RunRow } from './run-row';
+import { Segmented } from './team-controls';
 import { TeamOffline } from './team-offline';
 import {
   CHIP_BUCKETS,
@@ -69,10 +70,14 @@ export function TeamScreen() {
     // Decision 8: what was loaded is not shown offline; only the spec's message is.
     return (
       <SafeAreaView style={styles.safe}>
-        <Text accessibilityRole="header" style={[styles.title, styles.pad]}>
-          {t('mobile.team.title')}
-        </Text>
-        <TeamOffline />
+        <View style={styles.pad}>
+          <View style={headerBlock.block}>
+            <Text accessibilityRole="header" style={headerBlock.title}>
+              {t('mobile.team.title')}
+            </Text>
+          </View>
+          <TeamOffline />
+        </View>
       </SafeAreaView>
     );
   }
@@ -100,20 +105,14 @@ export function TeamScreen() {
   const rows = runs.data ? uniqueRuns(runs.data.pages) : [];
   const header = (
     <View style={styles.header}>
-      <Text accessibilityRole="header" style={styles.title}>
-        {t('mobile.team.title')}
-      </Text>
-      <View style={styles.chips}>
-        {TEAM_PERIODS.map((p) => (
-          <Choice key={p} role="radio" label={t(`mobile.team.periods.${p}`)} selected={preset === p} onPress={() => setPreset(p)} />
-        ))}
+      <View style={headerBlock.block}>
+        <Text accessibilityRole="header" style={headerBlock.title}>
+          {t('mobile.team.title')}
+        </Text>
       </View>
+      <Segmented options={TEAM_PERIODS.map((p) => ({ key: p, label: t(`mobile.team.periods.${p}`) }))} value={preset} onChange={setPreset} />
       {summary.data ? <CountTiles summary={summary.data} /> : summary.isPending ? <ActivityIndicator color={colors.primary} /> : null}
-      <View style={styles.chips}>
-        {TEAM_CHIPS.map((c) => (
-          <Choice key={c} role="radio" label={t(`reports.buckets.${c}`)} selected={chip === c} onPress={() => setChip(c)} />
-        ))}
-      </View>
+      <Segmented scroll options={TEAM_CHIPS.map((c) => ({ key: c, label: t(`reports.buckets.${c}`) }))} value={chip} onChange={setChip} />
       <EmployeePicker choices={employees.data ? employeeChoices(employees.data) : []} selected={employee} onChange={setEmployee} />
       {error ? (
         <View style={styles.error}>
@@ -147,11 +146,9 @@ export function TeamScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  pad: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
-  header: { gap: spacing.md, marginBottom: spacing.sm },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  pad: { paddingHorizontal: 20, paddingTop: spacing.sm, gap: 20 },
+  header: { gap: spacing.md, marginBottom: spacing.xs },
   error: { gap: spacing.sm },
-  list: { padding: spacing.lg, gap: spacing.sm },
-  muted: { color: colors.muted },
+  list: { paddingHorizontal: 20, paddingTop: spacing.sm, paddingBottom: spacing.xl, gap: spacing.sm },
+  muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
 });

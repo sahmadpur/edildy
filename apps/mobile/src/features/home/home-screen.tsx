@@ -10,12 +10,13 @@ import { SyncIndicator } from '@/features/sync/sync-indicator';
 import { useSession } from '@/lib/session';
 import { useLocale } from '@/lib/language';
 import { localDate } from '@/lib/time';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { type OccurrenceView, StartRefusedError } from '@/offline/execution-store';
 import { formatLocalDate } from '@taskop/i18n';
 import { useLiveQuery, useNow } from '@/offline/hooks';
 
+/** The four counts in one quiet strip; a count takes its colour only when it is not zero, so a calm day reads calm. */
 const STATS: { key: keyof HomeStats; color: string }[] = [
   { key: 'myTasks', color: colors.text },
   { key: 'overdue', color: colors.dangerText },
@@ -60,7 +61,7 @@ export function HomeScreen() {
           <Text style={headerBlock.eyebrow}>{formatLocalDate(localDate(now, services.timeZone), locale)}</Text>
           <View style={styles.tools}>
             <SyncIndicator compact />
-            <NotificationBell tone="light" />
+            <NotificationBell />
           </View>
         </View>
         <Text accessibilityRole="header" style={headerBlock.greeting}>
@@ -72,36 +73,40 @@ export function HomeScreen() {
           <Text style={styles.offlineText}>{t('mobile.home.offline')}</Text>
         </View>
       ) : null}
-      <View style={styles.grid}>
-        {STATS.map((stat) => (
-          <View key={stat.key} testID={`stat-${stat.key}`} style={styles.tile}>
-            <Text style={[styles.value, { color: stat.color }]}>{stats ? String(stats[stat.key]) : '—'}</Text>
-            <Text style={styles.tileLabel}>{t(`mobile.home.${stat.key}`)}</Text>
-          </View>
-        ))}
+      <View style={styles.strip}>
+        {STATS.map((stat) => {
+          const value = stats ? stats[stat.key] : null;
+          return (
+            <View key={stat.key} testID={`stat-${stat.key}`} style={styles.stat}>
+              <Text style={[styles.value, { color: value ? stat.color : colors.muted }]}>{value === null ? '—' : String(value)}</Text>
+              <Text style={styles.statLabel}>{t(`mobile.home.${stat.key}`)}</Text>
+            </View>
+          );
+        })}
       </View>
       {groups ? (
-        GROUP_KEYS.map((key) =>
-          // Spec decision 6: "Düzəliş tələb olunur" only when something was sent back.
-          key === 'rework' && groups.rework.length === 0 ? null : (
+        // Only sections with something in them; one quiet line when the whole list is empty.
+        GROUP_KEYS.every((key) => groups[key].length === 0) ? (
+          <Text style={styles.subtitle}>{t('mobile.checklists.emptySection')}</Text>
+        ) : (
+          GROUP_KEYS.filter((key) => groups[key].length > 0).map((key) => (
             <View key={key} style={styles.group}>
-              <Text style={styles.section}>{t(`mobile.checklists.sections.${key}`)}</Text>
-              {groups[key].length === 0 ? (
-                <Text style={styles.subtitle}>{t('mobile.checklists.emptySection')}</Text>
-              ) : (
-                groups[key].map((card) => (
-                  <OccurrenceCard
-                    key={card.occurrence.id}
-                    card={card}
-                    group={key}
-                    timeZone={services.timeZone}
-                    onStart={() => void start(card.occurrence)}
-                    onOpen={() => open(card.occurrence)}
-                  />
-                ))
-              )}
+              <View style={styles.sectionRow}>
+                <Text style={styles.section}>{t(`mobile.checklists.sections.${key}`)}</Text>
+                <Text style={styles.count}>{groups[key].length}</Text>
+              </View>
+              {groups[key].map((card) => (
+                <OccurrenceCard
+                  key={card.occurrence.id}
+                  card={card}
+                  group={key}
+                  timeZone={services.timeZone}
+                  onStart={() => void start(card.occurrence)}
+                  onOpen={() => open(card.occurrence)}
+                />
+              ))}
             </View>
-          ),
+          ))
         )
       ) : (
         <ActivityIndicator color={colors.primary} />
@@ -111,15 +116,17 @@ export function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  tools: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  offline: { backgroundColor: colors.warningSoft, borderRadius: radius.control, padding: spacing.md },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginRight: -spacing.xs },
+  tools: { flexDirection: 'row', alignItems: 'center' },
+  offline: { backgroundColor: colors.warningSoft, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   offlineText: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '500' },
   subtitle: { fontFamily: font, fontSize: type.base, color: colors.muted },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  tile: { flexBasis: '47%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1.5, borderColor: colors.border, padding: spacing.md, gap: 2 },
-  value: { fontFamily: font, fontSize: type.display, fontWeight: '600', letterSpacing: -0.5 },
-  tileLabel: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  strip: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.borderStrong, paddingVertical: spacing.md },
+  stat: { width: '25%', gap: 2, paddingRight: spacing.sm },
+  value: { fontFamily: font, fontSize: 26, lineHeight: 30, fontWeight: '600', letterSpacing: -0.6 },
+  statLabel: { fontFamily: font, fontSize: 12, lineHeight: 16, color: colors.muted },
   group: { gap: spacing.sm },
-  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  sectionRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, marginTop: spacing.xs },
+  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  count: { fontFamily: font, fontSize: type.base, color: colors.muted },
 });

@@ -45,7 +45,7 @@ describe('CommitInput', () => {
     const flushRef = createRef<(() => void) | null>();
     await render(<CommitInput accessibilityLabel="Qeyd" value="" onCommit={onCommit} flushRef={flushRef} />);
     await fireEvent.changeText(screen.getByLabelText('Qeyd'), 'tələsik');
-    act(() => flushRef.current?.());
+    await act(async () => flushRef.current?.());
     expect(onCommit).toHaveBeenCalledWith('tələsik');
     await act(async () => jest.advanceTimersByTime(COMMIT_DELAY_MS));
     expect(onCommit).toHaveBeenCalledTimes(1);

@@ -6,7 +6,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { notAcceptedText } from '@/features/sync/refusal-text';
 import { useLocale } from '@/lib/language';
 import { formatTime } from '@/lib/time';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import type { CardModel, GroupKey } from './group-occurrences';
 
 interface Props {
@@ -24,13 +24,17 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
   const o = card.occurrence;
   const e = o.execution;
   const status = e && e.state !== 'active' ? t(`executions.states.${e.state}`) : !e && o.status !== 'pending' ? t(`scheduling.statuses.${o.status}`) : null;
-  const edge = card.overdue ? styles.edgeDanger : card.rework ? styles.edgeWarning : group === 'done' ? styles.edgeDone : group === 'upcoming' ? styles.edgeUpcoming : null;
+  // A small dot before the name carries the group colour that used to be a thick left edge.
+  const dot = card.overdue ? colors.danger : card.rework ? colors.warning : group === 'done' ? colors.success : group === 'upcoming' ? colors.planned : colors.primary;
   return (
-    <View testID={`occurrence-${o.id}`} style={[styles.card, edge]}>
+    <View testID={`occurrence-${o.id}`} style={styles.card}>
       <View style={styles.row}>
-        <Text style={styles.title} numberOfLines={1}>
-          {o.checklistName}
-        </Text>
+        <View style={styles.name}>
+          <View style={[styles.dot, { backgroundColor: dot }]} />
+          <Text style={styles.title} numberOfLines={1}>
+            {o.checklistName}
+          </Text>
+        </View>
         <View testID="site-column" style={styles.right}>
           <Text style={styles.site} numberOfLines={1}>
             {o.siteName}
@@ -49,7 +53,7 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
         // Spec §8.1: the due date, red once it has passed; in the tenant's time zone (spec §9).
         <Text style={card.overdue ? styles.note : styles.muted}>{t('corrections.dueAt', { date: formatDateTime(card.rework.dueAt, { locale, timeZone }) })}</Text>
       ) : null}
-      <View style={styles.badges}>
+      <View style={[styles.badges, !(card.overdue || card.late || card.claimedBy || status) && styles.none]}>
         {card.overdue ? <StatusChip tone="danger" text={t('mobile.checklists.overdue')} /> : null}
         {card.late ? <StatusChip tone="warning" text={t('executions.flags.late')} /> : null}
         {card.claimedBy ? <StatusChip tone="active" text={t('mobile.checklists.claimedBy', { name: card.claimedBy })} /> : null}
@@ -74,18 +78,17 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1.5, borderColor: colors.border, borderLeftWidth: 5, borderLeftColor: colors.primary, padding: spacing.md, gap: spacing.xs },
-  edgeDanger: { borderLeftColor: colors.danger },
-  edgeWarning: { borderLeftColor: colors.warning },
-  edgeDone: { borderLeftColor: colors.success },
-  edgeUpcoming: { borderLeftColor: colors.planned },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 6 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm },
+  name: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
   // Capped so a long site name never squeezes the checklist name to an ellipsis; the site clips instead.
   right: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '55%' },
   title: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, flexShrink: 1 },
-  site: { fontFamily: font, fontSize: type.base, color: colors.muted, flexShrink: 0 },
+  site: { fontFamily: font, fontSize: type.sm, color: colors.muted, flexShrink: 0, lineHeight: 22 },
   shift: { fontFamily: font, fontSize: type.sm, color: colors.muted },
-  muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
-  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted, marginLeft: 16 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginLeft: 16 },
+  none: { display: 'none' },
   note: { fontFamily: font, fontSize: type.base, color: colors.dangerText },
 });

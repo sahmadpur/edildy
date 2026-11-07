@@ -10,7 +10,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { ScreenHeader } from '@/features/tasks/screen-header';
 import { canSeeTeam } from '@/features/team/team-rules';
 import { api, useSession } from '@/lib/session';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { createRouteContext, INBOX, routeForTarget } from '@/notifications/notification-router';
 import { useOffline } from '@/offline/context';
 import { useSyncStatus } from '@/offline/hooks';
@@ -157,9 +157,20 @@ export function InboxScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <ScreenHeader title={t('notifications.title')} />
+        <View style={styles.headerTitle}>
+          <ScreenHeader title={t('notifications.title')} />
+        </View>
         {online && items && items.length > 0 ? (
-          <PrimaryButton variant="outline" title={t('notifications.markAllRead')} onPress={() => void markAll()} disabled={markingAll || !hasUnread} />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.markAllRead')}
+            accessibilityState={{ disabled: markingAll || !hasUnread }}
+            disabled={markingAll || !hasUnread}
+            onPress={() => void markAll()}
+            style={({ pressed }) => [styles.markAll, pressed && styles.pressed]}
+          >
+            <Text style={[styles.markAllText, (markingAll || !hasUnread) && styles.markAllOff]}>{t('notifications.markAllRead')}</Text>
+          </Pressable>
         ) : null}
       </View>
       {!online ? (
@@ -182,16 +193,21 @@ export function InboxScreen() {
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => <InboxRow item={item} timeZone={services.timeZone} opening={openingId === item.id} onPress={() => void open(item)} />}
           contentContainerStyle={styles.list}
+          ItemSeparatorComponent={Separator}
           refreshing={refreshing}
           onRefresh={() => void refresh()}
           onEndReached={() => void loadMore()}
           onEndReachedThreshold={0.5}
-          ListEmptyComponent={<Text style={styles.muted}>{t('notifications.empty')}</Text>}
+          ListEmptyComponent={<Text style={[styles.muted, styles.empty]}>{t('notifications.empty')}</Text>}
           ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} /> : <FormError message={error} />}
         />
       )}
     </SafeAreaView>
   );
+}
+
+function Separator() {
+  return <View style={styles.separator} />;
 }
 
 function InboxRow({ item, timeZone, opening, onPress }: { item: NotificationItem; timeZone: string; opening: boolean; onPress: () => void }) {
@@ -206,30 +222,40 @@ function InboxRow({ item, timeZone, opening, onPress }: { item: NotificationItem
       accessibilityLabel={`${unread ? `${t('mobile.notifications.unread')}: ${item.title}` : item.title}. ${item.body}. ${when}`}
       testID={`notification-${item.id}`}
       onPress={onPress}
-      style={[styles.row, unread && styles.unreadRow]}
+      style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <View style={styles.rowTop}>
-        {unread ? <View style={styles.dot} /> : null}
+        {/* Read rows keep the dot's space, so every title starts at the same edge. */}
+        <View style={[styles.dot, unread && styles.dotOn]} />
         <Text style={[styles.title, unread && styles.bold]}>{item.title}</Text>
         {opening ? <ActivityIndicator size="small" color={colors.primary} /> : null}
       </View>
-      <Text style={styles.body}>{item.body}</Text>
-      <Text style={styles.muted}>{when}</Text>
+      <Text style={[styles.body, styles.indent]}>{item.body}</Text>
+      <Text style={[styles.muted, styles.indent]}>{when}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.sm },
-  pad: { padding: spacing.lg, gap: spacing.md },
-  list: { padding: spacing.lg, gap: spacing.sm },
-  row: { minHeight: 44, backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1.5, borderColor: colors.border, borderLeftWidth: 5, borderLeftColor: colors.border, padding: spacing.md, gap: spacing.xs },
-  unreadRow: { borderLeftColor: colors.primary },
+  // The title gets the full width (long in Russian); the mark-all action sits under it, aligned with the title text.
+  header: { paddingHorizontal: 20, paddingTop: spacing.sm, paddingBottom: spacing.xs },
+  headerTitle: {},
+  markAll: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center', marginLeft: 36, paddingHorizontal: spacing.xs, borderRadius: 10 },
+  markAllText: { fontFamily: font, fontSize: type.base, fontWeight: '500', color: colors.primary },
+  markAllOff: { color: colors.muted },
+  pressed: { backgroundColor: colors.fill },
+  pad: { paddingHorizontal: 20, paddingVertical: spacing.md, gap: spacing.md },
+  list: { paddingHorizontal: 20, paddingBottom: spacing.xl },
+  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 16 },
+  row: { minHeight: 44, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, marginHorizontal: -spacing.sm, borderRadius: 10, gap: 4 },
   rowTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  dotOn: { backgroundColor: colors.primary },
+  indent: { marginLeft: 16 },
   title: { fontFamily: font, fontSize: type.md, fontWeight: '500', color: colors.text, flexShrink: 1 },
   bold: { fontWeight: '600' },
-  body: { fontFamily: font, fontSize: type.base, color: colors.text },
+  body: { fontFamily: font, fontSize: type.base, lineHeight: 21, color: colors.text },
   muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  empty: { paddingVertical: spacing.md },
 });

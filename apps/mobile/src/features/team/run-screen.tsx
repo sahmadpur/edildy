@@ -4,14 +4,14 @@ import { formatDateTime } from '@taskop/i18n';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { StatusChip } from '@/components/chip';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { ReadOnlyAnswers, ReadOnlyProblems } from '@/features/execution/answer-view';
 import { ScreenHeader } from '@/features/tasks/screen-header';
-import { Badge } from '@/features/tasks/task-row';
 import { api, useSession } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { useSyncStatus } from '@/offline/hooks';
 import { AuditPanel } from './audit-panel';
@@ -137,16 +137,16 @@ export function TeamRunScreen({ occurrenceId }: { occurrenceId: string }) {
       <Text style={styles.muted}>{o.siteName}</Text>
       <Field label={t('reports.columns.date')} value={formatLocalDay(o.localDate)} />
       <View style={styles.badges}>
-        <Badge text={t(`scheduling.statuses.${o.status}`)} tone={statusTone(o.status)} />
-        {execution?.late ? <Badge text={t('executions.flags.late')} tone="warning" /> : null}
-        {execution?.clockSuspect ? <Badge text={t('executions.flags.clockSuspect')} tone="warning" /> : null}
+        <StatusChip text={t(`scheduling.statuses.${o.status}`)} tone={statusTone(o.status)} />
+        {execution?.late ? <StatusChip text={t('executions.flags.late')} tone="warning" /> : null}
+        {execution?.clockSuspect ? <StatusChip text={t('executions.flags.clockSuspect')} tone="warning" /> : null}
         {auditState ? (
-          <Badge
+          <StatusChip
             text={`${t('audits.audit')}: ${t(`audits.runAuditStates.${auditState}`)}${auditPercent}`}
             tone={auditState === 'failed' ? 'danger' : auditState === 'passed' ? 'success' : 'neutral'}
           />
         ) : null}
-        {d?.corrected ? <Badge text={t('corrections.corrected')} tone="warning" /> : null}
+        {d?.corrected ? <StatusChip text={t('corrections.corrected')} tone="warning" /> : null}
       </View>
       {execution ? <ExecutionTimes execution={execution} timeZone={timeZone} /> : <NotExecuted occurrence={o} />}
       {d ? (
@@ -292,14 +292,14 @@ function Failed({ error, onRetry }: { error: unknown; onRetry: () => void }) {
 const styles = StyleSheet.create({
   block: { gap: spacing.sm },
   field: { gap: 2 },
-  label: { fontWeight: '600', color: colors.text },
-  value: { color: colors.text, fontSize: 16 },
-  muted: { color: colors.muted },
-  notice: { color: colors.text, fontSize: 16, fontWeight: '600', marginTop: spacing.sm },
-  section: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: spacing.md },
+  label: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  value: { fontFamily: font, fontSize: type.base, color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  notice: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text, marginTop: spacing.xs },
+  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   actions: { gap: spacing.sm },
-  rework: { borderRadius: 10, padding: spacing.md, backgroundColor: colors.warningSoft, gap: spacing.xs },
-  reworkTitle: { color: colors.warningText, fontWeight: '700' },
-  reworkText: { color: colors.warningText },
+  rework: { borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 12, backgroundColor: colors.warningSoft, gap: spacing.xs },
+  reworkTitle: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.warningText },
+  reworkText: { fontFamily: font, fontSize: type.sm, color: colors.warningText },
 });

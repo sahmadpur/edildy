@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { ExecutionLockedError } from '@/offline/execution-store';
 import { useNow } from '@/offline/hooks';
@@ -79,22 +79,28 @@ export function FinishScreen({ occurrenceId }: { occurrenceId: string }) {
       {missing.length === 0 ? (
         <Text style={styles.muted}>{t('mobile.finish.none')}</Text>
       ) : (
-        missing.map((m) => {
-          const label = labels.get(m.itemId) ?? '';
-          const kind = t(`mobile.finish.missingKinds.${m.kind}`);
-          return (
-            <Pressable
-              key={`${m.itemId}-${m.kind}`}
-              accessibilityRole="button"
-              accessibilityLabel={`${label}: ${kind}`}
-              onPress={() => router.push({ pathname: '/execution/[id]', params: { id: occurrenceId, itemId: m.itemId, focus: nextJump() } })}
-              style={styles.row}
-            >
-              <Text style={styles.rowLabel}>{label}</Text>
-              <Text style={styles.missing}>{kind}</Text>
-            </Pressable>
-          );
-        })
+        <View style={styles.list}>
+          {missing.map((m) => {
+            const label = labels.get(m.itemId) ?? '';
+            const kind = t(`mobile.finish.missingKinds.${m.kind}`);
+            return (
+              <Pressable
+                key={`${m.itemId}-${m.kind}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${label}: ${kind}`}
+                onPress={() => router.push({ pathname: '/execution/[id]', params: { id: occurrenceId, itemId: m.itemId, focus: nextJump() } })}
+                style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}
+              >
+                <View style={styles.dot} />
+                <View style={styles.flex}>
+                  <Text style={styles.rowLabel}>{label}</Text>
+                  <Text style={styles.missing}>{kind}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              </Pressable>
+            );
+          })}
+        </View>
       )}
       <View style={styles.card}>
         <Text style={styles.muted}>{t('mobile.finish.score')}</Text>
@@ -107,15 +113,27 @@ export function FinishScreen({ occurrenceId }: { occurrenceId: string }) {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginLeft: -spacing.sm },
   back: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  flex: { flex: 1 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  muted: { color: colors.muted },
-  section: { fontSize: 16, fontWeight: '600', color: colors.text },
-  row: { minHeight: 44, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.warning, padding: spacing.md, gap: spacing.xs },
-  rowLabel: { color: colors.text, fontWeight: '500' },
-  missing: { color: colors.danger },
-  card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
-  score: { fontSize: 32, fontWeight: '700', color: colors.text },
+  flex: { flex: 1, gap: 2 },
+  title: { fontFamily: font, fontSize: type.lg, fontWeight: '600', color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, marginBottom: -spacing.sm },
+  // Hairline rows instead of a box per missing item.
+  list: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  row: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  pressed: { backgroundColor: colors.fill },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.warning },
+  rowLabel: { fontFamily: font, fontSize: type.base, color: colors.text, fontWeight: '500' },
+  missing: { fontFamily: font, fontSize: type.sm, color: colors.dangerText },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
+  score: { fontFamily: font, fontSize: 30, lineHeight: 36, fontWeight: '600', letterSpacing: -0.6, color: colors.text },
 });

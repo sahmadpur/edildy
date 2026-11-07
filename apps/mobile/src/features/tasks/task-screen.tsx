@@ -11,7 +11,7 @@ import { CaptureError } from '@/features/execution/media-capture';
 import { EvidenceRow } from '@/features/execution/parts';
 import { fileNotAcceptedText, notAcceptedText } from '@/features/sync/refusal-text';
 import { api } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { LiveOnlyError, MediaLimitError } from '@/offline/execution-store';
 import { useLiveQuery, useNow } from '@/offline/hooks';
@@ -153,12 +153,16 @@ export function TaskScreen({ taskId }: { taskId: string }) {
       ))}
       {rejection !== null ? <Text style={styles.warning}>{t('mobile.tasks.detail.rejected', { comment: rejection })}</Text> : null}
       {task.status === 'cancelled' && s.cancelReason ? <Text style={styles.warning}>{t('mobile.tasks.detail.cancelled', { reason: s.cancelReason })}</Text> : null}
-      {s.site ? <Text style={styles.muted}>{s.site.name}</Text> : null}
-      {s.team ? <Text style={styles.muted}>{t('mobile.tasks.team', { name: s.team.name })}</Text> : null}
-      <Text style={styles.muted}>{s.dueAt ? t('mobile.tasks.due', { time: formatDateTime(s.dueAt, { locale, timeZone }) }) : t('mobile.tasks.noDue')}</Text>
+      <View style={styles.tight}>
+        {s.site ? <Text style={styles.muted}>{s.site.name}</Text> : null}
+        {s.team ? <Text style={styles.muted}>{t('mobile.tasks.team', { name: s.team.name })}</Text> : null}
+        <Text style={styles.muted}>{s.dueAt ? t('mobile.tasks.due', { time: formatDateTime(s.dueAt, { locale, timeZone }) }) : t('mobile.tasks.noDue')}</Text>
+      </View>
 
-      <Text style={styles.label}>{t('mobile.tasks.detail.instructions')}</Text>
-      <Text style={styles.text}>{s.instructions || t('mobile.tasks.detail.noInstructions')}</Text>
+      <View style={styles.tight}>
+        <Text style={styles.label}>{t('mobile.tasks.detail.instructions')}</Text>
+        <Text style={styles.text}>{s.instructions || t('mobile.tasks.detail.noInstructions')}</Text>
+      </View>
       <RemoteMediaStrip
         items={s.media.filter((m) => m.role === 'instruction').map((m) => ({ id: m.id, kind: m.kind, status: m.status }))}
         load={(id) => api.taskMedia.url(id)}
@@ -192,9 +196,13 @@ export function TaskScreen({ taskId }: { taskId: string }) {
       {task.status === 'new' || task.status === 'accepted' ? (
         <View style={styles.actions}>
           {task.status === 'new' ? (
-            <PrimaryButton variant="outline" title={t('mobile.tasks.detail.accept')} onPress={() => runStatus(() => tasks.accept(taskId))} disabled={busy} />
+            <View style={styles.action}>
+              <PrimaryButton variant="outline" title={t('mobile.tasks.detail.accept')} onPress={() => runStatus(() => tasks.accept(taskId))} disabled={busy} />
+            </View>
           ) : null}
-          <PrimaryButton title={t('mobile.tasks.detail.start')} onPress={() => runStatus(() => tasks.start(taskId))} disabled={busy} />
+          <View style={styles.action}>
+            <PrimaryButton title={t('mobile.tasks.detail.start')} onPress={() => runStatus(() => tasks.start(taskId))} disabled={busy} />
+          </View>
         </View>
       ) : null}
 
@@ -289,16 +297,19 @@ export function TaskScreen({ taskId }: { taskId: string }) {
 }
 
 const styles = StyleSheet.create({
+  tight: { gap: 4 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  label: { fontWeight: '600', color: colors.text, marginTop: spacing.sm },
-  text: { color: colors.text, fontSize: 16 },
-  muted: { color: colors.muted },
-  warning: { color: colors.warningText, backgroundColor: colors.warningSoft, borderRadius: 10, padding: spacing.md },
-  error: { color: colors.danger },
-  card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
-  actions: { flexDirection: 'row', gap: spacing.md, justifyContent: 'flex-end' },
+  label: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  text: { fontFamily: font, fontSize: type.base, lineHeight: 22, color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  // A real alert (a refusal, a rejection, a cancellation): the one place a tinted background is used.
+  warning: { fontFamily: font, fontSize: type.base, color: colors.warningText, backgroundColor: colors.warningSoft, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, overflow: 'hidden' },
+  error: { fontFamily: font, fontSize: type.sm, color: colors.dangerText },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 6 },
+  actions: { flexDirection: 'row', gap: spacing.sm },
+  action: { flex: 1 },
   response: { gap: spacing.sm },
   failed: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   discard: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm },
-  discardText: { color: colors.danger, fontWeight: '600' },
+  discardText: { fontFamily: font, fontSize: type.base, color: colors.dangerText, fontWeight: '600' },
 });

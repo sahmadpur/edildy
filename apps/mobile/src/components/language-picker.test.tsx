@@ -40,6 +40,21 @@ describe('LanguagePicker', () => {
     await waitFor(() => expect(i18n.language).toBe('en'));
   });
 
+  it('dropdown variant shows the current flag and opens a menu of flags with names', async () => {
+    await render(<LanguagePicker variant="dropdown" />);
+    const trigger = screen.getByRole('button', { name: 'Dil: Azərbaycan dili' });
+    expect(screen.getByText('🇦🇿')).toBeTruthy();
+    expect(screen.queryByRole('radio', { name: 'English' })).toBeNull();
+    await fireEvent.press(trigger);
+    expect(screen.getByRole('radio', { name: 'Azərbaycan dili' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByText('Русский')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: 'English' }));
+    await waitFor(() => expect(i18n.language).toBe('en'));
+    await waitFor(() => expect(screen.queryByRole('radio', { name: 'English' })).toBeNull());
+    expect(screen.getByRole('button', { name: 'Language: English' })).toBeTruthy();
+    expect(await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('en');
+  });
+
   it('switches the UI language and stores the choice on the phone', async () => {
     await render(<LanguagePicker />);
     fireEvent.press(screen.getByRole('radio', { name: 'English' }));

@@ -4,14 +4,15 @@ import { formatDateTime } from '@taskop/i18n';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text } from 'react-native';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { api, useSession } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { useSyncStatus } from '@/offline/hooks';
+import { MultilineInput } from './multiline-input';
 import { RemoteMediaStrip } from './remote-media';
 import { ScreenHeader } from './screen-header';
 import { useLocale } from '@/lib/language';
@@ -124,17 +125,14 @@ export function ReviewScreen({ taskId }: { taskId: string }) {
       {reviewable ? (
         <>
           <Text style={styles.label}>{t('mobile.tasks.review.comment')}</Text>
-          <TextInput
+          <MultilineInput
             accessibilityLabel={t('mobile.tasks.review.comment')}
             value={comment}
             onChangeText={(c) => {
               setComment(c);
               setFields({});
             }}
-            multiline
             maxLength={TASK_LIMITS.commentMax}
-            placeholderTextColor={colors.muted}
-            style={styles.input}
           />
           <FormError message={fields.comment ? t(fields.comment) : null} />
           <FormError message={error} />
@@ -149,8 +147,7 @@ export function ReviewScreen({ taskId }: { taskId: string }) {
 }
 
 const styles = StyleSheet.create({
-  label: { fontWeight: '600', color: colors.text, marginTop: spacing.sm },
-  text: { color: colors.text, fontSize: 16 },
-  muted: { color: colors.muted },
-  input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
+  label: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  text: { fontFamily: font, fontSize: type.base, lineHeight: 22, color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
 });

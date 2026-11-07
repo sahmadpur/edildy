@@ -16,7 +16,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CommitInput } from '@/components/commit-input';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import type { LocalMedia } from '@/offline/local-model';
 import { fromAnswerDatetime, nowInputFor, toAnswerDatetime } from './datetime-format';
@@ -155,8 +155,10 @@ export function ItemField(p: ItemFieldProps) {
   // A photo/video item's own media, or the evidence its settings and rules allow: one row per allowed kind.
   const evidenceKinds = MEDIA_KINDS.filter((k) => mediaLimitFor(item, k) > 0);
   return (
-    <View testID={`item-${item.id}`} style={[styles.card, p.missing.length > 0 ? styles.cardMissing : null]}>
+    <View testID={`item-${item.id}`} style={styles.card}>
       <View style={styles.labelRow}>
+        {/* Something still blocks completion: a small warning dot before the label (it used to be a thick left edge). */}
+        {p.missing.length > 0 ? <View style={styles.dot} /> : null}
         <Text style={styles.label}>{item.label}</Text>
         {item.required ? <Text style={styles.required}>*</Text> : null}
       </View>
@@ -217,20 +219,20 @@ export function ItemField(p: ItemFieldProps) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.surface, borderRadius: radius.card, borderWidth: 1.5, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
-  cardMissing: { borderLeftWidth: 5, borderLeftColor: colors.warning },
-  labelRow: { flexDirection: 'row', gap: spacing.xs },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.warning, marginRight: spacing.xs },
   label: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, flexShrink: 1 },
-  required: { color: colors.danger, fontWeight: '700' },
-  help: { color: colors.muted, fontSize: 13 },
+  required: { fontFamily: font, fontSize: type.md, color: colors.danger, fontWeight: '600' },
+  help: { fontFamily: font, color: colors.muted, fontSize: type.sm },
   gap: { gap: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   flex: { flex: 1 },
-  unit: { color: colors.muted, fontSize: 16 },
-  missing: { color: colors.danger, fontSize: 13 },
+  unit: { fontFamily: font, color: colors.muted, fontSize: type.base },
+  missing: { fontFamily: font, color: colors.dangerText, fontSize: type.sm },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  problem: { color: colors.danger, fontWeight: '600', fontSize: 13 },
+  problem: { fontFamily: font, color: colors.dangerText, fontWeight: '600', fontSize: type.sm },
   flag: { minHeight: 44, justifyContent: 'center' },
-  flagText: { color: colors.muted },
-  flagActive: { color: colors.danger, fontWeight: '600' },
+  flagText: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  flagActive: { color: colors.dangerText, fontWeight: '600' },
 });

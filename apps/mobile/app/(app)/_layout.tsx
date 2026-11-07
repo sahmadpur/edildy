@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet } from 'react-native';
 import { canSeeTeam } from '@/features/team/team-rules';
 import { useSession } from '@/lib/session';
 import { colors, font } from '@/lib/theme';
@@ -25,8 +26,8 @@ export default function AppLayout() {
           headerShown: false,
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.muted,
-          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1 },
-          tabBarLabelStyle: { fontFamily: font, fontSize: 12, fontWeight: '600' },
+          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, elevation: 0, shadowOpacity: 0 },
+          tabBarLabelStyle: { fontFamily: font, fontSize: 11, fontWeight: '500' },
         }}
       >
         <Tabs.Screen name="index" options={{ title: t('mobile.tabs.home'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} /> }} />

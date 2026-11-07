@@ -5,14 +5,15 @@ import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { StatusChip } from '@/components/chip';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { ReadOnlyItem } from '@/features/execution/answer-view';
-import { Badge } from '@/features/tasks/task-row';
 import { api } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { FinishAuditSheet } from './finish-audit-sheet';
 import { type RunCommand, teamKeys, useTeamAudit } from './queries';
+import { ButtonRow, ChoiceButton, Grow, OfflineNote } from './team-controls';
 import { percentText } from './team-format';
 import { VerdictSheet } from './verdict-sheet';
 
@@ -69,7 +70,7 @@ export function AuditPanel({ viewerId, auditId, online, command, onClose }: Prop
     ) : online ? (
       <ActivityIndicator color={colors.primary} />
     ) : (
-      <Text style={styles.offline}>{t('mobile.team.offline')}</Text>
+      <OfflineNote text={t('mobile.team.offline')} />
     );
   }
 
@@ -139,9 +140,9 @@ export function AuditPanel({ viewerId, auditId, online, command, onClose }: Prop
 
   return (
     <View style={styles.block}>
-      <View style={styles.badges}>
+      <View style={styles.heading}>
         <Text style={styles.title}>{t('audits.audit')}</Text>
-        <Badge text={t(`audits.statuses.${a.status}`)} tone={a.status === 'finished' ? 'success' : 'neutral'} />
+        <StatusChip text={t(`audits.statuses.${a.status}`)} tone={a.status === 'finished' ? 'success' : 'neutral'} />
       </View>
       {a.paused ? (
         <View testID="audit-paused" style={styles.paused}>
@@ -164,57 +165,73 @@ export function AuditPanel({ viewerId, auditId, online, command, onClose }: Prop
           <View key={item.id} testID={`audit-item-${item.id}`} style={[styles.item, { marginLeft: depth * spacing.md }, highlight.has(item.id) ? styles.itemMissing : null]}>
             <ReadOnlyItem item={item} answer={a.execution.answers[item.id]} media={a.execution.media} flagged={problemItems.has(item.id)} load={loadMedia} />
             <View
-              style={styles.badges}
+              style={styles.verdict}
               {...(highlight.has(item.id) ? { accessible: true, accessibilityLabel: `${t('audits.verdicts.unreviewed')}: ${t('errors.AUDIT_INCOMPLETE')}` } : {})}
             >
-              <Badge
+              <StatusChip
                 text={v ? t(`audits.verdicts.${v.verdict}`) : t('audits.verdicts.unreviewed')}
                 tone={v?.verdict === 'approved' ? 'success' : v?.verdict === 'rejected' ? 'danger' : highlight.has(item.id) ? 'warning' : 'neutral'}
               />
             </View>
             {v?.comment ? <Text style={styles.value}>{v.comment}</Text> : null}
             {editable ? (
-              <View style={styles.actions}>
-                <PrimaryButton
-                  variant={v?.verdict === 'approved' ? 'primary' : 'outline'}
-                  title={t('audits.actions.approve')}
-                  accessibilityLabel={`${t('audits.actions.approve')}: ${item.label}`}
-                  disabled={off}
-                  onPress={() => void decide(item.id, { verdict: 'approved' })}
-                />
-                <PrimaryButton
-                  variant={v?.verdict === 'rejected' ? 'primary' : 'outline'}
-                  title={t('audits.actions.reject')}
-                  accessibilityLabel={`${t('audits.actions.reject')}: ${item.label}`}
-                  disabled={off}
-                  onPress={() => {
-                    setProblem(null);
-                    setRejecting(item.id);
-                  }}
-                />
-                {v ? (
-                  <PrimaryButton
-                    variant="outline"
-                    title={t('audits.actions.clearVerdict')}
-                    accessibilityLabel={`${t('audits.actions.clearVerdict')}: ${item.label}`}
+              <ButtonRow>
+                <Grow>
+                  <ChoiceButton
+                    selected={v?.verdict === 'approved'}
+                    label={t('audits.actions.approve')}
+                    accessibilityLabel={`${t('audits.actions.approve')}: ${item.label}`}
                     disabled={off}
-                    onPress={() => void clear(item.id)}
+                    onPress={() => void decide(item.id, { verdict: 'approved' })}
                   />
+                </Grow>
+                <Grow>
+                  <ChoiceButton
+                    danger
+                    selected={v?.verdict === 'rejected'}
+                    label={t('audits.actions.reject')}
+                    accessibilityLabel={`${t('audits.actions.reject')}: ${item.label}`}
+                    disabled={off}
+                    onPress={() => {
+                      setProblem(null);
+                      setRejecting(item.id);
+                    }}
+                  />
+                </Grow>
+                {v ? (
+                  <Grow>
+                    <ChoiceButton
+                      label={t('audits.actions.clearVerdict')}
+                      accessibilityLabel={`${t('audits.actions.clearVerdict')}: ${item.label}`}
+                      disabled={off}
+                      onPress={() => void clear(item.id)}
+                    />
+                  </Grow>
                 ) : null}
-              </View>
+              </ButtonRow>
             ) : null}
           </View>
         );
       })}
       <FormError message={problem} />
-      {!online ? <Text style={styles.offline}>{t('mobile.team.offline')}</Text> : null}
-      <View style={styles.actions}>
-        <PrimaryButton variant="outline" title={t('common.close')} onPress={onClose} />
-        {editable ? <PrimaryButton title={t('audits.actions.finish')} disabled={off || !canFinish} onPress={() => {
+      {!online ? <OfflineNote text={t('mobile.team.offline')} /> : null}
+      <ButtonRow>
+        <Grow>
+          <PrimaryButton variant="outline" title={t('common.close')} onPress={onClose} />
+        </Grow>
+        {editable ? (
+          <Grow>
+            <PrimaryButton
+              title={t('audits.actions.finish')}
+              disabled={off || !canFinish}
+              onPress={() => {
                 setProblem(null);
                 setFinishing(true);
-              }} /> : null}
-      </View>
+              }}
+            />
+          </Grow>
+        ) : null}
+      </ButtonRow>
       {rejecting ? (
         <VerdictSheet
           itemLabel={items.find((x) => x.item.id === rejecting)?.item.label ?? ''}
@@ -244,17 +261,17 @@ function Line({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   block: { gap: spacing.sm },
-  title: { fontSize: 20, fontWeight: '700', color: colors.text },
-  muted: { color: colors.muted },
-  offline: { color: colors.muted, fontSize: 16 },
-  badges: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
-  paused: { borderRadius: 10, padding: spacing.md, backgroundColor: colors.warningSoft },
-  pausedText: { color: colors.warningText, fontWeight: '600' },
-  card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
-  item: { borderRadius: 14, borderWidth: 2, borderColor: colors.border, padding: spacing.xs, gap: spacing.sm },
-  itemMissing: { borderColor: colors.warning },
+  heading: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+  title: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  verdict: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs },
+  paused: { borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: 12, backgroundColor: colors.warningSoft },
+  pausedText: { fontFamily: font, fontSize: type.base, fontWeight: '500', color: colors.warningText },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
+  // The answer card is the item's own; the verdict row sits under it. Only an item the finish refused is outlined.
+  item: { gap: spacing.sm, marginBottom: spacing.xs },
+  itemMissing: { borderRadius: 16, borderWidth: 1.5, borderColor: colors.warning, padding: spacing.xs },
   line: { gap: 2 },
-  label: { fontWeight: '600', color: colors.text },
-  value: { color: colors.text, fontSize: 16 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.sm },
+  label: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  value: { fontFamily: font, fontSize: type.base, color: colors.text },
 });

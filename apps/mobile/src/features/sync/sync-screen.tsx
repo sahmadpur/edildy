@@ -1,12 +1,11 @@
-import { Ionicons } from '@expo/vector-icons';
 import { formatDateTime } from '@taskop/i18n';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { colors, spacing } from '@/lib/theme';
+import { ScreenHeader } from '@/features/tasks/screen-header';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { isClockSkewed } from '@/offline/clock';
 import { useOffline } from '@/offline/context';
 import { useLiveQuery, useSyncStatus } from '@/offline/hooks';
@@ -88,12 +87,7 @@ export function SyncScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('common.back')} onPress={() => router.back()} style={styles.back}>
-          <Ionicons name="chevron-back" size={28} color={colors.primary} />
-        </Pressable>
-        <Text style={styles.title}>{t('mobile.sync.title')}</Text>
-      </View>
+      <ScreenHeader title={t('mobile.sync.title')} />
       <Text style={styles.muted}>
         {status.lastSyncedAt
           ? t('mobile.sync.lastSynced', { time: formatDateTime(status.lastSyncedAt, { locale, timeZone: services.timeZone }) })
@@ -106,38 +100,46 @@ export function SyncScreen() {
       {rows.length === 0 ? (
         <Text style={styles.muted}>{t('mobile.sync.empty')}</Text>
       ) : (
-        rows.map((row) => (
-          <View key={row.key} style={[styles.row, row.error ? styles.rowFailed : null]}>
-            <Text style={styles.rowTitle}>{row.title}</Text>
-            {row.error ? <Text style={styles.error}>{row.error}</Text> : <Text style={styles.muted}>{t('mobile.sync.states.pending')}</Text>}
-            {row.discard ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${t('mobile.sync.discard')}: ${row.title}`}
-                onPress={() => confirmDiscard(row)}
-                style={styles.discard}
-              >
-                <Text style={styles.discardText}>{t('mobile.sync.discard')}</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        ))
+        <View style={styles.list}>
+          {rows.map((row) => (
+            <View key={row.key} style={styles.row}>
+              <View style={[styles.dot, row.error ? styles.dotFailed : null]} />
+              <View style={styles.rowText}>
+                <Text style={styles.rowTitle}>{row.title}</Text>
+                {row.error ? <Text style={styles.error}>{row.error}</Text> : <Text style={styles.muted}>{t('mobile.sync.states.pending')}</Text>}
+              </View>
+              {row.discard ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('mobile.sync.discard')}: ${row.title}`}
+                  onPress={() => confirmDiscard(row)}
+                  style={({ pressed }) => [styles.discard, pressed && styles.pressed]}
+                >
+                  <Text style={styles.discardText}>{t('mobile.sync.discard')}</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))}
+        </View>
       )}
-      <PrimaryButton title={t('mobile.sync.retry')} onPress={() => void retry()} disabled={busy} />
+      <PrimaryButton variant={rows.length === 0 ? 'outline' : 'primary'} title={t('mobile.sync.retry')} onPress={() => void retry()} disabled={busy} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  back: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  muted: { color: colors.muted },
-  warning: { color: colors.warningText, backgroundColor: colors.warningSoft, borderRadius: 10, padding: spacing.md },
-  row: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
-  rowFailed: { borderColor: colors.danger },
-  rowTitle: { color: colors.text, fontWeight: '500' },
-  error: { color: colors.danger },
-  discard: { minHeight: 44, alignSelf: 'flex-end', justifyContent: 'center', paddingHorizontal: spacing.sm },
-  discardText: { color: colors.danger, fontWeight: '600' },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  // A real alert (a skewed clock, a lost sign-in): the one place a tinted background is used.
+  warning: { fontFamily: font, fontSize: type.base, color: colors.warningText, backgroundColor: colors.warningSoft, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, overflow: 'hidden' },
+  // Plain rows between hairlines.
+  list: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  row: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.warning },
+  dotFailed: { backgroundColor: colors.danger },
+  rowText: { flex: 1, gap: 2 },
+  rowTitle: { fontFamily: font, fontSize: type.base, fontWeight: '500', color: colors.text },
+  error: { fontFamily: font, fontSize: type.sm, color: colors.dangerText },
+  discard: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm, marginRight: -spacing.sm, borderRadius: 10 },
+  pressed: { backgroundColor: colors.fill },
+  discardText: { fontFamily: font, fontSize: type.base, color: colors.dangerText, fontWeight: '600' },
 });

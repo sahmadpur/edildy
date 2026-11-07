@@ -18,7 +18,7 @@ import { claimRejectionText } from '@/features/sync/claim-rejection';
 import { fileNotAcceptedText, notAcceptedText } from '@/features/sync/refusal-text';
 import { SyncIndicator } from '@/features/sync/sync-indicator';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import {
   type CapturedMedia,
@@ -252,13 +252,13 @@ export function ExecutionScreen({
           onPress={() => router.back()}
           style={styles.back}
         >
-          <Ionicons name="chevron-back" size={28} color={colors.onDeep} />
+          <Ionicons name="chevron-back" size={28} color={colors.primary} />
         </Pressable>
         <View style={styles.headerText}>
           <Text style={styles.title} numberOfLines={1}>
             {occurrence.checklistName}
           </Text>
-          <Text style={styles.subtitleOnDeep} numberOfLines={1}>
+          <Text style={styles.subtitle} numberOfLines={1}>
             {occurrence.siteName}
           </Text>
         </View>
@@ -435,46 +435,45 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     backgroundColor: colors.background,
   },
+  // Minimal pass: the header is type on white (it used to be a deep block), with a thin progress line under it.
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    backgroundColor: colors.deep,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.xs,
-    paddingBottom: spacing.sm,
   },
   back: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   headerText: { flex: 1 },
-  title: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.onDeep },
-  muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
-  progressWrap: { backgroundColor: colors.deep, paddingHorizontal: spacing.md, paddingBottom: spacing.md, gap: spacing.xs, borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
-  track: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.18)', overflow: 'hidden' },
-  fill: { height: 8, backgroundColor: colors.saffron, borderRadius: 4 },
-  banner: { marginHorizontal: spacing.md, marginTop: spacing.sm, borderRadius: radius.control, padding: spacing.md, backgroundColor: colors.warningSoft },
+  title: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  subtitle: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  progressWrap: { paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.sm, gap: spacing.xs },
+  track: { height: 4, borderRadius: 2, backgroundColor: colors.fill, overflow: 'hidden' },
+  fill: { height: 4, backgroundColor: colors.primary, borderRadius: 2 },
+  progressText: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  banner: { marginHorizontal: spacing.md, marginTop: spacing.sm, borderRadius: 12, padding: spacing.md, backgroundColor: colors.warningSoft },
   bannerText: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '500' },
   noteBanner: {
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
-    borderRadius: radius.control,
+    borderRadius: 12,
     padding: spacing.md,
     backgroundColor: colors.dangerSoft,
   },
   noteText: { fontFamily: font, fontSize: type.base, color: colors.dangerText, fontWeight: '500' },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xl * 2 },
-  sectionTitle: { fontFamily: font, fontSize: type.xl, fontWeight: '600', color: colors.text, letterSpacing: -0.3 },
+  sectionTitle: { fontFamily: font, fontSize: type.lg, fontWeight: '600', color: colors.text, marginTop: -spacing.sm },
   reworkBanner: {
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
-    borderRadius: radius.control,
+    borderRadius: 12,
     padding: spacing.md,
     backgroundColor: colors.warningSoft,
     gap: spacing.xs,
   },
-  reworkTitle: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '700' },
-  comment: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '600', marginBottom: spacing.xs },
-  progressText: { fontFamily: font, fontSize: type.sm, color: colors.onDeepMuted },
-  subtitleOnDeep: { fontFamily: font, fontSize: type.sm, color: colors.onDeepMuted },
+  reworkTitle: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '600' },
+  comment: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '500', marginBottom: spacing.xs },
   dimmed: { opacity: 0.5 },
   pager: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.md },
   pagerHalf: { flex: 1 },

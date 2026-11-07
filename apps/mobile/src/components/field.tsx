@@ -1,20 +1,38 @@
+import { type Ref, useState } from 'react';
 import { StyleSheet, Text, TextInput, type TextInputProps, View } from 'react-native';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 
-interface Props extends Pick<TextInputProps, 'value' | 'onChangeText' | 'secureTextEntry' | 'keyboardType' | 'autoCapitalize' | 'autoComplete' | 'onBlur'> {
+interface Props
+  extends Pick<
+    TextInputProps,
+    'value' | 'onChangeText' | 'secureTextEntry' | 'keyboardType' | 'autoCapitalize' | 'autoComplete' | 'onBlur' | 'returnKeyType' | 'onSubmitEditing' | 'textContentType' | 'submitBehavior'
+  > {
   label: string;
   error?: string | null;
+  /** React 19 passes `ref` as a prop: lets a form move focus to the next field. */
+  ref?: Ref<TextInput>;
 }
 
-export function Field({ label, error, ...input }: Props) {
+/**
+ * A labelled text input drawn as an underline: a small grey label, the value in body size, and a rule that turns
+ * primary while focused and red on error. 52 px tall so it stays easy to hit outdoors.
+ */
+export function Field({ label, error, onBlur, ref, ...input }: Props) {
+  const [focused, setFocused] = useState(false);
   return (
     <View style={styles.wrap}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, focused && styles.labelFocused]}>{label}</Text>
       <TextInput
+        ref={ref}
         accessibilityLabel={label}
         autoCorrect={false}
-        style={[styles.input, error ? styles.inputError : null]}
+        style={[styles.input, focused && styles.inputFocused, error ? styles.inputError : null]}
         placeholderTextColor={colors.muted}
+        onFocus={() => setFocused(true)}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
         {...input}
       />
       {error ? (
@@ -27,19 +45,20 @@ export function Field({ label, error, ...input }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: spacing.xs },
-  label: { fontFamily: font, fontSize: type.base, fontWeight: '500', color: colors.text },
+  wrap: { gap: 2 },
+  label: { fontFamily: font, fontSize: type.sm, fontWeight: '500', color: colors.muted },
+  labelFocused: { color: colors.primary },
   input: {
-    minHeight: 52,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.control,
-    paddingHorizontal: spacing.md,
+    minHeight: 48,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
+    paddingHorizontal: 0,
+    paddingVertical: spacing.xs,
     fontFamily: font,
     fontSize: type.md,
-    backgroundColor: colors.surface,
     color: colors.text,
   },
-  inputError: { borderColor: colors.danger },
-  error: { fontFamily: font, color: colors.dangerText, fontSize: type.sm },
+  inputFocused: { borderBottomColor: colors.primary },
+  inputError: { borderBottomColor: colors.danger },
+  error: { fontFamily: font, color: colors.dangerText, fontSize: type.sm, marginTop: 2 },
 });

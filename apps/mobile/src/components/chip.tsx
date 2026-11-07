@@ -11,19 +11,22 @@ export function StatusChip({ text, tone = 'neutral', testID }: { text: string; t
   );
 }
 
-/** The deep header block at the top of the main screens: a line above (the date, a subtitle), the title, and tools. */
+/**
+ * The top of the main screens: no block, just type on white. A small grey line (the date, a subtitle), a large title,
+ * and tools. Names kept from the old deep header so every screen picks the new look up at once.
+ */
 export const headerBlock = StyleSheet.create({
-  block: { backgroundColor: colors.deep, borderRadius: radius.sheet, padding: spacing.md, paddingTop: spacing.lg, gap: spacing.xs },
-  /** The Home header: shorter, with the date row and a one-line greeting. */
-  compactBlock: { backgroundColor: colors.deep, borderRadius: radius.sheet, padding: spacing.md, gap: spacing.xs },
-  greeting: { fontFamily: font, color: colors.onDeep, fontSize: type.lg, fontWeight: '600' },
-  eyebrow: { fontFamily: font, color: colors.onDeepMuted, fontSize: type.sm },
-  title: { fontFamily: font, color: colors.onDeep, fontSize: type.display, fontWeight: '600', letterSpacing: -0.5 },
-  subtitle: { fontFamily: font, color: colors.onDeepMuted, fontSize: type.base },
+  block: { paddingTop: spacing.sm, gap: spacing.xs },
+  /** The Home header: the date row and the greeting. */
+  compactBlock: { paddingTop: spacing.xs, gap: spacing.xs },
+  greeting: { fontFamily: font, color: colors.text, fontSize: 26, lineHeight: 32, fontWeight: '600', letterSpacing: -0.6 },
+  eyebrow: { fontFamily: font, color: colors.muted, fontSize: type.sm },
+  title: { fontFamily: font, color: colors.text, fontSize: type.display, lineHeight: 36, fontWeight: '600', letterSpacing: -0.8 },
+  subtitle: { fontFamily: font, color: colors.muted, fontSize: type.base, lineHeight: 21 },
   tools: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
 });
 
 const styles = StyleSheet.create({
-  chip: { alignSelf: 'flex-start', borderRadius: radius.chip, paddingHorizontal: spacing.sm, paddingVertical: 3 },
+  chip: { alignSelf: 'flex-start', borderRadius: radius.chip, paddingHorizontal: 7, paddingVertical: 2 },
   text: { fontFamily: font, fontSize: type.sm, fontWeight: '600' },
 });

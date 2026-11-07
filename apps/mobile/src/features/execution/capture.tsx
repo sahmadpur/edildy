@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Modal, Platform, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/primary-button';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import type { CapturedMedia } from '@/offline/execution-store';
 import { uuidv7 } from '@/offline/ids';
 import { mediaDirectory } from '@/offline/native/media-files';
@@ -188,6 +188,6 @@ export function VideoPreview({ uri, onClose }: { uri: string; onClose: () => voi
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: '#000' },
   bar: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, padding: spacing.md, backgroundColor: '#000' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.lg, backgroundColor: colors.background },
-  text: { color: colors.text, textAlign: 'center', fontSize: 16 },
+  center: { flex: 1, alignItems: 'stretch', justifyContent: 'center', gap: spacing.sm, padding: spacing.lg, backgroundColor: colors.background },
+  text: { fontFamily: font, color: colors.text, textAlign: 'center', fontSize: type.md, marginBottom: spacing.sm },
 });

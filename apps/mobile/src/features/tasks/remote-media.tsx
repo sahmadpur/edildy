@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { VideoPreview } from '@/features/execution/capture';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { useSyncStatus } from '@/offline/hooks';
 
@@ -136,9 +136,9 @@ function without(set: ReadonlySet<string>, id: string): ReadonlySet<string> {
 
 const styles = StyleSheet.create({
   strip: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  thumb: { width: 72, height: 72, borderRadius: 8, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  thumb: { width: 72, height: 72, borderRadius: 10, backgroundColor: colors.fill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   image: { width: 72, height: 72 },
-  play: { fontSize: 24, color: colors.text },
-  pending: { fontSize: 12, color: colors.muted, textAlign: 'center', padding: spacing.xs },
-  muted: { color: colors.muted },
+  play: { fontSize: 22, color: colors.muted },
+  pending: { fontFamily: font, fontSize: 12, color: colors.muted, textAlign: 'center', padding: spacing.xs },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
 });

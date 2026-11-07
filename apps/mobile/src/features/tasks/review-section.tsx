@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { api } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { useSyncStatus } from '@/offline/hooks';
 
@@ -36,9 +36,12 @@ export function ReviewSection() {
   );
   return (
     <View style={styles.group}>
-      <Text testID="section-review" style={styles.section}>
-        {t('mobile.tasks.sections.review')}
-      </Text>
+      <View style={styles.sectionRow}>
+        <Text testID="section-review" style={styles.section}>
+          {t('mobile.tasks.sections.review')}
+        </Text>
+        {online && !error && items && items.length > 0 ? <Text style={styles.count}>{items.length}</Text> : null}
+      </View>
       {!online ? (
         <Text style={styles.muted}>{t('mobile.tasks.online')}</Text>
       ) : error ? (
@@ -55,10 +58,10 @@ export function ReviewSection() {
             accessibilityRole="button"
             accessibilityLabel={item.title}
             onPress={() => router.push({ pathname: '/review/[id]', params: { id: item.id, n: services.newId() } })}
-            style={styles.card}
+            style={({ pressed }) => [styles.card, pressed && styles.pressed]}
           >
             <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.muted}>{item.assignee?.fullName ?? item.team?.name ?? ''}</Text>
+            <Text style={styles.meta}>{item.assignee?.fullName ?? item.team?.name ?? ''}</Text>
           </Pressable>
         ))
       )}
@@ -68,8 +71,12 @@ export function ReviewSection() {
 
 const styles = StyleSheet.create({
   group: { gap: spacing.sm },
-  section: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
-  card: { minHeight: 44, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
-  title: { fontSize: 16, fontWeight: '600', color: colors.text },
-  muted: { color: colors.muted },
+  sectionRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, marginTop: spacing.xs },
+  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  count: { fontFamily: font, fontSize: type.base, color: colors.muted },
+  card: { minHeight: 44, backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 6 },
+  pressed: { backgroundColor: colors.fill },
+  title: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  meta: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
 });

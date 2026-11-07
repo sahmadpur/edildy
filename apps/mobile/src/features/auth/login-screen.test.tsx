@@ -55,10 +55,21 @@ describe('LoginScreen', () => {
   it('switches to staff login', async () => {
     mockLoginStaff.mockResolvedValue({ accessToken: 's' });
     await render(<LoginScreen />);
-    await fireEvent.press(screen.getByRole('tab', { name: 'Rəhbər' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Rəhbər kimi daxil ol' }));
+    expect(screen.getByText('Rəhbər hesabınızın e-poçtu və şifrəsi ilə daxil olun.')).toBeTruthy();
     await fireEvent.changeText(screen.getByLabelText('E-poçt'), ' Leyla@Acme.az ');
     await fireEvent.changeText(screen.getByLabelText('Şifrə'), 'manager password');
     await fireEvent.press(screen.getByRole('button', { name: 'Daxil ol' }));
     await waitFor(() => expect(mockLoginStaff).toHaveBeenCalledWith({ email: 'leyla@acme.az', password: 'manager password', client: 'mobile' }));
+  });
+
+  it('switches back to the worker form and clears errors', async () => {
+    await render(<LoginScreen />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Daxil ol' }));
+    expect(screen.getAllByRole('alert').length).toBeGreaterThan(0);
+    await fireEvent.press(screen.getByRole('button', { name: 'Rəhbər kimi daxil ol' }));
+    expect(screen.queryAllByRole('alert')).toHaveLength(0);
+    await fireEvent.press(screen.getByRole('button', { name: 'İşçi kimi daxil ol' }));
+    expect(screen.getByLabelText('Təşkilat kodu')).toBeTruthy();
   });
 });
