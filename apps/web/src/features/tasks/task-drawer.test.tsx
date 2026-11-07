@@ -119,7 +119,7 @@ describe('TaskDrawer', () => {
   });
 
   it('shows the source problem report of a report task (2026-11-06 design §8)', async () => {
-    mocks.api.tasks.get.mockResolvedValue(taskDetail({ source: 'report', problemReportId: 'r1', problemReport: problemReportDto() }));
+    mocks.api.tasks.get.mockResolvedValue(taskDetail({ problemReportId: 'r1', problemReport: problemReportDto() }));
     renderWithRouter(<TaskDrawer id="t1" onClose={vi.fn()} />, '/tasks?task=t1');
     const drawer = await screen.findByRole('dialog', { name: 'Soyuducunun qapısını təmir edin' });
     const report = within(drawer).getByRole('region', { name: 'Bildirilən problem' });

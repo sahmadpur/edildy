@@ -33,10 +33,19 @@ export const TASK_REVIEW_DECISIONS = ['approved', 'rejected'] as const;
 export const taskReviewDecisionSchema = z.enum(TASK_REVIEW_DECISIONS);
 export type TaskReviewDecision = z.infer<typeof taskReviewDecisionSchema>;
 
-/** `problem`: from a checklist problem; `report`: from a problem report (2026-11-06 design); `adhoc`: neither. */
-export const TASK_SOURCES = ['problem', 'report', 'adhoc'] as const;
+/**
+ * The wire value: `problem` (from a checklist problem) or `adhoc`. A task from a problem report (2026-11-06 design) is
+ * `adhoc` here with `problemReportId` set: the enum stays as older phones know it, so their /me/sync keeps parsing;
+ * clients derive the "Bildirilən problem" badge from `problemReportId`.
+ */
+export const TASK_SOURCES = ['problem', 'adhoc'] as const;
 export const taskSourceSchema = z.enum(TASK_SOURCES);
 export type TaskSource = z.infer<typeof taskSourceSchema>;
+
+/** The list filter, where `report` means tasks made from problem reports. */
+export const TASK_SOURCE_FILTERS = ['problem', 'report', 'adhoc'] as const;
+export const taskSourceFilterSchema = z.enum(TASK_SOURCE_FILTERS);
+export type TaskSourceFilter = z.infer<typeof taskSourceFilterSchema>;
 
 /** A problem's resolution, derived from its task (spec §5). The strings are also i18n keys under tasks.resolutions. */
 export const PROBLEM_RESOLUTIONS = ['none', 'open', 'resolved', 'cancelled'] as const;
@@ -204,7 +213,7 @@ export const taskListQuerySchema = cursorQuerySchema.extend({
   assigneeUserId: idSchema.optional(),
   teamId: idSchema.optional(),
   createdBy: idSchema.optional(),
-  source: taskSourceSchema.optional(),
+  source: taskSourceFilterSchema.optional(),
   /** Tasks in awaiting_review that the caller may review. */
   awaitingMyReview: z.stringbool().optional(),
   dueFrom: isoDateTimeSchema.optional(),

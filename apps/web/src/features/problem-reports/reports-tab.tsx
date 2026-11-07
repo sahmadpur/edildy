@@ -1,4 +1,5 @@
-import type { ProblemReportDto, ProblemReportStateFilter } from '@taskop/contracts';
+import type { ProblemReportDto, ProblemReportState, ProblemReportStateFilter } from '@taskop/contracts';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -13,13 +14,15 @@ import { useSites } from '@/features/sites/queries';
 import { TaskDialog } from '@/features/tasks/task-dialog';
 import { errorText } from '@/lib/errors';
 import { useFormatDateTime } from '@/lib/format';
-import { useCan } from '@/lib/session';
+import { api, useCan } from '@/lib/session';
 import { CloseReportDialog } from './close-report-dialog';
 import { mapsLink, REPORT_STATE_FILTERS, reportStateVariant } from './labels';
 import { type ReportFilters, useProblemReports } from './queries';
 import { ReportMediaStrip } from './report-media';
 
 const TEXT_MAX = 80;
+/** The filter that lists a report in the given state (a deep link seeds it, so a closed report is not hidden by the default). */
+const filterFor = (s: ProblemReportState): ProblemReportStateFilter => (s === 'closed' ? 'closed' : s === 'resolved' ? 'resolved' : 'active');
 const cut = (s: string) => (s.length > TEXT_MAX ? `${s.slice(0, TEXT_MAX)}…` : s);
 
 /**
@@ -32,6 +35,13 @@ export function ReportsTab({ highlight }: { highlight?: string }) {
   const canManageTasks = useCan('tasks.manage');
   const sites = useSites();
   const [state, setState] = useState<ProblemReportStateFilter>('active');
+  const linked = useQuery({ queryKey: ['problem-reports', 'detail', highlight], queryFn: () => api.problemReports.get(highlight!), enabled: Boolean(highlight) });
+  const seeded = useRef<string | null>(null);
+  useEffect(() => {
+    if (!highlight || !linked.data || seeded.current === highlight) return;
+    seeded.current = highlight;
+    setState(filterFor(linked.data.state));
+  }, [highlight, linked.data]);
   const [siteId, setSiteId] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');

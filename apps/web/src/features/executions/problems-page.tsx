@@ -7,7 +7,7 @@ import {
   type ProblemSeverity,
   type ProblemSource,
 } from '@taskop/contracts';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -42,6 +42,15 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
   const tenantToday = useTenantToday();
   const today = fixedToday ?? tenantToday;
   const canManageTasks = useCan('tasks.manage');
+  const navigate = useNavigate();
+  // Controlled: a notification link while the page is open changes only the search, and the tab must follow it
+  // (state adjusted during render on a prop change, the React-sanctioned pattern).
+  const [current, setCurrent] = useState<'checklist' | 'reports'>(tab);
+  const [seenTab, setSeenTab] = useState(tab);
+  if (seenTab !== tab) {
+    setSeenTab(tab);
+    setCurrent(tab);
+  }
   const sites = useSites();
   const checklists = useChecklistOptions();
   const [range, setRange] = useState(() => defaultProblemRange(today));
@@ -71,7 +80,14 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
   return (
     <div className="grid gap-4">
       <PageHeader title={t('executions.problemsPage.title')} />
-      <Tabs defaultValue={tab}>
+      <Tabs
+        value={current}
+        onValueChange={(v) => {
+          const next = v === 'reports' ? 'reports' : 'checklist';
+          setCurrent(next);
+          void navigate({ to: '/problems', search: { tab: next } });
+        }}
+      >
         <TabsList>
           <TabsTrigger value="checklist">{t('executions.problemsPage.tabs.checklist')}</TabsTrigger>
           <TabsTrigger value="reports">{t('executions.problemsPage.tabs.reports')}</TabsTrigger>

@@ -10,7 +10,7 @@ import { ReportsTab } from './reports-tab';
 const mocks = vi.hoisted(() => ({
   canManageTasks: { current: true },
   api: {
-    problemReports: { list: vi.fn(), close: vi.fn() },
+    problemReports: { list: vi.fn(), close: vi.fn(), get: vi.fn() },
     sites: { list: vi.fn() },
     tasks: { create: vi.fn(), assignees: vi.fn() },
   },
@@ -26,7 +26,7 @@ beforeEach(() => {
   mocks.canManageTasks.current = true;
   mocks.api.sites.list.mockResolvedValue([{ id: 'site1', name: 'Anbar №1' }, { id: 'site2', name: 'Filial 2' }]);
   mocks.api.tasks.assignees.mockResolvedValue(assigneeOptions());
-  mocks.api.tasks.create.mockImplementation(async (body: { id: string }) => taskDetail({ id: body.id, source: 'report', problemReportId: 'r1' }));
+  mocks.api.tasks.create.mockImplementation(async (body: { id: string }) => taskDetail({ id: body.id, problemReportId: 'r1' }));
   mocks.api.problemReports.list.mockResolvedValue({
     items: [problemReportDto(), problemReportDto({ id: 'r2', severity: 'normal', text: 'Lampa yanmır', location: null, media: [], state: 'closed', closedAt: REPORT_CLOSED, closedBy: { id: 'mgr', fullName: 'Leyla' }, closeComment: 'Dəyişdirildi' })],
     nextCursor: null,
@@ -35,6 +35,17 @@ beforeEach(() => {
 const REPORT_CLOSED = '2026-11-02T06:00:00.000Z';
 
 describe('ReportsTab (2026-11-06 design §8)', () => {
+  it('a deep link to a closed report switches the state filter to closed and highlights the row', async () => {
+    const closed = problemReportDto({ id: 'r9', text: 'Köhnə problem', state: 'closed', closedAt: REPORT_CLOSED, closedBy: { id: 'mgr', fullName: 'Leyla' }, closeComment: 'Dəyişdirildi' });
+    mocks.api.problemReports.get.mockResolvedValue(closed);
+    mocks.api.problemReports.list.mockImplementation(async (q: { state: string }) => ({ items: q.state === 'closed' ? [closed] : [problemReportDto()], nextCursor: null }));
+    renderWithRouter(<ReportsTab highlight="r9" />, '/problems?tab=reports&report=r9');
+    const row = (await screen.findByText('Köhnə problem')).closest('tr')!;
+    expect(row).toHaveAttribute('data-highlight', 'true');
+    expect(screen.getByLabelText(az.executions.reportsTab.state)).toHaveValue('closed');
+    expect(mocks.api.problemReports.get).toHaveBeenCalledWith('r9');
+  });
+
   it('lists reports with their state, a map link, and a dash without a location; the default filter is active', async () => {
     renderWithRouter(<ReportsTab />, '/problems');
     await screen.findByText('Anbarın qapısı bağlanmır, kilid sınıb');

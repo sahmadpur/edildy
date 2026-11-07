@@ -61,7 +61,7 @@ describe('TaskScreen', () => {
   it('shows the source problem report with its media signed through the task (2026-11-06 design §7.5)', async () => {
     mockReportUrl.mockResolvedValue({ url: 'http://files.test/r', expiresAt: '2026-11-02T05:00:00.000Z' });
     await opened(
-      { source: 'report', problemReportId: REPORT, problemReport: syncReport({ id: REPORT, text: 'Anbarın qapısı bağlanmır', reporter: { id: OTHER, fullName: 'Fərid Hacıyev' }, media: [{ id: PROBLEM_PHOTO, kind: 'photo', status: 'uploaded' }] }) },
+      { problemReportId: REPORT, problemReport: syncReport({ id: REPORT, text: 'Anbarın qapısı bağlanmır', reporter: { id: OTHER, fullName: 'Fərid Hacıyev' }, media: [{ id: PROBLEM_PHOTO, kind: 'photo', status: 'uploaded' }] }) },
       { online: true },
     );
     const card = screen.getByTestId('task-report');

@@ -59,7 +59,7 @@ export function TaskDialog({ task: latest, problem, problemReport, onClose, onSa
   const qc = useQueryClient();
   const { tenant } = useMe();
   // A problem task's site comes from the problem (Part 1 decision 19): shown, never edited.
-  const fixedSite = problem ? problem.siteName : problemReport ? problemReport.siteName : task?.source === 'problem' || task?.source === 'report' ? (task.site?.name ?? '—') : null;
+  const fixedSite = problem ? problem.siteName : problemReport ? problemReport.siteName : task?.source === 'problem' || task?.problemReportId ? (task.site?.name ?? '—') : null;
   // The sites a task may name (Part 1 decision 25), from the picker's endpoint; no `sites.view` needed (decision 16).
   const siteOptions = useTaskAssignees('', fixedSite === null).data?.sites ?? [];
   const [values, setValues] = useState<TaskFormValues>(() => initialValues({ task, problem, problemReport }, tenant.timezone));

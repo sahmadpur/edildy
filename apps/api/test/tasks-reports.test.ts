@@ -20,7 +20,8 @@ describe('tasks from problem reports', () => {
     const w = await reportWorld(t);
     const r = await createReport(w.workers[0].api, newReportBody(w.siteId, { severity: 'critical', text: 'Anbarın qapısı bağlanmır, kilid sınıb' }));
     const task = await createTask(w.managerHere.api, { id: uuidv7(), assignee: { userId: w.workers[0].id }, problemReportId: r.id, siteId: w.otherSiteId });
-    expect(task).toMatchObject({ title: r.text, instructions: r.text, requiresReview: true, source: 'report', problemReportId: r.id, problemId: null, site: { id: w.siteId } });
+    // On the wire the source stays within the old enum (older phones must keep parsing /me/sync); clients derive the badge from problemReportId.
+    expect(task).toMatchObject({ title: r.text, instructions: r.text, requiresReview: true, source: 'adhoc', problemReportId: r.id, problemId: null, site: { id: w.siteId } });
     expect(task.problemReport).toMatchObject({ id: r.id, text: r.text, severity: 'critical' });
     expect(task.problem).toBeNull();
     // An explicit title and instructions win.

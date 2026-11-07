@@ -73,7 +73,8 @@ export function ReportScreen({ id, remote }: Props) {
   const localMedia: LocalMedia[] = local?.media ?? [];
   const pendingLocal = localMedia.filter((m) => m.uploadedAt === null && m.fileDeletedAt === null);
   const notes = own ? [own.syncNote, own.failedKey].filter((k): k is string => k !== null).map((k) => notAcceptedText(t, k)) : [];
-  const actions = canManage && online && report.state === 'open';
+  // Not on the phone's own draft: the server does not know it yet (or refused it), so a task or a close would 404.
+  const actions = canManage && online && report.state === 'open' && (own === null || own.localStatus === 'sent');
 
   return (
     <Screen>

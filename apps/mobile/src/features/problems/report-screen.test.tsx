@@ -51,6 +51,22 @@ describe('ReportScreen', () => {
     expect(screen.queryByRole('button', { name: 'Bağla' })).toBeNull();
   });
 
+  it('a manager sees no actions on their own report while the server has not accepted it', async () => {
+    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' } };
+    const t = await createTestServices({ online: true });
+    await t.seed();
+    t.net.online = false; // the create stays queued
+    const id = await t.services.reports.create(input, []);
+    await t.services.engine.idle(); // the run the create started sees the phone offline and stops
+    t.net.online = true;
+    await t.services.engine.refresh();
+    await renderWithServices(t.services, <ReportScreen id={id} remote={false} />);
+    expect(await screen.findByText('Anbarın qapısı bağlanmır')).toBeTruthy();
+    expect(screen.getByText('Göndərilməyib')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Tapşırıq yarat' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Bağla' })).toBeNull();
+  });
+
   it('a report without location says so', async () => {
     const t = await createTestServices();
     await t.seed();

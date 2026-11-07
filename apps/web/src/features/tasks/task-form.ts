@@ -127,7 +127,8 @@ export function changedFields(task: TaskDetail, v: TaskFormValues, timeZone: str
   if (v.title.trim() !== before.title) body.title = v.title.trim();
   if (v.instructions.trim() !== before.instructions) body.instructions = v.instructions.trim();
   if (v.priority !== before.priority) body.priority = v.priority;
-  if (task.source === 'adhoc' && v.siteId !== before.siteId) body.siteId = v.siteId || null;
+  // A report task's site is fixed like a problem task's, although its wire source is 'adhoc'.
+  if (task.source === 'adhoc' && !task.problemReportId && v.siteId !== before.siteId) body.siteId = v.siteId || null;
   if (v.dueDate !== before.dueDate || v.dueTime !== before.dueTime) body.dueAt = dueAtFromLocal(v.dueDate, v.dueTime, timeZone);
   if (v.requiresReview !== before.requiresReview) body.requiresReview = v.requiresReview;
   if (EVIDENCE_KEYS.some((k) => v.evidence[k] !== before.evidence[k])) body.evidence = v.evidence;

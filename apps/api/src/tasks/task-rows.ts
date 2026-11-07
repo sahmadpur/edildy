@@ -41,7 +41,8 @@ export const toTaskSummary = (r: TaskSummaryRow): TaskSummary => ({
   assigneeInactive: r.t.assigneeUserId !== null && r.assigneeStatus !== 'active',
   createdBy: { id: r.t.createdByUserId, fullName: r.creatorName },
   requiresReview: r.t.requiresReview,
-  source: r.t.problemId ? 'problem' : r.t.problemReportId ? 'report' : 'adhoc',
+  // 'adhoc' for a task from a problem report too: the wire enum is stable for older phones (contracts TASK_SOURCES).
+  source: r.t.problemId ? 'problem' : 'adhoc',
   problemId: r.t.problemId,
   problemReportId: r.t.problemReportId,
   dueAt: iso(r.t.dueAt),

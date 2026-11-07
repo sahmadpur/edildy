@@ -255,6 +255,10 @@ Step 1 can be its own PR; steps 2–5 can be one PR or two (API first).
 - Debounce, page size (50 on web, 30 on phone), and empty-state wording.
 - How the web `TaskDialog` shares its pre-fill logic between the existing `problem` prop and the new `problemReport` prop; the mobile create-task screen's source mode is new and can be built the simplest way that works.
 
+## 11a. Rollout order (added after review, 2026-11-07)
+
+Phones on older builds validate every API answer against the schemas compiled into them. The task `source` enum therefore stays as it was on the wire (`problem` | `adhoc`); a task from a report is `adhoc` with `problemReportId` set, and clients derive its badge from that. The four new notification types and the `problem_report` target kind cannot be hidden the same way: an older phone whose inbox holds a `problem_report.*` row fails to parse `/me/notifications` (the sync and everything else keep working). So the app build with this feature ships to TestFlight/Play **before** the API deploy, and managers are asked to update first; the inbox recovers as soon as the phone is updated.
+
 ## 12. Open items for later
 
 - Reports over problem reports (counts per site, time to resolve) in SP7's reports.
