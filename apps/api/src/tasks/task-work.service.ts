@@ -100,7 +100,10 @@ export class TaskWorkService {
       .returning();
     await this.writer.history(t, [{ from: t.status, to: next, at, actorUserId: p.userId }]);
     await this.writer.emit('task.submitted', row!, p.userId);
-    if (next === 'completed') await this.writer.emit('task.completed', row!, p.userId);
+    if (next === 'completed') {
+      await this.writer.emit('task.completed', row!, p.userId);
+      await this.writer.emitReportResolved(row!, p.userId);
+    }
     return this.queries.detail(p, id);
   }
 

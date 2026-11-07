@@ -41,7 +41,7 @@ export const toTaskSummary = (r: TaskSummaryRow): TaskSummary => ({
   assigneeInactive: r.t.assigneeUserId !== null && r.assigneeStatus !== 'active',
   createdBy: { id: r.t.createdByUserId, fullName: r.creatorName },
   requiresReview: r.t.requiresReview,
-  source: r.t.problemId ? 'problem' : 'adhoc',
+  source: r.t.problemId ? 'problem' : r.t.problemReportId ? 'report' : 'adhoc',
   problemId: r.t.problemId,
   problemReportId: r.t.problemReportId,
   dueAt: iso(r.t.dueAt),
@@ -102,5 +102,6 @@ export const auditView = (t: TaskRow) => ({
   requiresReview: t.requiresReview,
   evidence: t.evidence,
   problemId: t.problemId,
+  problemReportId: t.problemReportId,
   status: t.status,
 });

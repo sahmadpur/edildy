@@ -1,12 +1,12 @@
 import { isDeepStrictEqual } from 'node:util';
 import { Injectable } from '@nestjs/common';
 import { isFinalTaskStatus, type TaskDetail, taskTransition } from '@taskop/contracts';
-import { desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
 import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';
-import { sites, tasks, taskSubmissions } from '../db/schema';
+import { problemReports, sites, tasks, taskSubmissions } from '../db/schema';
 import { SchedulingScope } from '../scheduling/scheduling-scope';
 import type { CancelTaskDto, CreateTaskDto, ReviewTaskDto, UpdateTaskDto } from './dto';
 import { TaskAssignees } from './task-assignees';
@@ -14,6 +14,7 @@ import { TaskProblems } from './task-problems';
 import { TaskQueries } from './task-queries';
 import { auditView } from './task-rows';
 import { TaskScope } from './task-scope';
+import { ProblemReportScope } from '../problem-reports/problem-report-scope';
 import { TaskWriter } from './task-writer';
 
 /** Manager commands (spec §6.2). Each runs in the request's tenant transaction. */
@@ -28,6 +29,7 @@ export class TasksService {
     private readonly writer: TaskWriter,
     private readonly queries: TaskQueries,
     private readonly scope: TaskScope,
+    private readonly reportScope: ProblemReportScope,
   ) {}
 
   /** POST /tasks. Idempotent on the client id: a repeat returns the stored task unchanged (the body is not compared). */
@@ -37,7 +39,25 @@ export class TasksService {
     if (known) return this.queries.detail(p, dto.id);
     const now = this.clock.now();
     let siteId = dto.siteId;
-    if (dto.problemId) {
+    let title = dto.title ?? '';
+    let instructions = dto.instructions;
+    if (dto.problemReportId) {
+      // 2026-11-06 design §6.2: a readable, manageable, open report with no active task; its site and text are the defaults.
+      const [report] = await tx
+        .select({ siteId: problemReports.siteId, text: problemReports.text, closedAt: problemReports.closedAt })
+        .from(problemReports)
+        .where(and(eq(problemReports.id, dto.problemReportId), this.reportScope.manageable(p)));
+      if (!report) throw new AppError('NOT_FOUND');
+      if (report.closedAt !== null) throw new AppError('PROBLEM_REPORT_CLOSED');
+      const [active] = await tx
+        .select({ id: tasks.id })
+        .from(tasks)
+        .where(and(eq(tasks.problemReportId, dto.problemReportId), ne(tasks.status, 'cancelled')));
+      if (active) throw new AppError('PROBLEM_REPORT_HAS_TASK');
+      siteId = report.siteId;
+      if (!title) title = report.text.slice(0, 200);
+      if (!instructions) instructions = report.text;
+    } else if (dto.problemId) {
       const problem = await this.problems.readable(p, dto.problemId);
       if (!problem) throw new AppError('NOT_FOUND');
       // Only problems of closed runs: their rows no longer change (spec §1).
@@ -55,19 +75,19 @@ export class TasksService {
       .values({
         id: dto.id,
         tenantId: p.tenantId,
-        // The schema requires a title unless the task comes from a problem report, whose text then supplies it (2026-11-06 design §6.2).
-        title: dto.title ?? '',
-        instructions: dto.instructions,
+        title,
+        instructions,
         priority: dto.priority,
         siteId,
         createdByUserId: p.userId,
         assigneeUserId: assignee.userId,
         assigneeTeamId: assignee.teamId,
         // Problem fixes are reviewed unless the creator says otherwise (spec §1).
-        requiresReview: dto.requiresReview ?? dto.problemId !== null,
+        requiresReview: dto.requiresReview ?? (dto.problemId !== null || dto.problemReportId !== null),
         evidence: dto.evidence,
         dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
         problemId: dto.problemId,
+        problemReportId: dto.problemReportId,
         createdAt: now,
         updatedAt: now,
       })
@@ -191,6 +211,7 @@ export class TasksService {
     await this.writer.history(t, [{ from: t.status, to: next, at: now, actorUserId: p.userId, comment }]);
     await this.writer.record(approved ? 'task.approved' : 'task.rejected', id, { after: { submissionId: latest.id, comment } });
     await this.writer.emit(approved ? 'task.completed' : 'task.rejected', row!, p.userId);
+    if (approved) await this.writer.emitReportResolved(row!, p.userId);
     return this.queries.detail(p, id, { afterManage: true });
   }
 

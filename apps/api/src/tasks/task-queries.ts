@@ -7,6 +7,7 @@ import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';
 import { taskMedia, taskStatusHistory, taskSubmissions, tasks, users } from '../db/schema';
 import type { TaskListQueryDto } from './dto';
+import { ProblemReportQueries } from '../problem-reports/problem-report-queries';
 import { TaskProblems } from './task-problems';
 import { iso, selectTasks, toHistoryEntry, toSubmissionDto, toTaskMediaDto, toTaskSummary } from './task-rows';
 import { TaskScope } from './task-scope';
@@ -21,6 +22,7 @@ export class TaskQueries {
     private readonly db: DbService,
     private readonly scope: TaskScope,
     private readonly problems: TaskProblems,
+    private readonly reports: ProblemReportQueries,
   ) {}
 
   /** GET /tasks (spec §6.2): readable tasks only, newest first, keyset on (created_at, id). */
@@ -32,7 +34,9 @@ export class TaskQueries {
     if (q.assigneeUserId) conds.push(eq(tasks.assigneeUserId, q.assigneeUserId));
     if (q.teamId) conds.push(eq(tasks.assigneeTeamId, q.teamId));
     if (q.createdBy) conds.push(eq(tasks.createdByUserId, q.createdBy));
-    if (q.source) conds.push(q.source === 'problem' ? isNotNull(tasks.problemId) : isNull(tasks.problemId));
+    if (q.source === 'problem') conds.push(isNotNull(tasks.problemId));
+    else if (q.source === 'report') conds.push(isNotNull(tasks.problemReportId));
+    else if (q.source === 'adhoc') conds.push(isNull(tasks.problemId), isNull(tasks.problemReportId));
     if (q.awaitingMyReview) conds.push(eq(tasks.status, 'awaiting_review'), this.scope.reviewable(p));
     if (q.dueFrom) conds.push(gte(tasks.dueAt, new Date(q.dueFrom)));
     if (q.dueTo) conds.push(lte(tasks.dueAt, new Date(q.dueTo)));
@@ -76,6 +80,7 @@ export class TaskQueries {
       .where(inArray(taskSubmissions.taskId, ids))
       .orderBy(asc(taskSubmissions.receivedAt), asc(taskSubmissions.id));
     const problems = await this.problems.cards(rows.flatMap((r) => (r.t.problemId ? [r.t.problemId] : [])));
+    const reports = new Map((await this.reports.byIds(rows.flatMap((r) => (r.t.problemReportId ? [r.t.problemReportId] : [])))).map((d) => [d.id, d]));
     const byId = new Map<string, SyncTask>(
       rows.map((r) => [
         r.t.id,
@@ -92,8 +97,7 @@ export class TaskQueries {
           media: media.filter((m) => m.m.taskId === r.t.id).map(toTaskMediaDto),
           submissions: submissions.filter((s) => s.s.taskId === r.t.id).map(toSubmissionDto),
           problem: r.t.problemId ? (problems.get(r.t.problemId) ?? null) : null,
-          // Filled once tasks can be made from problem reports (2026-11-06 design §6.2).
-          problemReport: null,
+          problemReport: r.t.problemReportId ? (reports.get(r.t.problemReportId) ?? null) : null,
         },
       ]),
     );
