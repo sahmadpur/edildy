@@ -17,10 +17,17 @@ export default {
   },
   home: {
     greeting: 'Здравствуйте, {{name}}!',
-    myTasks: 'Мои задачи',
+    myTasks: 'Задачи',
     overdue: 'Просрочено',
-    completed: 'Завершено (сегодня)',
-    issues: 'Проблемы (сегодня)',
+    completed: 'Завершено',
+    upcoming: 'Предстоящие',
+    archive: {
+      more: 'Показать более ранние',
+      none: 'Более ранних проверок нет.',
+      offline: 'Для старых проверок нужен интернет.',
+      title: 'Архив',
+      subtitle: 'Архив · {{date}}',
+    },
     offline: 'Режим офлайн — данные обновятся, когда появится интернет.',
   },
   profile: {
@@ -122,7 +129,7 @@ export default {
       notFound: 'Местоположение не найдено',
       retry: 'Повторить',
       denied: 'Нет разрешения на геолокацию.',
-      openSettings: 'Открыть настройки',
+      openSettings: 'Открыть настройки телефона',
       unknown: 'Местоположение неизвестно',
       sendWithout: 'Отправить без местоположения?',
       sendAnyway: 'Отправить',
@@ -163,6 +170,7 @@ export default {
     start: 'Начать',
     continue: 'Продолжить',
     view: 'Открыть',
+    preview: 'Посмотреть вопросы',
     emptySection: 'Здесь пока ничего нет.',
     startBlocked: {
       notYetOpen: 'Время выполнения ещё не наступило.',
@@ -196,6 +204,9 @@ export default {
     notFound: 'Выполнение не найдено.',
     flagProblem: 'Отметить проблему',
     problemFlagged: 'Проблема отмечена',
+    previewBanner: 'Проверка откроется в {{time}}. Пока можно только посмотреть вопросы.',
+    previewOpen: 'Проверка открыта — можно начинать.',
+    back: 'Назад',
   },
   evidence: {
     camera: 'Камера',
@@ -233,7 +244,7 @@ export default {
     noScore: 'Балл не считается',
     problems: 'Проблем: {{count}}',
     complete: 'Завершить',
-    completed: 'Чек-лист завершён.',
+    completed: 'Проверка завершена.',
     missingKinds: {
       answer: 'Нет ответа',
       photo: 'Нужно фото',
@@ -308,7 +319,7 @@ export default {
       push: 'Push-уведомления',
       pushStates: { granted: 'Включены', denied: 'Выключены', undetermined: 'Ещё не запрашивались', unavailable: 'Не поддерживаются на этом устройстве' },
       deniedHint: 'Включите push-уведомления в настройках телефона.',
-      openSettings: 'Открыть настройки',
+      openSettings: 'Открыть настройки телефона',
     },
   },
   team: {

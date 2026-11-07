@@ -23,7 +23,7 @@ export function NotificationsPage() {
   return (
     <div className="grid max-w-3xl gap-4">
       <PageHeader
-        title={t('notifications.title')}
+        title={t('notifications.title')} description={t('pages.notifications')}
         actions={
           <Button variant="outline" disabled={(unread.data?.count ?? 0) === 0 || markAll.isPending} onClick={() => markAll.mutate()}>
             {t('notifications.markAllRead')}

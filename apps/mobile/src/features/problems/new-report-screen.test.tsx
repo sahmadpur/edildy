@@ -91,7 +91,7 @@ describe('NewReportScreen (2026-11-06 design §7.5)', () => {
     const { port } = controlledPort('denied');
     await renderWithServices(t.services, <NewReportScreen location={port} />);
     expect(await screen.findByText('Yer icazəsi verilməyib.')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Parametrləri aç' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Telefon ayarlarını aç' }));
     expect(mockOpenSettings).toHaveBeenCalled();
     await fireEvent.changeText(screen.getByLabelText('Təsvir'), 'Su axır');
     expect(screen.getByRole('button', { name: 'Göndər' }).props.accessibilityState.disabled).toBe(false);

@@ -1,4 +1,4 @@
-import { isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, type Timing } from '@taskop/contracts';
+import { isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@taskop/contracts';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Field } from '@/components/field';
+import { cn } from '@/lib/utils';
 import { formatLocalDate } from './labels';
 import { useLocale } from '@/lib/i18n';
 
@@ -30,9 +31,14 @@ export function defaultRecurrence(kind: RecurrenceKind, today: string): Recurren
 }
 
 export function defaultTiming(mode: Timing['mode'], shifts: ShiftDto[]): Timing {
-  return mode === 'fixed'
-    ? { mode, startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 60 }
-    : { mode, shiftId: shifts.find((s) => s.active)?.id ?? '', graceMinutes: 0 };
+  switch (mode) {
+    case 'fixed':
+      return { mode, startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 60 };
+    case 'shift':
+      return { mode, shiftId: shifts.find((s) => s.active)?.id ?? '', graceMinutes: 0 };
+    case 'anytime':
+      return { mode };
+  }
 }
 
 function NumberField({ id, label, value, min, max, onChange }: { id: string; label: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
@@ -268,14 +274,32 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
   const max = SCHEDULING_LIMITS.maxExtendedWindowMinutes;
   return (
     <fieldset className="grid gap-3" disabled={disabled}>
-      <div className="grid gap-1.5">
-        <Label htmlFor={`${id}-mode`}>{t('scheduling.builder.mode')}</Label>
-        <NativeSelect id={`${id}-mode`} value={value.mode} onChange={(e) => onChange(defaultTiming(e.target.value as Timing['mode'], shifts))}>
-          <option value="fixed">{t('scheduling.builder.modes.fixed')}</option>
-          <option value="shift">{t('scheduling.builder.modes.shift')}</option>
-        </NativeSelect>
+      {/* Three tick boxes side by side, one ticked at a time (feedback 2026-11-07), instead of a dropdown. */}
+      <div role="group" aria-label={t('scheduling.builder.mode')} className="grid gap-1.5">
+        <span className="text-sm font-medium">{t('scheduling.builder.mode')}</span>
+        <div className="flex flex-wrap gap-2">
+          {TIMING_MODES.map((mode) => (
+            <label
+              key={mode}
+              htmlFor={`${id}-mode-${mode}`}
+              className={cn(
+                'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
+                value.mode === mode ? 'border-primary bg-primary/5' : 'hover:bg-muted/50',
+              )}
+            >
+              <Checkbox
+                id={`${id}-mode-${mode}`}
+                checked={value.mode === mode}
+                onCheckedChange={(c) => c === true && value.mode !== mode && onChange(defaultTiming(mode, shifts))}
+              />
+              {t(`scheduling.builder.modes.${mode}`)}
+            </label>
+          ))}
+        </div>
       </div>
-      {value.mode === 'fixed' ? (
+      {value.mode === 'anytime' ? (
+        <p className="text-muted-foreground text-sm">{t('scheduling.builder.anytimeHint')}</p>
+      ) : value.mode === 'fixed' ? (
         <div className="grid grid-cols-3 gap-3">
           <div className="grid gap-1.5">
             <Label htmlFor={`${id}-start`}>{t('scheduling.builder.startTime')}</Label>

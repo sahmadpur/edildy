@@ -73,13 +73,14 @@ describe('notification fan-out', () => {
     const here = await staffAt(t, w.s.tenantId, w.owner, 'manager', [w.siteId], 'Menecer 1');
     const admin = await staffAt(t, w.s.tenantId, w.owner, 'admin', [], 'Admin');
     await ownerQuery('update users set email_notifications = false where id = $1', [admin.id]);
-    expect((await fanOutAll(t, w.s.tenantId)).sort()).toEqual(['fanned_out', 'fanned_out', 'fanned_out']);
+    // checklist.assigned, the two problems and checklist.completed.
+    expect((await fanOutAll(t, w.s.tenantId)).sort()).toEqual(['fanned_out', 'fanned_out', 'fanned_out', 'fanned_out']);
     const managerInbox = await inboxOf(here.id);
-    expect(managerInbox.map((n) => n.type).sort()).toEqual(['problem.critical', 'problem.recorded']);
+    expect(managerInbox.map((n) => n.type).sort()).toEqual(['checklist.completed', 'problem.critical', 'problem.recorded']);
     const critical = managerInbox.find((n) => n.type === 'problem.critical')!;
     expect(critical).toMatchObject({ title: 'Kritik problem!', body: 'Filial 1, İcra yoxlaması: Kondisioner xarabdır', target_kind: 'occurrence', target_id: w.occurrenceId, target_date: '2026-11-02' });
     expect((await deliveriesOf(here.id)).map((d) => [d.notification_id, d.channel])).toEqual([[critical.id, 'email']]);
-    expect((await inboxOf(admin.id)).map((n) => n.type)).toEqual(['problem.critical']);
+    expect((await inboxOf(admin.id)).map((n) => n.type).sort()).toEqual(['checklist.completed', 'problem.critical', 'problem.recorded']);
     expect(await deliveriesOf(admin.id)).toEqual([]);
     expect(await inboxOf(w.workers[0].id)).toEqual([expect.objectContaining({ type: 'checklist.assigned' })]);
   });

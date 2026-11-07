@@ -59,7 +59,7 @@ describe('ProblemsTab', () => {
   it('filters by severity with the chips', async () => {
     const onSeverity = vi.fn();
     renderWithRouter(<ProblemsTab filters={FILTERS} severity="critical" onSeverity={onSeverity} />);
-    const chips = await screen.findByRole('group', { name: 'Ciddilik' });
+    const chips = await screen.findByRole('group', { name: 'Növ' });
     expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Hamısı', 'Adi', 'Kritik']);
     expect(within(chips).getByRole('button', { name: 'Kritik' })).toHaveAttribute('aria-pressed', 'true');
     expect(mocks.api.reports.problems).toHaveBeenCalledWith({ ...FILTERS, severity: 'critical' });

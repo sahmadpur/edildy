@@ -10,7 +10,7 @@ import {
   emailListSchema,
   runAuditStateSchema,
 } from './audit-logic.js';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema, pageOf } from './common.js';
+import { cursorQuerySchema, idListParam, idSchema, isoDateTimeSchema, listParam, pageOf } from './common.js';
 import { executionCorrectionsSchema } from './corrections.js';
 import { executionDetailSchema } from './execution-views.js';
 import { occurrenceStatusSchema, userRefSchema } from './occurrences.js';
@@ -70,10 +70,10 @@ export type AuditDetail = z.infer<typeof auditDetailSchema>;
 export const auditQueueQuerySchema = cursorQuerySchema
   .extend({
     queue: auditQueueSchema,
-    siteId: idSchema.optional(),
-    checklistId: idSchema.optional(),
-    auditorId: idSchema.optional(),
-    result: auditResultSchema.optional(),
+    siteId: idListParam.optional(),
+    checklistId: idListParam.optional(),
+    auditorId: idListParam.optional(),
+    result: listParam(auditResultSchema).optional(),
     from: localDateSchema.optional(),
     to: localDateSchema.optional(),
   })

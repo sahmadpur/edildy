@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { EVIDENCE_LEVELS } from './checklist-content.js';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idListParam, idSchema, isoDateTimeSchema, listParam } from './common.js';
 import { MEDIA_KINDS, type MediaKind, mediaKindSchema, mediaSourceSchema } from './executions.js';
 
 /** Spec §3. `completed` and `cancelled` are final: nothing leaves them. */
@@ -209,11 +209,11 @@ const statusList = z
 export const taskListQuerySchema = cursorQuerySchema.extend({
   status: statusList.optional(),
   overdue: z.stringbool().optional(),
-  siteId: idSchema.optional(),
+  siteId: idListParam.optional(),
   assigneeUserId: idSchema.optional(),
   teamId: idSchema.optional(),
   createdBy: idSchema.optional(),
-  source: taskSourceFilterSchema.optional(),
+  source: listParam(taskSourceFilterSchema).optional(),
   /** Tasks in awaiting_review that the caller may review. */
   awaitingMyReview: z.stringbool().optional(),
   dueFrom: isoDateTimeSchema.optional(),

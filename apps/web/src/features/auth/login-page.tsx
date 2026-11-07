@@ -1,23 +1,19 @@
-import { Link, useNavigate, useRouter, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { safeRedirectPath } from '@/lib/redirect';
 import { session } from '@/lib/session';
 import { LoginForm } from './login-form';
 
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const router = useRouter();
-  const { redirect } = useSearch({ from: '/auth/login' });
   return (
     <div className="grid gap-6">
       <h1 className="text-xl font-semibold">{t('auth.login.title')}</h1>
       <LoginForm
         onSuccess={async (result) => {
           await session.signedIn(result);
-          const target = safeRedirectPath(redirect);
-          if (target) router.history.push(target);
-          else await navigate({ to: '/' });
+          // Every sign-in opens Göstəricilər on "Bu gün" (feedback 2026-11-07), not the page the session ended on.
+          await navigate({ to: '/' });
         }}
       />
       <div className="text-muted-foreground grid gap-2 text-sm">

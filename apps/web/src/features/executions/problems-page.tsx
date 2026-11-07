@@ -3,14 +3,12 @@ import {
   PROBLEM_SEVERITIES,
   PROBLEM_SOURCES,
   type ProblemDto,
-  type ProblemResolution,
-  type ProblemSeverity,
-  type ProblemSource,
+  toListParam,
 } from '@taskop/contracts';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,22 +52,23 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
   const sites = useSites();
   const checklists = useChecklistOptions();
   const [range, setRange] = useState(() => defaultProblemRange(today));
-  const [siteId, setSiteId] = useState('');
-  const [checklistId, setChecklistId] = useState('');
-  const [severity, setSeverity] = useState<ProblemSeverity | ''>('');
-  const [source, setSource] = useState<ProblemSource | ''>('');
-  const [resolution, setResolution] = useState<ProblemResolution | ''>('');
+  // Multi-select filters (feedback 2026-11-07): an empty list means all.
+  const [siteId, setSiteId] = useState<string[]>([]);
+  const [checklistId, setChecklistId] = useState<string[]>([]);
+  const [severity, setSeverity] = useState<string[]>([]);
+  const [source, setSource] = useState<string[]>([]);
+  const [resolution, setResolution] = useState<string[]>([]);
   const [creatingFrom, setCreatingFrom] = useState<ProblemDto | null>(null);
   const [showCleared, setShowCleared] = useState(false);
   const rangeError = problemRangeError(range.from, range.to);
   const filters: ProblemFilters = {
     from: range.from,
     to: range.to,
-    siteId: siteId || undefined,
-    checklistId: checklistId || undefined,
-    severity: severity || undefined,
-    source: source || undefined,
-    resolution: resolution || undefined,
+    siteId: toListParam(siteId),
+    checklistId: toListParam(checklistId),
+    severity: toListParam(severity),
+    source: toListParam(source),
+    resolution: toListParam(resolution),
     // Part 1 decision 18: cleared problems are skipped unless asked for.
     ...(showCleared ? { includeCleared: 'true' } : {}),
   };
@@ -79,7 +78,7 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title={t('executions.problemsPage.title')} />
+      <PageHeader title={t('executions.problemsPage.title')} description={t('pages.problems')} />
       <Tabs
         value={current}
         onValueChange={(v) => {
@@ -105,61 +104,46 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           <Label htmlFor="problems-to">{t('executions.problemsPage.to')}</Label>
           <Input id="problems-to" type="date" value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} className="w-44" />
         </div>
-        <NativeSelect aria-label={t('executions.problemsPage.site')} value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-52">
-          <option value="">{t('executions.problemsPage.allSites')}</option>
-          {(sites.data ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          aria-label={t('executions.problemsPage.severity')}
+        <MultiSelectFilter
+          label={t('executions.problemsPage.site')}
+          allLabel={t('executions.problemsPage.allSites')}
+          options={(sites.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
+          value={siteId}
+          onChange={setSiteId}
+          className="w-52"
+        />
+        <MultiSelectFilter
+          label={t('executions.problemsPage.severity')}
+          allLabel={t('executions.problemsPage.allSeverities')}
+          options={PROBLEM_SEVERITIES.map((s) => ({ value: s, label: t(`executions.severities.${s}`) }))}
           value={severity}
-          onChange={(e) => setSeverity(e.target.value as ProblemSeverity | '')}
+          onChange={setSeverity}
           className="w-44"
-        >
-          <option value="">{t('executions.problemsPage.allSeverities')}</option>
-          {PROBLEM_SEVERITIES.map((s) => (
-            <option key={s} value={s}>
-              {t(`executions.severities.${s}`)}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect aria-label={t('executions.problemsPage.checklist')} value={checklistId} onChange={(e) => setChecklistId(e.target.value)} className="w-56">
-          <option value="">{t('executions.problemsPage.allChecklists')}</option>
-          {(checklists.data ?? []).map((cl) => (
-            <option key={cl.id} value={cl.id}>
-              {cl.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          aria-label={t('executions.problemsPage.source')}
+        />
+        <MultiSelectFilter
+          label={t('executions.problemsPage.checklist')}
+          allLabel={t('executions.problemsPage.allChecklists')}
+          options={(checklists.data ?? []).map((cl) => ({ value: cl.id, label: cl.name }))}
+          value={checklistId}
+          onChange={setChecklistId}
+          className="w-56"
+        />
+        <MultiSelectFilter
+          label={t('executions.problemsPage.source')}
+          allLabel={t('executions.problemsPage.allSources')}
+          options={PROBLEM_SOURCES.map((s) => ({ value: s, label: t(`executions.problemSources.${s}`) }))}
           value={source}
-          onChange={(e) => setSource(e.target.value as ProblemSource | '')}
+          onChange={setSource}
           className="w-44"
-        >
-          <option value="">{t('executions.problemsPage.allSources')}</option>
-          {PROBLEM_SOURCES.map((s) => (
-            <option key={s} value={s}>
-              {t(`executions.problemSources.${s}`)}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          aria-label={t('tasks.problems.resolution')}
+        />
+        <MultiSelectFilter
+          label={t('tasks.problems.resolution')}
+          allLabel={t('tasks.problems.allResolutions')}
+          options={PROBLEM_RESOLUTIONS.map((r) => ({ value: r, label: t(`tasks.resolutions.${r}`) }))}
           value={resolution}
-          onChange={(e) => setResolution(e.target.value as ProblemResolution | '')}
+          onChange={setResolution}
           className="w-44"
-        >
-          <option value="">{t('tasks.problems.allResolutions')}</option>
-          {PROBLEM_RESOLUTIONS.map((r) => (
-            <option key={r} value={r}>
-              {t(`tasks.resolutions.${r}`)}
-            </option>
-          ))}
-        </NativeSelect>
+        />
         <div className="flex h-9 items-center gap-2">
           <Checkbox id="problems-show-cleared" checked={showCleared} onCheckedChange={(c) => setShowCleared(c === true)} />
           <Label htmlFor="problems-show-cleared" className="font-normal">

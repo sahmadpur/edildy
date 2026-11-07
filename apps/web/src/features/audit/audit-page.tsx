@@ -1,8 +1,8 @@
-import type { AuditEntryDto } from '@taskop/contracts';
+import { type AuditEntryDto, toListParam } from '@taskop/contracts';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Fragment, useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,15 +33,15 @@ export function AuditPage() {
   const { t } = useTranslation();
   const formatDateTime = useFormatDateTime();
   const [action, setAction] = useState('');
-  const [entityType, setEntityType] = useState('');
-  const [client, setClient] = useState<'' | (typeof CLIENTS)[number]>('');
+  const [entityType, setEntityType] = useState<string[]>([]);
+  const [client, setClient] = useState<string[]>([]);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [open, setOpen] = useState<string | null>(null);
   const filters = {
     action: useDeferredValue(action.trim()) || undefined,
-    entityType: entityType || undefined,
-    client: client || undefined,
+    entityType: toListParam(entityType),
+    client: toListParam(client),
     from: dayBoundary(from, false),
     to: dayBoundary(to, true),
   };
@@ -61,37 +61,31 @@ export function AuditPage() {
 
   return (
     <div>
-      <PageHeader title={t('audit.title')} />
+      <PageHeader title={t('audit.title')} description={t('pages.auditLog')} />
       <div className="mb-4 grid gap-3 sm:grid-cols-5">
         <div className="grid gap-1.5">
           <Label htmlFor="f-action">{t('audit.filters.action')}</Label>
           <Input id="f-action" value={action} onChange={(e) => setAction(e.target.value)} />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="f-entity">{t('audit.filters.entityType')}</Label>
-          <NativeSelect id="f-entity" value={entityType} onChange={(e) => setEntityType(e.target.value)}>
-            <option value="">{t('common.all')}</option>
-            {ENTITY_TYPES.map((et) => (
-              <option key={et} value={et}>
-                {t(`audit.entityTypes.${et}`)}
-              </option>
-            ))}
-          </NativeSelect>
+          <Label>{t('audit.filters.entityType')}</Label>
+          <MultiSelectFilter
+            label={t('audit.filters.entityType')}
+            allLabel={t('common.all')}
+            options={ENTITY_TYPES.map((et) => ({ value: et, label: t(`audit.entityTypes.${et}`) }))}
+            value={entityType}
+            onChange={setEntityType}
+          />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="f-client">{t('audit.filters.client')}</Label>
-          <NativeSelect
-            id="f-client"
+          <Label>{t('audit.filters.client')}</Label>
+          <MultiSelectFilter
+            label={t('audit.filters.client')}
+            allLabel={t('common.all')}
+            options={CLIENTS.map((c) => ({ value: c, label: t(`audit.clients.${c}`) }))}
             value={client}
-            onChange={(e) => setClient(e.target.value as '' | (typeof CLIENTS)[number])}
-          >
-            <option value="">{t('common.all')}</option>
-            {CLIENTS.map((c) => (
-              <option key={c} value={c}>
-                {t(`audit.clients.${c}`)}
-              </option>
-            ))}
-          </NativeSelect>
+            onChange={setClient}
+          />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="f-from">{t('audit.filters.from')}</Label>

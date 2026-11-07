@@ -13,6 +13,7 @@ import mail from './mail.js';
 import mobile from './mobile.js';
 import nav from './nav.js';
 import notifications from './notifications.js';
+import pages from './pages.js';
 import platform from './platform.js';
 import reports from './reports.js';
 import roles from './roles.js';
@@ -24,4 +25,4 @@ import teams from './teams.js';
 import users from './users.js';
 
 // Mirrors az/index.ts: every namespace with the same keys (checked by `satisfies` here and by i18n.test.ts at runtime).
-export const ru = { common, errors, executions, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, platform, reports, roles, scheduling, settings, sites, tasks, teams, users } satisfies Shape<Translations>;
+export const ru = { common, errors, executions, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, pages, platform, reports, roles, scheduling, settings, sites, tasks, teams, users } satisfies Shape<Translations>;

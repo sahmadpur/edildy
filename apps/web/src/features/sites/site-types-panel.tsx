@@ -1,9 +1,9 @@
-import { Power, RotateCcw } from 'lucide-react';
 import type { SiteTypeDto } from '@taskop/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ConfirmButton } from '@/components/confirm-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,18 +37,21 @@ export function SiteTypesPanel({ types, canManage }: { types: SiteTypeDto[]; can
             <span className={ty.active ? '' : 'text-muted-foreground line-through'}>{ty.name}</span>
             <div className="flex items-center gap-2">
               {!ty.active && <Badge variant="secondary">{t('common.inactive')}</Badge>}
-              {canManage && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-7"
-                  aria-label={ty.active ? t('common.deactivate') : t('common.reactivate')}
-                  title={ty.active ? t('common.deactivate') : t('common.reactivate')}
-                  onClick={() => toggle.mutate(ty)}
-                >
-                  {ty.active ? <Power className="size-4" /> : <RotateCcw className="size-4" />}
-                </Button>
-              )}
+              {canManage &&
+                (ty.active ? (
+                  <ConfirmButton
+                    size="xs"
+                    variant="ghost"
+                    label={t('common.deactivate')}
+                    title={t('common.deactivate')}
+                    description={t('sites.types.confirmDeactivate', { name: ty.name })}
+                    onConfirm={() => toggle.mutateAsync(ty).then(() => undefined, () => undefined)}
+                  />
+                ) : (
+                  <Button size="xs" variant="ghost" onClick={() => toggle.mutate(ty)}>
+                    {t('common.reactivate')}
+                  </Button>
+                ))}
             </div>
           </li>
         ))}

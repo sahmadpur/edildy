@@ -10,8 +10,8 @@ export default {
       allAuditors: 'Все аудиторы',
       result: 'Результат',
       allResults: 'Все результаты',
-      from: 'Дата начала',
-      to: 'Дата окончания',
+      from: 'С',
+      to: 'По',
     },
     range: {
       incomplete: 'Выберите и дату начала, и дату окончания.',

@@ -1,6 +1,7 @@
 export default {
   title: 'Teams',
-  add: 'Create team',
+  add: 'New team',
+  confirmDeactivate: 'Deactivate the team «{{name}}»? Members and past tasks are not changed.',
   name: 'Name',
   description: 'Description',
   members: 'Members',

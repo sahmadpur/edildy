@@ -61,5 +61,8 @@ export function problemRangeError(from: string, to: string): string | null {
   return null;
 }
 
-/** The last 7 days of the tenant's calendar, today included. `today` must be the tenant-local date. */
-export const defaultProblemRange = (today: string): { from: string; to: string } => ({ from: addDays(today, -6), to: today });
+/**
+ * The last 30 days of the tenant's calendar, today included: the same default as Hesabatlar (`last_30`), so the two
+ * pages list the same problems when first opened (feedback 2026-11-07). `today` must be the tenant-local date.
+ */
+export const defaultProblemRange = (today: string): { from: string; to: string } => ({ from: addDays(today, -29), to: today });

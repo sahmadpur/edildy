@@ -106,7 +106,7 @@ describe('report exports (spec §5.4)', () => {
       {
         entity_type: 'report',
         entity_id: null,
-        after: { kind: 'runs', format: 'csv', filters: { from: '2026-11-02', to: '2026-11-04', siteId: w.sites.branchA, userId: null, checklistId: null, bucket: 'missed', auditState: null, severity: null }, rows: 2 },
+        after: { kind: 'runs', format: 'csv', filters: { from: '2026-11-02', to: '2026-11-04', siteId: [w.sites.branchA], userId: null, checklistId: null, bucket: 'missed', auditState: null, severity: null }, rows: 2 },
       },
     ]);
   });

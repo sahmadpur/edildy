@@ -13,7 +13,7 @@ export function MessagesPage() {
   const search = useSearch({ strict: false }) as MessagesSearch;
   return (
     <div className="grid gap-6">
-      <PageHeader title={t('nav.messages')} />
+      <PageHeader title={t('nav.messages')} description={t('pages.messages')} />
       <Card>
         <CardHeader>
           <CardTitle>{t('notifications.messages.compose')}</CardTitle>

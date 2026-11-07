@@ -8,13 +8,15 @@ interface Props {
   /** `primary` is the one main action on a screen; `outline` is the quiet secondary (a grey fill, no border). */
   variant?: 'primary' | 'outline' | 'danger';
   accessibilityLabel?: string;
+  testID?: string;
 }
 
 /** The app's button: 52 px tall and 17 px semibold, so it is readable in sunlight and pressable with gloves. */
-export function PrimaryButton({ title, onPress, disabled, variant = 'primary', accessibilityLabel }: Props) {
+export function PrimaryButton({ title, onPress, disabled, variant = 'primary', accessibilityLabel, testID }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
+      testID={testID}
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled: Boolean(disabled) }}
       disabled={disabled}

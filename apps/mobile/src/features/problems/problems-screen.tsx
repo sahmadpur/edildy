@@ -3,11 +3,10 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { headerBlock } from '@/components/chip';
 import { mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { SyncIndicator } from '@/features/sync/sync-indicator';
+import { TabHeader } from '@/components/tab-header';
 import { api, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
@@ -32,17 +31,8 @@ export function ProblemsScreen() {
 
   return (
     <Screen>
-      <View style={headerBlock.block}>
-        <View style={styles.top}>
-          <Text accessibilityRole="header" style={[headerBlock.title, styles.title]}>
-            {t('mobile.problems.title')}
-          </Text>
-          <View style={styles.tools}>
-            <SyncIndicator compact />
-          </View>
-        </View>
-        {sites && sites.length === 0 ? <Text style={headerBlock.subtitle}>{t('mobile.problems.noSites')}</Text> : null}
-      </View>
+      <TabHeader title={t('mobile.problems.title')} />
+      {sites && sites.length === 0 ? <Text style={styles.subtitle}>{t('mobile.problems.noSites')}</Text> : null}
       {sites && sites.length > 0 ? (
         <PrimaryButton title={`+ ${t('mobile.problems.report')}`} accessibilityLabel={t('mobile.problems.report')} onPress={() => router.push({ pathname: '/problems/new', params: { n: services.newId() } })} />
       ) : null}
@@ -144,9 +134,7 @@ function Segments<K extends string>({ options, value, onChange }: { options: { k
 }
 
 const styles = StyleSheet.create({
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  title: { flexShrink: 1 },
-  tools: { flexDirection: 'row', alignItems: 'center', marginRight: -spacing.sm },
+  subtitle: { fontFamily: font, fontSize: type.base, lineHeight: 21, color: colors.muted },
   segments: { flexDirection: 'row', backgroundColor: colors.fill, borderRadius: 10, padding: 3 },
   segment: { flex: 1, minHeight: 34, paddingHorizontal: spacing.sm, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   segmentOn: { backgroundColor: colors.surface, shadowColor: colors.text, shadowOpacity: 0.08, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },

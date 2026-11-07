@@ -10,8 +10,8 @@ export default {
       allAuditors: 'All auditors',
       result: 'Result',
       allResults: 'All results',
-      from: 'Start date',
-      to: 'End date',
+      from: 'From',
+      to: 'To',
     },
     range: {
       incomplete: 'Select both a start and an end date.',

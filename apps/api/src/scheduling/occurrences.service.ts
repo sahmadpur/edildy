@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { OccurrenceDetail, OccurrenceDto, OccurrenceStatus, Page } from '@taskop/contracts';
 import { and, asc, between, eq, getTableColumns, inArray, type SQL, sql } from 'drizzle-orm';
+import { inSiteSubtrees, sqlList } from '../common/sql';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
 import type { Principal } from '../common/request';
@@ -37,8 +38,8 @@ export class OccurrencesService {
 
   list(a: Actor, q: OccurrenceListQueryDto): Promise<Page<OccurrenceDto>> {
     const conds: (SQL | undefined)[] = [this.scope.occurrences(a)];
-    if (q.siteId) conds.push(eq(occurrences.siteId, q.siteId));
-    if (q.checklistId) conds.push(eq(occurrences.checklistId, q.checklistId));
+    if (q.siteId) conds.push(inSiteSubtrees(occurrences.siteId, q.siteId));
+    if (q.checklistId) conds.push(inArray(occurrences.checklistId, q.checklistId));
     if (q.assignmentId) conds.push(eq(occurrences.assignmentId, q.assignmentId));
     if (q.assigneeId) conds.push(this.hasAssignee(q.assigneeId));
     return this.page(q, conds);
@@ -90,8 +91,9 @@ export class OccurrencesService {
     return this.get(a, id);
   }
 
-  private hasAssignee(userId: string): SQL {
-    return sql`exists (select 1 from occurrence_assignees oa where oa.occurrence_id = ${occurrences.id} and oa.user_id = ${userId})`;
+  private hasAssignee(userIds: string | readonly string[]): SQL {
+    const ids = typeof userIds === 'string' ? [userIds] : userIds;
+    return sql`exists (select 1 from occurrence_assignees oa where oa.occurrence_id = ${occurrences.id} and oa.user_id in ${sqlList(ids)})`;
   }
 
   /** Keyset pagination on (starts_at, id). */

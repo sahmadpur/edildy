@@ -42,7 +42,7 @@ describe('TemplatesPage', () => {
     ws.templates.create.mockResolvedValue({ id: 't2' });
     renderInWorkspace(<TemplatesPage />, ws);
     await userEvent.click(screen.getByRole('tab', { name: 'Bizim şablonlar' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Aktiv et' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Bərpa et' }));
     expect(ws.templates.reactivate).toHaveBeenCalledWith('t1');
     await userEvent.click(screen.getByRole('button', { name: 'Yeni şablon' }));
     await userEvent.type(screen.getByLabelText('Ad'), 'Növbə təhvili');
@@ -63,7 +63,7 @@ describe('TemplatesPage', () => {
     await userEvent.click(screen.getByRole('tab', { name: 'Bizim şablonlar' }));
     await screen.findByText('Bizim');
     expect(screen.queryByRole('button', { name: 'Yeni şablon' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Deaktiv et' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Aktiv et' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ləğv et' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Bərpa et' })).toBeNull();
   });
 });

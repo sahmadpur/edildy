@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { type ReportFilters, reportRangeTooLong } from '@taskop/contracts';
-import { eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
 import { DbService } from '../db/db.service';
-import { sites, tenants } from '../db/schema';
+import { tenants } from '../db/schema';
 
 /** The shared filters (spec §5.2) with what every query needs from the tenant. */
 export interface ResolvedFilters extends ReportFilters {
-  /** The `siteId` site's ltree path; null when it names no site of this tenant (the filter then matches nothing); absent without siteId. */
-  sitePath?: string | null;
   timezone: string;
   tenantName: string;
   /** The instant "due" is measured against: one Clock reading per request (Spec decision 2). */
@@ -38,10 +35,6 @@ export class ReportFilterResolver {
       tenantName: tenant!.name,
       now: this.clock.now(),
     };
-    if (q.siteId) {
-      const [site] = await tx.select({ path: sites.path }).from(sites).where(eq(sites.id, q.siteId));
-      f.sitePath = site?.path ?? null;
-    }
     return f;
   }
 }

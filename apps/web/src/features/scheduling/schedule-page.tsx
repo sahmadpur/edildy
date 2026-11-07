@@ -1,14 +1,14 @@
-import { addDays, type ExecutionBrief, OCCURRENCE_STATUSES, type OccurrenceDto } from '@taskop/contracts';
+import { addDays, type ExecutionBrief, OCCURRENCE_STATUSES, type OccurrenceDto, toListParam } from '@taskop/contracts';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatPercent } from '@/features/executions/labels';
 import { useSites } from '@/features/sites/queries';
 import { errorText } from '@/lib/errors';
-import { formatLocalDate, occurrenceVariant, useTenantToday, useTimeFormat } from './labels';
+import { formatLocalDate, occurrenceVariant, useTenantToday, useWindowText } from './labels';
 import { OccurrenceDialog, type OccurrenceTab } from './occurrence-dialog';
 import { useOccurrences } from './queries';
 import { weekStartOf } from './roster-grid';
@@ -19,18 +19,18 @@ export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?
   const { t } = useTranslation();
   const locale = useLocale();
   const today = useTenantToday();
-  const time = useTimeFormat();
+  const windowText = useWindowText();
   const sites = useSites();
   const [view, setView] = useState<'day' | 'week'>('week');
   const [anchor, setAnchor] = useState(props.initialDate ?? today);
-  const [siteId, setSiteId] = useState('');
-  const [status, setStatus] = useState('');
+  const [siteId, setSiteId] = useState<string[]>([]);
+  const [status, setStatus] = useState<string[]>([]);
   // A link (e.g. from the problems page) may name an occurrence to open right away.
   const [selected, setSelected] = useState<string | null>(props.initialOccurrenceId ?? null);
   const from = view === 'day' ? anchor : weekStartOf(anchor);
   const to = view === 'day' ? anchor : addDays(from, 6);
   const step = view === 'day' ? 1 : 7;
-  const occurrences = useOccurrences({ from, to, siteId: siteId || undefined, status: status || undefined });
+  const occurrences = useOccurrences({ from, to, siteId: toListParam(siteId), status: toListParam(status) });
   const groups = useMemo(() => {
     const byDay = new Map<string, OccurrenceDto[]>();
     for (const o of occurrences.data ?? []) byDay.set(o.localDate, [...(byDay.get(o.localDate) ?? []), o]);
@@ -40,7 +40,7 @@ export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?
   return (
     <div className="grid gap-4">
       <div>
-        <PageHeader title={t('nav.assignments')} />
+        <PageHeader title={t('nav.assignments')} description={t('pages.schedule')} />
         {props.tabs}
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -59,22 +59,22 @@ export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?
           {t('scheduling.schedule.next')}
         </Button>
         <span className="text-sm">{from === to ? formatLocalDate(from, locale) : `${formatLocalDate(from, locale)} – ${formatLocalDate(to, locale)}`}</span>
-        <NativeSelect aria-label={t('scheduling.schedule.site')} value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-56">
-          <option value="">{t('scheduling.schedule.allSites')}</option>
-          {(sites.data ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect aria-label={t('scheduling.schedule.status')} value={status} onChange={(e) => setStatus(e.target.value)} className="w-48">
-          <option value="">{t('scheduling.schedule.allStatuses')}</option>
-          {OCCURRENCE_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(`scheduling.statuses.${s}`)}
-            </option>
-          ))}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('scheduling.schedule.site')}
+          allLabel={t('scheduling.schedule.allSites')}
+          options={(sites.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
+          value={siteId}
+          onChange={setSiteId}
+          className="w-56"
+        />
+        <MultiSelectFilter
+          label={t('scheduling.schedule.status')}
+          allLabel={t('scheduling.schedule.allStatuses')}
+          options={OCCURRENCE_STATUSES.map((s) => ({ value: s, label: t(`scheduling.statuses.${s}`) }))}
+          value={status}
+          onChange={setStatus}
+          className="w-48"
+        />
       </div>
       {occurrences.error && <p className="text-destructive">{errorText(t, occurrences.error)}</p>}
       {occurrences.isSuccess && groups.length === 0 && <EmptyState title={t('scheduling.schedule.empty')} />}
@@ -90,7 +90,7 @@ export function SchedulePage(props: { initialDate?: string; initialOccurrenceId?
                   className="bg-card shadow-card hover:bg-muted/60 flex w-full flex-wrap items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm"
                 >
                   <span className="tabular-nums">
-                    {time(o.startsAt)}–{time(o.dueAt)}
+                    {windowText(o.startsAt, o.dueAt)}
                   </span>
                   <span className="font-medium">{o.checklistName}</span>
                   {o.assignmentName && <span className="text-muted-foreground">{o.assignmentName}</span>}

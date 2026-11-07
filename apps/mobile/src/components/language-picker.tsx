@@ -11,10 +11,19 @@ import { colors, font, radius, spacing, type } from '@/lib/theme';
  * a chevron that opens a small menu of flags and names (`dropdown`, the sign-in screen and the profile). The choice
  * is stored on the phone and, when signed in, on the profile. The accessibility label is always the name.
  */
-export function LanguagePicker({ testID = 'language-picker', variant = 'names' }: { testID?: string; variant?: 'names' | 'flags' | 'dropdown' }) {
+export function LanguagePicker({
+  testID = 'language-picker',
+  variant = 'names',
+  tone = 'dark',
+}: {
+  testID?: string;
+  variant?: 'names' | 'flags' | 'dropdown';
+  /** `light`: on the deep tab header, the dropdown trigger is a translucent chip. */
+  tone?: 'dark' | 'light';
+}) {
   const { t } = useTranslation();
   const current = useLocale();
-  if (variant === 'dropdown') return <LanguageDropdown testID={testID} />;
+  if (variant === 'dropdown') return <LanguageDropdown testID={testID} tone={tone} />;
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={t('common.language')} testID={testID} style={styles.row}>
       {LANGUAGES.map((lng: Language) => {
@@ -38,7 +47,7 @@ export function LanguagePicker({ testID = 'language-picker', variant = 'names' }
 }
 
 /** The current flag and a chevron; the menu opens under it, right-aligned, and closes on a choice or a tap outside. */
-function LanguageDropdown({ testID }: { testID: string }) {
+function LanguageDropdown({ testID, tone }: { testID: string; tone: 'dark' | 'light' }) {
   const { t } = useTranslation();
   const current = useLocale();
   const { width } = useWindowDimensions();
@@ -62,10 +71,10 @@ function LanguageDropdown({ testID }: { testID: string }) {
         accessibilityState={{ expanded: open }}
         testID={testID}
         onPress={show}
-        style={({ pressed }) => [styles.trigger, pressed && styles.triggerPressed]}
+        style={({ pressed }) => [styles.trigger, tone === 'light' && styles.triggerLight, pressed && (tone === 'light' ? styles.triggerLightPressed : styles.triggerPressed)]}
       >
         <Text style={styles.triggerFlag}>{LANGUAGE_FLAGS[current]}</Text>
-        <Ionicons name="chevron-down" size={14} color={colors.muted} />
+        <Ionicons name="chevron-down" size={14} color={tone === 'light' ? colors.onDeepMuted : colors.muted} />
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} style={StyleSheet.absoluteFill} onPress={() => setOpen(false)} />
@@ -102,6 +111,8 @@ function LanguageDropdown({ testID }: { testID: string }) {
 const styles = StyleSheet.create({
   trigger: { minHeight: 44, minWidth: 44, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, borderRadius: 10, backgroundColor: colors.fill },
   triggerPressed: { backgroundColor: colors.border },
+  triggerLight: { minHeight: 34, paddingHorizontal: 6, backgroundColor: 'rgba(255,255,255,0.12)' },
+  triggerLightPressed: { backgroundColor: 'rgba(255,255,255,0.22)' },
   triggerFlag: { fontSize: 20, lineHeight: 26 },
   menu: {
     position: 'absolute',

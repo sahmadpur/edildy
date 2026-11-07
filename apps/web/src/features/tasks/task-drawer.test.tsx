@@ -72,14 +72,14 @@ describe('TaskDrawer', () => {
     let finish: (t: TaskDetail) => void = () => {};
     mocks.api.tasks.cancel.mockImplementation(() => new Promise((resolve) => (finish = resolve)));
     renderWithRouter(<TaskDrawer id="t1" onClose={vi.fn()} />);
-    const edit = await screen.findByRole('button', { name: 'Redaktə et' });
+    const edit = await screen.findByRole('button', { name: 'Düzəliş et' });
     expect(edit).toBeEnabled();
     await userEvent.type(screen.getByLabelText('Ləğv səbəbi'), 'Lazım deyil');
     await userEvent.click(screen.getByRole('button', { name: 'Tapşırığı ləğv et' }));
     await waitFor(() => expect(mocks.api.tasks.cancel).toHaveBeenCalled());
     expect(edit).toBeDisabled();
     finish(taskDetail({ status: 'cancelled' }));
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Redaktə et' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Düzəliş et' })).not.toBeInTheDocument());
   });
 
   it('asks again when it opens, also when the cached task is still fresh (the phone moves tasks on its own)', async () => {
@@ -153,9 +153,9 @@ describe('TaskDrawer', () => {
     mocks.api.tasks.get.mockResolvedValue(taskDetail({ status: 'accepted' }));
     mocks.api.tasks.cancel.mockResolvedValue(taskDetail({ status: 'cancelled', cancelReason: 'Lazım deyil', cancelledAt: AT }));
     renderWithRouter(<TaskDrawer id="t1" onClose={vi.fn()} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Redaktə et' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Düzəliş et' }));
     expect(await screen.findByRole('dialog', { name: 'Tapşırığı redaktə et' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
+    await userEvent.click(screen.getByRole('button', { name: 'İmtina et' }));
     await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Tapşırığı redaktə et' })).not.toBeInTheDocument());
     const cancel = screen.getByRole('button', { name: 'Tapşırığı ləğv et' });
     expect(cancel).toBeDisabled();
@@ -163,20 +163,20 @@ describe('TaskDrawer', () => {
     await userEvent.click(cancel);
     await waitFor(() => expect(mocks.api.tasks.cancel).toHaveBeenCalledWith('t1', { reason: 'Lazım deyil' }));
     expect(await screen.findByText('Ləğv səbəbi: Lazım deyil')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Redaktə et' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Düzəliş et' })).not.toBeInTheDocument();
   });
 
   it('offers only the actions the caller may take, and warns about an inactive assignee', async () => {
     mocks.api.tasks.get.mockResolvedValue(taskDetail({ status: 'awaiting_review', canManage: false, canReview: false, assigneeInactive: true }));
     renderWithRouter(<TaskDrawer id="t1" onClose={vi.fn()} />);
     expect(await screen.findByText('İcraçı deaktiv edilib. Tapşırığı başqasına təyin edin.')).toBeInTheDocument();
-    for (const name of ['Təsdiqlə', 'Geri qaytar', 'Redaktə et', 'Tapşırığı ləğv et']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    for (const name of ['Təsdiqlə', 'Geri qaytar', 'Düzəliş et', 'Tapşırığı ləğv et']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     cleanup();
     // The creator without tasks.manage may still review (spec §6.1).
     mocks.api.tasks.get.mockResolvedValue(taskDetail({ status: 'awaiting_review', canManage: false, canReview: true }));
     renderWithRouter(<TaskDrawer id="t1" onClose={vi.fn()} />);
     expect(await screen.findByRole('button', { name: 'Təsdiqlə' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Redaktə et' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Düzəliş et' })).not.toBeInTheDocument();
   });
 
   it('shows the error and the current task when someone changed it meanwhile', async () => {

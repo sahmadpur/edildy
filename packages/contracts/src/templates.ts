@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { checklistContentSchema } from './checklist-content.js';
-import { idSchema, isoDateTimeSchema } from './common.js';
+import { idSchema, isoDateTimeSchema, listParam } from './common.js';
 
 export const TEMPLATE_CATEGORIES = ['cleaning', 'restaurant', 'retail', 'safety', 'production', 'warehouse', 'quality', 'maintenance', 'other'] as const;
 export const templateCategorySchema = z.enum(TEMPLATE_CATEGORIES);
@@ -42,7 +42,7 @@ export type GlobalTemplateDto = z.infer<typeof globalTemplateSchema>;
 
 export const templateListQuerySchema = z.object({
   source: templateSourceSchema.optional(),
-  category: templateCategorySchema.optional(),
+  category: listParam(templateCategorySchema).optional(),
   status: statusSchema.optional(),
   q: z.string().trim().max(100).optional(),
 });

@@ -1,6 +1,6 @@
 export default {
   title: 'Роли',
-  add: 'Создать роль',
+  add: 'Новая роль',
   name: 'Название роли',
   scope: 'Область данных',
   permissions: 'Права',

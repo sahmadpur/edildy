@@ -6,7 +6,7 @@ export default {
   add: 'Добавить',
   edit: 'Редактировать',
   deactivate: 'Деактивировать',
-  reactivate: 'Активировать',
+  reactivate: 'Восстановить',
   active: 'Активен',
   inactive: 'Неактивен',
   loading: 'Загрузка…',

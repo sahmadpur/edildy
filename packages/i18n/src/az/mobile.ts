@@ -17,10 +17,18 @@ export default {
   },
   home: {
     greeting: 'Salam, {{name}}!',
-    myTasks: 'Mənim tapşırıqlarım',
+    myTasks: 'Tapşırıqlar',
     overdue: 'Gecikən',
-    completed: 'Tamamlanan (bu gün)',
-    issues: 'Problemlər (bu gün)',
+    completed: 'Tamamlanan',
+    upcoming: 'Gələcək',
+    /** Older finished runs, paged from the server (the phone keeps about a week). */
+    archive: {
+      more: 'Daha əvvəlkilər',
+      none: 'Daha köhnə yoxlama yoxdur.',
+      offline: 'Köhnə yoxlamalara baxmaq üçün internet lazımdır.',
+      title: 'Arxiv',
+      subtitle: 'Arxiv · {{date}}',
+    },
     offline: 'Oflayn rejim — internet bərpa olunanda məlumatlar yenilənəcək.',
   },
   profile: {
@@ -122,7 +130,7 @@ export default {
       notFound: 'Yer tapılmadı',
       retry: 'Yenidən cəhd et',
       denied: 'Yer icazəsi verilməyib.',
-      openSettings: 'Parametrləri aç',
+      openSettings: 'Telefon ayarlarını aç',
       unknown: 'Yer məlum deyil',
       sendWithout: 'Yer olmadan göndərilsin?',
       sendAnyway: 'Göndər',
@@ -163,6 +171,7 @@ export default {
     start: 'Başla',
     continue: 'Davam et',
     view: 'Bax',
+    preview: 'Sual siyahısına bax',
     emptySection: 'Burada heç nə yoxdur.',
     startBlocked: {
       notYetOpen: 'İcra vaxtı hələ başlamayıb.',
@@ -196,6 +205,9 @@ export default {
     notFound: 'İcra tapılmadı.',
     flagProblem: 'Problem qeyd et',
     problemFlagged: 'Problem qeyd olunub',
+    previewBanner: 'Bu yoxlama {{time}}-da açılacaq. İndi yalnız suallara baxa bilərsiniz.',
+    previewOpen: 'Yoxlama açıldı — başlaya bilərsiniz.',
+    back: 'Geri',
   },
   evidence: {
     camera: 'Kamera',
@@ -233,7 +245,7 @@ export default {
     noScore: 'Bal hesablanmır',
     problems: 'Problemlər: {{count}}',
     complete: 'Tamamla',
-    completed: 'Checklist tamamlandı.',
+    completed: 'Yoxlama bitdi.',
     missingKinds: {
       answer: 'Cavab verilməyib',
       photo: 'Foto lazımdır',
@@ -308,7 +320,7 @@ export default {
       push: 'Push bildirişləri',
       pushStates: { granted: 'Açıqdır', denied: 'Bağlıdır', undetermined: 'Hələ soruşulmayıb', unavailable: 'Bu cihazda dəstəklənmir' },
       deniedHint: 'Push bildirişlərini telefonun ayarlarından açın.',
-      openSettings: 'Ayarları aç',
+      openSettings: 'Telefon ayarlarını aç',
     },
   },
   team: {

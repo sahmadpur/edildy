@@ -47,7 +47,7 @@ describe('TeamsPage saving', () => {
     mocks.api.teams.update.mockResolvedValue(team({ id: 'new', name: 'Yeni', memberIds: [] }));
     mocks.api.teams.setMembers.mockRejectedValue(new Error('boom'));
     renderWithProviders(<TeamsPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Komanda yarat' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Yeni komanda' }));
     await userEvent.type(await screen.findByLabelText('Ad'), 'Yeni');
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Elvin' }));
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
@@ -63,7 +63,7 @@ describe('TeamsPage saving', () => {
     mocks.api.teams.list.mockResolvedValue([team()]);
     mocks.api.teams.update.mockResolvedValue(team({ name: 'Alfa2' }));
     renderWithProviders(<TeamsPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Redaktə et' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Düzəliş et' }));
     const name = await screen.findByLabelText('Ad');
     await userEvent.clear(name);
     await userEvent.type(name, 'Alfa2');
@@ -74,7 +74,7 @@ describe('TeamsPage saving', () => {
     expect(mocks.api.teams.setMembers).not.toHaveBeenCalled();
   });
 
-  it('shows each team as a box with icon-only edit and deactivate actions', async () => {
+  it('shows each team as a box with worded edit and deactivate actions, asking before deactivating', async () => {
     mocks.api.teams.list.mockResolvedValue([team({ description: 'Səhər növbəsi' })]);
     mocks.api.teams.update.mockResolvedValue(team({ active: false }));
     renderWithProviders(<TeamsPage />);
@@ -82,10 +82,10 @@ describe('TeamsPage saving', () => {
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.getByText('1 üzv')).toBeInTheDocument();
     expect(screen.getByText('Səhər növbəsi')).toBeInTheDocument();
-    const edit = screen.getByRole('button', { name: 'Redaktə et' });
-    expect(edit).toHaveTextContent('');
-    expect(edit).toHaveAttribute('title', 'Redaktə et');
-    await userEvent.click(screen.getByRole('button', { name: 'Deaktiv et' }));
+    expect(screen.getByRole('button', { name: 'Düzəliş et' })).toHaveTextContent('Düzəliş et');
+    await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
+    expect(screen.getByText('«Alfa» komandası ləğv edilsin? Üzvlər və köhnə tapşırıqlar dəyişməyəcək.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
     await waitFor(() => expect(mocks.api.teams.update).toHaveBeenCalledWith('t1', { active: false }));
   });
 });

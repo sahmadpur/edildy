@@ -24,7 +24,7 @@ export function NotificationsBridge() {
     () =>
       startTapRouting({
         events: notificationEvents,
-        ctx: createRouteContext(services, () => canManageTasks.current, () => seesTeam.current),
+        ctx: createRouteContext(services, () => canManageTasks.current, () => seesTeam.current, (id) => api.notifications.markRead(id)),
         navigate: (route) => router.push(route),
       }),
     [services],

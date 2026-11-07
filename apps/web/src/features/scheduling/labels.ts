@@ -2,6 +2,7 @@ import {
   type AssignmentStatus,
   CANCEL_REASON_CODES,
   describeSchedule,
+  isWholeDayWindow,
   localDateOf,
   type OccurrenceStatus,
   type Recurrence,
@@ -10,6 +11,7 @@ import {
 import { formatLocalDate as formatLocalDateIn, formatTime } from '@taskop/i18n';
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMe } from '@/lib/session';
 import { useLocale } from '@/lib/i18n';
 
@@ -49,6 +51,17 @@ export function useTimeFormat(): (iso: string) => string {
   const { tenant } = useMe();
   const locale = useLocale();
   return useCallback((iso: string) => formatTime(iso, { locale, timeZone: tenant.timezone }), [locale, tenant.timezone]);
+}
+
+/** A run's window as "08:00–10:00", or "İstənilən vaxt" for a whole local day (feedback 2026-11-07). */
+export function useWindowText(): (startsAt: string, dueAt: string) => string {
+  const { tenant } = useMe();
+  const { t } = useTranslation();
+  const time = useTimeFormat();
+  return useCallback(
+    (startsAt: string, dueAt: string) => (isWholeDayWindow(startsAt, dueAt, tenant.timezone) ? t('scheduling.builder.modes.anytime') : `${time(startsAt)}–${time(dueAt)}`),
+    [t, time, tenant.timezone],
+  );
 }
 
 export function useTenantToday(): string {

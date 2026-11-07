@@ -11,6 +11,7 @@ import mail from './mail.js';
 import mobile from './mobile.js';
 import nav from './nav.js';
 import notifications from './notifications.js';
+import pages from './pages.js';
 import platform from './platform.js';
 import reports from './reports.js';
 import roles from './roles.js';
@@ -22,5 +23,5 @@ import teams from './teams.js';
 import users from './users.js';
 
 // Each UI namespace is a file in this folder; register new ones here.
-export const az = { common, errors, executions, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, platform, reports, roles, scheduling, settings, sites, tasks, teams, users } as const;
+export const az = { common, errors, executions, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, pages, platform, reports, roles, scheduling, settings, sites, tasks, teams, users } as const;
 export type Translations = typeof az;

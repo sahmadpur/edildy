@@ -102,3 +102,17 @@ export async function openSettings(): Promise<void> {
     console.warn('[push] Could not open the settings', message(e));
   }
 }
+
+/**
+ * Nov 2026 feedback point 15: once a run is finished, its reminders leave the phone's notification tray too (the inbox
+ * rows are marked read by the API). Best effort: nothing to do on a simulator or without permission.
+ */
+export async function dismissPresentedFor(targetId: string): Promise<void> {
+  try {
+    const shown = await Notifications.getPresentedNotificationsAsync();
+    const mine = shown.filter((n) => (n.request.content.data as { targetId?: unknown } | null)?.targetId === targetId);
+    await Promise.all(mine.map((n) => Notifications.dismissNotificationAsync(n.request.identifier)));
+  } catch (e) {
+    console.warn('[push] Could not clear finished notifications', message(e));
+  }
+}

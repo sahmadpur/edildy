@@ -890,6 +890,13 @@ describe('audit and correction translations', () => {
     expect(az.notifications.templates['audit.finished'].body).toContain('{{result}}');
   });
 
+  it('names the finished-run notification in every language, with the executor in its text', () => {
+    expect(az.notifications.templates['checklist.completed']).toEqual({ title: 'Yoxlama bitdi', body: '{{checklist}} — {{site}}: {{executor}}' });
+    expect(en.notifications.templates['checklist.completed'].title).toBe('Check finished');
+    expect(ru.notifications.templates['checklist.completed'].title).toBe('Проверка завершена');
+    for (const t of [az, en, ru]) expect(t.notifications.types['checklist.completed']).toBe(t.notifications.templates['checklist.completed'].title);
+  });
+
   it('fills placeholders and leaves unknown ones visible', () => {
     expect(interpolate('{{a}} və {{b}}', { a: 1, b: 'iki' })).toBe('1 və iki');
     expect(interpolate('{{a}} {{x}}', { a: 'A' })).toBe('A {{x}}');

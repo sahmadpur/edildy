@@ -8,6 +8,7 @@ import {
   fromDayNumber,
   isoWeekday,
   type LocalDate,
+  localDateOf,
   localDateSchema,
   type LocalTime,
   localTimeSchema,
@@ -66,7 +67,13 @@ export const timingSchema = z.discriminatedUnion('mode', [
     graceMinutes,
   }),
   z.object({ mode: z.literal('shift'), shiftId: idSchema, graceMinutes }),
+  /** "İstənilən vaxt" (feedback 2026-11-07): any time on the scheduled day, local midnight to midnight; no grace. */
+  z.object({ mode: z.literal('anytime') }),
 ]);
+export type TimingMode = Timing['mode'];
+export const TIMING_MODES = ['fixed', 'shift', 'anytime'] as const satisfies readonly TimingMode[];
+/** An "anytime" slot is the whole local day. */
+export const ANYTIME_WINDOW_MINUTES = 1440;
 export type Timing = z.infer<typeof timingSchema>;
 
 export interface ShiftHours {
@@ -90,6 +97,7 @@ export function shiftDurationMinutes(s: ShiftHours): number {
 /** Start → close length of every slot (FR-09.05). */
 export function windowMinutes(timing: Timing, shift: ShiftHours | null): number {
   if (timing.mode === 'fixed') return timing.dueAfterMinutes + timing.graceMinutes;
+  if (timing.mode === 'anytime') return ANYTIME_WINDOW_MINUTES;
   if (!shift) throw new Error('shift timing needs the shift hours');
   return shiftDurationMinutes(shift) + timing.graceMinutes;
 }
@@ -141,11 +149,27 @@ export function slotFor(date: LocalDate, timing: Timing, shift: ShiftHours | nul
     const dueAt = new Date(+startsAt + timing.dueAfterMinutes * 60_000);
     return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + timing.graceMinutes * 60_000) };
   }
+  if (timing.mode === 'anytime') {
+    // Midnight to the next midnight in the tenant's zone: due when the day ends, nothing after.
+    const startsAt = zonedTimeToUtc(date, 0, tz);
+    const dueAt = zonedTimeToUtc(addDays(date, 1), 0, tz);
+    return { localDate: date, startsAt, dueAt, closesAt: dueAt };
+  }
   if (!shift) throw new Error('shift timing needs the shift hours');
   const startsAt = zonedTimeToUtc(date, timeToMinutes(shift.startTime), tz);
   const overnight = timeToMinutes(shift.endTime) <= timeToMinutes(shift.startTime);
   const dueAt = zonedTimeToUtc(overnight ? addDays(date, 1) : date, timeToMinutes(shift.endTime), tz);
   return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + timing.graceMinutes * 60_000) };
+}
+
+/**
+ * Whether a run's window is one whole local day, midnight to midnight: an "İstənilən vaxt" run (or a fixed one set up
+ * the same way). Screens then say "any time" instead of "00:00–00:00".
+ */
+export function isWholeDayWindow(startsAt: string | Date, dueAt: string | Date, tz: string): boolean {
+  const start = new Date(startsAt);
+  const date = localDateOf(start, tz);
+  return +start === +zonedTimeToUtc(date, 0, tz) && +new Date(dueAt) === +zonedTimeToUtc(addDays(date, 1), 0, tz);
 }
 
 export function expandSchedule(r: Recurrence, timing: Timing, shift: ShiftHours | null, tz: string, from: LocalDate, to: LocalDate): Slot[] {

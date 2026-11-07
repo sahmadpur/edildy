@@ -1,9 +1,8 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { headerBlock } from '@/components/chip';
 import { Screen } from '@/components/screen';
-import { SyncIndicator } from '@/features/sync/sync-indicator';
+import { headerAction, TabHeader } from '@/components/tab-header';
 import { useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
@@ -24,24 +23,21 @@ export function TasksScreen() {
   const open = (id: string) => router.push({ pathname: '/task/[id]', params: { id } });
   return (
     <Screen>
-      <View style={headerBlock.block}>
-        <View style={styles.top}>
-          <Text accessibilityRole="header" style={[headerBlock.title, styles.title]}>
-            {t('mobile.tasks.title')}
-          </Text>
-          {canManage ? (
+      <TabHeader
+        title={t('mobile.tasks.title')}
+        action={
+          canManage ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('mobile.tasks.create.open')}
               onPress={() => router.push({ pathname: '/task/new', params: { n: services.newId() } })}
-              style={({ pressed }) => [styles.create, pressed && styles.pressed]}
+              style={({ pressed }) => [headerAction.button, pressed && headerAction.pressed]}
             >
-              <Text style={styles.createText}>{`+ ${t('mobile.tasks.create.open')}`}</Text>
+              <Text style={headerAction.text}>{`+ ${t('mobile.tasks.create.open')}`}</Text>
             </Pressable>
-          ) : null}
-        </View>
-        <SyncIndicator />
-      </View>
+          ) : null
+        }
+      />
       {canManage ? <ReviewSection /> : null}
       {groups ? (
         // Only sections with something in them; one quiet line when there is nothing at all.
@@ -70,11 +66,6 @@ export function TasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  title: { flexShrink: 1 },
-  create: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.xs, marginRight: -spacing.xs, borderRadius: 10 },
-  pressed: { backgroundColor: colors.fill },
-  createText: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.primary },
   group: { gap: spacing.sm },
   sectionRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, marginTop: spacing.xs },
   section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },

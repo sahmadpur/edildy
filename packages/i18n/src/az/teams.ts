@@ -1,6 +1,7 @@
 export default {
   title: 'Komandalar',
-  add: 'Komanda yarat',
+  add: 'Yeni komanda',
+  confirmDeactivate: '«{{name}}» komandası ləğv edilsin? Üzvlər və köhnə tapşırıqlar dəyişməyəcək.',
   name: 'Ad',
   description: 'Təsvir',
   members: 'Üzvlər',

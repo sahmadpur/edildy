@@ -13,6 +13,7 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArchiveHeader } from '@/components/archive-header';
 import { PrimaryButton } from '@/components/primary-button';
 import { claimRejectionText } from '@/features/sync/claim-rejection';
 import { fileNotAcceptedText, notAcceptedText } from '@/features/sync/refusal-text';
@@ -33,6 +34,8 @@ import {
 import { useNow } from '@/offline/hooks';
 import { CaptureModal, pickFromGallery, VideoPreview } from './capture';
 import { ItemField } from './item-field';
+import { RunPreview } from './run-preview';
+import { leaveRun } from './run-nav';
 import { CaptureError } from './media-capture';
 import { type ProblemDraft, ProblemSheet } from './problem-sheet';
 import { reworkComments, reworkOverdue, reworkProgress } from './rework';
@@ -110,13 +113,8 @@ export function ExecutionScreen({
       </Centered>
     );
   }
-  if (data === null) {
-    return (
-      <Centered>
-        <Text style={styles.muted}>{t('mobile.execution.notFound')}</Text>
-      </Centered>
-    );
-  }
+  // No execution on this phone: a run not open yet (or just opened) is shown read-only with a Start button (point 12).
+  if (data === null) return <RunPreview occurrenceId={occurrenceId} />;
   if (!content) {
     return (
       <Centered>
@@ -245,25 +243,35 @@ export function ExecutionScreen({
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-          onPress={() => router.back()}
-          style={styles.back}
-        >
-          <Ionicons name="chevron-back" size={28} color={colors.primary} />
-        </Pressable>
-        <View style={styles.headerText}>
-          <Text style={styles.title} numberOfLines={1}>
-            {occurrence.checklistName}
-          </Text>
-          <Text style={styles.subtitle} numberOfLines={1}>
-            {occurrence.siteName}
-          </Text>
+      {readOnly ? (
+        // Finished, locked or someone else's: an archive page, not work to do (point 19).
+        <ArchiveHeader
+          title={occurrence.checklistName}
+          subtitle={t('mobile.home.archive.subtitle', { date: formatDateTime(execution.completedAt ?? execution.lockedAt ?? occurrence.startsAt, { locale, timeZone }) }) + ` · ${occurrence.siteName}`}
+          onBack={leaveRun}
+          right={<SyncIndicator compact />}
+        />
+      ) : (
+        <View style={styles.header}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back')}
+            onPress={leaveRun}
+            style={styles.back}
+          >
+            <Ionicons name="chevron-back" size={28} color={colors.primary} />
+          </Pressable>
+          <View style={styles.headerText}>
+            <Text style={styles.title} numberOfLines={1}>
+              {occurrence.checklistName}
+            </Text>
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {occurrence.siteName}
+            </Text>
+          </View>
+          <SyncIndicator />
         </View>
-        <SyncIndicator />
-      </View>
+      )}
       <View style={styles.progressWrap}>
         <View style={styles.track}>
           <View
@@ -376,6 +384,9 @@ export function ExecutionScreen({
           <View style={styles.pagerHalf}>
             {index < content.sections.length - 1 ? (
               <PrimaryButton title={t('mobile.execution.next')} onPress={() => setSectionIndex(index + 1)} />
+            ) : readOnly ? (
+              // Nothing to finish on a run that can no longer change: the last page only leads back (point 19).
+              <PrimaryButton variant="outline" title={t('mobile.execution.back')} onPress={leaveRun} />
             ) : (
               <PrimaryButton
                 title={rework ? t('mobile.rework.resubmit') : t('mobile.execution.finish')}

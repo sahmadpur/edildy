@@ -1,9 +1,9 @@
 import type { TeamDto } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
-import { Pencil, Power, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ConfirmButton } from '@/components/confirm-button';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,16 +23,23 @@ export function TeamsPage() {
   const users = useActiveUsers(canSeeUsers);
   const [editing, setEditing] = useState<TeamDto | 'new' | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: ['teams'] });
+  const toggle = async (team: { id: string; active: boolean }) => {
+    try {
+      await api.teams.update(team.id, { active: !team.active });
+      await refresh();
+    } catch (e) {
+      toast.error(errorText(t, e));
+    }
+  };
 
   return (
     <div>
       <PageHeader
-        title={t('teams.title')}
+        title={t('teams.title')} description={t('pages.teams')}
         actions={canManage && <Button onClick={() => setEditing('new')}>{t('teams.add')}</Button>}
       />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(teams.data ?? []).map((team) => {
-          const toggleLabel = team.active ? t('common.deactivate') : t('common.reactivate');
           return (
             <Card key={team.id}>
               <CardHeader>
@@ -45,33 +52,23 @@ export function TeamsPage() {
                 <CardDescription>{t('teams.membersCount', { count: team.memberIds.length })}</CardDescription>
                 {canManage && (
                   <CardAction className="flex gap-0.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7"
-                      aria-label={t('common.edit')}
-                      title={t('common.edit')}
-                      onClick={() => setEditing(team)}
-                    >
-                      <Pencil className="size-4" />
+                    <Button variant="ghost" size="xs" onClick={() => setEditing(team)}>
+                      {t('common.edit')}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7"
-                      aria-label={toggleLabel}
-                      title={toggleLabel}
-                      onClick={async () => {
-                        try {
-                          await api.teams.update(team.id, { active: !team.active });
-                          await refresh();
-                        } catch (e) {
-                          toast.error(errorText(t, e));
-                        }
-                      }}
-                    >
-                      {team.active ? <Power className="size-4" /> : <RotateCcw className="size-4" />}
-                    </Button>
+                    {team.active ? (
+                      <ConfirmButton
+                        variant="ghost"
+                        size="xs"
+                        label={t('common.deactivate')}
+                        title={t('common.deactivate')}
+                        description={t('teams.confirmDeactivate', { name: team.name })}
+                        onConfirm={() => toggle(team)}
+                      />
+                    ) : (
+                      <Button variant="ghost" size="xs" onClick={() => void toggle(team)}>
+                        {t('common.reactivate')}
+                      </Button>
+                    )}
                   </CardAction>
                 )}
               </CardHeader>

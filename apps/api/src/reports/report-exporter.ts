@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { REPORT_CONTENT_TYPES, REPORT_LIMITS, type ReportExportKind, type ReportExportParams, type ReportTaskCounts, reportFileName, type RunBucket } from '@taskop/contracts';
 import { type Language, translationsFor } from '@taskop/i18n';
-import { and, eq, type SQL } from 'drizzle-orm';
+import { and, inArray, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
 import { userLanguage } from '../common/locale';
@@ -149,21 +149,23 @@ export class ReportExporter {
     const T = translationsFor(locale);
     const F = T.reports.filters;
     const out: string[] = [];
+    // A filter may name several of each (feedback 2026-11-07): the names joined, in name order.
+    const names = (rows: { name: string }[]) => (rows.length ? rows.map((r) => r.name).sort((a, b) => a.localeCompare(b)).join(', ') : T.reports.noValue);
     if (f.siteId) {
-      const [s] = await tx.select({ name: sites.name }).from(sites).where(and(eq(sites.id, f.siteId), this.scheduling.readableSites(p)));
-      out.push(`${F.site}: ${s?.name ?? T.reports.noValue}`);
+      const rows = await tx.select({ name: sites.name }).from(sites).where(and(inArray(sites.id, f.siteId), this.scheduling.readableSites(p)));
+      out.push(`${F.site}: ${names(rows)}`);
     }
     if (f.userId) {
-      const [u] = await tx.select({ name: users.fullName }).from(users).where(and(eq(users.id, f.userId), this.scope.usersFilter(p)));
-      out.push(`${F.employee}: ${u?.name ?? T.reports.noValue}`);
+      const rows = await tx.select({ name: users.fullName }).from(users).where(and(inArray(users.id, f.userId), this.scope.usersFilter(p)));
+      out.push(`${F.employee}: ${names(rows)}`);
     }
     if (f.checklistId) {
-      const [c] = await tx.select({ name: checklists.name }).from(checklists).where(eq(checklists.id, f.checklistId));
-      out.push(`${F.checklist}: ${c?.name ?? T.reports.noValue}`);
+      const rows = await tx.select({ name: checklists.name }).from(checklists).where(inArray(checklists.id, f.checklistId));
+      out.push(`${F.checklist}: ${names(rows)}`);
     }
     if (kind === 'runs' && q.bucket && q.bucket !== 'all') out.push(`${F.bucket}: ${T.reports.buckets[q.bucket]}`);
     if (kind === 'runs' && q.auditState) out.push(`${T.audits.audit}: ${T.audits.runAuditStates[q.auditState]}`);
-    if (kind === 'problems' && q.severity) out.push(`${F.severity}: ${T.executions.severities[q.severity]}`);
+    if (kind === 'problems' && q.severity) out.push(`${F.severity}: ${q.severity.map((v) => T.executions.severities[v]).join(', ')}`);
     return out;
   }
 }

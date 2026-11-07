@@ -2,7 +2,7 @@ import { AUDIT_QUEUES, AUDIT_RESULTS, type AuditQueue, type AuditQueueRow } from
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,8 @@ const COLUMNS: Record<AuditQueue, readonly Column[]> = {
  * `/audits` (spec §8.3): Waiting, In progress and Finished, with site, checklist, auditor, result and date filters, all in
  * the URL (decision 2). A waiting row starts its audit; the others open theirs.
  */
+const split = (v: string | undefined): string[] => (v ? v.split(',').filter(Boolean) : []);
+
 export function AuditsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -55,47 +57,47 @@ export function AuditsPage() {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title={t('audits.title')} />
+      <PageHeader title={t('audits.title')} description={t('pages.audits')} />
       <div className="flex flex-wrap items-end gap-3">
         {canSites && (
-          <NativeSelect aria-label={t('audits.web.page.filters.site')} value={search.siteId ?? ''} onChange={(e) => set('siteId', e.target.value)} className="w-52">
-            <option value="">{t('audits.web.page.filters.allSites')}</option>
-            {(sites.data ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {indentedName(s)}
-              </option>
-            ))}
-          </NativeSelect>
+          <MultiSelectFilter
+            label={t('audits.web.page.filters.site')}
+            allLabel={t('audits.web.page.filters.allSites')}
+            options={(sites.data ?? []).map((s) => ({ value: s.id, label: indentedName(s) }))}
+            value={split(search.siteId)}
+            onChange={(v) => set('siteId', v.join(','))}
+            className="w-52"
+          />
         )}
         {canChecklists && (
-          <NativeSelect aria-label={t('audits.web.page.filters.checklist')} value={search.checklistId ?? ''} onChange={(e) => set('checklistId', e.target.value)} className="w-56">
-            <option value="">{t('audits.web.page.filters.allChecklists')}</option>
-            {(checklists.data ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </NativeSelect>
+          <MultiSelectFilter
+            label={t('audits.web.page.filters.checklist')}
+            allLabel={t('audits.web.page.filters.allChecklists')}
+            options={(checklists.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+            value={split(search.checklistId)}
+            onChange={(v) => set('checklistId', v.join(','))}
+            className="w-56"
+          />
         )}
         {canUsers && queue !== 'waiting' && (
-          <NativeSelect aria-label={t('audits.web.page.filters.auditor')} value={search.auditorId ?? ''} onChange={(e) => set('auditorId', e.target.value)} className="w-52">
-            <option value="">{t('audits.web.page.filters.allAuditors')}</option>
-            {(auditors.data ?? []).map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.fullName}
-              </option>
-            ))}
-          </NativeSelect>
+          <MultiSelectFilter
+            label={t('audits.web.page.filters.auditor')}
+            allLabel={t('audits.web.page.filters.allAuditors')}
+            options={(auditors.data ?? []).map((u) => ({ value: u.id, label: u.fullName }))}
+            value={split(search.auditorId)}
+            onChange={(v) => set('auditorId', v.join(','))}
+            className="w-52"
+          />
         )}
         {queue === 'finished' && (
-          <NativeSelect aria-label={t('audits.web.page.filters.result')} value={search.result ?? ''} onChange={(e) => set('result', e.target.value)} className="w-44">
-            <option value="">{t('audits.web.page.filters.allResults')}</option>
-            {AUDIT_RESULTS.map((r) => (
-              <option key={r} value={r}>
-                {t(`audits.results.${r}`)}
-              </option>
-            ))}
-          </NativeSelect>
+          <MultiSelectFilter
+            label={t('audits.web.page.filters.result')}
+            allLabel={t('audits.web.page.filters.allResults')}
+            options={AUDIT_RESULTS.map((r) => ({ value: r, label: t(`audits.results.${r}`) }))}
+            value={split(search.result)}
+            onChange={(v) => set('result', v.join(','))}
+            className="w-44"
+          />
         )}
         <div className="grid gap-1">
           <Label htmlFor="audits-from">{t('audits.web.page.filters.from')}</Label>

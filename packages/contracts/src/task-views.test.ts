@@ -87,7 +87,7 @@ describe('task read models', () => {
   it('gives problems a resolution, a task link, the run state and each medium’s kind and status, with a resolution filter', () => {
     expect(problemDtoSchema.parse(detail.problem)).toMatchObject({ resolution: 'open', taskId: ID, executionState: 'partial', media: [{ id: ID, kind: 'video', status: 'pending' }] });
     expect(problemDtoSchema.safeParse({ ...detail.problem, media: [{ id: ID, kind: 'video', status: 'purged' }] }).success).toBe(false);
-    expect(problemListQuerySchema.parse({ from: '2026-11-01', to: '2026-11-30', resolution: 'none' })).toMatchObject({ resolution: 'none' });
+    expect(problemListQuerySchema.parse({ from: '2026-11-01', to: '2026-11-30', resolution: 'none' })).toMatchObject({ resolution: ['none'] });
     expect(problemListQuerySchema.safeParse({ from: '2026-11-01', to: '2026-11-30', resolution: 'fixed' }).success).toBe(false);
   });
 

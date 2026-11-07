@@ -36,8 +36,8 @@ describe('UserAccessCard', () => {
     deactivate.mockResolvedValue({ ...worker, status: 'deactivated' });
     const onChanged = vi.fn();
     renderWithProviders(<UserAccessCard user={worker} orgCode="acme" isSelf={false} canManage onChanged={onChanged} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Deaktiv et' }));
-    expect(screen.getByText(/Elvin Məmmədov deaktiv edilsin/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
+    expect(screen.getByText(/Elvin Məmmədov ləğv edilsin/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
     expect(deactivate).toHaveBeenCalledWith('u1');
     expect(onChanged).toHaveBeenCalled();
@@ -45,7 +45,7 @@ describe('UserAccessCard', () => {
 
   it('hides destructive actions on your own account', () => {
     renderWithProviders(<UserAccessCard user={worker} orgCode="acme" isSelf canManage onChanged={vi.fn()} />);
-    expect(screen.queryByRole('button', { name: 'Deaktiv et' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ləğv et' })).not.toBeInTheDocument();
     expect(screen.getByText('Bu sizin hesabınızdır.')).toBeInTheDocument();
   });
 });

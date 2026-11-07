@@ -12,6 +12,7 @@ import {
   timingSchema,
 } from '@taskop/contracts';
 import { and, between, desc, eq, getTableColumns, ilike, inArray, lt, or, type SQL, sql } from 'drizzle-orm';
+import { inSiteSubtrees, sqlList } from '../common/sql';
 import { actorColumns } from '../checklists/actor';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -54,10 +55,10 @@ export class AssignmentsService {
 
   async list(a: Actor, q: AssignmentListQueryDto): Promise<Page<AssignmentDto>> {
     const conds: (SQL | undefined)[] = [this.scope.assignments(a)];
-    if (q.siteId) conds.push(eq(assignments.siteId, q.siteId));
-    if (q.checklistId) conds.push(eq(assignments.checklistId, q.checklistId));
-    if (q.status) conds.push(eq(assignments.status, q.status));
-    if (q.assigneeId) conds.push(sql`exists (select 1 from assignment_assignees aa where aa.assignment_id = ${assignments.id} and aa.user_id = ${q.assigneeId})`);
+    if (q.siteId) conds.push(inSiteSubtrees(assignments.siteId, q.siteId));
+    if (q.checklistId) conds.push(inArray(assignments.checklistId, q.checklistId));
+    if (q.status) conds.push(inArray(assignments.status, q.status));
+    if (q.assigneeId) conds.push(sql`exists (select 1 from assignment_assignees aa where aa.assignment_id = ${assignments.id} and aa.user_id in ${sqlList(q.assigneeId)})`);
     if (q.q) {
       const pattern = `%${escapeLike(q.q)}%`;
       conds.push(or(ilike(assignments.name, pattern), ilike(checklists.name, pattern)));

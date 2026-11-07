@@ -34,6 +34,11 @@ describe('notificationLink', () => {
     expect(notificationLink(notificationItem({ type: 'audit.finished', ...at }))).toEqual({ to: '/schedule', search: { date: '2026-11-02', occurrence: 'o1', tab: 'audit' } });
   });
 
+  it('opens a finished run on its execution tab', () => {
+    const at = { targetKind: 'occurrence' as const, targetId: 'o1', targetDate: '2026-11-02' };
+    expect(notificationLink(notificationItem({ type: 'checklist.completed', ...at }))).toEqual({ to: '/schedule', search: { date: '2026-11-02', occurrence: 'o1', tab: 'execution' } });
+  });
+
   it('gives a notification without a target id no page, and an occurrence without a date the current week', () => {
     expect(notificationLink(notificationItem({ targetKind: 'task', targetId: null }))).toBeNull();
     expect(notificationLink(notificationItem({ type: 'checklist.available', targetKind: 'occurrence', targetId: null, targetDate: '2026-11-02' }))).toBeNull();

@@ -126,7 +126,7 @@ describe('logout', () => {
     await renderWithServices(t.services, <ProfileScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Çıxış' }));
     await eventually(async () => expect(alert).toHaveBeenCalledTimes(1));
-    await press(alert.mock.calls[0]![2], 'Ləğv et');
+    await press(alert.mock.calls[0]![2], 'İmtina et');
     expect(mockRemove).not.toHaveBeenCalled();
     expect(native.nativePush.setBadge).not.toHaveBeenCalled();
     alert.mockRestore();
@@ -160,7 +160,7 @@ describe('logout', () => {
     await renderWithServices(t.services, <ProfileScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Çıxış' }));
     await eventually(async () => expect(alert).toHaveBeenCalledTimes(1));
-    await press(alert.mock.calls[0]![2], 'Ləğv et');
+    await press(alert.mock.calls[0]![2], 'İmtina et');
     expect(mockSignOut).not.toHaveBeenCalled();
     expect(await t.services.store.unsyncedCount()).toBe(1);
     alert.mockRestore();
@@ -217,7 +217,7 @@ describe('logout', () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(alert).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Çıxış' }).props.accessibilityState.disabled).toBe(true);
-    await press(alert.mock.calls[0]![2], 'Ləğv et');
+    await press(alert.mock.calls[0]![2], 'İmtina et');
     await eventually(async () => expect(screen.getByRole('button', { name: 'Çıxış' }).props.accessibilityState.disabled).toBe(false));
     alert.mockRestore();
   });
@@ -323,13 +323,13 @@ describe('notification settings', () => {
     const t = await createTestServices();
     await renderWithServices(t.services, <ProfileScreen />);
     expect(await screen.findByText('Bağlıdır')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Ayarları aç' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Telefon ayarlarını aç' }));
     expect(native.openSettings).toHaveBeenCalledTimes(1);
     native.nativePush.permission.mockResolvedValue('granted');
     const onChange = (AppState.addEventListener as jest.Mock).mock.calls.at(-1)![1] as (state: string) => void;
     await act(async () => onChange('active'));
     expect(await screen.findByText('Açıqdır')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Ayarları aç' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Telefon ayarlarını aç' })).toBeNull();
   });
 
   it('says push is not available on a simulator', async () => {

@@ -2,11 +2,11 @@ import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
-import { headerBlock } from '@/components/chip';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { LanguagePicker } from '@/components/language-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
+import { TabHeader } from '@/components/tab-header';
 import { api, session, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
 import { nativePush, openSettings, pushTokenStore } from '@/notifications/native';
@@ -129,11 +129,10 @@ export function ProfileScreen() {
   };
   return (
     <Screen>
-      <View style={headerBlock.block}>
-        <Text accessibilityRole="header" style={headerBlock.title}>
-          {me.user.fullName}
-        </Text>
-        {me.user.jobTitle ? <Text style={headerBlock.subtitle}>{me.user.jobTitle}</Text> : null}
+      <TabHeader title={t('mobile.profile.title')} />
+      <View style={styles.who}>
+        <Text style={styles.name}>{me.user.fullName}</Text>
+        {me.user.jobTitle ? <Text style={styles.job}>{me.user.jobTitle}</Text> : null}
       </View>
 
       <View style={styles.group}>
@@ -188,6 +187,9 @@ export function ProfileScreen() {
 
 /** Settings as plain rows on white: a label, the value on the right, hairlines between rows, no boxes. */
 const styles = StyleSheet.create({
+  who: { gap: 2 },
+  name: { fontFamily: font, fontSize: type.lg, lineHeight: 26, fontWeight: '600', color: colors.text },
+  job: { fontFamily: font, fontSize: type.base, color: colors.muted },
   group: { gap: 0 },
   heading: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, marginBottom: spacing.xs },
   row: {

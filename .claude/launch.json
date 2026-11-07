@@ -2,6 +2,8 @@
   "version": "0.0.1",
   "configurations": [
     { "name": "api", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@taskop/api", "dev"], "port": 3000 },
-    { "name": "web", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@taskop/web", "dev"], "port": 5173 }
+    { "name": "web", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@taskop/web", "dev"], "port": 5173 },
+    { "name": "api-alt", "runtimeExecutable": "env", "runtimeArgs": ["PORT=3100", "pnpm", "--filter", "@taskop/api", "dev"], "port": 3100 },
+    { "name": "web-alt", "runtimeExecutable": "env", "runtimeArgs": ["API_PORT=3100", "pnpm", "--filter", "@taskop/web", "exec", "vite", "--port", "5174"], "port": 5174 }
   ]
 }

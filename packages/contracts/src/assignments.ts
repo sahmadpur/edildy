@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idListParam, idSchema, isoDateTimeSchema, listParam } from './common.js';
 import { occurrenceDtoSchema, userRefSchema } from './occurrences.js';
 import { localDateSchema } from './scheduling-time.js';
 import { PREVIEW_WARNINGS, recurrenceSchema, SCHEDULING_LIMITS, timingSchema } from './scheduling.js';
@@ -70,10 +70,10 @@ export const assignmentPreviewSchema = z.object({ slots: z.array(previewSlotSche
 export type AssignmentPreview = z.infer<typeof assignmentPreviewSchema>;
 
 export const assignmentListQuerySchema = cursorQuerySchema.extend({
-  siteId: idSchema.optional(),
-  checklistId: idSchema.optional(),
-  status: assignmentStatusSchema.optional(),
-  assigneeId: idSchema.optional(),
+  siteId: idListParam.optional(),
+  checklistId: idListParam.optional(),
+  status: listParam(assignmentStatusSchema).optional(),
+  assigneeId: idListParam.optional(),
   q: z.string().trim().max(100).optional(),
 });
 export type AssignmentListQuery = z.input<typeof assignmentListQuerySchema>;

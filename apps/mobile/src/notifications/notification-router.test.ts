@@ -224,7 +224,7 @@ describe('sub-project 8 run notifications (Spec decision 15)', () => {
   });
 
   it('names only notification types that exist', () => {
-    expect([...TEAM_RUN_TYPES]).toHaveLength(3);
+    expect([...TEAM_RUN_TYPES]).toHaveLength(4);
     for (const type of TEAM_RUN_TYPES) expect(NOTIFICATION_TYPES).toContain(type);
   });
 });

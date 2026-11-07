@@ -70,7 +70,7 @@ describe('picker options', () => {
   it('lists sites in tree order, inactive ones only when asked or selected', () => {
     expect(siteOptions(SITES, false).map((s) => s.name)).toEqual(['Filial A', 'Zona A1']);
     expect(siteOptions(SITES, true).map((s) => s.name)).toEqual(['Filial A', 'Zona A1', 'Zona B (köhnə)']);
-    expect(siteOptions(SITES, false, IDS.zoneB).map((s) => s.name)).toEqual(['Filial A', 'Zona A1', 'Zona B (köhnə)']);
+    expect(siteOptions(SITES, false, [IDS.zoneB]).map((s) => s.name)).toEqual(['Filial A', 'Zona A1', 'Zona B (köhnə)']);
   });
 
   it('lists the period’s people without the Unassigned row, deactivated ones only when asked or selected', () => {
@@ -79,13 +79,13 @@ describe('picker options', () => {
       { id: IDS.kamran, name: 'Kamran Əliyev', active: true },
     ]);
     expect(employeeOptions(EMPLOYEE_ROWS, true).map((e) => e.name)).toEqual(['Aynur Quliyeva', 'Kamran Əliyev', 'Rauf Həsənov']);
-    expect(employeeOptions(EMPLOYEE_ROWS, false, IDS.rauf).map((e) => e.name)).toEqual(['Aynur Quliyeva', 'Kamran Əliyev', 'Rauf Həsənov']);
+    expect(employeeOptions(EMPLOYEE_ROWS, false, [IDS.rauf]).map((e) => e.name)).toEqual(['Aynur Quliyeva', 'Kamran Əliyev', 'Rauf Həsənov']);
   });
 
   it('lists active checklists by name, deactivated ones only when asked or selected', () => {
     expect(checklistOptions(CHECKLISTS, false).map((c) => c.name)).toEqual(['Açılış yoxlaması']);
     expect(checklistOptions([...CHECKLISTS].reverse(), true).map((c) => c.name)).toEqual(['Açılış yoxlaması', 'Köhnə yoxlama']);
-    expect(checklistOptions(CHECKLISTS, false, IDS.oldChecklist).map((c) => c.name)).toEqual(['Açılış yoxlaması', 'Köhnə yoxlama']);
+    expect(checklistOptions(CHECKLISTS, false, [IDS.oldChecklist]).map((c) => c.name)).toEqual(['Açılış yoxlaması', 'Köhnə yoxlama']);
   });
 });
 

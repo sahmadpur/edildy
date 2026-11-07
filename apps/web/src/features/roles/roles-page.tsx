@@ -32,7 +32,7 @@ export function RolesPage() {
   return (
     <div>
       <PageHeader
-        title={t('roles.title')}
+        title={t('roles.title')} description={t('pages.roles')}
         actions={canManage && <Button onClick={() => setSelected('new')}>{t('roles.add')}</Button>}
       />
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">

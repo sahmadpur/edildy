@@ -2,7 +2,7 @@ import { TASK_SOURCE_FILTERS, TASK_STATUSES, type TaskSourceFilter, type TaskSta
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export function TasksPage() {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title={t('tasks.page.title')} actions={canManage && <Button onClick={() => setCreating(true)}>{t('tasks.page.new')}</Button>} />
+      <PageHeader title={t('tasks.page.title')} description={t('pages.tasks')} actions={canManage && <Button onClick={() => setCreating(true)}>{t('tasks.page.new')}</Button>} />
       <Tabs value={tab} onValueChange={(v) => setTab(v as TaskTab)}>
         <TabsList>
           {TASK_TABS.map((k) => (
@@ -56,37 +56,37 @@ export function TasksPage() {
         </TabsList>
       </Tabs>
       <div className="flex flex-wrap items-end gap-3">
-        <NativeSelect aria-label={t('tasks.page.status')} value={filters.status} onChange={(e) => set('status', e.target.value as TaskStatus | '')} className="w-48">
-          <option value="">{t('tasks.page.allStatuses')}</option>
-          {TASK_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(`tasks.statuses.${s}`)}
-            </option>
-          ))}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('tasks.page.status')}
+          allLabel={t('tasks.page.allStatuses')}
+          options={TASK_STATUSES.map((s) => ({ value: s, label: t(`tasks.statuses.${s}`) }))}
+          value={filters.status}
+          onChange={(v) => set('status', v as TaskStatus[])}
+          className="w-48"
+        />
         {canSeeSites && (
-          <NativeSelect aria-label={t('tasks.page.site')} value={filters.siteId} onChange={(e) => set('siteId', e.target.value)} className="w-52">
-            <option value="">{t('tasks.page.allSites')}</option>
-            {(sites.data ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </NativeSelect>
+          <MultiSelectFilter
+            label={t('tasks.page.site')}
+            allLabel={t('tasks.page.allSites')}
+            options={(sites.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
+            value={filters.siteId}
+            onChange={(v) => set('siteId', v)}
+            className="w-52"
+          />
         )}
         {canManage && (
           <div className="w-64">
             <AssigneePicker label={t('tasks.page.assignee')} value={filters.assignee} onChange={(c) => set('assignee', c)} clearable />
           </div>
         )}
-        <NativeSelect aria-label={t('tasks.page.source')} value={filters.source} onChange={(e) => set('source', e.target.value as TaskSourceFilter | '')} className="w-44">
-          <option value="">{t('tasks.page.allSources')}</option>
-          {TASK_SOURCE_FILTERS.map((s) => (
-            <option key={s} value={s}>
-              {t(`tasks.sources.${s}`)}
-            </option>
-          ))}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('tasks.page.source')}
+          allLabel={t('tasks.page.allSources')}
+          options={TASK_SOURCE_FILTERS.map((s) => ({ value: s, label: t(`tasks.sources.${s}`) }))}
+          value={filters.source}
+          onChange={(v) => set('source', v as TaskSourceFilter[])}
+          className="w-44"
+        />
         <div className="grid gap-1">
           <Label htmlFor="tasks-due-from">{t('tasks.page.dueFrom')}</Label>
           <Input id="tasks-due-from" type="date" value={filters.dueFrom} onChange={(e) => set('dueFrom', e.target.value)} className="w-44" />

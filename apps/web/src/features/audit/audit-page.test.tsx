@@ -1,9 +1,9 @@
 import type { AuditEntryDto } from '@taskop/contracts';
-import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/render';
 import { AuditPage } from './audit-page';
+import { filterOptions, tickOptions } from '@/test/multi-select';
 
 const mocks = vi.hoisted(() => ({ api: { audit: { list: vi.fn() } } }));
 vi.mock('@/lib/session', () => ({
@@ -58,19 +58,12 @@ describe('AuditPage (İstifadə jurnalı)', () => {
   it('filters by source and offers runs and tasks as element types', async () => {
     renderWithProviders(<AuditPage />);
     await screen.findByText('team.created');
-    const source = screen.getByLabelText('Mənbə');
-    expect(
-      within(source)
-        .getAllByRole('option')
-        .map((o) => o.textContent),
-    ).toEqual(['Hamısı', 'Veb', 'Mobil']);
-    await userEvent.selectOptions(source, 'mobile');
+    expect(await filterOptions('Mənbə')).toEqual(['Hamısı', 'Veb', 'Mobil']);
+    await tickOptions('Mənbə', ['Mobil']);
     await waitFor(() =>
       expect(mocks.api.audit.list).toHaveBeenLastCalledWith(expect.objectContaining({ client: 'mobile' })),
     );
-    const types = within(screen.getByLabelText('Element növü'))
-      .getAllByRole('option')
-      .map((o) => o.textContent);
+    const types = await filterOptions('Element növü');
     expect(types).toEqual(expect.arrayContaining(['İcra', 'Tapşırıq']));
   });
 });

@@ -29,7 +29,7 @@ export function ChangePasswordForm() {
     }
   });
   return (
-    <form onSubmit={onSubmit} className="grid max-w-lg gap-4" noValidate>
+    <form onSubmit={onSubmit} className="grid gap-4" noValidate>
       <TextField form={form} name="currentSecret" label={t('settings.password.current')} type="password" autoComplete="current-password" required />
       <TextField form={form} name="newSecret" label={t('settings.password.next')} type="password" autoComplete="new-password" required />
       <FormError message={error} />

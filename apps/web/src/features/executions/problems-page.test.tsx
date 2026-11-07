@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithRouter } from '@/test/router';
 import { ProblemsPage } from './problems-page';
 import { assigneeOptions, taskDetail } from '@/features/tasks/fixtures';
+import { tickOptions } from '@/test/multi-select';
 
 const mocks = vi.hoisted(() => ({
   canManageTasks: { current: true },
@@ -33,8 +34,8 @@ const problem = (over: Partial<ProblemDto> = {}): ProblemDto => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
-  mocks.api.sites.list.mockResolvedValue([{ id: 'site1', name: 'Anbar' }]);
-  mocks.api.checklists.list.mockResolvedValue({ items: [{ id: 'c1', name: 'Açılış' }], nextCursor: null });
+  mocks.api.sites.list.mockResolvedValue([{ id: 'site1', name: 'Anbar' }, { id: 'site2', name: 'Mağaza' }]);
+  mocks.api.checklists.list.mockResolvedValue({ items: [{ id: 'c1', name: 'Açılış' }, { id: 'c2', name: 'Bağlanış' }], nextCursor: null });
   mocks.api.problems.list.mockResolvedValue({
     items: [problem(), problem({ id: 'p2', itemId: 'i2', itemLabel: null, source: 'rule', severity: 'normal', note: null, mediaIds: [], media: [] })],
     nextCursor: null,
@@ -97,7 +98,7 @@ describe('ProblemsPage', () => {
   it('lists problems with place, item, severity and source, and links a row to the occurrence drawer', async () => {
     const router = renderWithRouter(<ProblemsPage today="2026-11-04" />, '/problems');
     await screen.findByText('Kondisioner xarabdır');
-    expect(mocks.api.problems.list).toHaveBeenCalledWith(expect.objectContaining({ from: '2026-10-29', to: '2026-11-04', limit: 50 }));
+    expect(mocks.api.problems.list).toHaveBeenCalledWith(expect.objectContaining({ from: '2026-10-06', to: '2026-11-04', limit: 50 }));
     const [, first, second] = screen.getAllByRole('row');
     for (const text of ['Anbar', 'Açılış', 'Temperatur', 'Kritik', 'Əl ilə qeyd', 'Aysel', '2 fayl']) expect(first).toHaveTextContent(text);
     for (const text of ['Silinmiş sual', 'Adi', 'Qayda üzrə']) expect(second).toHaveTextContent(text);
@@ -121,15 +122,18 @@ describe('ProblemsPage', () => {
     expect(await screen.findByRole('link', { name: 'Qapı' })).toBeInTheDocument();
     expect(mocks.api.problems.list).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: 'p1' }));
     expect(screen.queryByRole('button', { name: 'Daha çox göstər' })).not.toBeInTheDocument();
-    await screen.findByRole('option', { name: 'Anbar' });
-    await screen.findByRole('option', { name: 'Açılış' });
-    await userEvent.selectOptions(screen.getByLabelText('Ciddilik'), 'critical');
-    await userEvent.selectOptions(screen.getByLabelText('Mənbə'), 'manual');
-    await userEvent.selectOptions(screen.getByLabelText('Obyekt'), 'site1');
-    await userEvent.selectOptions(screen.getByLabelText('Yoxlama vərəqəsi'), 'c1');
+    await waitFor(() => expect(mocks.api.checklists.list).toHaveBeenCalled());
+    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Bütün obyektlər');
+    await tickOptions('Növ', ['Kritik']);
+    await tickOptions('Mənbə', ['Əl ilə qeyd']);
+    await tickOptions('Obyekt', ['Anbar', 'Mağaza']);
+    await tickOptions('Yoxlama vərəqəsi', ['Açılış']);
+    expect(screen.getByRole('button', { name: 'Yoxlama vərəqəsi' })).toHaveTextContent('Açılış');
+    // Every site ticked is "all": no site filter is sent.
+    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Bütün obyektlər');
     await waitFor(() =>
       expect(mocks.api.problems.list).toHaveBeenLastCalledWith(
-        expect.objectContaining({ severity: 'critical', source: 'manual', siteId: 'site1', checklistId: 'c1', from: '2026-10-29', to: '2026-11-04' }),
+        expect.objectContaining({ severity: 'critical', source: 'manual', siteId: undefined, checklistId: 'c1', from: '2026-10-06', to: '2026-11-04' }),
       ),
     );
   });
@@ -137,20 +141,20 @@ describe('ProblemsPage', () => {
   it('refuses a range over 92 days or an inverted one without asking the API', async () => {
     renderWithRouter(<ProblemsPage today="2026-11-04" />);
     await waitFor(() => expect(mocks.api.problems.list).toHaveBeenCalledTimes(1));
-    fireEvent.change(screen.getByLabelText('Başlanğıc tarixi'), { target: { value: '2026-08-03' } });
+    fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-08-03' } });
     expect(await screen.findByText('Tarix aralığı çox uzundur (ən çox 92 gün).')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Başlanğıc tarixi'), { target: { value: '2026-11-05' } });
+    fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-11-05' } });
     expect(await screen.findByText('Son tarix başlanğıc tarixindən əvvəl ola bilməz.')).toBeInTheDocument();
     expect(mocks.api.problems.list).toHaveBeenCalledTimes(1);
   });
 
-  it("defaults to the last 7 days of the tenant's calendar, not UTC's", async () => {
+  it("defaults to the last 30 days of the tenant's calendar (as Hesabatlar does), not UTC's", async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     // 21:30 UTC on 2 November is 01:30 on 3 November in Baku: a problem from this morning's occurrence is dated 3 November.
     vi.setSystemTime(new Date('2026-11-02T21:30:00.000Z'));
     renderWithRouter(<ProblemsPage />);
-    await waitFor(() => expect(mocks.api.problems.list).toHaveBeenCalledWith(expect.objectContaining({ from: '2026-10-28', to: '2026-11-03' })));
-    expect(screen.getByLabelText('Son tarix')).toHaveValue('2026-11-03');
+    await waitFor(() => expect(mocks.api.problems.list).toHaveBeenCalledWith(expect.objectContaining({ from: '2026-10-05', to: '2026-11-03' })));
+    expect(screen.getByLabelText('Son')).toHaveValue('2026-11-03');
   });
 });
 
@@ -165,8 +169,8 @@ describe('ProblemsPage resolution', () => {
     expect(screen.getByRole('columnheader', { name: 'Nəticə' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Həll olunub' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tapşırıq yarat' })).not.toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByLabelText('Nəticə'), 'resolved');
-    await waitFor(() => expect(mocks.api.problems.list).toHaveBeenLastCalledWith(expect.objectContaining({ resolution: 'resolved' })));
+    await tickOptions('Nəticə', ['Həll olunub', 'Açıq']);
+    await waitFor(() => expect(mocks.api.problems.list).toHaveBeenLastCalledWith(expect.objectContaining({ resolution: 'resolved,open' })));
     await userEvent.click(await screen.findByRole('link', { name: 'Açıq' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/tasks'));
     expect(router.state.location.search).toEqual({ task: 't1' });

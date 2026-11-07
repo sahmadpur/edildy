@@ -1,0 +1,23 @@
+/** One line under each page title saying what the page is for (feedback 2026-11-07, item 13). */
+export default {
+  home: 'Seçilmiş dövr üzrə yoxlamaların, problemlərin və tapşırıqların qısa mənzərəsi.',
+  problems: 'Yoxlamalarda qeydə alınan və əməkdaşların bildirdiyi problemlər. Problemdən tapşırıq yaradıb həllini izləyin.',
+  reports: 'Dövr, obyekt, əməkdaş və yoxlama vərəqəsi üzrə nəticələr. Cədvəlləri Excel-ə yükləyə bilərsiniz.',
+  assignments: 'Kim, harada, hansı yoxlamanı və nə vaxt edəcək. Yeni təyinat yaradın və ya mövcud olanı dəyişin.',
+  schedule: 'Təyinatlardan yaranan icralar həftə üzrə. İcranın üzərinə klikləyib cavablarına baxın.',
+  checklists: 'Yoxlama zamanı cavablandırılan sual siyahıları. Vərəqəni boş yaradın və ya şablondan götürün.',
+  templates: 'Yeni yoxlama vərəqəsi üçün hazır nümunələr: Taskop şablonları və öz şablonlarınız.',
+  tasks: '«Hamısı» sizə görünən bütün tapşırıqlardır; «Mənim yaratdıqlarım» yalnız sizin yaratdıqlarınızdır.',
+  audits: 'Bitmiş yoxlamaların ikinci baxışı. Auditə başlayın və nəticəni qiymətləndirin.',
+  users: 'Təşkilatın əməkdaşları və mobil işçiləri. Adın yanında düzəliş edin və ya ləğv edin.',
+  sites: 'Yoxlamaların aparıldığı yerlər: binalar, filiallar, mərtəbələr, otaqlar.',
+  teams: 'Əməkdaşları komandalara toplayın: tapşırıq və təyinatları bütöv komandaya verə bilərsiniz.',
+  shifts: 'İş növbələri və onların saatları. Növbə cədvəlində kimin hansı növbədə işlədiyini qeyd edin.',
+  roles: 'Hər rol üçün icazələri seçin. Əməkdaşın görə və edə bildikləri onun rolundan asılıdır.',
+  auditLog: 'Sistemdə kimin, nə vaxt, nəyi dəyişdiyinin tam qeydi.',
+  settings: 'Təşkilatın əsas məlumatları, şifrəniz və bildiriş qaydaları.',
+  messages: 'Əməkdaşlara, komandalara və ya obyektlərə mesaj göndərin.',
+  notifications: 'Sizə gələn bütün bildirişlər. Bildirişin üzərinə klikləyib əlaqəli səhifəyə keçin.',
+  newAssignment: 'Yoxlama vərəqəsini, obyekti, icraçıları və vaxtı seçin.',
+  globalTemplates: 'Bütün təşkilatlara görünən Taskop şablonları.',
+} as const;

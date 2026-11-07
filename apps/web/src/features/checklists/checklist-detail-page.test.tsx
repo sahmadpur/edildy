@@ -50,7 +50,7 @@ describe('ChecklistDetailPage', () => {
     ws.checklists.get.mockResolvedValue(detail());
     ws.checklists.startDraft.mockResolvedValue({});
     renderInWorkspace(<ChecklistDetailPage checklistId={ID} />, ws);
-    await userEvent.click(await screen.findByRole('button', { name: 'Redaktə et' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Suallara düzəliş et' }));
     await waitFor(() => expect(ws.checklists.startDraft).toHaveBeenCalledWith(ID));
     expect(ws.go).toHaveBeenCalledWith(`/checklists/${ID}/draft`);
   });
@@ -75,8 +75,8 @@ describe('ChecklistDetailPage', () => {
     ws.checklists.get.mockResolvedValue(detail({ status: 'deactivated' }));
     renderInWorkspace(<ChecklistDetailPage checklistId={ID} />, ws);
     expect(await screen.findByText('Bu yoxlama vərəqəsi deaktivdir və dəyişdirilə bilməz.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Redaktə et' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Aktiv et' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Suallara düzəliş et' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Bərpa et' })).toBeInTheDocument();
   });
 
   it('hides every management action without checklists.manage', async () => {
@@ -85,11 +85,11 @@ describe('ChecklistDetailPage', () => {
     renderInWorkspace(<ChecklistDetailPage checklistId={ID} />, ws);
     await screen.findAllByRole('row');
     for (const name of [
-      'Redaktə et',
+      'Suallara düzəliş et',
       'Qaralamaya davam et',
       'Məlumatları dəyiş',
       'Qaralama kimi bərpa et',
-      'Deaktiv et',
+      'Ləğv et',
       'Kopyala',
     ]) {
       expect(screen.queryByRole('button', { name })).toBeNull();
@@ -109,7 +109,7 @@ describe('ChecklistDetailPage', () => {
     ws.checklists.get.mockResolvedValue(detail({ draftRevision: 3 }));
     renderInWorkspace(<ChecklistDetailPage checklistId={ID} />, ws);
     expect(await screen.findByRole('button', { name: 'Qaralamaya davam et' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Redaktə et' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Suallara düzəliş et' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Qaralama kimi bərpa et' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Qaralamanı sil' })).toBeInTheDocument();
   });

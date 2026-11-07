@@ -51,14 +51,15 @@ describe('ChecklistsPage', () => {
     );
   });
 
-  it('shows each checklist as a card, like the templates tab, and opens it from the card button', async () => {
+  it('shows each checklist as a card, like the templates tab, and opens it with a click anywhere on the card', async () => {
     const ws = fakeWorkspace();
     ws.checklists.list.mockResolvedValue({ items: [row()], nextCursor: null });
     renderInWorkspace(<ChecklistsPage />, ws);
     expect(await screen.findByText('Gündəlik təmizlik')).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeNull();
     expect(screen.getByText('v2')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Aç' }));
+    expect(screen.queryByRole('button', { name: 'Aç' })).toBeNull();
+    await userEvent.click(screen.getByText('v2'));
     expect(ws.go).toHaveBeenCalledWith('/checklists/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01');
   });
 

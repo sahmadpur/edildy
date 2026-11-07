@@ -48,10 +48,10 @@ describe('notification recipients', () => {
     return { w, a, occurrenceId, here, there, admin };
   }
 
-  it('sends overdue to the assignees and the managers whose sites cover the run; missed to managers and admins', async () => {
+  it('sends overdue to the assignees and the managers whose sites cover the run, the admins and the owner; missed to all but the assignees', async () => {
     const { w, occurrenceId, here, admin } = await checklistWorld();
-    expect(await resolve(w.s.tenantId, 'checklist.overdue', { occurrenceId })).toEqual(sorted(w.workers[0]!, w.workers[1]!, here.id));
-    expect(await resolve(w.s.tenantId, 'checklist.missed', { occurrenceId })).toEqual(sorted(here.id, admin.id));
+    expect(await resolve(w.s.tenantId, 'checklist.overdue', { occurrenceId })).toEqual(sorted(w.workers[0]!, w.workers[1]!, here.id, admin.id, w.s.ownerId));
+    expect(await resolve(w.s.tenantId, 'checklist.missed', { occurrenceId })).toEqual(sorted(here.id, admin.id, w.s.ownerId));
   });
 
   it('applies every data scope of a role holder and needs assignments.view', async () => {
@@ -87,10 +87,10 @@ describe('notification recipients', () => {
   });
 
   it('removes the actor and inactive users', async () => {
-    const { w, occurrenceId, here } = await checklistWorld();
-    expect(await resolve(w.s.tenantId, 'checklist.overdue', { occurrenceId }, w.workers[0]!)).toEqual(sorted(w.workers[1]!, here.id));
+    const { w, occurrenceId, here, admin } = await checklistWorld();
+    expect(await resolve(w.s.tenantId, 'checklist.overdue', { occurrenceId }, w.workers[0]!)).toEqual(sorted(w.workers[1]!, here.id, admin.id, w.s.ownerId));
     await ownerQuery("update users set status = 'deactivated' where id = $1", [w.workers[1]]);
-    expect(await resolve(w.s.tenantId, 'checklist.overdue', { occurrenceId })).toEqual(sorted(w.workers[0]!, here.id));
+    expect(await resolve(w.s.tenantId, 'checklist.overdue', { occurrenceId }, w.s.ownerId)).toEqual(sorted(w.workers[0]!, here.id, admin.id));
   });
 
   it('tells the added users about an assignment, and role holders whose scope covers it', async () => {
@@ -109,8 +109,10 @@ describe('notification recipients', () => {
     await staffAt(t, w.s.tenantId, w.owner, 'manager', [w.otherSiteId], 'Menecer 2');
     const admin = await staffAt(t, w.s.tenantId, w.owner, 'admin', [], 'Admin');
     const critical = { problemId: run.manualProblemId, occurrenceId: w.occurrenceId };
-    expect(await resolve(w.s.tenantId, 'problem.critical', critical, w.workers[0].id)).toEqual(sorted(here.id, admin.id));
-    expect(await resolve(w.s.tenantId, 'problem.recorded', { problemId: run.ruleProblemId, occurrenceId: w.occurrenceId }, w.workers[0].id)).toEqual([here.id]);
+    expect(await resolve(w.s.tenantId, 'problem.critical', critical, w.workers[0].id)).toEqual(sorted(here.id, admin.id, w.s.ownerId));
+    expect(await resolve(w.s.tenantId, 'problem.recorded', { problemId: run.ruleProblemId, occurrenceId: w.occurrenceId }, w.workers[0].id)).toEqual(
+      sorted(here.id, admin.id, w.s.ownerId),
+    );
     // A later answers sync may delete a problem before its fan-out runs.
     await ownerQuery('delete from execution_problems where id = $1', [run.manualProblemId]);
     const gone = await t.app.get(DbService).withTenant(w.s.tenantId, null, () => t.app.get(NotificationTargets).load('problem.critical', critical, null));

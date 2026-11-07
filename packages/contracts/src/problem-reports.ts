@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idListParam, idSchema, isoDateTimeSchema } from './common.js';
 import { problemSeveritySchema } from './execution-logic.js';
 import { problemMediaRefSchema } from './execution-views.js';
 import { MEDIA_LIMITS } from './executions.js';
@@ -86,7 +86,7 @@ export type ProblemReportDto = z.infer<typeof problemReportDtoSchema>;
 
 export const problemReportListQuerySchema = cursorQuerySchema.extend({
   state: problemReportStateFilterSchema.default('active'),
-  siteId: idSchema.optional(),
+  siteId: idListParam.optional(),
   /** Tenant-local dates on reported_at. */
   from: localDateSchema.optional(),
   to: localDateSchema.optional(),

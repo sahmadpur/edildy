@@ -35,10 +35,10 @@ function renderTree(nodes: SiteNode[], onToggleActive = vi.fn()) {
 describe('SiteTree', () => {
   it('asks for confirmation before deactivating a site', async () => {
     const onToggleActive = renderTree([node('a', 'Alfa', true)]);
-    await userEvent.click(screen.getByRole('button', { name: 'Deaktiv et' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
     expect(onToggleActive).not.toHaveBeenCalled();
     expect(
-      screen.getByText('«Alfa» deaktiv edilsin? Alt obyektlər avtomatik dəyişməyəcək.'),
+      screen.getByText('«Alfa» ləğv edilsin? Alt obyektlər avtomatik dəyişməyəcək.'),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
     expect(onToggleActive).toHaveBeenCalledWith(expect.objectContaining({ id: 'a' }));
@@ -46,25 +46,23 @@ describe('SiteTree', () => {
 
   it('cancelling the confirmation keeps the site active', async () => {
     const onToggleActive = renderTree([node('a', 'Alfa', true)]);
-    await userEvent.click(screen.getByRole('button', { name: 'Deaktiv et' }));
     await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
+    await userEvent.click(screen.getByRole('button', { name: 'İmtina et' }));
     expect(onToggleActive).not.toHaveBeenCalled();
   });
 
   it('reactivates without confirmation', async () => {
     const onToggleActive = renderTree([node('b', 'Bravo', false)]);
-    await userEvent.click(screen.getByRole('button', { name: 'Aktiv et' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Bərpa et' }));
     expect(onToggleActive).toHaveBeenCalledWith(expect.objectContaining({ id: 'b' }));
   });
 
-  it('renders each site as a box with icon-only actions, sub-sites nested inside the parent box', () => {
+  it('renders each site as a box with worded actions, sub-sites nested inside the parent box', () => {
     const child: SiteNode = { ...node('b', 'Beta', true), parentId: 'a', depth: 1 };
     renderTree([{ ...node('a', 'Alfa', true), children: [child] }]);
     const alfa = screen.getByRole('treeitem', { name: 'Alfa' });
     expect(within(alfa).getByRole('treeitem', { name: 'Beta' })).toBeInTheDocument();
-    const edit = within(alfa).getAllByRole('button', { name: 'Redaktə et' })[0]!;
-    expect(edit).toHaveTextContent('');
-    expect(edit).toHaveAttribute('title', 'Redaktə et');
-    expect(within(alfa).getAllByRole('button', { name: 'Deaktiv et' })[0]).toHaveTextContent('');
+    expect(within(alfa).getAllByRole('button', { name: 'Düzəliş et' })[0]).toHaveTextContent('Düzəliş et');
+    expect(within(alfa).getAllByRole('button', { name: 'Ləğv et' })[0]).toHaveTextContent('Ləğv et');
   });
 });

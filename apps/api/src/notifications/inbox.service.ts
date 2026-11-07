@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import type { NotificationItem, NotificationType, Page, Preferences } from '@taskop/contracts';
+import type { NotificationItem, NotificationTargetKind, NotificationType, Page, Preferences } from '@taskop/contracts';
 import { isLanguage } from '@taskop/i18n';
-import { and, eq, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
 import type { Principal } from '../common/request';
-import { DbService } from '../db/db.service';
+import { DbService, type Executor } from '../db/db.service';
 import { notifications, pushDevices, users } from '../db/schema';
 import type { NotificationListQueryDto, RegisterPushDeviceDto, UpdatePreferencesDto } from './dto';
 import { unreadCount } from './notification-delivery';
@@ -76,6 +76,29 @@ export class InboxService {
       .update(notifications)
       .set({ readAt: this.clock.now() })
       .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
+  }
+
+  /**
+   * Every recipient's unread rows of `types` about one target, read now (2026-11-07 feedback: a reminder about a run
+   * or task that is finished is cleared for everyone). Runs in the caller's transaction; the phone's badge follows on
+   * its next unread-count pull and the next push, which both count unread rows. Returns how many rows it marked.
+   */
+  async markReadForTarget(target: { kind: NotificationTargetKind; id: string }, types: readonly NotificationType[], tx: Executor = this.db.tx()): Promise<number> {
+    if (!types.length) return 0;
+    const rows = await tx
+      .update(notifications)
+      .set({ readAt: this.clock.now() })
+      .where(
+        and(
+          eq(notifications.tenantId, this.db.context().tenantId),
+          eq(notifications.targetKind, target.kind),
+          eq(notifications.targetId, target.id),
+          inArray(notifications.type, [...types]),
+          isNull(notifications.readAt),
+        ),
+      )
+      .returning({ id: notifications.id });
+    return rows.length;
   }
 
   /**

@@ -35,7 +35,7 @@ const nowhere = { targetKind: 'none' as const, targetId: null, targetDate: null 
 
 const place = (o: OccurrenceTarget) => `${o.checklistName} — ${o.siteName}`;
 
-type OccurrenceType = Exclude<Extract<NotificationType, `checklist.${string}`>, 'checklist.assigned'>;
+type OccurrenceType = Exclude<Extract<NotificationType, `checklist.${string}`>, 'checklist.assigned' | 'checklist.completed'>;
 type ProblemType = Extract<NotificationType, `problem.${string}`>;
 type TaskType = Extract<NotificationType, `task.${string}`>;
 type ReportType = Extract<NotificationType, `problem_report.${string}`>;
@@ -84,6 +84,8 @@ function runText(L: ReturnType<typeof translationsFor>, type: NotificationType, 
       const due = r.dueAt ? ` ${interpolate(T['run.correction_required'].due, { date: dayTime(r.dueAt, r.occurrence.timezone) })}` : '';
       return { title: T['run.correction_required'].title, body: `${body}${due}` };
     }
+    case 'checklist.completed':
+      return { title: T['checklist.completed'].title, body: interpolate(T['checklist.completed'].body, { ...place, executor: r.executorName }) };
     case 'run.resubmitted':
       return { title: T['run.resubmitted'].title, body: interpolate(T['run.resubmitted'].body, { ...place, executor: r.executorName, round: r.round ?? 1 }) };
     case 'audit.finished':

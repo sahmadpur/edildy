@@ -1,9 +1,9 @@
-import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateSource, type TemplateSummary } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateSource, type TemplateSummary, toListParam } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,8 @@ export function TemplatesPage() {
   const ws = useWorkspace();
   const qc = useQueryClient();
   const [source, setSource] = useState<TemplateSource>('global');
-  const [category, setCategory] = useState<TemplateCategory | ''>('');
-  const templates = useTemplates({ source, category: category || undefined });
+  const [category, setCategory] = useState<string[]>([]);
+  const templates = useTemplates({ source, category: toListParam(category) });
   const [using, setUsing] = useState<TemplateSummary | null>(null);
   const [creating, setCreating] = useState(false);
   const act = async (fn: () => Promise<unknown>) => {
@@ -38,7 +38,7 @@ export function TemplatesPage() {
 
   return (
     <div>
-      <PageHeader title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} actions={ws.can.templates && <Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
+      <PageHeader title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} description={t('pages.templates')} actions={ws.can.templates && <Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
       <ChecklistTabs active="templates" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         {/* Pills: a filter inside the Şablonlar tab, not another row of page tabs. */}
@@ -48,14 +48,14 @@ export function TemplatesPage() {
             <TabsTrigger value="tenant">{t('checklists.templates.ours')}</TabsTrigger>
           </TabsList>
         </Tabs>
-        <NativeSelect aria-label={t('checklists.filters.category')} className="w-56" value={category} onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}>
-          <option value="">{t('checklists.filters.allCategories')}</option>
-          {TEMPLATE_CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {t(`checklists.categories.${c}`)}
-            </option>
-          ))}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('checklists.filters.category')}
+          allLabel={t('checklists.filters.allCategories')}
+          options={TEMPLATE_CATEGORIES.map((c) => ({ value: c, label: t(`checklists.categories.${c}`) }))}
+          value={category}
+          onChange={setCategory}
+          className="w-56"
+        />
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(templates.data ?? []).map((tpl) => (

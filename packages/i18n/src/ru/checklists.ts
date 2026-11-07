@@ -69,7 +69,8 @@ export default {
     templateRequired: 'Выберите шаблон.',
   },
   detail: {
-    edit: 'Редактировать',
+    edit: 'Редактировать пункты',
+    editTitle: 'Изменить',
     continueDraft: 'Продолжить черновик',
     copy: 'Копировать',
     editDetails: 'Изменить данные',

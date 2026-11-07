@@ -13,6 +13,7 @@ import { ExecutionLockedError, flaggedItems, reworkEditable } from '@/offline/ex
 import { useNow } from '@/offline/hooks';
 import { FinishScreen, nextJump } from './finish-screen';
 import { reworkOverdue } from './rework';
+import { backToRun } from './run-nav';
 import { readOnlyReason, useExecution } from './use-execution';
 import { useLocale } from '@/lib/language';
 
@@ -55,7 +56,7 @@ export function ResubmitScreen({ occurrenceId }: { occurrenceId: string }) {
   const labels = new Map<string, string>();
   walkItems(content, (item) => labels.set(item.id, item.label));
   const open = execution.state === 'rework' && readOnlyReason(execution, occurrence, userId, now) === null;
-  const jump = (itemId: string) => router.push({ pathname: '/execution/[id]', params: { id: occurrenceId, itemId, focus: nextJump() } });
+  const jump = (itemId: string) => backToRun(occurrenceId, { itemId, focus: nextJump() });
 
   const resubmit = async () => {
     if (inFlight.current) return;
@@ -82,7 +83,7 @@ export function ResubmitScreen({ occurrenceId }: { occurrenceId: string }) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
-          onPress={() => router.push({ pathname: '/execution/[id]', params: { id: occurrenceId } })}
+          onPress={() => backToRun(occurrenceId)}
           style={styles.back}
         >
           <Ionicons name="chevron-back" size={28} color={colors.primary} />

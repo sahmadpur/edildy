@@ -38,7 +38,7 @@ export function OrgSettingsForm({ tenant, canEdit }: { tenant: TenantDto; canEdi
     },
   });
   return (
-    <form onSubmit={form.handleSubmit((v) => save.mutate(v))} className="grid max-w-lg gap-4" noValidate>
+    <form onSubmit={form.handleSubmit((v) => save.mutate(v))} className="grid gap-4" noValidate>
       <fieldset disabled={!canEdit} className="grid gap-4">
         <TextField form={form} name="name" label={t('settings.org.name')} required />
         <div className="grid gap-1.5">

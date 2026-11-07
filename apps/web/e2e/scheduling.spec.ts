@@ -37,7 +37,7 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
 
   // Shift template.
   await page.getByRole('link', { name: 'Növbələr' }).click();
-  await page.getByRole('button', { name: 'Növbə yarat' }).click();
+  await page.getByRole('button', { name: 'Yeni növbə' }).click();
   const shiftDialog = page.getByRole('dialog');
   await shiftDialog.getByLabel('Ad', { exact: true }).fill('Səhər');
   await shiftDialog.getByLabel('Başlama').fill('08:00');
@@ -60,7 +60,7 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await page.getByLabel('Yoxlama vərəqəsi').selectOption({ label: 'E2E açılış' });
   await page.getByLabel('Obyekt').selectOption({ label: 'Anbar №1' });
   await page.getByRole('checkbox', { name: 'Nigar Səfərli' }).click();
-  await page.getByLabel('Vaxt növü').selectOption('shift');
+  await page.getByRole('checkbox', { name: 'Növbəyə görə' }).click();
   const preview = page.getByRole('complementary', { name: 'Növbəti icralar' });
   await expect(preview.getByText('Hər gün, Səhər növbəsi')).toBeVisible();
   await expect(preview.getByRole('listitem').first()).toBeVisible();
@@ -70,10 +70,10 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await expect(page.getByRole('heading', { name: 'E2E açılış' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Yaxın icralar' }).getByRole('listitem').first()).toBeVisible();
 
-  // The schedule is the second tab of Yoxlamalar.
+  // The schedule is no longer a Yoxlamalar tab (feedback 2026-11-07); run links still open it, under Təyinatlar.
   await page.getByRole('link', { name: 'Yoxlamalar' }).click();
-  await page.getByRole('link', { name: 'İcra cədvəli' }).click();
-  await expect(page).toHaveURL(/\/schedule$/);
+  await expect(page.getByRole('link', { name: 'İcra cədvəli' })).toHaveCount(0);
+  await page.goto('/schedule');
   await expect(page.getByRole('heading', { name: 'Yoxlamalar' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'İcra cədvəli' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('aria-current', 'page');
 });

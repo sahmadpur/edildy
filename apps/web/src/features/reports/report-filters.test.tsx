@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatLocalDate } from '@/features/scheduling/labels';
+import { filterOptions, tickOptions } from '@/test/multi-select';
 import { renderWithProviders } from '@/test/render';
 import { CHECKLISTS, EMPLOYEE_ROWS, IDS, meWith, SITES, TODAY, VIEWER } from './fixtures';
 import { ReportFilters } from './report-filters';
@@ -40,7 +41,7 @@ function renderBar(initial: ReportSearch = {}) {
   return onChange;
 }
 
-const texts = (select: HTMLElement) =>
+const texts = (select: HTMLElement): (string | null)[] =>
   within(select)
     .getAllByRole('option')
     .map((o) => o.textContent);
@@ -77,8 +78,8 @@ describe('ReportFilters', () => {
       to: TODAY,
       siteId: IDS.zoneA,
     });
-    expect(screen.getByLabelText('Başlanğıc tarixi')).toHaveValue('2026-11-02');
-    fireEvent.change(screen.getByLabelText('Başlanğıc tarixi'), { target: { value: '2026-10-01' } });
+    expect(screen.getByLabelText('Başlama')).toHaveValue('2026-11-02');
+    fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-10-01' } });
     expect(onChange).toHaveBeenLastCalledWith({
       period: 'custom',
       from: '2026-10-01',
@@ -88,7 +89,7 @@ describe('ReportFilters', () => {
 
     await userEvent.selectOptions(period, 'last_30');
     expect(onChange).toHaveBeenLastCalledWith({ siteId: IDS.zoneA });
-    expect(screen.queryByLabelText('Başlanğıc tarixi')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Başlama')).not.toBeInTheDocument();
   });
 
   it('defaults to the last 30 days: that period is dropped from the search, today is written explicitly', async () => {
@@ -116,30 +117,33 @@ describe('ReportFilters', () => {
       .mockResolvedValueOnce({ items: [CHECKLISTS[0]], nextCursor: IDS.checklist })
       .mockResolvedValueOnce({ items: [CHECKLISTS[1]], nextCursor: null });
     const onChange = renderBar();
-    const site = screen.getByLabelText('Obyekt');
-    const checklist = screen.getByLabelText('Yoxlama vərəqəsi');
-    await waitFor(() => expect(texts(site)).toEqual(['Bütün obyektlər', 'Filial A', '\u00a0\u00a0Zona A1']));
-    await waitFor(() => expect(texts(checklist)).toEqual(['Bütün yoxlama vərəqələri', 'Açılış yoxlaması']));
+    await waitFor(() => expect(mocks.api.checklists.list).toHaveBeenCalledTimes(2));
+    await waitFor(async () => expect(await filterOptions('Obyekt')).toEqual(['Bütün obyektlər', 'Filial A', '\u00a0\u00a0Zona A1']));
+    expect(await filterOptions('Yoxlama vərəqəsi')).toEqual(['Bütün yoxlama vərəqələri', 'Açılış yoxlaması']);
     expect(mocks.api.checklists.list).toHaveBeenNthCalledWith(1, { limit: 200 });
     expect(mocks.api.checklists.list).toHaveBeenNthCalledWith(2, { limit: 200, cursor: IDS.checklist });
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Deaktivləri göstər' }));
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true });
-    expect(texts(site)).toEqual([
+    expect(await filterOptions('Obyekt')).toEqual([
       'Bütün obyektlər',
       'Filial A',
       '\u00a0\u00a0Zona A1',
       '\u00a0\u00a0Zona B (köhnə) (Deaktiv)',
     ]);
-    expect(texts(checklist)).toEqual([
+    expect(await filterOptions('Yoxlama vərəqəsi')).toEqual([
       'Bütün yoxlama vərəqələri',
       'Açılış yoxlaması',
       'Köhnə yoxlama (Deaktiv)',
     ]);
 
-    await userEvent.selectOptions(site, IDS.zoneA);
+    // Multi-select (feedback 2026-11-07): several sites go to the URL as a comma list; "all" clears it.
+    await tickOptions('Obyekt', [/Zona A1/]);
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true, siteId: IDS.zoneA });
-    await userEvent.selectOptions(site, '');
+    await tickOptions('Obyekt', ['Filial A']);
+    expect(onChange).toHaveBeenLastCalledWith({ inactive: true, siteId: `${IDS.zoneA},${IDS.branch}` });
+    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Filial A +1');
+    await tickOptions('Obyekt', ['Bütün obyektlər']);
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true });
   });
 
@@ -152,31 +156,29 @@ describe('ReportFilters', () => {
         siteId: IDS.zoneA,
       }),
     );
-    const employee = screen.getByLabelText('Əməkdaş');
-    await waitFor(() =>
-      expect(texts(employee)).toEqual(['Bütün əməkdaşlar', 'Aynur Quliyeva', 'Kamran Əliyev']),
-    );
-    expect(employee).toHaveValue(IDS.aynur);
-    await userEvent.selectOptions(employee, IDS.kamran);
-    expect(onChange).toHaveBeenLastCalledWith({ period: 'yesterday', userId: IDS.kamran, siteId: IDS.zoneA });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent('Aynur Quliyeva'));
+    expect(await filterOptions('Əməkdaş')).toEqual(['Bütün əməkdaşlar', 'Aynur Quliyeva', 'Kamran Əliyev']);
+    await tickOptions('Əməkdaş', ['Kamran Əliyev']);
+    // Both people ticked is every option: the same as "all".
+    expect(onChange).toHaveBeenLastCalledWith({ period: 'yesterday', siteId: IDS.zoneA });
   });
 
   it('keeps a selected inactive or unlisted site, employee and checklist visible', async () => {
     renderBar({ siteId: IDS.zoneB, userId: IDS.rauf, checklistId: IDS.oldChecklist });
     await waitFor(() =>
-      expect(screen.getByLabelText('Obyekt')).toHaveDisplayValue('\u00a0\u00a0Zona B (köhnə) (Deaktiv)'),
+      expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Zona B (köhnə) (Deaktiv)'),
     );
     await waitFor(() =>
-      expect(screen.getByLabelText('Əməkdaş')).toHaveDisplayValue('Rauf Həsənov (Deaktiv)'),
+      expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent('Rauf Həsənov (Deaktiv)'),
     );
     await waitFor(() =>
-      expect(screen.getByLabelText('Yoxlama vərəqəsi')).toHaveDisplayValue('Köhnə yoxlama (Deaktiv)'),
+      expect(screen.getByRole('button', { name: 'Yoxlama vərəqəsi' })).toHaveTextContent('Köhnə yoxlama (Deaktiv)'),
     );
     cleanup();
     // A person with no runs in the period is not in the report, but the filter still applies.
     renderBar({ userId: IDS.stranger });
     await waitFor(() =>
-      expect(screen.getByLabelText('Əməkdaş')).toHaveDisplayValue(
+      expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent(
         'Seçilmiş əməkdaş (bu dövrdə icrası yoxdur)',
       ),
     );
@@ -185,15 +187,15 @@ describe('ReportFilters', () => {
   it('never reads as "all" while the site list is loading or failed: the selected id shows as unlisted', async () => {
     mocks.api.sites.list.mockRejectedValue(new Error('boom'));
     renderBar({ siteId: IDS.zoneA });
-    expect(screen.getByLabelText('Obyekt')).toHaveDisplayValue('Seçilmiş (siyahıda yoxdur)');
+    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Seçilmiş (siyahıda yoxdur)');
     await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
-    expect(screen.getByLabelText('Obyekt')).toHaveDisplayValue('Seçilmiş (siyahıda yoxdur)');
+    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Seçilmiş (siyahıda yoxdur)');
   });
 
   it('keeps the selected person visible when an invalid custom range asks for no employee report', () => {
     // An invalid custom range asks for no employee report, yet the selected person stays visible.
     renderBar({ period: 'custom', from: '2026-10-31', to: '2026-10-01', userId: IDS.aynur });
-    expect(screen.getByLabelText('Əməkdaş')).toHaveDisplayValue('Seçilmiş əməkdaş (bu dövrdə icrası yoxdur)');
+    expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent('Seçilmiş əməkdaş (bu dövrdə icrası yoxdur)');
     expect(mocks.api.reports.employees).not.toHaveBeenCalled();
   });
 
@@ -201,7 +203,7 @@ describe('ReportFilters', () => {
     renderBar({ checklistId: IDS.stranger });
     await waitFor(() => expect(mocks.api.checklists.list).toHaveBeenCalled());
     await waitFor(() =>
-      expect(screen.getByLabelText('Yoxlama vərəqəsi')).toHaveDisplayValue('Seçilmiş (siyahıda yoxdur)'),
+      expect(screen.getByRole('button', { name: 'Yoxlama vərəqəsi' })).toHaveTextContent('Seçilmiş (siyahıda yoxdur)'),
     );
   });
 

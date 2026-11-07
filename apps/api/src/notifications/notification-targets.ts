@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type AuditResult, type AuditScore, isAuditType, type NotificationType, type ProblemSeverity, type ReworkItem } from '@taskop/contracts';
+import { type AuditResult, type AuditScore, isAuditType, type NotificationType, type OccurrenceStatus, type ProblemSeverity, type ReworkItem } from '@taskop/contracts';
 import { and, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { assignments, audits, checklists, executionProblems, executionReworkRequests, executions, occurrences, problemReports, sites, tasks, tenants, users } from '../db/schema';
@@ -12,6 +12,8 @@ export interface OccurrenceTarget {
   localDate: string;
   startsAt: Date;
   dueAt: Date;
+  /** At fan-out: a reminder about a run no longer open is dropped (see notification-fanout.ts). */
+  status: OccurrenceStatus;
   checklistName: string;
   siteName: string;
   /** The tenant's timezone, for times in texts. */
@@ -58,7 +60,7 @@ export interface TaskTarget {
   timezone: string;
 }
 
-/** SP8: a run sent back, resubmitted or audited. Opens the run like checklist notifications do. */
+/** SP8: a run sent back, resubmitted or audited; also checklist.completed (a run finished). Opens the run like checklist notifications do. */
 export interface RunTarget {
   kind: 'run';
   occurrence: OccurrenceTarget;
@@ -87,7 +89,7 @@ export class NotificationTargets {
 
   async load(type: NotificationType, payload: unknown, actorUserId: string | null): Promise<NotificationTarget | null> {
     if (type === 'manual') return { kind: 'manual', ...(payload as ManualPayload), senderUserId: actorUserId };
-    if (isAuditType(type)) return this.run(payload as RunPayload);
+    if (isAuditType(type) || type === 'checklist.completed') return this.run(payload as RunPayload);
     if (type === 'checklist.assigned') return this.assignment(payload as AssignedPayload);
     if (type.startsWith('checklist.')) return this.occurrence((payload as OccurrencePayload).occurrenceId);
     if (type.startsWith('problem.')) return this.problem(payload as ProblemPayload);
@@ -109,6 +111,7 @@ export class NotificationTargets {
         localDate: occurrences.localDate,
         startsAt: occurrences.startsAt,
         dueAt: occurrences.dueAt,
+        status: occurrences.status,
         checklistName: checklists.name,
         siteName: sites.name,
       })
@@ -124,6 +127,7 @@ export class NotificationTargets {
       localDate: r.localDate,
       startsAt: r.startsAt,
       dueAt: r.dueAt,
+      status: r.status,
       checklistName: r.checklistName,
       siteName: r.siteName,
       timezone: await this.timezone(),

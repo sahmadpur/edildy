@@ -24,7 +24,7 @@ export interface TaskPayload {
   taskId: string;
 }
 
-/** SP8: the run, the send-back round, the audit (spec §7.1). */
+/** SP8: the run, the send-back round, the audit (spec §7.1). checklist.completed carries the run alone. */
 export interface RunPayload {
   occurrenceId: string;
   executionId: string;
@@ -48,6 +48,7 @@ export interface PayloadOf extends Record<NotificationType, object> {
   'checklist.due_soon': OccurrencePayload;
   'checklist.overdue': OccurrencePayload;
   'checklist.missed': OccurrencePayload;
+  'checklist.completed': RunPayload;
   'problem.recorded': ProblemPayload;
   'problem.critical': ProblemPayload;
   'problem_report.created': ProblemReportPayload;
