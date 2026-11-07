@@ -20,6 +20,13 @@ describe('notificationLink', () => {
     expect(notificationLink(notificationItem({ type: 'manual', targetKind: 'none', targetId: null }))).toBeNull();
   });
 
+  it('opens a problem report on the Problems page’s reports tab (2026-11-06 design)', () => {
+    expect(notificationLink(notificationItem({ type: 'problem_report.created', targetKind: 'problem_report', targetId: 'r1', targetDate: null }))).toEqual({
+      to: '/problems',
+      search: { tab: 'reports', report: 'r1' },
+    });
+  });
+
   it('opens the run on the tab each audit notification is about', () => {
     const at = { targetKind: 'occurrence' as const, targetId: 'o1', targetDate: '2026-11-02' };
     expect(notificationLink(notificationItem({ type: 'run.correction_required', ...at }))).toEqual({ to: '/schedule', search: { date: '2026-11-02', occurrence: 'o1', tab: 'execution' } });

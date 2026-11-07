@@ -50,5 +50,6 @@ export async function storeTask(qc: QueryClient, task: TaskDetail): Promise<void
   await Promise.all([
     qc.invalidateQueries({ queryKey: taskKeys.lists }),
     ...(task.problemId ? [qc.invalidateQueries({ queryKey: ['problems'] }), qc.invalidateQueries({ queryKey: ['executions'] })] : []),
+    ...(task.problemReportId ? [qc.invalidateQueries({ queryKey: ['problem-reports'] })] : []),
   ]);
 }

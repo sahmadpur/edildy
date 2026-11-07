@@ -4,6 +4,7 @@ import {
   type EvidenceLevel,
   MEDIA_LIMITS,
   type ProblemDto,
+  type ProblemReportDto,
   TASK_LIMITS,
   TASK_PRIORITIES,
   type TaskDetail,
@@ -40,6 +41,8 @@ interface Props {
   task?: TaskDetail;
   /** Create the fix for this closed run's problem (spec §8): pre-filled, its site, review on. */
   problem?: ProblemDto;
+  /** Create the fix for this problem report (2026-11-06 design §8): pre-filled from its text, its site, review on. */
+  problemReport?: ProblemReportDto;
   onClose: () => void;
   /** The created or saved task, also when the dialog is closed after a failed upload. */
   onSaved?: (task: TaskDetail) => void;
@@ -47,7 +50,7 @@ interface Props {
   readMeta?: ReadMediaMeta;
 }
 
-export function TaskDialog({ task: latest, problem, onClose, onSaved, readMeta = readMediaMeta }: Props) {
+export function TaskDialog({ task: latest, problem, problemReport, onClose, onSaved, readMeta = readMediaMeta }: Props) {
   const { t } = useTranslation();
   const locale = useLocale();
   // The task as it was when the dialog opened: the prop follows refetches (and the uploads' own invalidation), but the
@@ -56,10 +59,10 @@ export function TaskDialog({ task: latest, problem, onClose, onSaved, readMeta =
   const qc = useQueryClient();
   const { tenant } = useMe();
   // A problem task's site comes from the problem (Part 1 decision 19): shown, never edited.
-  const fixedSite = problem ? problem.siteName : task?.source === 'problem' ? (task.site?.name ?? '—') : null;
+  const fixedSite = problem ? problem.siteName : problemReport ? problemReport.siteName : task?.source === 'problem' || task?.source === 'report' ? (task.site?.name ?? '—') : null;
   // The sites a task may name (Part 1 decision 25), from the picker's endpoint; no `sites.view` needed (decision 16).
   const siteOptions = useTaskAssignees('', fixedSite === null).data?.sites ?? [];
-  const [values, setValues] = useState<TaskFormValues>(() => initialValues({ task, problem }, tenant.timezone));
+  const [values, setValues] = useState<TaskFormValues>(() => initialValues({ task, problem, problemReport }, tenant.timezone));
   const [errors, setErrors] = useState<TaskFormErrors>({});
   const [files, setFiles] = useState<PendingMedia[]>([]);
   const [saved, setSaved] = useState<TaskDetail | null>(null);
@@ -117,7 +120,7 @@ export function TaskDialog({ task: latest, problem, onClose, onSaved, readMeta =
             stored = task;
           }
         } else {
-          stored = await api.tasks.create(createBody(newId, values, tenant.timezone, problem));
+          stored = await api.tasks.create(createBody(newId, values, tenant.timezone, problem, problemReport));
           serverTime = stored.createdAt;
         }
         setSaved(stored);
@@ -141,6 +144,7 @@ export function TaskDialog({ task: latest, problem, onClose, onSaved, readMeta =
         if (e.fields) setErrors(fieldErrors(e.fields));
         // Someone else made the task first: let the problems page show it.
         if (e.code === 'PROBLEM_ALREADY_HAS_TASK') void qc.invalidateQueries({ queryKey: ['problems'] });
+        if (e.code === 'PROBLEM_REPORT_HAS_TASK' || e.code === 'PROBLEM_REPORT_CLOSED') void qc.invalidateQueries({ queryKey: ['problem-reports'] });
       }
     } finally {
       inFlight.current = false;
@@ -157,8 +161,10 @@ export function TaskDialog({ task: latest, problem, onClose, onSaved, readMeta =
     <Dialog open onOpenChange={(open) => !open && close()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t(task ? 'tasks.dialog.editTitle' : problem ? 'tasks.dialog.fromProblem' : 'tasks.dialog.createTitle')}</DialogTitle>
-          <DialogDescription>{problem ? `${problem.checklistName} · ${formatLocalDate(problem.localDate, locale)}` : t('tasks.dialog.description')}</DialogDescription>
+          <DialogTitle>{t(task ? 'tasks.dialog.editTitle' : problem ? 'tasks.dialog.fromProblem' : problemReport ? 'tasks.dialog.fromReport' : 'tasks.dialog.createTitle')}</DialogTitle>
+          <DialogDescription>
+            {problem ? `${problem.checklistName} · ${formatLocalDate(problem.localDate, locale)}` : problemReport ? `${problemReport.siteName} · ${problemReport.reporter.fullName}` : t('tasks.dialog.description')}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <fieldset disabled={locked} className="m-0 grid min-w-0 gap-4 border-0 p-0">

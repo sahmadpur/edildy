@@ -34,7 +34,8 @@ describe('NotificationRulesTab', () => {
       expect(await screen.findByRole('region', { name: az.notifications.groups[g] })).toBeInTheDocument();
     }
     // Header row + problem.recorded + problem.critical.
-    expect(within(screen.getByRole('region', { name: az.notifications.groups.problem })).getAllByRole('row')).toHaveLength(3);
+    // The header row, the two checklist-problem types and the four problem-report types (2026-11-06 design §6.4).
+    expect(within(screen.getByRole('region', { name: az.notifications.groups.problem })).getAllByRole('row')).toHaveLength(7);
     expect(screen.queryByRole('checkbox', { name: ctl('problem.recorded', audiences.assignees) })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox', { name: ctl('checklist.overdue', audiences.creator) })).not.toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: ctl('task.overdue', audiences.creator) })).toBeChecked();

@@ -1,5 +1,5 @@
 import { ApiError } from '@taskop/api-client';
-import { isFinalTaskStatus, type ProblemDto, TASK_LIMITS, type TaskDetail, type TaskMediaDto } from '@taskop/contracts';
+import { isFinalTaskStatus, type ProblemDto, type ProblemReportDto, TASK_LIMITS, type TaskDetail, type TaskMediaDto } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { type ReactNode, useMemo, useRef, useState } from 'react';
@@ -20,6 +20,8 @@ import { api } from '@/lib/session';
 import { assigneeText, historyComment, taskStatusVariant } from './labels';
 import { storeTask, taskKeys, useTask } from './queries';
 import { TaskDialog } from './task-dialog';
+import { mapsLink } from '@/features/problem-reports/labels';
+import { TaskReportMediaStrip } from '@/features/problem-reports/report-media';
 import { ProblemMediaStrip, TaskMediaStrip } from './task-media';
 import { useLocale } from '@/lib/i18n';
 
@@ -102,6 +104,7 @@ function TaskBody({ task, onEdit, onError }: { task: TaskDetail; onEdit: () => v
         <TaskMediaStrip media={task.media.filter((m) => m.role === 'instruction')} />
       </section>
       {task.problem && <ProblemCard taskId={task.id} problem={task.problem} />}
+      {task.problemReport && <ReportCard taskId={task.id} report={task.problemReport} />}
       <section aria-label={t('tasks.drawer.submissions')} className="grid gap-2">
         <h3 className="font-medium">{t('tasks.drawer.submissions')}</h3>
         {task.submissions.length === 0 ? (
@@ -148,6 +151,28 @@ function TaskBody({ task, onEdit, onError }: { task: TaskDetail; onEdit: () => v
         </ol>
       </section>
     </div>
+  );
+}
+
+/** The source problem report of a report task (2026-11-06 design §8). */
+function ReportCard({ taskId, report: r }: { taskId: string; report: ProblemReportDto }) {
+  const { t } = useTranslation();
+  const formatDateTime = useFormatDateTime();
+  return (
+    <section aria-label={t('tasks.drawer.report')} className="grid gap-2 bg-card shadow-card rounded-xl p-3">
+      <h3 className="font-medium">{t('tasks.drawer.report')}</h3>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant={severityVariant(r.severity)}>{t(`executions.severities.${r.severity}`)}</Badge>
+        <span className="text-muted-foreground">{[r.siteName, r.reporter.fullName, formatDateTime(r.reportedAt)].join(' · ')}</span>
+      </div>
+      <p className="whitespace-pre-line">{r.text}</p>
+      <TaskReportMediaStrip taskId={taskId} media={r.media} />
+      {r.location && (
+        <a href={mapsLink(r.location.lat, r.location.lng)} target="_blank" rel="noreferrer" className="w-fit underline-offset-4 hover:underline">
+          {t('executions.reportsTab.map')}
+        </a>
+      )}
+    </section>
   );
 }
 

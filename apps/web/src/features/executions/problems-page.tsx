@@ -18,9 +18,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatLocalDate, useTenantToday } from '@/features/scheduling/labels';
 import { useSites } from '@/features/sites/queries';
 import { resolutionVariant } from '@/features/tasks/labels';
+import { ReportsTab } from '@/features/problem-reports/reports-tab';
+import type { ProblemsSearch } from '@/features/problem-reports/routes';
 import { TaskDialog } from '@/features/tasks/task-dialog';
 import { errorText } from '@/lib/errors';
 import { useCan } from '@/lib/session';
@@ -33,7 +36,7 @@ import { LoadingState, EmptyState } from '@/components/states';
  * Recorded problems (spec §8 of SP4 and SP5). Each row opens its occurrence in the schedule drawer on the "İcra" tab;
  * its resolution links to its task, or offers to create one once the run is closed.
  */
-export function ProblemsPage({ today: fixedToday }: { today?: string }) {
+export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: { today?: string } & ProblemsSearch) {
   const { t } = useTranslation();
   const locale = useLocale();
   const tenantToday = useTenantToday();
@@ -68,6 +71,15 @@ export function ProblemsPage({ today: fixedToday }: { today?: string }) {
   return (
     <div className="grid gap-4">
       <PageHeader title={t('executions.problemsPage.title')} />
+      <Tabs defaultValue={tab}>
+        <TabsList>
+          <TabsTrigger value="checklist">{t('executions.problemsPage.tabs.checklist')}</TabsTrigger>
+          <TabsTrigger value="reports">{t('executions.problemsPage.tabs.reports')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="reports" className="mt-4">
+          <ReportsTab highlight={report} />
+        </TabsContent>
+        <TabsContent value="checklist" className="mt-4 grid gap-4">
       <div className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1">
           <Label htmlFor="problems-from">{t('executions.problemsPage.from')}</Label>
@@ -193,6 +205,8 @@ export function ProblemsPage({ today: fixedToday }: { today?: string }) {
       )}
       {/* Saving invalidates ['problems'] (storeTask), so the row then shows its open task. */}
       {creatingFrom && <TaskDialog problem={creatingFrom} onClose={() => setCreatingFrom(null)} />}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
