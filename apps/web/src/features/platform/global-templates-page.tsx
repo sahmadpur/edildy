@@ -37,7 +37,7 @@ export function GlobalTemplatesPage() {
   return (
     <div>
       <PageHeader
-        title={t('checklists.templates.taskop')}
+        title={t('checklists.templates.taskop')} description={t('pages.globalTemplates')}
         actions={<Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>}
       />
       <Table>

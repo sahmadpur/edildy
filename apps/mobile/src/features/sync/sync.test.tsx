@@ -114,7 +114,7 @@ describe('sync screen', () => {
     await renderWithServices(t.services, <SyncScreen />);
     await fireEvent.press(await screen.findByRole('button', { name: 'Sil: Fayl yükləmə · Açılış yoxlaması' }));
     expect(alert.mock.calls[0]![1]).toBe('Bu dəyişiklik serverə göndərilməyəcək və telefondan silinəcək. Bu, geri qaytarıla bilməz.');
-    await act(async () => (alert.mock.calls[0]![2] as AlertButton[]).find((b) => b.text === 'Ləğv et')!.onPress?.());
+    await act(async () => (alert.mock.calls[0]![2] as AlertButton[]).find((b) => b.text === 'İmtina et')!.onPress?.());
     expect(t.services.engine.status().failed).toBe(1);
     await fireEvent.press(screen.getByRole('button', { name: 'Sil: Fayl yükləmə · Açılış yoxlaması' }));
     await act(async () => (alert.mock.calls[1]![2] as AlertButton[]).find((b) => b.text === 'Sil')!.onPress?.());

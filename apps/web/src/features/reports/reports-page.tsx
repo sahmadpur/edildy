@@ -1,4 +1,4 @@
-import { REPORT_KINDS, type ReportFilters as Filters, type ReportKind } from '@taskop/contracts';
+import { REPORT_KINDS, type ReportFiltersQuery as Filters, type ReportKind } from '@taskop/contracts';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +36,7 @@ export function ReportsPage({ today: fixedToday }: { today?: string }) {
   return (
     <div className="grid gap-4">
       <PageHeader
-        title={t('reports.title')}
+        title={t('reports.title')} description={t('pages.reports')}
         actions={
           <ExportMenu
             kind={tab}

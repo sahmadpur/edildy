@@ -1,4 +1,4 @@
-import { PROBLEM_SEVERITIES, type ProblemSeverity, type ReportFilters } from '@taskop/contracts';
+import { PROBLEM_SEVERITIES, type ProblemSeverity, type ReportFiltersQuery as ReportFilters } from '@taskop/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';

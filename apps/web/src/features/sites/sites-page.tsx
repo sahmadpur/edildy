@@ -5,12 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { errorText } from '@/lib/errors';
 import { api, useCan } from '@/lib/session';
 import { MoveSiteDialog } from './move-site-dialog';
 import { useSites, useSiteTypes } from './queries';
 import { SiteFormDialog } from './site-form-dialog';
+import { SiteList } from './site-list';
 import { SiteTree } from './site-tree';
 import { SiteTypesPanel } from './site-types-panel';
 import { buildTree } from './tree';
@@ -36,7 +37,7 @@ export function SitesPage() {
   return (
     <div className="grid gap-6">
       <PageHeader
-        title={t('sites.title')}
+        title={t('sites.title')} description={t('pages.sites')}
         actions={
           canManage && (
             <Button onClick={() => setDialog({ kind: 'create', parent: null })}>
@@ -45,40 +46,58 @@ export function SitesPage() {
           )
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <section aria-labelledby="site-tree-title" className="grid content-start gap-3">
-          <h2 id="site-tree-title" className="text-base font-semibold">
-            {t('sites.tree.title')}
-          </h2>
-          {tree.length === 0 ? (
-            <p className="text-muted-foreground">
-              {sites.isLoading ? t('common.loading') : t('sites.tree.empty')}
-            </p>
-          ) : (
-            <SiteTree
-              nodes={tree}
-              typeName={typeName}
-              canManage={canManage}
-              onAddChild={(n) => setDialog({ kind: 'create', parent: n })}
-              onEdit={(n) => setDialog({ kind: 'edit', site: n })}
-              onMove={(n) => setDialog({ kind: 'move', site: n })}
-              onToggleActive={async (n) => {
-                try {
-                  await api.sites.update(n.id, { active: !n.active });
-                  await refresh();
-                } catch (e) {
-                  toast.error(errorText(t, e));
-                }
-              }}
-            />
-          )}
-        </section>
+      {/* Three equal boxes, each with a line on what it is for (feedback 2026-11-07). */}
+      <div className="grid items-stretch gap-6 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('sites.tree.title')}</CardTitle>
+            <CardDescription>{t('sites.tree.hint')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {tree.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                {sites.isLoading ? t('common.loading') : t('sites.tree.empty')}
+              </p>
+            ) : (
+              <SiteTree
+                nodes={tree}
+                typeName={typeName}
+                canManage={canManage}
+                onAddChild={(n) => setDialog({ kind: 'create', parent: n })}
+                onEdit={(n) => setDialog({ kind: 'edit', site: n })}
+                onMove={(n) => setDialog({ kind: 'move', site: n })}
+                onToggleActive={async (n) => {
+                  try {
+                    await api.sites.update(n.id, { active: !n.active });
+                    await refresh();
+                  } catch (e) {
+                    toast.error(errorText(t, e));
+                  }
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>{t('sites.types.title')}</CardTitle>
+            <CardDescription>{t('sites.types.hint')}</CardDescription>
           </CardHeader>
           <CardContent>
             <SiteTypesPanel types={types.data ?? []} canManage={canManage} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('sites.list.title')}</CardTitle>
+            <CardDescription>{t('sites.list.hint')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SiteList
+              sites={sites.data ?? []}
+              typeName={typeName}
+              onOpen={canManage ? (site) => setDialog({ kind: 'edit', site }) : undefined}
+            />
           </CardContent>
         </Card>
       </div>

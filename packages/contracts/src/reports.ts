@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { runAuditStateSchema } from './audit-logic.js';
-import { idSchema, isoDateTimeSchema, pageOf } from './common.js';
+import { idListParam, idSchema, isoDateTimeSchema, listParam, pageOf } from './common.js';
 import { problemSeveritySchema } from './execution-logic.js';
 import { problemDtoSchema } from './execution-views.js';
 import { occurrenceStatusSchema, userRefSchema } from './occurrences.js';
@@ -34,9 +34,9 @@ export type ReportIssueCode = (typeof REPORT_ISSUE_CODES)[number];
 const filterShape = {
   from: localDateSchema,
   to: localDateSchema,
-  siteId: idSchema.optional(),
-  userId: idSchema.optional(),
-  checklistId: idSchema.optional(),
+  siteId: idListParam.optional(),
+  userId: idListParam.optional(),
+  checklistId: idListParam.optional(),
 };
 const toNotBeforeFrom = (v: { from: string; to: string }, ctx: z.RefinementCtx): void => {
   if (dayNumber(v.to) < dayNumber(v.from)) ctx.addIssue({ code: 'custom', path: ['to'], message: 'reports.issues.toBeforeFrom' });
@@ -54,7 +54,7 @@ export type ReportRunsParams = z.output<typeof reportRunsQuerySchema>;
 
 /** `severity` feeds the dashboard's critical-problems panel (Spec decision 5). */
 export const reportProblemsQuerySchema = z
-  .object({ ...filterShape, severity: problemSeveritySchema.optional(), cursor: idSchema.optional() })
+  .object({ ...filterShape, severity: listParam(problemSeveritySchema).optional(), cursor: idSchema.optional() })
   .superRefine(toNotBeforeFrom);
 export type ReportProblemsQuery = z.input<typeof reportProblemsQuerySchema>;
 export type ReportProblemsParams = z.output<typeof reportProblemsQuerySchema>;
@@ -71,7 +71,7 @@ export const reportExportQuerySchema = z
     bucket: runBucketSchema.optional(),
     /** The runs export only (SP8 spec §8.3). */
     auditState: runAuditStateSchema.optional(),
-    severity: problemSeveritySchema.optional(),
+    severity: listParam(problemSeveritySchema).optional(),
   })
   .superRefine(toNotBeforeFrom);
 export type ReportExportQuery = z.input<typeof reportExportQuerySchema>;

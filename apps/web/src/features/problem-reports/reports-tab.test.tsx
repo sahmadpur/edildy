@@ -6,6 +6,7 @@ import { renderWithRouter } from '@/test/router';
 import { assigneeOptions, taskDetail } from '@/features/tasks/fixtures';
 import { problemReportDto } from './fixtures';
 import { ReportsTab } from './reports-tab';
+import { tickOptions } from '@/test/multi-select';
 
 const mocks = vi.hoisted(() => ({
   canManageTasks: { current: true },
@@ -64,7 +65,8 @@ describe('ReportsTab (2026-11-06 design §8)', () => {
     renderWithRouter(<ReportsTab />, '/problems');
     await screen.findByText('Lampa yanmır');
     await userEvent.selectOptions(await screen.findByLabelText(az.executions.reportsTab.state), 'closed');
-    await userEvent.selectOptions(await screen.findByLabelText(az.executions.reportsTab.site), 'site2');
+    await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
+    await tickOptions(az.executions.reportsTab.site, ['Filial 2']);
     await waitFor(() => expect(mocks.api.problemReports.list).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'closed', siteId: 'site2' })));
   });
 

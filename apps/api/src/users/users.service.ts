@@ -34,9 +34,9 @@ export class UsersService {
 
   async list(p: Principal, q: UserListQueryDto): Promise<Page<UserDto>> {
     const conditions: (SQL | undefined)[] = [this.scope.usersFilter(p)];
-    if (q.status) conditions.push(eq(users.status, q.status));
+    if (q.status) conditions.push(inArray(users.status, q.status));
     if (q.kind) conditions.push(eq(users.kind, q.kind));
-    if (q.roleId) conditions.push(eq(users.roleId, q.roleId));
+    if (q.roleId) conditions.push(inArray(users.roleId, q.roleId));
     if (q.teamId) conditions.push(sql`exists (select 1 from user_teams ut where ut.user_id = ${users.id} and ut.team_id = ${q.teamId})`);
     if (q.siteId) conditions.push(sql`exists (select 1 from user_sites us where us.user_id = ${users.id} and us.site_id = ${q.siteId})`);
     if (q.q) {

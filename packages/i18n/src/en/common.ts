@@ -6,7 +6,7 @@ export default {
   add: 'Add',
   edit: 'Edit',
   deactivate: 'Deactivate',
-  reactivate: 'Activate',
+  reactivate: 'Restore',
   active: 'Active',
   inactive: 'Inactive',
   loading: 'Loading…',

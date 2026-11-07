@@ -34,16 +34,17 @@ export const verdictVariant = (v: AuditVerdict | null): Variant => (v === 'appro
 /** `/audits`: the open queue and its filters (decision 2). Absent means Waiting, everything in scope. */
 export interface AuditsSearch {
   queue?: AuditQueue;
+  /** One value or several joined by commas (the multi-select filters, feedback 2026-11-07). */
   siteId?: string;
   checklistId?: string;
   auditorId?: string;
-  result?: AuditResult;
+  result?: string;
   /** Run completion date range, both ends inclusive, tenant dates. */
   from?: string;
   to?: string;
 }
 
-const isId = (v: unknown): v is string => idSchema.safeParse(v).success;
+const isId = (v: unknown): v is string => typeof v === 'string' && v.split(',').every((id) => idSchema.safeParse(id).success);
 const isDate = (v: unknown): v is string => localDateSchema.safeParse(v).success;
 const isOneOf = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
 
@@ -54,7 +55,7 @@ export function auditsSearch(s: Record<string, unknown>): AuditsSearch {
     ...(isId(s.siteId) ? { siteId: s.siteId } : {}),
     ...(isId(s.checklistId) ? { checklistId: s.checklistId } : {}),
     ...(isId(s.auditorId) ? { auditorId: s.auditorId } : {}),
-    ...(isOneOf(AUDIT_RESULTS, s.result) ? { result: s.result } : {}),
+    ...(typeof s.result === 'string' && s.result.split(',').every((r) => isOneOf(AUDIT_RESULTS, r)) ? { result: s.result } : {}),
     ...(isDate(s.from) ? { from: s.from } : {}),
     ...(isDate(s.to) ? { to: s.to } : {}),
   };

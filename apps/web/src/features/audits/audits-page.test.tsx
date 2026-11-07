@@ -6,6 +6,7 @@ import { CHECKLISTS, IDS, meWith, page, SITES } from '@/features/reports/fixture
 import { renderWithRouter } from '@/test/router';
 import { AuditsPage } from './audits-page';
 import { apiError, AUDIT_IDS, AUDITOR, auditDto, queueRow } from './fixtures';
+import { tickOptions } from '@/test/multi-select';
 
 const mocks = vi.hoisted(() => ({
   me: { current: null as unknown },
@@ -38,7 +39,13 @@ beforeEach(() => {
   );
   mocks.api.sites.list.mockResolvedValue(SITES);
   mocks.api.checklists.list.mockResolvedValue({ items: CHECKLISTS, nextCursor: null });
-  mocks.api.users.list.mockResolvedValue({ items: [{ id: AUDIT_IDS.auditor, fullName: 'Rəşad Kazımov' }], nextCursor: null });
+  mocks.api.users.list.mockResolvedValue({
+    items: [
+      { id: AUDIT_IDS.auditor, fullName: 'Rəşad Kazımov' },
+      { id: IDS.stranger, fullName: 'Günel Həsənova' },
+    ],
+    nextCursor: null,
+  });
 });
 
 describe('AuditsPage', () => {
@@ -90,12 +97,12 @@ describe('AuditsPage', () => {
     await waitFor(() => expect(router.state.location.search).toEqual({ queue: 'finished' }));
     const rows = await screen.findAllByRole('row');
     for (const text of ['Rəşad Kazımov', '15:00', az.audits.results.failed, '83,3%']) expect(rows[1]).toHaveTextContent(text);
-    await screen.findByRole('option', { name: 'Rəşad Kazımov' });
-    await userEvent.selectOptions(screen.getByLabelText('Nəticə'), 'failed');
-    await userEvent.selectOptions(screen.getByLabelText('Auditor'), AUDIT_IDS.auditor);
-    await screen.findByRole('option', { name: /Zona A1/ });
-    await userEvent.selectOptions(screen.getByLabelText('Obyekt'), IDS.zoneA);
-    await userEvent.selectOptions(screen.getByLabelText('Yoxlama vərəqəsi'), IDS.checklist);
+    await waitFor(() => expect(mocks.api.users.list).toHaveBeenCalled());
+    await tickOptions('Nəticə', ['Uğursuz']);
+    await tickOptions('Auditor', ['Rəşad Kazımov']);
+    await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
+    await tickOptions('Obyekt', [/Zona A1/]);
+    await tickOptions('Yoxlama vərəqəsi', ['Açılış yoxlaması']);
     await waitFor(() =>
       expect(mocks.api.audits.list).toHaveBeenLastCalledWith({ queue: 'finished', result: 'failed', auditorId: AUDIT_IDS.auditor, siteId: IDS.zoneA, checklistId: IDS.checklist }),
     );
@@ -105,12 +112,12 @@ describe('AuditsPage', () => {
   it('asks for both dates, refuses an inverted range, and sends a valid one', async () => {
     renderWithRouter(<AuditsPage />, '/audits');
     await screen.findAllByRole('row');
-    fireEvent.change(screen.getByLabelText('Başlanğıc tarixi'), { target: { value: '2026-10-31' } });
+    fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-10-31' } });
     expect(await screen.findByText('Başlanğıc və son tarixi birlikdə seçin.')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Son tarix'), { target: { value: '2026-10-01' } });
+    fireEvent.change(screen.getByLabelText('Son'), { target: { value: '2026-10-01' } });
     expect(await screen.findByText('Son tarix başlanğıc tarixindən əvvəl ola bilməz.')).toBeInTheDocument();
     expect(mocks.api.audits.list).toHaveBeenCalledTimes(1);
-    fireEvent.change(screen.getByLabelText('Son tarix'), { target: { value: '2026-11-04' } });
+    fireEvent.change(screen.getByLabelText('Son'), { target: { value: '2026-11-04' } });
     await waitFor(() => expect(mocks.api.audits.list).toHaveBeenLastCalledWith({ queue: 'waiting', from: '2026-10-31', to: '2026-11-04' }));
   });
 

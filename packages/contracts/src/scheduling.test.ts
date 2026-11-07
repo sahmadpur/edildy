@@ -5,6 +5,7 @@ import {
   recurrenceSchema,
   scheduleDates,
   scheduleWarnings,
+  isWholeDayWindow,
   slotFor,
   timingSchema,
   validateSchedule,
@@ -107,9 +108,29 @@ describe('slots', () => {
     expect(slots.map((s) => s.startsAt.toISOString())).toEqual(['2026-10-24T06:00:00.000Z', '2026-10-25T07:00:00.000Z', '2026-10-26T07:00:00.000Z']);
   });
 
+  it('gives an "anytime" slot the whole local day, due at the next midnight with no grace', () => {
+    const s = slotFor('2026-11-02', { mode: 'anytime' }, null, 'Asia/Baku');
+    expect(s.localDate).toBe('2026-11-02');
+    expect([s.startsAt, s.dueAt, s.closesAt].map((x) => x.toISOString())).toEqual([
+      '2026-11-01T20:00:00.000Z',
+      '2026-11-02T20:00:00.000Z',
+      '2026-11-02T20:00:00.000Z',
+    ]);
+    expect(timingSchema.parse({ mode: 'anytime' })).toEqual({ mode: 'anytime' });
+  });
+
+  it('tells a whole-day window from a timed one', () => {
+    const day = slotFor('2026-11-02', { mode: 'anytime' }, null, 'Asia/Baku');
+    expect(isWholeDayWindow(day.startsAt, day.dueAt, 'Asia/Baku')).toBe(true);
+    expect(isWholeDayWindow(day.startsAt.toISOString(), day.dueAt.toISOString(), 'Asia/Baku')).toBe(true);
+    const timed = slotFor('2026-11-02', { mode: 'fixed', startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 0 }, null, 'Asia/Baku');
+    expect(isWholeDayWindow(timed.startsAt, timed.dueAt, 'Asia/Baku')).toBe(false);
+  });
+
   it('measures windows', () => {
     expect(windowMinutes({ mode: 'fixed', startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 60 }, null)).toBe(180);
     expect(windowMinutes({ mode: 'shift', shiftId: ID, graceMinutes: 30 }, { startTime: '22:00', endTime: '06:00' })).toBe(510);
+    expect(windowMinutes({ mode: 'anytime' }, null)).toBe(1440);
   });
 });
 

@@ -11,7 +11,7 @@ import {
   regenerateIds,
   validateForPublish,
 } from '@taskop/contracts';
-import { and, desc, eq, getTableColumns, ilike, lt, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, ilike, inArray, lt, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { escapeLike } from '../common/sql';
 import { AuditService } from '../db/audit.service';
@@ -41,8 +41,8 @@ export class ChecklistsService {
 
   async list(q: ChecklistListQueryDto): Promise<Page<ChecklistSummary>> {
     const conditions: (SQL | undefined)[] = [];
-    if (q.status) conditions.push(eq(checklists.status, q.status));
-    if (q.category) conditions.push(eq(checklists.category, q.category));
+    if (q.status) conditions.push(inArray(checklists.status, q.status));
+    if (q.category) conditions.push(inArray(checklists.category, q.category));
     if (q.q) conditions.push(ilike(checklists.name, `%${escapeLike(q.q)}%`));
     if (q.hasDraft !== undefined) conditions.push(q.hasDraft ? sql`${this.draftRevisionSql()} is not null` : sql`${this.draftRevisionSql()} is null`);
     if (q.cursor) conditions.push(lt(checklists.id, q.cursor));

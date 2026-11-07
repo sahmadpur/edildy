@@ -1,6 +1,6 @@
 import {
   type PeriodPreset,
-  type ReportFilters,
+  type ReportFiltersQuery as ReportFilters,
   type ReportSummary,
   resolvePeriod,
   type RunBucket,
@@ -95,7 +95,7 @@ export function HomeDashboard({ today: fixedToday }: { today?: string }) {
   return (
     <div className="grid gap-5">
       <PageHeader
-        title={t('nav.home')}
+        title={t('nav.home')} description={t('pages.home')}
         actions={
           <>
             {updatedAt > 0 && (

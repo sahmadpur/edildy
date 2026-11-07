@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idListParam, idSchema, isoDateTimeSchema, listParam } from './common.js';
 import { credentialKindSchema, emailSchema, secretSchemaFor, usernameSchema } from './credentials.js';
 import { systemRoleKeySchema } from './permissions.js';
 
@@ -27,9 +27,9 @@ export const userDtoSchema = z.object({
 export type UserDto = z.infer<typeof userDtoSchema>;
 
 export const userListQuerySchema = cursorQuerySchema.extend({
-  status: userStatusSchema.optional(),
+  status: listParam(userStatusSchema).optional(),
   kind: userKindSchema.optional(),
-  roleId: idSchema.optional(),
+  roleId: idListParam.optional(),
   teamId: idSchema.optional(),
   siteId: idSchema.optional(),
   q: z.string().trim().max(100).optional(),

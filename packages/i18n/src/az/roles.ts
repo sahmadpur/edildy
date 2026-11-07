@@ -1,6 +1,6 @@
 export default {
   title: 'Rollar',
-  add: 'Rol yarat',
+  add: 'Yeni rol',
   name: 'Rolun adı',
   scope: 'Məlumat əhatəsi',
   permissions: 'İcazələr',
@@ -8,7 +8,7 @@ export default {
   system: 'Sistem rolu',
   locked: 'Sahib rolu bütün icazələrə malikdir və dəyişdirilə bilməz.',
   createTitle: 'Yeni rol',
-  select: 'Redaktə etmək üçün rol seçin.',
+  select: 'Düzəliş etmək üçün rol seçin.',
   systemNames: {
     owner: 'Sahib',
     admin: 'Administrator',

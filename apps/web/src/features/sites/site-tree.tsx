@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronRight, FolderInput, Pencil, Plus, Power, RotateCcw } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfirmButton } from '@/components/confirm-button';
 import { Badge } from '@/components/ui/badge';
@@ -35,9 +35,9 @@ function SiteTreeItem({ node, ...props }: Props & { node: SiteNode }) {
   const [open, setOpen] = useState(true);
   const hasChildren = node.children.length > 0;
   const nested = node.depth > 0;
-  const iconButton = (label: string, icon: ReactNode, onClick: () => void) => (
-    <Button variant="ghost" size="icon" className="size-7" aria-label={label} title={label} onClick={onClick}>
-      {icon}
+  const action = (label: string, onClick: () => void) => (
+    <Button variant="ghost" size="xs" onClick={onClick}>
+      {label}
     </Button>
   );
   return (
@@ -63,25 +63,23 @@ function SiteTreeItem({ node, ...props }: Props & { node: SiteNode }) {
         <Badge variant="outline">{props.typeName(node.typeId)}</Badge>
         {!node.active && <Badge variant="secondary">{t('common.inactive')}</Badge>}
         {props.canManage && (
-          <div className="ml-auto flex gap-0.5">
-            {iconButton(t('sites.tree.addChild'), <Plus className={ICON} />, () => props.onAddChild(node))}
-            {iconButton(t('common.edit'), <Pencil className={ICON} />, () => props.onEdit(node))}
-            {iconButton(t('sites.tree.move'), <FolderInput className={ICON} />, () => props.onMove(node))}
+          // Words, not icons (feedback 2026-11-07); the row wraps them under the name when the box is narrow.
+          <div className="ml-auto flex flex-wrap justify-end gap-0.5">
+            {action(t('sites.tree.addChild'), () => props.onAddChild(node))}
+            {action(t('common.edit'), () => props.onEdit(node))}
+            {action(t('sites.tree.move'), () => props.onMove(node))}
             {node.active ? (
               // Spec §4.1: deactivating warns; descendants are not changed automatically and the admin decides.
               <ConfirmButton
-                size="icon"
+                size="xs"
                 variant="ghost"
-                icon={<Power className={ICON} />}
                 label={t('common.deactivate')}
                 title={t('common.deactivate')}
                 description={t('sites.tree.confirmDeactivate', { name: node.name })}
                 onConfirm={() => props.onToggleActive(node)}
               />
             ) : (
-              iconButton(t('common.reactivate'), <RotateCcw className={ICON} />, () =>
-                props.onToggleActive(node),
-              )
+              action(t('common.reactivate'), () => props.onToggleActive(node))
             )}
           </div>
         )}

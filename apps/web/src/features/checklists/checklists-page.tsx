@@ -1,8 +1,8 @@
-import { TEMPLATE_CATEGORIES, type ChecklistStatus, type TemplateCategory } from '@taskop/contracts';
+import { type ChecklistStatus, TEMPLATE_CATEGORIES, toListParam } from '@taskop/contracts';
 import { formatDateTime } from '@taskop/i18n';
 import { useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,18 +16,20 @@ import { useChecklistPages } from './queries';
 import { useWorkspace, WsLink } from './workspace';
 import { useLocale } from '@/lib/i18n';
 
+const CHECKLIST_STATUSES: readonly ChecklistStatus[] = ['active', 'deactivated'];
+
 export function ChecklistsPage() {
   const { t } = useTranslation();
   const locale = useLocale();
   const ws = useWorkspace();
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<ChecklistStatus | ''>('active');
-  const [category, setCategory] = useState<TemplateCategory | ''>('');
+  const [status, setStatus] = useState<string[]>(['active']);
+  const [category, setCategory] = useState<string[]>([]);
   const q = useDeferredValue(search.trim());
   const pages = useChecklistPages({
     q: q || undefined,
-    status: status || undefined,
-    category: category || undefined,
+    status: toListParam(status),
+    category: toListParam(category),
   });
   const [creating, setCreating] = useState(false);
   const rows = pages.data?.pages.flatMap((p) => p.items) ?? [];
@@ -35,7 +37,7 @@ export function ChecklistsPage() {
   return (
     <div>
       <PageHeader
-        title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')}
+        title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} description={t('pages.checklists')}
         actions={ws.can.manage && <Button onClick={() => setCreating(true)}>{t('checklists.new')}</Button>}
       />
       <ChecklistTabs active="checklists" />
@@ -47,33 +49,34 @@ export function ChecklistsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <NativeSelect
-          aria-label={t('checklists.filters.status')}
-          className="w-44"
+        <MultiSelectFilter
+          label={t('checklists.filters.status')}
+          allLabel={t('checklists.filters.allStatuses')}
+          options={CHECKLIST_STATUSES.map((s) => ({ value: s, label: t(`checklists.statuses.${s}`) }))}
           value={status}
-          onChange={(e) => setStatus(e.target.value as ChecklistStatus | '')}
-        >
-          <option value="">{t('checklists.filters.allStatuses')}</option>
-          <option value="active">{t('checklists.statuses.active')}</option>
-          <option value="deactivated">{t('checklists.statuses.deactivated')}</option>
-        </NativeSelect>
-        <NativeSelect
-          aria-label={t('checklists.filters.category')}
-          className="w-52"
+          onChange={setStatus}
+          className="w-44"
+        />
+        <MultiSelectFilter
+          label={t('checklists.filters.category')}
+          allLabel={t('checklists.filters.allCategories')}
+          options={TEMPLATE_CATEGORIES.map((c) => ({ value: c, label: t(`checklists.categories.${c}`) }))}
           value={category}
-          onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}
-        >
-          <option value="">{t('checklists.filters.allCategories')}</option>
-          {TEMPLATE_CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {t(`checklists.categories.${c}`)}
-            </option>
-          ))}
-        </NativeSelect>
+          onChange={setCategory}
+          className="w-52"
+        />
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map((c) => (
-          <Card key={c.id}>
+          // The whole card opens the checklist; the title stays a link for keyboard and cmd-click (feedback 2026-11-07).
+          <Card
+            key={c.id}
+            className="hover:border-primary/40 cursor-pointer transition-colors"
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest('a,button')) return;
+              ws.go(`/checklists/${c.id}`);
+            }}
+          >
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center gap-2">
                 <WsLink to={`/checklists/${c.id}`}>{c.name}</WsLink>
@@ -96,11 +99,6 @@ export function ChecklistsPage() {
               <p className="text-muted-foreground text-xs tabular-nums">
                 {t('checklists.updated')}: {formatDateTime(c.updatedAt, { locale, timeZone: ws.timeZone })}
               </p>
-              <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => ws.go(`/checklists/${c.id}`)}>
-                  {t('checklists.open')}
-                </Button>
-              </div>
             </CardContent>
           </Card>
         ))}

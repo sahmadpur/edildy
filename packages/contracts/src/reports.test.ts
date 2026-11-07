@@ -56,7 +56,7 @@ describe('report catalogue', () => {
 
 describe('report queries', () => {
   it('parses the shared filters and refuses a range that ends before it starts', () => {
-    expect(reportFiltersSchema.parse({ ...range, siteId: ID, userId: ID, checklistId: ID })).toEqual({ ...range, siteId: ID, userId: ID, checklistId: ID });
+    expect(reportFiltersSchema.parse({ ...range, siteId: ID, userId: ID, checklistId: ID })).toEqual({ ...range, siteId: [ID], userId: [ID], checklistId: [ID] });
     const inverted = reportFiltersSchema.safeParse({ from: '2026-11-04', to: '2026-11-02' });
     expect(inverted.error?.issues.map((i) => [i.path.join('.'), i.message])).toEqual([['to', 'reports.issues.toBeforeFrom']]);
     expect(reportFiltersSchema.safeParse({ from: '2026-02-30', to: '2026-03-01' }).success).toBe(false);
@@ -76,7 +76,7 @@ describe('report queries', () => {
   });
 
   it('filters problems by severity and pages tasks', () => {
-    expect(reportProblemsQuerySchema.parse({ ...range, severity: 'critical' })).toEqual({ ...range, severity: 'critical' });
+    expect(reportProblemsQuerySchema.parse({ ...range, severity: 'critical' })).toEqual({ ...range, severity: ['critical'] });
     expect(reportProblemsQuerySchema.safeParse({ ...range, severity: 'major' }).success).toBe(false);
     expect(reportTasksQuerySchema.parse({ ...range, cursor: ID })).toEqual({ ...range, cursor: ID });
   });

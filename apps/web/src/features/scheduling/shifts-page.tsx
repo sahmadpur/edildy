@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ConfirmButton } from '@/components/confirm-button';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -21,11 +22,19 @@ export function ShiftsPage({ tabs }: { tabs?: ReactNode } = {}) {
   const sites = useSites();
   const [editing, setEditing] = useState<ShiftDto | 'new' | null>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: ['shifts'] });
+  const toggle = async (s: ShiftDto) => {
+    try {
+      await api.shifts.update(s.id, { active: !s.active });
+      await refresh();
+    } catch (e) {
+      toast.error(errorText(t, e));
+    }
+  };
   const hours = (s: ShiftDto) => `${s.startTime}–${s.endTime}${s.endTime < s.startTime ? ` (${t('scheduling.shifts.nextDay')})` : ''}`;
 
   return (
     <div>
-      <PageHeader title={t('scheduling.shifts.title')} actions={canManage && <Button onClick={() => setEditing('new')}>{t('scheduling.shifts.add')}</Button>} />
+      <PageHeader title={t('scheduling.shifts.title')} description={t('pages.shifts')} actions={canManage && <Button onClick={() => setEditing('new')}>{t('scheduling.shifts.add')}</Button>} />
       {tabs}
       <Table>
         <TableHeader>
@@ -52,20 +61,20 @@ export function ShiftsPage({ tabs }: { tabs?: ReactNode } = {}) {
                     <Button size="sm" variant="ghost" onClick={() => setEditing(s)}>
                       {t('common.edit')}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={async () => {
-                        try {
-                          await api.shifts.update(s.id, { active: !s.active });
-                          await refresh();
-                        } catch (e) {
-                          toast.error(errorText(t, e));
-                        }
-                      }}
-                    >
-                      {s.active ? t('common.deactivate') : t('common.reactivate')}
-                    </Button>
+                    {s.active ? (
+                      <ConfirmButton
+                        size="sm"
+                        variant="ghost"
+                        label={t('common.deactivate')}
+                        title={t('common.deactivate')}
+                        description={t('scheduling.shifts.confirmDeactivate', { name: s.name })}
+                        onConfirm={() => toggle(s)}
+                      />
+                    ) : (
+                      <Button size="sm" variant="ghost" onClick={() => void toggle(s)}>
+                        {t('common.reactivate')}
+                      </Button>
+                    )}
                   </div>
                 )}
               </TableCell>

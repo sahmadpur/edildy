@@ -1,7 +1,7 @@
-import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateSummary } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateSummary, toListParam } from '@taskop/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NativeSelect } from '@/components/native-select';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { cn } from '@/lib/utils';
 import { categoryLabel } from './labels';
 import { useTemplates } from './queries';
@@ -9,18 +9,18 @@ import { EmptyState } from '@/components/states';
 
 export function TemplatePicker({ value, onPick }: { value: TemplateSummary | null; onPick: (t: TemplateSummary) => void }) {
   const { t } = useTranslation();
-  const [category, setCategory] = useState<TemplateCategory | ''>('');
-  const templates = useTemplates({ status: 'active', category: category || undefined });
+  const [category, setCategory] = useState<string[]>([]);
+  const templates = useTemplates({ status: 'active', category: toListParam(category) });
   return (
     <div className="grid gap-2">
-      <NativeSelect aria-label={t('checklists.filters.category')} value={category} onChange={(e) => setCategory(e.target.value as TemplateCategory | '')}>
-        <option value="">{t('checklists.filters.allCategories')}</option>
-        {TEMPLATE_CATEGORIES.map((c) => (
-          <option key={c} value={c}>
-            {t(`checklists.categories.${c}`)}
-          </option>
-        ))}
-      </NativeSelect>
+      <MultiSelectFilter
+        label={t('checklists.filters.category')}
+        allLabel={t('checklists.filters.allCategories')}
+        options={TEMPLATE_CATEGORIES.map((c) => ({ value: c, label: t(`checklists.categories.${c}`) }))}
+        value={category}
+        onChange={setCategory}
+        className="w-full"
+      />
       <div role="radiogroup" aria-label={t('checklists.create.pickTemplate')} className="grid max-h-64 gap-1 overflow-y-auto">
         {(templates.data ?? []).map((tpl) => (
           <button

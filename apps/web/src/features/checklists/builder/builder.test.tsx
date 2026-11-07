@@ -96,7 +96,7 @@ describe('Builder', () => {
     fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Z' } });
     await userEvent.click(screen.getByRole('button', { name: 'Dərc et' }));
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
-    await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
+    await userEvent.click(screen.getByRole('button', { name: 'İmtina et' }));
     expect(screen.getByLabelText('Bölmənin adı')).toHaveValue('Z');
   });
 });

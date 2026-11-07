@@ -1,6 +1,6 @@
 export default {
   title: 'Roles',
-  add: 'Create role',
+  add: 'New role',
   name: 'Role name',
   scope: 'Data scope',
   permissions: 'Permissions',

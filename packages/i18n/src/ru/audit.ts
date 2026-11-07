@@ -1,6 +1,6 @@
 export default {
   title: 'Журнал использования',
-  filters: { action: 'Действие (напр. user.created)', entityType: 'Тип элемента', from: 'Дата начала', to: 'Дата окончания', client: 'Источник' },
+  filters: { action: 'Действие (напр. user.created)', entityType: 'Тип элемента', from: 'С', to: 'По', client: 'Источник' },
   columns: { time: 'Время', actor: 'Кто', action: 'Действие', entity: 'Элемент', client: 'Источник' },
   clients: { web: 'Веб', mobile: 'Мобильное' },
   actorPlatform: 'Поддержка Taskop',

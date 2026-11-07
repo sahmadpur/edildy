@@ -34,7 +34,7 @@ describe('ShiftsPage', () => {
     mocks.api.shifts.list.mockResolvedValue([]);
     mocks.api.shifts.create.mockResolvedValue(shift());
     renderWithProviders(<ShiftsPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Növbə yarat' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Yeni növbə' }));
     const dialog = screen.getByRole('dialog');
     await userEvent.type(within(dialog).getByLabelText('Ad'), 'Gecə');
     fireEvent.change(within(dialog).getByLabelText('Başlama'), { target: { value: '22:00' } });
@@ -49,7 +49,7 @@ describe('ShiftsPage', () => {
   it('rejects a zero-length shift before calling the API', async () => {
     mocks.api.shifts.list.mockResolvedValue([]);
     renderWithProviders(<ShiftsPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Növbə yarat' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Yeni növbə' }));
     const dialog = screen.getByRole('dialog');
     await userEvent.type(within(dialog).getByLabelText('Ad'), 'X');
     fireEvent.change(within(dialog).getByLabelText('Bitmə'), { target: { value: '08:00' } });
@@ -62,7 +62,10 @@ describe('ShiftsPage', () => {
     mocks.api.shifts.list.mockResolvedValue([shift()]);
     mocks.api.shifts.update.mockResolvedValue(shift({ active: false }));
     renderWithProviders(<ShiftsPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Deaktiv et' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Ləğv et' }));
+    expect(screen.getByText('«Səhər» növbəsi ləğv edilsin? Mövcud təyinatlar dəyişməyəcək.')).toBeInTheDocument();
+    expect(mocks.api.shifts.update).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
     await waitFor(() => expect(mocks.api.shifts.update).toHaveBeenCalledWith('s1', { active: false }));
   });
 
@@ -70,7 +73,7 @@ describe('ShiftsPage', () => {
     mocks.api.shifts.list.mockResolvedValue([shift({ siteId: 'old', siteName: 'Köhnə filial' })]);
     mocks.api.shifts.update.mockResolvedValue(shift());
     renderWithProviders(<ShiftsPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Redaktə et' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Düzəliş et' }));
     const dialog = screen.getByRole('dialog');
     await within(dialog).findByRole('option', { name: 'Anbar' });
     expect(within(dialog).getByLabelText('Obyekt')).toHaveValue('old');
@@ -84,7 +87,7 @@ describe('ShiftsPage', () => {
     mocks.api.shifts.list.mockResolvedValue([shift({ siteId: 'old', siteName: 'Köhnə filial' })]);
     mocks.api.shifts.update.mockResolvedValue(shift());
     renderWithProviders(<ShiftsPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Redaktə et' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Düzəliş et' }));
     const dialog = screen.getByRole('dialog');
     await within(dialog).findByRole('option', { name: 'Anbar' });
     await userEvent.selectOptions(within(dialog).getByLabelText('Obyekt'), '');

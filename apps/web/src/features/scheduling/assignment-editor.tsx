@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useSites } from '@/features/sites/queries';
 import { errorText } from '@/lib/errors';
 import { api } from '@/lib/session';
-import { formatLocalDate, scheduleSummary, useDebounced, useTenantToday, useTimeFormat } from './labels';
+import { formatLocalDate, scheduleSummary, useDebounced, useTenantToday, useWindowText } from './labels';
 import { useAssignableChecklists, useShifts, useSiteUsers } from './queries';
 import { defaultRecurrence, defaultTiming, RecurrenceEditor, TimingEditor } from './schedule-builder';
 import { useLocale } from '@/lib/i18n';
@@ -45,7 +45,7 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
   const locale = useLocale();
   const tenantToday = useTenantToday();
   const today = todayProp ?? tenantToday;
-  const time = useTimeFormat();
+  const windowText = useWindowText();
   const source = initial ?? preset?.copyFrom;
   const [name, setName] = useState(source?.name ?? '');
   const [checklistId, setChecklistId] = useState(source?.checklistId ?? preset?.checklistId ?? '');
@@ -172,7 +172,7 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
         <ol className="grid gap-1 text-sm">
           {preview.data?.slots.map((s) => (
             <li key={s.startsAt}>
-              {formatLocalDate(s.localDate, locale)} · {time(s.startsAt)}–{time(s.dueAt)}
+              {formatLocalDate(s.localDate, locale)} · {windowText(s.startsAt, s.dueAt)}
             </li>
           ))}
         </ol>

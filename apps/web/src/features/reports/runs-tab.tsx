@@ -1,4 +1,4 @@
-import { type ReportFilters, RUN_AUDIT_STATES, RUN_BUCKETS, type RunAuditState, type RunBucket } from '@taskop/contracts';
+import { type ReportFiltersQuery as ReportFilters, RUN_AUDIT_STATES, RUN_BUCKETS, type RunAuditState, type RunBucket } from '@taskop/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';

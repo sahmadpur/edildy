@@ -1,4 +1,4 @@
-import { type ProblemSeverity, REPORT_FORMATS, type ReportExportKind, type ReportFilters, type ReportFormat, type ReportKind, type RunAuditState, type RunBucket } from '@taskop/contracts';
+import { type ProblemSeverity, REPORT_FORMATS, type ReportExportKind, type ReportFiltersQuery as ReportFilters, type ReportFormat, type ReportKind, type RunAuditState, type RunBucket } from '@taskop/contracts';
 import { Download, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

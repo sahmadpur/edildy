@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { AuditEntryDto, Page } from '@taskop/contracts';
-import { and, desc, eq, gte, lt, lte, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lt, lte, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { DbService } from '../db/db.service';
 import { auditLog, users } from '../db/schema';
@@ -16,11 +16,11 @@ export class AuditLogService {
     const conditions: (SQL | undefined)[] = [];
     if (q.actorUserId) conditions.push(eq(auditLog.actorUserId, q.actorUserId));
     if (q.action) conditions.push(eq(auditLog.action, q.action));
-    if (q.entityType) conditions.push(eq(auditLog.entityType, q.entityType));
+    if (q.entityType) conditions.push(inArray(auditLog.entityType, q.entityType));
     if (q.entityId) conditions.push(eq(auditLog.entityId, q.entityId));
     if (q.from) conditions.push(gte(auditLog.occurredAt, new Date(q.from)));
     if (q.to) conditions.push(lte(auditLog.occurredAt, new Date(q.to)));
-    if (q.client) conditions.push(eq(auditLog.client, q.client));
+    if (q.client) conditions.push(inArray(auditLog.client, q.client));
     if (q.cursor) conditions.push(lt(auditLog.id, q.cursor));
     const rows = await this.db
       .tx()

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Page, SyncTask, TaskDetail, TaskEvidence, TaskHistoryEntry, TaskSummary } from '@taskop/contracts';
-import { and, asc, desc, eq, getTableColumns, gte, inArray, isNotNull, isNull, lte, type SQL, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, gte, inArray, isNotNull, isNull, lte, or, type SQL, sql } from 'drizzle-orm';
+import { inSiteSubtrees } from '../common/sql';
 import { alias } from 'drizzle-orm/pg-core';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -30,13 +31,11 @@ export class TaskQueries {
     const conds: (SQL | undefined)[] = [this.scope.readable(p)];
     if (q.status) conds.push(inArray(tasks.status, q.status));
     if (q.overdue !== undefined) conds.push(q.overdue ? isNotNull(tasks.overdueAt) : isNull(tasks.overdueAt));
-    if (q.siteId) conds.push(eq(tasks.siteId, q.siteId));
+    if (q.siteId) conds.push(inSiteSubtrees(tasks.siteId, q.siteId));
     if (q.assigneeUserId) conds.push(eq(tasks.assigneeUserId, q.assigneeUserId));
     if (q.teamId) conds.push(eq(tasks.assigneeTeamId, q.teamId));
     if (q.createdBy) conds.push(eq(tasks.createdByUserId, q.createdBy));
-    if (q.source === 'problem') conds.push(isNotNull(tasks.problemId));
-    else if (q.source === 'report') conds.push(isNotNull(tasks.problemReportId));
-    else if (q.source === 'adhoc') conds.push(isNull(tasks.problemId), isNull(tasks.problemReportId));
+    if (q.source) conds.push(or(...q.source.map(sourceFilter)));
     if (q.awaitingMyReview) conds.push(eq(tasks.status, 'awaiting_review'), this.scope.reviewable(p));
     if (q.dueFrom) conds.push(gte(tasks.dueAt, new Date(q.dueFrom)));
     if (q.dueTo) conds.push(lte(tasks.dueAt, new Date(q.dueTo)));
@@ -117,4 +116,11 @@ export class TaskQueries {
       .orderBy(asc(taskStatusHistory.at), asc(taskStatusHistory.id));
     return rows.map(toHistoryEntry);
   }
+}
+
+/** The `source` filter: where the task came from. */
+function sourceFilter(source: 'problem' | 'report' | 'adhoc'): SQL {
+  if (source === 'problem') return isNotNull(tasks.problemId);
+  if (source === 'report') return isNotNull(tasks.problemReportId);
+  return and(isNull(tasks.problemId), isNull(tasks.problemReportId))!;
 }

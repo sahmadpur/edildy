@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { auditReportEmailsSchema } from './audit-logic.js';
 import { checklistContentSchema, contentIssueSchema } from './checklist-content.js';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idSchema, isoDateTimeSchema, listParam } from './common.js';
 import { templateCategorySchema } from './templates.js';
 
 export const checklistStatusSchema = z.enum(['active', 'deactivated']);
@@ -99,8 +99,8 @@ export const publishInputSchema = z.object({
 export type PublishInput = z.input<typeof publishInputSchema>;
 
 export const checklistListQuerySchema = cursorQuerySchema.extend({
-  status: checklistStatusSchema.optional(),
-  category: templateCategorySchema.optional(),
+  status: listParam(checklistStatusSchema).optional(),
+  category: listParam(templateCategorySchema).optional(),
   q: z.string().trim().max(100).optional(),
   hasDraft: z.stringbool().optional(),
 });

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { Page, ProblemDto } from '@taskop/contracts';
-import { and, between, desc, eq, isNull, type SQL, sql } from 'drizzle-orm';
+import { and, between, desc, inArray, isNull, or, type SQL, sql } from 'drizzle-orm';
+import { inSiteSubtrees } from '../common/sql';
 import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';
 import { executionProblems, occurrences } from '../db/schema';
@@ -18,11 +19,12 @@ export class ProblemsService {
 
   async list(p: Principal, q: ProblemListQueryDto): Promise<Page<ProblemDto>> {
     const conds: (SQL | undefined)[] = [this.scope.occurrences(p), between(occurrences.localDate, q.from, q.to)];
-    if (q.siteId) conds.push(eq(executionProblems.siteId, q.siteId));
-    if (q.checklistId) conds.push(eq(executionProblems.checklistId, q.checklistId));
-    if (q.severity) conds.push(eq(executionProblems.severity, q.severity));
-    if (q.source) conds.push(eq(executionProblems.source, q.source));
-    if (q.resolution) conds.push(resolutionFilter(q.resolution));
+    // A parent site includes its sub-sites, as on Hesabatlar (feedback 2026-11-07).
+    if (q.siteId) conds.push(inSiteSubtrees(executionProblems.siteId, q.siteId));
+    if (q.checklistId) conds.push(inArray(executionProblems.checklistId, q.checklistId));
+    if (q.severity) conds.push(inArray(executionProblems.severity, q.severity));
+    if (q.source) conds.push(inArray(executionProblems.source, q.source));
+    if (q.resolution) conds.push(or(...q.resolution.map(resolutionFilter)));
     // Cleared by a correction (SP8 spec §8.3): hidden unless asked for.
     if (!q.includeCleared) conds.push(isNull(executionProblems.clearedAt));
     if (q.cursor) {

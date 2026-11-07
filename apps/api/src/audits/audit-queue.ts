@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { type AuditQueueParams, type AuditQueueRow, type AuditResult, type AuditStatus, type OccurrenceStatus, type Page, runAuditState } from '@taskop/contracts';
 import { type SQL, sql } from 'drizzle-orm';
+import { inSiteSubtrees, sqlList } from '../common/sql';
 import { DbService } from '../db/db.service';
 import { occurrences } from '../db/schema';
 import type { Actor } from '../scheduling/actor';
@@ -62,10 +63,10 @@ export class AuditQueueQuery {
         order = sql`au.finished_at desc, ${occurrences.id} desc`;
         break;
     }
-    if (q.siteId) conds.push(sql`exists (select 1 from sites fs, sites f where f.id = ${q.siteId} and fs.id = ${occurrences.siteId} and fs.path <@ f.path)`);
-    if (q.checklistId) conds.push(sql`${occurrences.checklistId} = ${q.checklistId}`);
-    if (q.auditorId) conds.push(sql`au.auditor_user_id = ${q.auditorId}`);
-    if (q.result) conds.push(sql`au.result = ${q.result}`);
+    if (q.siteId) conds.push(inSiteSubtrees(occurrences.siteId, q.siteId));
+    if (q.checklistId) conds.push(sql`${occurrences.checklistId} in ${sqlList(q.checklistId)}`);
+    if (q.auditorId) conds.push(sql`au.auditor_user_id in ${sqlList(q.auditorId)}`);
+    if (q.result) conds.push(sql`au.result in ${sqlList(q.result)}`);
     if (q.from && q.to) conds.push(sql`${occurrences.localDate} between ${q.from}::date and ${q.to}::date`);
     const rows = (
       await this.db.tx().execute<QueueRow>(sql`

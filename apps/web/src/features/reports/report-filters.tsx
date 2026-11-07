@@ -1,5 +1,7 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toListParam } from '@taskop/contracts';
+import { type FilterOption, MultiSelectFilter } from '@/components/multi-select-filter';
 import { NativeSelect } from '@/components/native-select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -12,6 +14,8 @@ import { checklistOptions, employeeOptions, siteOptions } from './labels';
 import { useEmployeeOptions, useReportChecklistOptions } from './queries';
 import { cleanSearch, DEFAULT_PERIOD, FILTER_ISSUE_KEYS, PERIOD_CHOICES, type PeriodChoice, type ReportSearch, resolveReportFilters, withPeriod } from './search';
 import { useLocale } from '@/lib/i18n';
+
+const splitIds = (v: string | undefined): string[] => (v ? v.split(',').filter(Boolean) : []);
 
 /**
  * The filter bar of the dashboard and the Reports page (spec §6.1). Controlled: the page keeps `value` in the URL.
@@ -40,13 +44,18 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
   };
   const marked = (label: string, active: boolean) => (active ? label : `${label} (${t('reports.inactive')})`);
 
-  const siteList = siteOptions(sites.data ?? [], showInactive, value.siteId);
-  const people = employeeOptions(employees.data ?? [], showInactive, value.userId);
-  const lists = checklistOptions(checklists.data ?? [], showInactive, value.checklistId);
+  // Multi-select (feedback 2026-11-07): the URL keeps `a,b`; no value is "all".
+  const siteIds = splitIds(value.siteId);
+  const userIds = splitIds(value.userId);
+  const checklistIds = splitIds(value.checklistId);
+  const siteList = siteOptions(sites.data ?? [], showInactive, siteIds);
+  const people = employeeOptions(employees.data ?? [], showInactive, userIds);
+  const lists = checklistOptions(checklists.data ?? [], showInactive, checklistIds);
   // A selected id no list contains still shows as selected (decision 5), never as "all".
-  const unknownSite = Boolean(value.siteId) && !siteList.some((s) => s.id === value.siteId);
-  const unknownPerson = Boolean(value.userId) && !people.some((p) => p.id === value.userId);
-  const unknownList = Boolean(value.checklistId) && !lists.some((c) => c.id === value.checklistId);
+  const withUnknown = (options: FilterOption[], ids: string[], label: string): FilterOption[] => [
+    ...options,
+    ...ids.filter((id) => !options.some((o) => o.value === id)).map((id) => ({ value: id, label })),
+  ];
 
   let range: string | null = null;
   if (resolved.ok) {
@@ -81,35 +90,44 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
         </>
       )}
       {canSeeSites && (
-        <NativeSelect aria-label={t('reports.filters.site')} value={value.siteId ?? ''} onChange={(e) => set({ siteId: e.target.value })} className="w-56">
-          <option value="">{t('reports.filters.allSites')}</option>
-          {siteList.map((s) => (
-            <option key={s.id} value={s.id}>
-              {marked(indentedName(s), s.active)}
-            </option>
-          ))}
-          {unknownSite && <option value={value.siteId}>{t('reports.picker.unknown')}</option>}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('reports.filters.site')}
+          allLabel={t('reports.filters.allSites')}
+          options={withUnknown(
+            siteList.map((s) => ({ value: s.id, label: marked(indentedName(s), s.active) })),
+            siteIds,
+            t('reports.picker.unknown'),
+          )}
+          value={siteIds}
+          onChange={(ids) => set({ siteId: toListParam(ids) })}
+          className="w-56"
+        />
       )}
-      <NativeSelect aria-label={t('reports.filters.employee')} value={value.userId ?? ''} onChange={(e) => set({ userId: e.target.value })} className="w-56">
-        <option value="">{t('reports.filters.allEmployees')}</option>
-        {people.map((p) => (
-          <option key={p.id} value={p.id}>
-            {marked(p.name, p.active)}
-          </option>
-        ))}
-        {unknownPerson && <option value={value.userId}>{t('reports.picker.unknownEmployee')}</option>}
-      </NativeSelect>
+      <MultiSelectFilter
+        label={t('reports.filters.employee')}
+        allLabel={t('reports.filters.allEmployees')}
+        options={withUnknown(
+          people.map((p) => ({ value: p.id, label: marked(p.name, p.active) })),
+          userIds,
+          t('reports.picker.unknownEmployee'),
+        )}
+        value={userIds}
+        onChange={(ids) => set({ userId: toListParam(ids) })}
+        className="w-56"
+      />
       {canSeeChecklists && (
-        <NativeSelect aria-label={t('reports.filters.checklist')} value={value.checklistId ?? ''} onChange={(e) => set({ checklistId: e.target.value })} className="w-56">
-          <option value="">{t('reports.filters.allChecklists')}</option>
-          {lists.map((c) => (
-            <option key={c.id} value={c.id}>
-              {marked(c.name, c.status === 'active')}
-            </option>
-          ))}
-          {unknownList && <option value={value.checklistId}>{t('reports.picker.unknown')}</option>}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('reports.filters.checklist')}
+          allLabel={t('reports.filters.allChecklists')}
+          options={withUnknown(
+            lists.map((c) => ({ value: c.id, label: marked(c.name, c.status === 'active') })),
+            checklistIds,
+            t('reports.picker.unknown'),
+          )}
+          value={checklistIds}
+          onChange={(ids) => set({ checklistId: toListParam(ids) })}
+          className="w-56"
+        />
       )}
       <div className="flex h-9 items-center gap-2">
         <Checkbox id={inactiveId} checked={showInactive} onCheckedChange={(c) => set({ inactive: c === true ? true : undefined })} />

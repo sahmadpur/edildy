@@ -12,6 +12,7 @@ import {
   sameChoice,
   taskListQuery,
   taskStatusVariant,
+  type TaskFilters,
 } from './labels';
 
 const t = i18n.t.bind(i18n);
@@ -41,19 +42,19 @@ describe('task labels', () => {
     expect(taskListQuery('review', EMPTY_TASK_FILTERS, ctx)).toEqual({ awaitingMyReview: 'true' });
     expect(taskListQuery('overdue', EMPTY_TASK_FILTERS, ctx)).toEqual({ overdue: 'true', status: 'new,accepted,in_progress,awaiting_review' });
     expect(taskListQuery('mine', EMPTY_TASK_FILTERS, ctx)).toEqual({ createdBy: 'me1' });
-    const filters = {
-      status: 'in_progress',
-      siteId: 'site1',
+    const filters: TaskFilters = {
+      status: ['in_progress', 'new'],
+      siteId: ['site1', 'site2'],
       assignee: { type: 'team', id: 'team1', name: 'Texniki xidmət' },
-      source: 'problem',
+      source: ['problem'],
       dueFrom: '2026-11-01',
       dueTo: '2026-11-02',
-    } as const;
+    };
     // Whole Baku days: 1 November 00:00 (+4) to 2 November 23:59:59.999.
     expect(taskListQuery('overdue', filters, ctx)).toEqual({
       overdue: 'true',
-      status: 'in_progress',
-      siteId: 'site1',
+      status: 'in_progress,new',
+      siteId: 'site1,site2',
       teamId: 'team1',
       source: 'problem',
       dueFrom: '2026-10-31T20:00:00.000Z',

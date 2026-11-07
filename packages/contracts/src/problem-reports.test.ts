@@ -54,7 +54,7 @@ describe('problem report schemas (spec §4)', () => {
     // The wire enum is unchanged, so phones on older builds keep parsing /me/sync; 'report' exists only as a list filter.
     expect(TASK_SOURCES).toEqual(['problem', 'adhoc']);
     expect(TASK_SOURCE_FILTERS).toEqual(['problem', 'report', 'adhoc']);
-    expect(taskListQuerySchema.parse({ source: 'report' }).source).toBe('report');
+    expect(taskListQuerySchema.parse({ source: 'report' }).source).toEqual(['report']);
     expect(taskSummarySchema.shape.source.safeParse('report').success).toBe(false);
     expect(NOTIFICATION_TYPES).toEqual(expect.arrayContaining(['problem_report.created', 'problem_report.critical', 'problem_report.closed', 'problem_report.resolved']));
     expect(NOTIFICATION_TARGET_KINDS).toContain('problem_report');

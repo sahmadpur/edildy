@@ -1,6 +1,6 @@
 export default {
   title: 'İstifadə jurnalı',
-  filters: { action: 'Əməliyyat (məs. user.created)', entityType: 'Element növü', from: 'Başlanğıc tarixi', to: 'Son tarix', client: 'Mənbə' },
+  filters: { action: 'Əməliyyat (məs. user.created)', entityType: 'Element növü', from: 'Başlama', to: 'Son', client: 'Mənbə' },
   columns: { time: 'Vaxt', actor: 'İcraçı', action: 'Əməliyyat', entity: 'Element', client: 'Mənbə' },
   clients: { web: 'Veb', mobile: 'Mobil' },
   actorPlatform: 'Taskop dəstəyi',

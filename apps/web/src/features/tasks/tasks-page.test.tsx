@@ -2,6 +2,7 @@ import { ApiError } from '@taskop/api-client';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { tickOptions } from '@/test/multi-select';
 import { renderWithRouter } from '@/test/router';
 import { assigneeOptions, taskDetail, taskSummary, TEAM } from './fixtures';
 import { TasksPage } from './tasks-page';
@@ -27,7 +28,10 @@ beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
   vi.resetAllMocks();
   mocks.me.current = manager;
-  mocks.api.sites.list.mockResolvedValue([{ id: 'site1', name: 'Anbar №1', active: true }]);
+  mocks.api.sites.list.mockResolvedValue([
+    { id: 'site1', name: 'Anbar №1', active: true },
+    { id: 'site2', name: 'Anbar №2', active: true },
+  ]);
   mocks.api.tasks.assignees.mockResolvedValue(assigneeOptions());
   mocks.api.tasks.get.mockImplementation(async (id: string) => taskDetail({ id }));
 });
@@ -73,18 +77,18 @@ describe('TasksPage', () => {
   it("sends status, site, assignee, source and the due range in the tenant's zone, and refuses an inverted range", async () => {
     mocks.api.tasks.list.mockResolvedValue(empty);
     renderWithRouter(<TasksPage />, '/tasks');
-    await screen.findByRole('option', { name: 'Anbar №1' });
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'in_progress');
-    await userEvent.selectOptions(screen.getByLabelText('Obyekt'), 'site1');
-    await userEvent.selectOptions(screen.getByLabelText('Mənbə'), 'problem');
+    await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
+    await tickOptions('Status', ['İcradadır', 'Yeni']);
+    await tickOptions('Obyekt', ['Anbar №1']);
+    await tickOptions('Mənbə', ['Problemdən']);
     await userEvent.click(screen.getByRole('combobox', { name: 'İcraçı və ya komanda' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Texniki xidmət' }));
-    fireEvent.change(screen.getByLabelText('Son tarix: başlanğıc'), { target: { value: '2026-11-01' } });
-    fireEvent.change(screen.getByLabelText('Son tarix: son'), { target: { value: '2026-11-02' } });
+    fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-11-01' } });
+    fireEvent.change(screen.getByLabelText('Son'), { target: { value: '2026-11-02' } });
     await waitFor(() =>
       expect(mocks.api.tasks.list).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          status: 'in_progress',
+          status: 'in_progress,new',
           siteId: 'site1',
           teamId: 'team1',
           source: 'problem',
@@ -94,7 +98,7 @@ describe('TasksPage', () => {
       ),
     );
     const calls = mocks.api.tasks.list.mock.calls.length;
-    fireEvent.change(screen.getByLabelText('Son tarix: başlanğıc'), { target: { value: '2026-11-05' } });
+    fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-11-05' } });
     expect(await screen.findByText('Aralığın sonu başlanğıcından əvvəl ola bilməz.')).toBeInTheDocument();
     expect(mocks.api.tasks.list).toHaveBeenCalledTimes(calls);
   });

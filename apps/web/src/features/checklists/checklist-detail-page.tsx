@@ -55,17 +55,19 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
     <div className="grid gap-4">
       <PageHeader
         title={c.name}
+        titleAction={
+          editable && (
+            <Button size="sm" variant="ghost" aria-label={t('checklists.detail.editDetails')} onClick={() => setDialog('details')}>
+              {t('checklists.detail.editTitle')}
+            </Button>
+          )
+        }
         actions={
           <>
             {editable && <Button onClick={() => void openEditor()}>{hasDraft ? t('checklists.detail.continueDraft') : t('checklists.detail.edit')}</Button>}
             {ws.can.manage && c.currentVersionId && (
               <Button variant="outline" onClick={() => setDialog('copy')}>
                 {t('checklists.detail.copy')}
-              </Button>
-            )}
-            {editable && (
-              <Button variant="outline" onClick={() => setDialog('details')}>
-                {t('checklists.detail.editDetails')}
               </Button>
             )}
             {editable && hasDraft && (
@@ -103,17 +105,6 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
         {c.source && <span>{t(`checklists.detail.source.${c.source.kind}`)}</span>}
         {c.description && <span>{c.description}</span>}
       </div>
-      {/* Keyed by the stored values, so the section starts from the server's state again after a save. */}
-      <AuditSettings
-        key={`${c.requiresAudit}|${c.auditReportEmails.join(',')}`}
-        checklist={c}
-        editable={editable}
-        onSave={async (v) => {
-          await ws.checklists.update(checklistId, v);
-          await refresh();
-          toast.success(t('common.saved'));
-        }}
-      />
       <h2 className="text-lg font-semibold">{t('checklists.detail.versions')}</h2>
       <Table>
         <TableHeader>
@@ -165,6 +156,19 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
 
       {/* Only tenant users have a session to check assignment permissions against; platform admins use the API. */}
       {ws.scope === 'tenant' && <ChecklistAssignments checklistId={c.id} canAssign={active && c.currentVersionId !== null} />}
+
+      {/* The audit settings come last: they are set once and rarely looked at again (feedback 2026-11-07). */}
+      {/* Keyed by the stored values, so the section starts from the server's state again after a save. */}
+      <AuditSettings
+        key={`${c.requiresAudit}|${c.auditReportEmails.join(',')}`}
+        checklist={c}
+        editable={editable}
+        onSave={async (v) => {
+          await ws.checklists.update(checklistId, v);
+          await refresh();
+          toast.success(t('common.saved'));
+        }}
+      />
 
       {dialog === 'details' && (
         <DetailsDialog

@@ -16,7 +16,7 @@ interface Props {
   description: string;
   onConfirm: () => Promise<void> | void;
   variant?: 'default' | 'destructive' | 'outline' | 'ghost';
-  size?: 'default' | 'sm' | 'icon';
+  size?: 'default' | 'sm' | 'xs' | 'icon';
   disabled?: boolean;
   /** With an icon the button shows only the icon; `label` becomes its accessible name and tooltip. */
   icon?: ReactNode;

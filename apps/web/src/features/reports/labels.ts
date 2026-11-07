@@ -5,7 +5,7 @@ import type {
   ProblemSeverity,
   ReportExportKind,
   ReportExportQuery,
-  ReportFilters,
+  ReportFiltersQuery as ReportFilters,
   ReportFormat,
   ReportRun,
   RunAuditState,
@@ -78,11 +78,11 @@ export const nextSort = <K extends string>(current: SortState<K> | null, key: K)
   current?.key === key ? { key, dir: current.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: key === 'name' ? 'asc' : 'desc' };
 
 /** Sites in tree order; inactive ones only with "show inactive", except the selected one (decision 5). */
-export function siteOptions(sites: readonly SiteDto[], showInactive: boolean, selectedId?: string): SiteDto[] {
+export function siteOptions(sites: readonly SiteDto[], showInactive: boolean, selected: readonly string[] = []): SiteDto[] {
   const out: SiteDto[] = [];
   const walk = (nodes: SiteNode[]) => {
     for (const n of nodes) {
-      if (n.active || showInactive || n.id === selectedId) out.push(n);
+      if (n.active || showInactive || selected.includes(n.id)) out.push(n);
       walk(n.children);
     }
   };
@@ -97,15 +97,15 @@ export interface EmployeeOption {
 }
 
 /** The people of the period's employee report (decision 4); the Unassigned row cannot be a filter. */
-export function employeeOptions(rows: readonly EmployeeReportRow[], showInactive: boolean, selectedId?: string): EmployeeOption[] {
+export function employeeOptions(rows: readonly EmployeeReportRow[], showInactive: boolean, selected: readonly string[] = []): EmployeeOption[] {
   return rows
     .filter((r): r is EmployeeReportRow & { userId: string } => r.userId !== null)
-    .filter((r) => r.active || showInactive || r.userId === selectedId)
+    .filter((r) => r.active || showInactive || selected.includes(r.userId))
     .map((r) => ({ id: r.userId, name: r.name, active: r.active }));
 }
 
-export function checklistOptions(list: readonly ChecklistSummary[], showInactive: boolean, selectedId?: string): ChecklistSummary[] {
-  return list.filter((c) => c.status === 'active' || showInactive || c.id === selectedId).sort((a, b) => a.name.localeCompare(b.name, 'az'));
+export function checklistOptions(list: readonly ChecklistSummary[], showInactive: boolean, selected: readonly string[] = []): ChecklistSummary[] {
+  return list.filter((c) => c.status === 'active' || showInactive || selected.includes(c.id)).sort((a, b) => a.name.localeCompare(b.name, 'az'));
 }
 
 /** The export's query: bucket and audit state go with runs, severity with problems, the full report takes none (SP7 decision 14, SP8 decision 16). */

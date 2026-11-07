@@ -1,4 +1,4 @@
-import { type ReportFilters, TASK_STATUSES } from '@taskop/contracts';
+import { type ReportFiltersQuery as ReportFilters, TASK_STATUSES } from '@taskop/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';

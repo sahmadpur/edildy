@@ -66,6 +66,6 @@ describe('execution labels', () => {
     expect(problemRangeError('', '2026-11-01')).toBe('errors.validation.required');
     expect(problemRangeError('2026-13-45', '2026-11-01')).toBe('errors.validation.required');
     expect(problemRangeError('2026-11-01', '2026-13-45')).toBe('errors.validation.required');
-    expect(defaultProblemRange('2026-11-03')).toEqual({ from: '2026-10-28', to: '2026-11-03' });
+    expect(defaultProblemRange('2026-11-03')).toEqual({ from: '2026-10-05', to: '2026-11-03' });
   });
 });

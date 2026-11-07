@@ -29,25 +29,24 @@ beforeEach(() => {
 });
 
 describe('Yoxlamalar tabs', () => {
-  it('shows the assignments list under the Təyinatlar tab of Yoxlamalar, beside the schedule, checklists and templates', async () => {
+  it('shows the assignments list under the Təyinatlar tab of Yoxlamalar, beside checklists and templates', async () => {
     const router = renderWithRouter(<AssignmentsRoute />, '/assignments');
     expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlamalar' })).toBeInTheDocument();
     const tabs = within(screen.getByRole('navigation', { name: 'Yoxlamalar' }));
-    expect(tabs.getAllByRole('link').map((l) => l.textContent)).toEqual(['Təyinatlar', 'İcra cədvəli', 'Yoxlama vərəqələri', 'Şablonlar']);
-    expect(tabs.getByRole('link', { name: 'Yoxlama vərəqələri' })).toHaveAttribute('href', '/checklists');
+    expect(tabs.getAllByRole('link').map((l) => l.textContent)).toEqual(['Təyinatlar', 'Yoxlama vərəqələri', 'Şablonlar']);
     expect(tabs.getByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('aria-current', 'page');
-    const schedule = tabs.getByRole('link', { name: 'İcra cədvəli' });
-    expect(schedule).toHaveAttribute('href', '/schedule');
-    await userEvent.click(schedule);
-    await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
+    const checklists = tabs.getByRole('link', { name: 'Yoxlama vərəqələri' });
+    expect(checklists).toHaveAttribute('href', '/checklists');
+    await userEvent.click(checklists);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/checklists'));
   });
 
-  it('shows the schedule under the Yoxlamalar heading with its own tab current', async () => {
+  it('shows the schedule (reached from run links) under the Yoxlamalar heading with Təyinatlar current', async () => {
     renderWithRouter(<ScheduleRoute />, '/schedule?date=2026-11-04');
     expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlamalar' })).toBeInTheDocument();
     const tabs = within(screen.getByRole('navigation', { name: 'Yoxlamalar' }));
-    expect(tabs.getByRole('link', { name: 'İcra cədvəli' })).toHaveAttribute('aria-current', 'page');
-    expect(tabs.getByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('href', '/assignments');
+    expect(tabs.queryByRole('link', { name: 'İcra cədvəli' })).not.toBeInTheDocument();
+    expect(tabs.getByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('aria-current', 'page');
     await waitFor(() => expect(mocks.api.occurrences.list).toHaveBeenCalledWith(expect.objectContaining({ from: '2026-11-02', to: '2026-11-08' })));
   });
 });

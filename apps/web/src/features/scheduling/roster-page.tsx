@@ -96,7 +96,7 @@ export function RosterPage({ initialDate, tabs }: { initialDate?: string; tabs?:
     <div className="grid gap-4">
       <div>
         <PageHeader
-          title={t('scheduling.shifts.title')}
+          title={t('scheduling.shifts.title')} description={t('pages.shifts')}
           actions={
             canManage &&
             siteId && (

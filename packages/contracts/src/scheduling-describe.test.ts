@@ -34,5 +34,6 @@ describe('describeSchedule', () => {
     expect(describeSchedule({ kind: 'dates', dates: ['2026-11-05', '2026-11-06'] }, { mode: 'shift', shiftId: 'x', graceMinutes: 0 }, 'Səhər', t)).toBe(
       'scheduling.summary.dates(count=2), scheduling.summary.shift(shift=Səhər)',
     );
+    expect(describeSchedule({ kind: 'daily', every: 1, ...r0 }, { mode: 'anytime' }, null, t)).toBe('scheduling.summary.daily, scheduling.summary.anytime');
   });
 });

@@ -26,7 +26,8 @@ import {
   type UserRef,
 } from '@taskop/contracts';
 import { az } from '@taskop/i18n';
-import { and, desc, eq, isNull, type SQL, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, type SQL, sql } from 'drizzle-orm';
+import { inSiteSubtrees, sqlList } from '../common/sql';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { DbService } from '../db/db.service';
 import { executionProblems, executions, occurrences, tasks } from '../db/schema';
@@ -37,11 +38,9 @@ import type { ResolvedFilters } from './report-filters';
 /** A SQL list of status literals from a contracts constant (never user input). */
 export const statusList = (list: readonly string[]): SQL => sql.raw(`(${list.map((s) => `'${s}'`).join(', ')})`);
 
-/** The siteId filter: the column's site lies in the filter site's subtree (spec §4). Undefined without a siteId. */
+/** The siteId filter: the column's site lies in the subtree of any filter site (spec §4). Undefined without a siteId. */
 export function inFilterSubtree(f: ResolvedFilters, siteCol: AnyPgColumn): SQL | undefined {
-  if (f.sitePath === undefined) return undefined;
-  if (f.sitePath === null) return sql`false`;
-  return sql`exists (select 1 from sites fs where fs.id = ${siteCol} and fs.path <@ ${f.sitePath}::ltree)`;
+  return f.siteId ? inSiteSubtrees(siteCol, f.siteId) : undefined;
 }
 
 /** The spec §3.1 buckets as one row of counts over `runs r`, plus the score sum and count. */
@@ -106,11 +105,12 @@ const addRows = (a: CountRow, b: CountRow): CountRow => Object.fromEntries(Objec
  */
 function runConditions(f: ResolvedFilters, scope: SQL | undefined): SQL {
   const conds: (SQL | undefined)[] = [scope, sql`${occurrences.localDate} between ${f.from}::date and ${f.to}::date`, inFilterSubtree(f, occurrences.siteId)];
-  if (f.checklistId) conds.push(eq(occurrences.checklistId, f.checklistId));
+  if (f.checklistId) conds.push(inArray(occurrences.checklistId, f.checklistId));
   if (f.userId) {
-    conds.push(sql`((x.id is not null and x.executor_user_id = ${f.userId})
+    const ids = sqlList(f.userId);
+    conds.push(sql`((x.id is not null and x.executor_user_id in ${ids})
       or (x.id is null and ${occurrences.status} <> 'cancelled'
-          and exists (select 1 from occurrence_assignees oa where oa.occurrence_id = ${occurrences.id} and oa.user_id = ${f.userId})))`);
+          and exists (select 1 from occurrence_assignees oa where oa.occurrence_id = ${occurrences.id} and oa.user_id in ${ids})))`);
   }
   return and(...conds)!;
 }
@@ -236,16 +236,16 @@ const toReportRun = (r: RunRow): ReportRun => ({
 });
 
 /** Problems of the period's occurrences (spec §3.2) under scope and filters; a problem's user is its run's executor (Spec decision 10). */
-function problemConditions(f: ResolvedFilters, scope: SQL | undefined, severity: ProblemSeverity | undefined): SQL {
+function problemConditions(f: ResolvedFilters, scope: SQL | undefined, severity: readonly ProblemSeverity[] | undefined): SQL {
   const conds: (SQL | undefined)[] = [
     scope,
     isNull(executionProblems.clearedAt),
     sql`${occurrences.localDate} between ${f.from}::date and ${f.to}::date`,
     inFilterSubtree(f, occurrences.siteId),
   ];
-  if (f.checklistId) conds.push(eq(executionProblems.checklistId, f.checklistId));
-  if (f.userId) conds.push(eq(executions.executorUserId, f.userId));
-  if (severity) conds.push(eq(executionProblems.severity, severity));
+  if (f.checklistId) conds.push(inArray(executionProblems.checklistId, f.checklistId));
+  if (f.userId) conds.push(inArray(executions.executorUserId, f.userId));
+  if (severity?.length) conds.push(inArray(executionProblems.severity, [...severity]));
   return and(...conds)!;
 }
 
@@ -256,8 +256,8 @@ function taskConditions(f: ResolvedFilters, scope: SQL): SQL {
     sql`(coalesce(${tasks.dueAt}, ${tasks.createdAt}) at time zone ${f.timezone})::date between ${f.from}::date and ${f.to}::date`,
     inFilterSubtree(f, tasks.siteId),
   ];
-  if (f.userId) conds.push(eq(tasks.assigneeUserId, f.userId));
-  if (f.checklistId) conds.push(sql`exists (select 1 from execution_problems fp where fp.id = ${tasks.problemId} and fp.checklist_id = ${f.checklistId})`);
+  if (f.userId) conds.push(inArray(tasks.assigneeUserId, f.userId));
+  if (f.checklistId) conds.push(sql`exists (select 1 from execution_problems fp where fp.id = ${tasks.problemId} and fp.checklist_id in ${sqlList(f.checklistId)})`);
   return and(...conds)!;
 }
 
@@ -323,7 +323,7 @@ export class ReportQueries {
       select r.user_id, u.full_name, u.status::text as status, ${countColumns(f.now)}
         from attributed r
         left join users u on u.id = r.user_id
-       where ${f.userId ? sql`r.user_id = ${f.userId}` : sql`true`}
+       where ${f.userId ? sql`r.user_id in ${sqlList(f.userId)}` : sql`true`}
        group by r.user_id, u.full_name, u.status
        order by r.user_id is null, u.full_name, r.user_id`);
     return rows.rows.map((r) => ({
@@ -370,7 +370,7 @@ export class ReportQueries {
   }
 
   /** Spec §5.3: the /problems rows (newest first, the same keyset) with the linked task's status. */
-  async problems(f: ResolvedFilters, scope: SQL | undefined, severity: ProblemSeverity | undefined, opts: { cursor?: string; limit: number | null }): Promise<Page<ReportProblem>> {
+  async problems(f: ResolvedFilters, scope: SQL | undefined, severity: readonly ProblemSeverity[] | undefined, opts: { cursor?: string; limit: number | null }): Promise<Page<ReportProblem>> {
     const conds = [problemConditions(f, scope, severity)];
     if (opts.cursor) {
       conds.push(sql`(${executionProblems.createdAt}, ${executionProblems.id}) < (select c.created_at, c.id from execution_problems c where c.id = ${opts.cursor})`);
@@ -387,7 +387,7 @@ export class ReportQueries {
   }
 
   /** Over the whole filtered set, cursor ignored (Spec decision 12); resolution by SP5's own rules (resolutionFilter). */
-  async problemCounts(f: ResolvedFilters, scope: SQL | undefined, severity: ProblemSeverity | undefined): Promise<ReportProblemCounts> {
+  async problemCounts(f: ResolvedFilters, scope: SQL | undefined, severity: readonly ProblemSeverity[] | undefined): Promise<ReportProblemCounts> {
     const n = (cond: SQL) => sql<number>`(count(*) filter (where ${cond}))::int`;
     const [r] = await this.db
       .tx()

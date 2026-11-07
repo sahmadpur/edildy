@@ -205,7 +205,7 @@ describe('TaskDialog', () => {
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
     await screen.findByRole('button', { name: 'Faylları yenidən yüklə' });
-    await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
+    await userEvent.click(screen.getByRole('button', { name: 'İmtina et' }));
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: mocks.api.tasks.create.mock.calls[0]![0].id }));
     expect(onClose).toHaveBeenCalled();
   });
@@ -329,9 +329,9 @@ describe('TaskDialog', () => {
     await fillMinimum();
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
     await waitFor(() => expect(mocks.api.tasks.create).toHaveBeenCalled());
-    expect(screen.getByRole('button', { name: 'Ləğv et' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'İmtina et' })).toBeDisabled();
     await userEvent.keyboard('{Escape}');
-    fireEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
+    fireEvent.click(screen.getByRole('button', { name: 'İmtina et' }));
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     finish(taskDetail({ id: mocks.api.tasks.create.mock.calls[0]![0].id }));

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { clientSchema } from './auth.js';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idSchema, isoDateTimeSchema, listParam } from './common.js';
 
 export const auditEntryDtoSchema = z.object({
   id: idSchema,
@@ -24,11 +24,11 @@ export type AuditEntryDto = z.infer<typeof auditEntryDtoSchema>;
 export const auditListQuerySchema = cursorQuerySchema.extend({
   actorUserId: idSchema.optional(),
   action: z.string().trim().max(100).optional(),
-  entityType: z.string().trim().max(50).optional(),
+  entityType: listParam(z.string().trim().max(50)).optional(),
   entityId: idSchema.optional(),
   from: isoDateTimeSchema.optional(),
   to: isoDateTimeSchema.optional(),
-  client: clientSchema.optional(),
+  client: listParam(clientSchema).optional(),
 });
 export type AuditListQuery = z.input<typeof auditListQuerySchema>;
 

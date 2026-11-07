@@ -1,4 +1,4 @@
-import type { ReportFilters, ReportSummary } from '@taskop/contracts';
+import type { ReportFiltersQuery as ReportFilters, ReportSummary } from '@taskop/contracts';
 import { useTranslation } from 'react-i18next';
 import { errorText } from '@/lib/errors';
 import { CountTiles } from './count-tiles';

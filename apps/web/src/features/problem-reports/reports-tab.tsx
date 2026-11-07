@@ -1,7 +1,8 @@
-import type { ProblemReportDto, ProblemReportState, ProblemReportStateFilter } from '@taskop/contracts';
+import { type ProblemReportDto, type ProblemReportState, type ProblemReportStateFilter, toListParam } from '@taskop/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { NativeSelect } from '@/components/native-select';
 import { EmptyState, LoadingState } from '@/components/states';
 import { Badge } from '@/components/ui/badge';
@@ -42,12 +43,12 @@ export function ReportsTab({ highlight }: { highlight?: string }) {
     seeded.current = highlight;
     setState(filterFor(linked.data.state));
   }, [highlight, linked.data]);
-  const [siteId, setSiteId] = useState('');
+  const [siteId, setSiteId] = useState<string[]>([]);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [taskFor, setTaskFor] = useState<ProblemReportDto | null>(null);
   const [closing, setClosing] = useState<ProblemReportDto | null>(null);
-  const filters: ReportFilters = { state, siteId: siteId || undefined, from: from || undefined, to: to || undefined };
+  const filters: ReportFilters = { state, siteId: toListParam(siteId), from: from || undefined, to: to || undefined };
   const reports = useProblemReports(filters);
   const items = reports.data?.pages.flatMap((p) => p.items) ?? [];
   const highlighted = useRef<HTMLTableRowElement>(null);
@@ -66,14 +67,14 @@ export function ReportsTab({ highlight }: { highlight?: string }) {
             </option>
           ))}
         </NativeSelect>
-        <NativeSelect aria-label={t('executions.reportsTab.site')} value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-52">
-          <option value="">{t('executions.reportsTab.allSites')}</option>
-          {(sites.data ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('executions.reportsTab.site')}
+          allLabel={t('executions.reportsTab.allSites')}
+          options={(sites.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
+          value={siteId}
+          onChange={setSiteId}
+          className="w-52"
+        />
         <div className="grid gap-1">
           <Label htmlFor="reports-from">{t('executions.reportsTab.from')}</Label>
           <Input id="reports-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-44" />

@@ -157,7 +157,7 @@ describe('ExecutionScreen', () => {
     expect(within(sheet).getByRole('button', { name: 'Foto: Qalereya' }).props.accessibilityState).toMatchObject({ disabled: true });
     expect(within(sheet).getByRole('button', { name: 'Video: Kamera' }).props.accessibilityState).toMatchObject({ disabled: true });
     expect(await t.services.store.media(t.id)).toHaveLength(MEDIA_LIMITS.problemMaxMedia);
-    await fireEvent.press(within(sheet).getByRole('button', { name: 'Ləğv et' }));
+    await fireEvent.press(within(sheet).getByRole('button', { name: 'İmtina et' }));
     await eventually(async () => expect(await t.services.store.media(t.id)).toEqual([]));
     expect(screen.queryByTestId('problem-sheet')).toBeNull();
   });
@@ -359,7 +359,7 @@ describe('ExecutionScreen inputs and races', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Problem qeyd et: Temperatur' }));
     const pick = deferredPick(t);
     await fireEvent.press(within(await screen.findByTestId('problem-sheet')).getByRole('button', { name: 'Foto: Qalereya' }));
-    await fireEvent.press(within(screen.getByTestId('problem-sheet')).getByRole('button', { name: 'Ləğv et' }));
+    await fireEvent.press(within(screen.getByTestId('problem-sheet')).getByRole('button', { name: 'İmtina et' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Problem qeyd et: Soyuducuda problem varmı?' }));
     const sheet = await screen.findByTestId('problem-sheet');
     await pick.resolve();

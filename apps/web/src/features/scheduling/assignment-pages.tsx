@@ -1,11 +1,12 @@
-import { ASSIGNMENT_STATUSES, type AssignmentStatus } from '@taskop/contracts';
+import { ASSIGNMENT_STATUSES, toListParam } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type ReactNode, useDeferredValue, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { ConfirmButton } from '@/components/confirm-button';
-import { NativeSelect } from '@/components/native-select';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import { useSites } from '@/features/sites/queries';
 import { errorText } from '@/lib/errors';
 import { api, useCan } from '@/lib/session';
 import { AssignmentEditor } from './assignment-editor';
-import { assignmentVariant, formatLocalDate, occurrenceVariant, scheduleSummary, useTimeFormat } from './labels';
+import { assignmentVariant, formatLocalDate, occurrenceVariant, scheduleSummary, useWindowText } from './labels';
 import { useAssignment, useAssignments } from './queries';
 import { useLocale } from '@/lib/i18n';
 import { LoadingState } from '@/components/states';
@@ -24,17 +25,17 @@ export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
   const { t } = useTranslation();
   const canManage = useCan('assignments.manage');
   const sites = useSites();
-  const [siteId, setSiteId] = useState('');
-  const [status, setStatus] = useState<AssignmentStatus | ''>('active');
+  const [siteId, setSiteId] = useState<string[]>([]);
+  const [status, setStatus] = useState<string[]>(['active']);
   const [search, setSearch] = useState('');
   const q = useDeferredValue(search.trim());
-  const list = useAssignments({ siteId: siteId || undefined, status: status || undefined, q: q || undefined });
+  const list = useAssignments({ siteId: toListParam(siteId), status: toListParam(status), q: q || undefined });
   const items = list.data?.items ?? [];
 
   return (
     <div>
       <PageHeader
-        title={t(tabs ? 'nav.assignments' : 'scheduling.assignments.title')}
+        title={t(tabs ? 'nav.assignments' : 'scheduling.assignments.title')} description={t('pages.assignments')}
         actions={
           canManage && (
             <Link to="/assignments/new" className={buttonVariants()}>
@@ -46,22 +47,22 @@ export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
       {tabs}
       <div className="mb-4 flex flex-wrap gap-3">
         <Input type="search" aria-label={t('common.search')} placeholder={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-64" />
-        <NativeSelect aria-label={t('scheduling.assignments.site')} value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-56">
-          <option value="">{t('scheduling.assignments.allSites')}</option>
-          {(sites.data ?? []).map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </NativeSelect>
-        <NativeSelect aria-label={t('common.status')} value={status} onChange={(e) => setStatus(e.target.value as AssignmentStatus | '')} className="w-48">
-          <option value="">{t('scheduling.assignments.allStatuses')}</option>
-          {ASSIGNMENT_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {t(`scheduling.assignments.status.${s}`)}
-            </option>
-          ))}
-        </NativeSelect>
+        <MultiSelectFilter
+          label={t('scheduling.assignments.site')}
+          allLabel={t('scheduling.assignments.allSites')}
+          options={(sites.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
+          value={siteId}
+          onChange={setSiteId}
+          className="w-56"
+        />
+        <MultiSelectFilter
+          label={t('common.status')}
+          allLabel={t('scheduling.assignments.allStatuses')}
+          options={ASSIGNMENT_STATUSES.map((s) => ({ value: s, label: t(`scheduling.assignments.status.${s}`) }))}
+          value={status}
+          onChange={setStatus}
+          className="w-48"
+        />
       </div>
       <Table>
         <TableHeader>
@@ -103,17 +104,29 @@ export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
   );
 }
 
+/** "Aysel, Kamran və Lalə", or the first three and "daha 2 nəfər" for a longer list. */
+export function peopleList(names: readonly string[], locale: string, t: TFunction): string {
+  const SHOWN = 3;
+  const parts = names.length > SHOWN ? [...names.slice(0, SHOWN), t('scheduling.assignments.morePeople', { count: names.length - SHOWN })] : [...names];
+  return new Intl.ListFormat(locale, { type: 'conjunction' }).format(parts);
+}
+
 export function NewAssignmentPage({ checklistId, copyFrom }: { checklistId?: string; copyFrom?: string }) {
   const { t } = useTranslation();
+  const locale = useLocale();
   const navigate = useNavigate();
   const source = useAssignment(copyFrom);
   if (copyFrom && source.isPending) return <LoadingState />;
   return (
     <div>
-      <PageHeader title={t('scheduling.assignments.createTitle')} />
+      <PageHeader title={t('scheduling.assignments.createTitle')} description={t('pages.newAssignment')} />
       <AssignmentEditor
         preset={{ checklistId, copyFrom: source.data }}
-        onSaved={(a) => void navigate({ to: '/assignments/$assignmentId', params: { assignmentId: a.id } })}
+        onSaved={(a) => {
+          // Say who it was made for (feedback 2026-11-07), then open it.
+          toast.success(t('scheduling.assignments.createdFor', { names: peopleList(a.assignees.map((u) => u.fullName), locale, t) }));
+          void navigate({ to: '/assignments/$assignmentId', params: { assignmentId: a.id } });
+        }}
         onCancel={() => void navigate({ to: '/assignments' })}
       />
     </div>
@@ -126,7 +139,7 @@ export function AssignmentDetailPage({ assignmentId }: { assignmentId: string })
   const qc = useQueryClient();
   const navigate = useNavigate();
   const canManage = useCan('assignments.manage');
-  const time = useTimeFormat();
+  const windowText = useWindowText();
   const detail = useAssignment(assignmentId);
   const refresh = () => qc.invalidateQueries({ queryKey: ['assignments'] });
   const act = async (fn: () => Promise<unknown>) => {
@@ -191,7 +204,7 @@ export function AssignmentDetailPage({ assignmentId }: { assignmentId: string })
             {a.upcoming.map((o) => (
               <li key={o.id} className="flex items-center gap-3">
                 <span>
-                  {formatLocalDate(o.localDate, locale)} · {time(o.startsAt)}–{time(o.dueAt)}
+                  {formatLocalDate(o.localDate, locale)} · {windowText(o.startsAt, o.dueAt)}
                 </span>
                 <Badge variant={occurrenceVariant(o.status)}>{t(`scheduling.statuses.${o.status}`)}</Badge>
                 {o.unassigned && <Badge variant="destructive">{t('scheduling.schedule.unassigned')}</Badge>}

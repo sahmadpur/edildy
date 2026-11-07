@@ -7,7 +7,7 @@ import {
   PROBLEM_SEVERITIES,
   type ProblemSeverity,
   REPORT_KINDS,
-  type ReportFilters,
+  type ReportFiltersQuery as ReportFilters,
   type ReportKind,
   reportRangeTooLong,
   resolvePeriod,
@@ -26,7 +26,7 @@ export const DEFAULT_TAB: ReportKind = 'summary';
 export const DEFAULT_BUCKET: RunBucket = 'all';
 
 /**
- * The filters shared by `/` and `/reports` (spec §6.1–6.2). Absent means the default: Today, everything in the viewer's
+ * The filters of `/reports` (spec §6.1–6.2). Absent means the default: the last 30 days, everything in the viewer's
  * scope, and only active entries in the pickers.
  */
 export interface ReportSearch {
@@ -34,6 +34,7 @@ export interface ReportSearch {
   /** Only with `period: 'custom'`. */
   from?: string;
   to?: string;
+  /** One id or several joined by commas (the multi-select filters, feedback 2026-11-07); the API reads the same. */
   siteId?: string;
   userId?: string;
   checklistId?: string;
@@ -50,7 +51,8 @@ export interface ReportsPageSearch extends ReportSearch {
   auditState?: RunAuditState;
 }
 
-const isId = (v: unknown): v is string => idSchema.safeParse(v).success;
+/** One id or a comma list of ids. */
+const isId = (v: unknown): v is string => typeof v === 'string' && v.split(',').every((id) => idSchema.safeParse(id).success);
 const isDate = (v: unknown): v is string => localDateSchema.safeParse(v).success;
 const isOneOf = <T extends string>(list: readonly T[], v: unknown): v is T =>
   typeof v === 'string' && (list as readonly string[]).includes(v);
@@ -61,7 +63,7 @@ function pick<T extends object, K extends keyof T>(o: T, keys: readonly K[]): Pi
   return out;
 }
 
-/** `validateSearch` of `/`. Anything invalid is dropped here, so it is never sent to the API. */
+/** The shared part of `validateSearch` of `/reports`. Anything invalid is dropped here, so it is never sent to the API. */
 export function reportSearch(s: Record<string, unknown>): ReportSearch {
   const period = isOneOf(PERIOD_CHOICES, s.period) ? s.period : undefined;
   const custom = period === 'custom';

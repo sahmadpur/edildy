@@ -69,7 +69,8 @@ export default {
     templateRequired: 'Choose a template.',
   },
   detail: {
-    edit: 'Edit',
+    edit: 'Edit items',
+    editTitle: 'Edit',
     continueDraft: 'Continue draft',
     copy: 'Copy',
     editDetails: 'Edit details',

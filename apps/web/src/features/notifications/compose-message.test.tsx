@@ -61,7 +61,7 @@ describe('ComposeMessage', () => {
     let dialog = await screen.findByRole('dialog', { name: 'Mesajı göndər' });
     expect(dialog).toHaveTextContent(i18n.t('notifications.issues.noRecipients', { count: 1000, max: 1000 }));
     expect(within(dialog).getByRole('button', { name: 'Göndər' })).toBeDisabled();
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Ləğv et' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'İmtina et' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     dialog = await screen.findByRole('dialog', { name: 'Mesajı göndər' });

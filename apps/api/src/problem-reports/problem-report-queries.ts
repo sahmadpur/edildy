@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Page, ProblemReportDto, ReportSite } from '@taskop/contracts';
 import { and, asc, desc, eq, inArray, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
+import { inSiteSubtrees } from '../common/sql';
 import type { Principal, TaskReader } from '../common/request';
 import { DbService } from '../db/db.service';
 import { problemReports, sites } from '../db/schema';
@@ -20,7 +21,7 @@ export class ProblemReportQueries {
   /** Readable reports only, newest first, keyset on (created_at, id). */
   async list(p: Principal, q: ProblemReportListQueryDto): Promise<Page<ProblemReportDto>> {
     const conds: (SQL | undefined)[] = [this.scope.readable(p), stateFilter(q.state)];
-    if (q.siteId) conds.push(eq(problemReports.siteId, q.siteId));
+    if (q.siteId) conds.push(inSiteSubtrees(problemReports.siteId, q.siteId));
     if (q.from) conds.push(reportedOn('>=', q.from));
     if (q.to) conds.push(reportedOn('<=', q.to));
     if (q.cursor) conds.push(sql`(${problemReports.createdAt}, ${problemReports.id}) < (select c.created_at, c.id from problem_reports c where c.id = ${q.cursor})`);

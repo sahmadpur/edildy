@@ -10,8 +10,8 @@ export default {
       allAuditors: 'Bütün auditorlar',
       result: 'Nəticə',
       allResults: 'Bütün nəticələr',
-      from: 'Başlanğıc tarixi',
-      to: 'Son tarix',
+      from: 'Başlama',
+      to: 'Son',
     },
     range: {
       incomplete: 'Başlanğıc və son tarixi birlikdə seçin.',

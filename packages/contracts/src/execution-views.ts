@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { auditBriefSchema } from './audit-logic.js';
 import { checklistContentSchema } from './checklist-content.js';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idListParam, idSchema, isoDateTimeSchema, listParam } from './common.js';
 import { claimRejectionReasonSchema, executionStateSchema, problemSeveritySchema, problemSourceSchema, progressSchema, scoreSchema } from './execution-logic.js';
 import { reworkRequestSchema } from './corrections.js';
 import { executionSummarySchema } from './execution-summary.js';
@@ -154,11 +154,11 @@ export const problemListQuerySchema = cursorQuerySchema
   .extend({
     from: localDateSchema,
     to: localDateSchema,
-    siteId: idSchema.optional(),
-    checklistId: idSchema.optional(),
-    severity: problemSeveritySchema.optional(),
-    source: problemSourceSchema.optional(),
-    resolution: problemResolutionSchema.optional(),
+    siteId: idListParam.optional(),
+    checklistId: idListParam.optional(),
+    severity: listParam(problemSeveritySchema).optional(),
+    source: listParam(problemSourceSchema).optional(),
+    resolution: listParam(problemResolutionSchema).optional(),
     /** 'true' also lists problems a correction cleared (SP8 spec §8.3). */
     includeCleared: z.stringbool().optional(),
   })

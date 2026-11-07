@@ -9,7 +9,7 @@ import {
   type TemplateSummary,
   validateForPublish,
 } from '@taskop/contracts';
-import { and, asc, eq, ilike, type SQL } from 'drizzle-orm';
+import { and, asc, eq, ilike, inArray, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { escapeLike } from '../common/sql';
 import { AuditService } from '../db/audit.service';
@@ -59,7 +59,7 @@ export class TemplatesService extends ChecklistContentSource {
     const out: TemplateSummary[] = [];
     if (q.source !== 'tenant' && q.status !== 'deactivated') {
       const g: (SQL | undefined)[] = [];
-      if (q.category) g.push(eq(globalTemplatesPublished.category, q.category));
+      if (q.category) g.push(inArray(globalTemplatesPublished.category, q.category));
       if (like) g.push(ilike(globalTemplatesPublished.name, like));
       const rows = await this.db
         .tx()
@@ -71,7 +71,7 @@ export class TemplatesService extends ChecklistContentSource {
     }
     if (q.source !== 'global') {
       const c: (SQL | undefined)[] = [];
-      if (q.category) c.push(eq(tenantTemplates.category, q.category));
+      if (q.category) c.push(inArray(tenantTemplates.category, q.category));
       if (q.status) c.push(eq(tenantTemplates.status, q.status));
       if (like) c.push(ilike(tenantTemplates.name, like));
       const rows = await this.db.tx().select().from(tenantTemplates).where(and(...c)).orderBy(asc(tenantTemplates.name));

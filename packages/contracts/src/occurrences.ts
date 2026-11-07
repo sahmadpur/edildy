@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
+import { cursorQuerySchema, idListParam, idSchema, isoDateTimeSchema } from './common.js';
 import { executionBriefSchema, executionSummarySchema } from './execution-summary.js';
 import { localDateSchema } from './scheduling-time.js';
 import { localRangeCheck, SCHEDULING_LIMITS } from './scheduling.js';
@@ -70,10 +70,10 @@ export const occurrenceListQuerySchema = cursorQuerySchema
   .extend({
     from: localDateSchema,
     to: localDateSchema,
-    siteId: idSchema.optional(),
+    siteId: idListParam.optional(),
     status: statusList.optional(),
-    assigneeId: idSchema.optional(),
-    checklistId: idSchema.optional(),
+    assigneeId: idListParam.optional(),
+    checklistId: idListParam.optional(),
     assignmentId: idSchema.optional(),
   })
   .superRefine(localRangeCheck(SCHEDULING_LIMITS.maxListDays));
