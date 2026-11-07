@@ -1,5 +1,5 @@
 import { NOTIFICATION_TYPES } from '@taskop/contracts';
-import { ME, OCC, OCC2, OCC3, occurrence, OTHER, pushData, reworkSync, REWORK_EXECUTION, syncResponse, syncTask, TASK, TASK2, versionOf } from '@/offline/testing/fixtures';
+import { ME, OCC, OCC2, OCC3, occurrence, OTHER, pushData, REPORT, reworkSync, REWORK_EXECUTION, syncResponse, syncTask, TASK, TASK2, versionOf } from '@/offline/testing/fixtures';
 import { createTestServices } from '@/offline/testing/test-services';
 import { createRouteContext, HOME, INBOX, type RouteContext, routeForPush, routeForTarget, startTapRouting, TEAM_RUN_TYPES } from './notification-router';
 import { fakeEvents } from './testing/fakes';
@@ -30,11 +30,20 @@ const stubCtx = (over: Partial<RouteContext> = {}): RouteContext => ({
   sync: jest.fn(async () => undefined),
   occurrenceOnPhone: jest.fn(async () => 'execution' as const),
   taskOnPhone: jest.fn(async () => true),
+  reportOnPhone: jest.fn(async () => true),
   nonce: () => 'nonce-1',
   ...over,
 });
 
 describe('where a notification leads (spec §7.3)', () => {
+  it('opens a problem report on the phone directly, and a remote one when the phone does not hold it (2026-11-06 design)', async () => {
+    const own = stubCtx();
+    expect(await routeForTarget({ targetKind: 'problem_report', targetId: REPORT, type: 'problem_report.closed' }, own)).toEqual({ pathname: '/problems/[id]', params: { id: REPORT } });
+    const manager = stubCtx({ reportOnPhone: jest.fn(async () => false) });
+    expect(await routeForTarget({ targetKind: 'problem_report', targetId: REPORT, type: 'problem_report.created' }, manager)).toEqual({ pathname: '/problems/[id]', params: { id: REPORT, remote: '1' } });
+    expect(manager.sync).toHaveBeenCalled();
+  });
+
   it('opens a started checklist by its occurrence id, after syncing first', async () => {
     const { ctx, pulls } = await world();
     const before = pulls();

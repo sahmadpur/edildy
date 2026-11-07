@@ -13,7 +13,8 @@ export type NotificationRoute =
   | { pathname: '/execution/[id]'; params: { id: string } }
   | { pathname: '/task/[id]'; params: { id: string } }
   | { pathname: '/review/[id]'; params: { id: string; n: string } }
-  | { pathname: '/team/run/[id]'; params: { id: string } };
+  | { pathname: '/team/run/[id]'; params: { id: string } }
+  | { pathname: '/problems/[id]'; params: { id: string; remote?: string } };
 
 export const INBOX: NotificationRoute = { pathname: '/notifications' };
 export const HOME: NotificationRoute = { pathname: '/' };
@@ -38,12 +39,14 @@ export interface RouteContext {
   /** 'execution' when the phone holds an execution of the occurrence, 'notStarted' when only the occurrence. */
   occurrenceOnPhone(id: string): Promise<'execution' | 'notStarted' | null>;
   taskOnPhone(id: string): Promise<boolean>;
+  /** The phone holds the problem report (the user's own); otherwise it is read from the API (2026-11-06 design). */
+  reportOnPhone(id: string): Promise<boolean>;
   /** A fresh nonce for /review/[id] (SP5: every visit is a new screen). */
   nonce(): string;
 }
 
 export function createRouteContext(
-  services: Pick<OfflineServices, 'userId' | 'syncNow' | 'store' | 'tasks' | 'newId'>,
+  services: Pick<OfflineServices, 'userId' | 'syncNow' | 'store' | 'tasks' | 'reports' | 'newId'>,
   canManageTasks: () => boolean,
   canSeeTeam: () => boolean = () => false,
 ): RouteContext {
@@ -58,6 +61,7 @@ export function createRouteContext(
       return o.execution ? 'execution' : 'notStarted';
     },
     taskOnPhone: async (id) => (await services.tasks.task(id)) !== null,
+    reportOnPhone: async (id) => (await services.reports.report(id)) !== null,
     nonce: services.newId,
   };
 }
@@ -74,6 +78,9 @@ export async function routeForTarget(target: NotificationTarget, ctx: RouteConte
     // occurrence (claimed by someone else, so not startable here) without an execution of it.
     if (target.type !== undefined && TEAM_RUN_TYPES.has(target.type) && ctx.canSeeTeam?.()) return { pathname: '/team/run/[id]', params: { id } };
     return where === 'notStarted' ? HOME : INBOX;
+  }
+  if (target.targetKind === 'problem_report') {
+    return (await ctx.reportOnPhone(id)) ? { pathname: '/problems/[id]', params: { id } } : { pathname: '/problems/[id]', params: { id, remote: '1' } };
   }
   if (await ctx.taskOnPhone(id)) return { pathname: '/task/[id]', params: { id } };
   return ctx.canManageTasks() ? { pathname: '/review/[id]', params: { id, n: ctx.nonce() } } : INBOX;

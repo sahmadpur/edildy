@@ -3,7 +3,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import '@/lib/i18n';
 import { capturedPhoto } from '@/offline/testing/fake-transport';
-import { CHECKLIST, ME_REF, OCC, OTHER, SITE, syncResponse, syncTask, T, TASK, versionOf } from '@/offline/testing/fixtures';
+import { CHECKLIST, ME_REF, OCC, OTHER, REPORT, SITE, syncReport, syncResponse, syncTask, T, TASK, versionOf } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices, type TestServices } from '@/offline/testing/test-services';
 import { TaskScreen } from './task-screen';
@@ -24,10 +24,11 @@ jest.mock('@/components/primary-button', () => {
 });
 const mockUrl = jest.fn();
 const mockProblemUrl = jest.fn();
+const mockReportUrl = jest.fn();
 jest.mock('@/lib/session', () => ({
   api: {
     taskMedia: { url: (...a: unknown[]) => mockUrl(...a) },
-    tasks: { problemMediaUrl: (...a: unknown[]) => mockProblemUrl(...a) },
+    tasks: { problemMediaUrl: (...a: unknown[]) => mockProblemUrl(...a), reportMediaUrl: (...a: unknown[]) => mockReportUrl(...a) },
   },
 }));
 
@@ -57,6 +58,20 @@ beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
 describe('TaskScreen', () => {
+  it('shows the source problem report with its media signed through the task (2026-11-06 design §7.5)', async () => {
+    mockReportUrl.mockResolvedValue({ url: 'http://files.test/r', expiresAt: '2026-11-02T05:00:00.000Z' });
+    await opened(
+      { source: 'report', problemReportId: REPORT, problemReport: syncReport({ id: REPORT, text: 'Anbarın qapısı bağlanmır', reporter: { id: OTHER, fullName: 'Fərid Hacıyev' }, media: [{ id: PROBLEM_PHOTO, kind: 'photo', status: 'uploaded' }] }) },
+      { online: true },
+    );
+    const card = screen.getByTestId('task-report');
+    expect(card).toBeTruthy();
+    expect(screen.getByText('Anbarın qapısı bağlanmır')).toBeTruthy();
+    expect(screen.getByText(/Fərid Hacıyev/)).toBeTruthy();
+    expect(await screen.findByTestId(`remote-${PROBLEM_PHOTO}`)).toBeTruthy();
+    expect(mockReportUrl).toHaveBeenCalledWith(TASK, PROBLEM_PHOTO);
+  });
+
   it('offers Qəbul et and Başla on a new task; Başla accepts and starts it', async () => {
     const t = await opened();
     expect(screen.getByText('Qapının rezinini dəyişin.')).toBeTruthy();

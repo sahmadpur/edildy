@@ -177,6 +177,18 @@ export function TaskScreen({ taskId }: { taskId: string }) {
         </View>
       ) : null}
 
+      {s.problemReport ? (
+        <View testID="task-report" style={styles.card}>
+          <Text style={styles.label}>{t('tasks.drawer.report')}</Text>
+          <Text style={styles.text}>{s.problemReport.text}</Text>
+          <Text style={styles.muted}>{`${s.problemReport.siteName} · ${s.problemReport.reporter.fullName}`}</Text>
+          <View style={styles.badges}>
+            <Badge text={t(`executions.severities.${s.problemReport.severity}`)} tone={s.problemReport.severity === 'critical' ? 'danger' : 'warning'} />
+          </View>
+          <RemoteMediaStrip items={s.problemReport.media} load={(id) => api.tasks.reportMediaUrl(taskId, id)} />
+        </View>
+      ) : null}
+
       {task.status === 'new' || task.status === 'accepted' ? (
         <View style={styles.actions}>
           {task.status === 'new' ? (

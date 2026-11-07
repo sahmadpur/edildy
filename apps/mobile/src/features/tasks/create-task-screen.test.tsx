@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import '@/lib/i18n';
 import { capturedPhoto } from '@/offline/testing/fake-transport';
 import { OTHER, SITE, syncTask, TEAM } from '@/offline/testing/fixtures';
+import { REPORT, syncReport } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { CreateTaskScreen } from './create-task-screen';
@@ -10,6 +11,7 @@ import { CreateTaskScreen } from './create-task-screen';
 const mockBack = jest.fn();
 const mockCreate = jest.fn();
 const mockAssignees = jest.fn();
+const mockReportGet = jest.fn();
 let mockPermissions: string[] = ['tasks.manage'];
 jest.mock('expo-router', () => ({ router: { back: (...a: unknown[]) => mockBack(...a), push: jest.fn() } }));
 jest.mock('@/features/execution/capture', () => ({ CaptureModal: () => null, VideoPreview: () => null, pickFromGallery: jest.fn() }));
@@ -18,6 +20,7 @@ jest.mock('@/lib/session', () => ({
   useSession: () => ({ status: 'authenticated', offline: false, me: { permissions: mockPermissions } }),
   api: {
     tasks: { create: (...a: unknown[]) => mockCreate(...a), assignees: (...a: unknown[]) => mockAssignees(...a) },
+    problemReports: { get: (...a: unknown[]) => mockReportGet(...a) },
   },
 }));
 
@@ -85,6 +88,24 @@ describe('CreateTaskScreen', () => {
     });
     expect(await t.db.all('SELECT owner_id, role FROM media')).toEqual([{ owner_id: body.id, role: 'instruction' }]);
     expect(Alert.alert).toHaveBeenCalledWith('Tapşırıq yaradıldı.');
+  });
+
+  it('from a problem report: pre-fills the title and instructions, locks the site, marks critical as high, and sends problemReportId', async () => {
+    mockReportGet.mockResolvedValue(syncReport({ id: REPORT, severity: 'critical', text: 'Anbarın qapısı bağlanmır, kilid sınıb', reporter: { id: OTHER, fullName: 'Fərid Hacıyev' } }));
+    const t = await createTestServices({ online: true });
+    await renderWithServices(t.services, <CreateTaskScreen problemReportId={REPORT} />);
+    expect(await screen.findByText(/Fərid Hacıyev/)).toBeTruthy();
+    expect(screen.getByLabelText('Ad').props.value).toBe('Anbarın qapısı bağlanmır, kilid sınıb');
+    expect(screen.getByLabelText('Təlimat').props.value).toBe('Anbarın qapısı bağlanmır, kilid sınıb');
+    expect(screen.getByRole('radio', { name: 'Yüksək' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('checkbox', { name: 'Yoxlama tələb olunur' }).props.accessibilityState.checked).toBe(true);
+    // The site is the report's: shown, not chosen.
+    expect(screen.queryByRole('radio', { name: 'Bakı filialı 1' })).toBeNull();
+    expect(screen.getByTestId('task-report')).toBeTruthy();
+    await fireEvent.press(await screen.findByRole('radio', { name: 'Murad Həsənov' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Yarat' }));
+    await eventually(async () => expect(mockBack).toHaveBeenCalled());
+    expect(mockCreate.mock.calls[0]![0]).toMatchObject({ title: 'Anbarın qapısı bağlanmır, kilid sınıb', priority: 'high', requiresReview: true, siteId: null, problemReportId: REPORT, assignee: { userId: OTHER } });
   });
 
   it('asks for a title and an assignee before sending', async () => {

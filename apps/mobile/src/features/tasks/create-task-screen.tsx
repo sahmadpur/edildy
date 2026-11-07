@@ -5,6 +5,7 @@ import {
   type EvidenceLevel,
   MEDIA_KINDS,
   type MediaKind,
+  type ProblemReportDto,
   TASK_LIMITS,
   TASK_PRIORITIES,
   type TaskAssignee,
@@ -28,7 +29,7 @@ import { api, useSession } from '@/lib/session';
 import { colors, spacing } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import type { CapturedMedia } from '@/offline/execution-store';
-import { useSyncStatus } from '@/offline/hooks';
+import { useLiveQuery, useSyncStatus } from '@/offline/hooks';
 import { ScreenHeader } from './screen-header';
 
 const ASSIGNEE_SEARCH_DELAY_MS = 300;
@@ -37,8 +38,11 @@ const SHOWN_FIELDS: ReadonlySet<string> = new Set(['title', 'assignee', 'siteId'
 
 const withLevel = (e: TaskEvidence, kind: MediaKind, level: EvidenceLevel): TaskEvidence => (kind === 'photo' ? { ...e, photo: level } : { ...e, video: level });
 
-/** Spec §7.2: a tasks.manage holder creates a task on the phone. Creating needs a connection (spec §1). */
-export function CreateTaskScreen() {
+/**
+ * Spec §7.2: a tasks.manage holder creates a task on the phone. Creating needs a connection (spec §1).
+ * With `problemReportId` (2026-11-06 design §7.5) the task fixes that report: its text pre-fills the task, its site is locked.
+ */
+export function CreateTaskScreen({ problemReportId = null }: { problemReportId?: string | null } = {}) {
   const { t } = useTranslation();
   const services = useOffline();
   const { online } = useSyncStatus();
@@ -62,11 +66,41 @@ export function CreateTaskScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  // The source report: the phone's own copy when it holds it, else the server's (a manager's "Hamısı" report).
+  const localReport = useLiveQuery(async (s) => (problemReportId ? ((await s.reports.report(problemReportId))?.server ?? null) : null), [problemReportId]);
+  const [remoteReport, setRemoteReport] = useState<ProblemReportDto | null>(null);
+  const report: ProblemReportDto | null = localReport ?? remoteReport;
+  const prefilled = useRef(false);
   // Closes the same-tick double press and the window between a successful create and the screen closing.
   const inFlight = useRef(false);
   const created = useRef(false);
   const photosRef = useRef(photos);
   photosRef.current = photos;
+
+  useEffect(() => {
+    if (!problemReportId || !online || !canManage || localReport === undefined || localReport !== null) return;
+    let alive = true;
+    api.problemReports.get(problemReportId).then(
+      (r) => {
+        if (alive) setRemoteReport(r);
+      },
+      (e: unknown) => {
+        if (alive) setError(mobileErrorText(t, e));
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [problemReportId, online, canManage, localReport, t]);
+  // Pre-fill once from the report (design §7.5): the manager may still edit everything but the site.
+  useEffect(() => {
+    if (!report || prefilled.current) return;
+    prefilled.current = true;
+    setTitle(report.text.slice(0, TASK_LIMITS.titleMax));
+    setInstructions(report.text);
+    if (report.severity === 'critical') setPriority('high');
+    setRequiresReview(true);
+  }, [report]);
 
   useEffect(() => {
     if (!online || !canManage) return;
@@ -153,7 +187,10 @@ export function CreateTaskScreen() {
     inFlight.current = true;
     setBusy(true);
     try {
-      await api.tasks.create({ id, title: title.trim(), instructions: instructions.trim(), priority, siteId, dueAt, evidence, requiresReview, assignee: assignee.value });
+      await api.tasks.create({
+        id, title: title.trim(), instructions: instructions.trim(), priority, siteId: problemReportId ? null : siteId, dueAt, evidence, requiresReview, assignee: assignee.value,
+        ...(problemReportId ? { problemReportId } : {}),
+      });
       created.current = true;
       if (photos.length > 0) await services.tasks.queueInstructionMedia(id, photos);
       Alert.alert(t('mobile.tasks.create.created'));
@@ -220,8 +257,21 @@ export function CreateTaskScreen() {
         ))}
       </View>
 
-      {/* Active sites writable in the caller's scope, unaffected by the search (decision 17). */}
-      {options && options.sites.length > 0 ? (
+      {problemReportId ? (
+        <View testID="task-report" style={styles.card}>
+          <Text style={styles.label}>{t('tasks.drawer.report')}</Text>
+          {report ? (
+            <>
+              <Text style={styles.text}>{report.text}</Text>
+              <Text style={styles.muted}>{`${report.siteName} · ${report.reporter.fullName}`}</Text>
+            </>
+          ) : (
+            <Text style={styles.muted}>{t('mobile.problems.title')}</Text>
+          )}
+        </View>
+      ) : null}
+      {/* Active sites writable in the caller's scope, unaffected by the search (decision 17). A report's task takes the report's site. */}
+      {!problemReportId && options && options.sites.length > 0 ? (
         <>
           <Text style={styles.label}>{t('mobile.tasks.create.site')}</Text>
           <View style={styles.row}>
@@ -295,6 +345,8 @@ export function CreateTaskScreen() {
 const styles = StyleSheet.create({
   label: { fontWeight: '600', color: colors.text, marginTop: spacing.sm },
   muted: { color: colors.muted },
+  text: { color: colors.text },
+  card: { backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   evidence: { gap: spacing.xs },
   input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
