@@ -16,7 +16,7 @@ test('owner signs up, creates a site and a worker, and finds the worker after lo
   await expect(page.getByRole('heading', { name: 'Göstəricilər' })).toBeVisible();
 
   await page.getByRole('link', { name: 'Obyektlər' }).click();
-  await page.getByRole('button', { name: 'Əlavə et' }).click();
+  await page.getByRole('button', { name: 'Əlavə et', exact: true }).click();
   await page.getByLabel('Ad', { exact: true }).fill('Anbar №1');
   await page.getByRole('button', { name: 'Yadda saxla' }).click();
   await expect(page.getByRole('treeitem').getByText('Anbar №1')).toBeVisible();
