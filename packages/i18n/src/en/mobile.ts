@@ -17,10 +17,17 @@ export default {
   },
   home: {
     greeting: 'Hello, {{name}}!',
-    myTasks: 'My tasks',
+    myTasks: 'Tasks',
     overdue: 'Late',
-    completed: 'Completed (today)',
-    issues: 'Problems (today)',
+    completed: 'Completed',
+    upcoming: 'Upcoming',
+    archive: {
+      more: 'Show older',
+      none: 'No older checks.',
+      offline: 'Older checks need an internet connection.',
+      title: 'Archive',
+      subtitle: 'Archive · {{date}}',
+    },
     offline: 'Offline mode — data will refresh when the connection is back.',
   },
   profile: {
@@ -122,7 +129,7 @@ export default {
       notFound: 'Location not found',
       retry: 'Try again',
       denied: 'Location permission not granted.',
-      openSettings: 'Open settings',
+      openSettings: 'Open phone settings',
       unknown: 'Location unknown',
       sendWithout: 'Send without a location?',
       sendAnyway: 'Send',
@@ -163,6 +170,7 @@ export default {
     start: 'Start',
     continue: 'Continue',
     view: 'View',
+    preview: 'View questions',
     emptySection: 'Nothing here.',
     startBlocked: {
       notYetOpen: 'The run window has not opened yet.',
@@ -196,6 +204,9 @@ export default {
     notFound: 'Run not found.',
     flagProblem: 'Flag a problem',
     problemFlagged: 'Problem flagged',
+    previewBanner: 'This check opens at {{time}}. For now you can only look at the questions.',
+    previewOpen: 'The check is open — you can start.',
+    back: 'Back',
   },
   evidence: {
     camera: 'Camera',
@@ -233,7 +244,7 @@ export default {
     noScore: 'Not scored',
     problems: 'Problems: {{count}}',
     complete: 'Complete',
-    completed: 'Checklist completed.',
+    completed: 'Check finished.',
     missingKinds: {
       answer: 'Not answered',
       photo: 'Photo required',
@@ -308,7 +319,7 @@ export default {
       push: 'Push notifications',
       pushStates: { granted: 'On', denied: 'Off', undetermined: 'Not asked yet', unavailable: 'Not supported on this device' },
       deniedHint: 'Turn on push notifications in the phone settings.',
-      openSettings: 'Open settings',
+      openSettings: 'Open phone settings',
     },
   },
   team: {

@@ -1,14 +1,14 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@/lib/theme';
 
 /** A scrolling screen on plain white with a 20 px gutter; sections are spaced 20 px apart. */
-export function Screen({ children }: { children: ReactNode }) {
+export function Screen({ children, scrollRef }: { children: ReactNode; scrollRef?: RefObject<ScrollView | null> }) {
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {children}
         </ScrollView>
       </KeyboardAvoidingView>

@@ -10,7 +10,7 @@ import { createTestServices, type TestServices } from '@/offline/testing/test-se
 import { ExecutionScreen } from './execution-screen';
 import { readOnlyReason } from './use-execution';
 
-jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn() } }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn(), back: jest.fn(), canGoBack: () => true, navigate: jest.fn(), replace: jest.fn() } }));
 jest.mock('./capture', () => ({ CaptureModal: () => null, VideoPreview: () => null, pickFromGallery: jest.fn() }));
 
 type Opened = TestServices & { id: string };
@@ -25,6 +25,51 @@ async function opened(focusItemId?: (t: TestServices) => string): Promise<Opened
   return { ...t, id };
 }
 const answers = async (t: Opened, id = t.id) => (await t.services.store.execution(id))!.answers;
+
+describe('ExecutionScreen archive and preview (Nov 2026 feedback)', () => {
+  const router = () => (jest.requireMock('expo-router') as { router: { push: jest.Mock; back: jest.Mock } }).router;
+  beforeEach(() => {
+    router().push.mockClear();
+    router().back.mockClear();
+  });
+
+  it('shows a finished run as an archive page: a large back arrow, and "Geri" instead of "Bitir" on the last section', async () => {
+    const t = await opened();
+    await act(async () => {
+      await t.db.run(`UPDATE executions SET state = 'completed', completed_at = ? WHERE id = ?`, [T.open, t.id]);
+      t.services.feed.emit();
+    });
+    expect(await screen.findByTestId('archive-header')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Növbəti bölmə' }));
+    await screen.findByText('Vitrin');
+    expect(screen.queryByRole('button', { name: 'Bitir' })).toBeNull();
+    // The header arrow and the pager's last button both lead back.
+    const backs = screen.getAllByRole('button', { name: 'Geri' });
+    expect(backs).toHaveLength(2);
+    await fireEvent.press(backs[1]!);
+    expect(router().back).toHaveBeenCalledTimes(1);
+    expect(router().push).not.toHaveBeenCalled();
+  });
+
+  it('leaves the run with its back arrow, never by pushing the finish screen', async () => {
+    await opened();
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Geri' })[0]!);
+    expect(router().back).toHaveBeenCalledTimes(1);
+    expect(router().push).not.toHaveBeenCalled();
+  });
+
+  it('opens a run that is not open yet read-only, with when it opens', async () => {
+    const t = await createTestServices();
+    await t.seed(syncResponse({ occurrences: [occurrence({ startsAt: '2026-11-02T14:00:00.000Z', dueAt: '2026-11-02T16:00:00.000Z', closesAt: '2026-11-02T17:00:00.000Z' })], checklistVersions: [versionOf(t.c.content)] }));
+    await renderWithServices(t.services, <ExecutionScreen occurrenceId={OCC} />);
+    expect(await screen.findByText('Bu yoxlama 18:00-da açılacaq. İndi yalnız suallara baxa bilərsiniz.')).toBeTruthy();
+    // Every section at once, nothing to finish or start yet.
+    expect(screen.getByText('Zal')).toBeTruthy();
+    expect(screen.getByText('Vitrin')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Bitir' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Başla' })).toBeNull();
+  });
+});
 
 describe('ExecutionScreen', () => {
   it('shows why the server did not accept the execution, and why it refused a file on its item', async () => {

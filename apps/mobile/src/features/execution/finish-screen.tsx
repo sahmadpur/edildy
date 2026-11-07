@@ -10,6 +10,8 @@ import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { ExecutionLockedError } from '@/offline/execution-store';
 import { useNow } from '@/offline/hooks';
+import { dismissPresentedFor } from '@/notifications/native';
+import { backToRun } from './run-nav';
 import { readOnlyReason, useExecution } from './use-execution';
 
 let jumps = 0;
@@ -48,6 +50,7 @@ export function FinishScreen({ occurrenceId }: { occurrenceId: string }) {
       // Always the execution's current id: it changes when the sync engine adopts my other install's claim.
       const result = await store.complete(data.execution.id);
       if (result.ok) {
+        void dismissPresentedFor(occurrenceId);
         Alert.alert(t('mobile.finish.completed'));
         router.replace('/');
       } else setRefused(result.missing);
@@ -65,7 +68,7 @@ export function FinishScreen({ occurrenceId }: { occurrenceId: string }) {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
-          onPress={() => router.push({ pathname: '/execution/[id]', params: { id: occurrenceId } })}
+          onPress={() => backToRun(occurrenceId)}
           style={styles.back}
         >
           <Ionicons name="chevron-back" size={28} color={colors.primary} />
@@ -88,7 +91,7 @@ export function FinishScreen({ occurrenceId }: { occurrenceId: string }) {
                 key={`${m.itemId}-${m.kind}`}
                 accessibilityRole="button"
                 accessibilityLabel={`${label}: ${kind}`}
-                onPress={() => router.push({ pathname: '/execution/[id]', params: { id: occurrenceId, itemId: m.itemId, focus: nextJump() } })}
+                onPress={() => backToRun(occurrenceId, { itemId: m.itemId, focus: nextJump() })}
                 style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}
               >
                 <View style={styles.dot} />

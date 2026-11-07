@@ -12,7 +12,7 @@ const TASK = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e02';
 // 08:00–10:00 in Baku (UTC+4).
 const occurrence: OccurrenceTarget = {
   kind: 'occurrence', occurrenceId: OCC, assignmentId: OCC, localDate: '2026-11-02', startsAt: new Date('2026-11-02T04:00:00Z'),
-  dueAt: new Date('2026-11-02T06:00:00Z'), checklistName: 'Açılış yoxlaması', siteName: 'Filial 1', timezone: 'Asia/Baku',
+  dueAt: new Date('2026-11-02T06:00:00Z'), status: 'pending', checklistName: 'Açılış yoxlaması', siteName: 'Filial 1', timezone: 'Asia/Baku',
 };
 const problem: ProblemTarget = { kind: 'problem', problemId: OCC, severity: 'critical', note: 'Kondisioner xarabdır', occurrence };
 const assignment: AssignmentTarget = { kind: 'assignment', assignmentId: OCC, addedUserIds: [], checklistName: 'Açılış yoxlaması', siteName: 'Filial 1' };
@@ -85,6 +85,13 @@ describe('SP8 texts', () => {
     expect(() => renderNotification('task.assigned', run)).toThrow(/cannot be rendered/);
   });
 
+  it('renders checklist.completed on the run with the executor, opening the occurrence, in every language', () => {
+    expect(renderNotification('checklist.completed', run)).toEqual({ title: 'Yoxlama bitdi', body: 'Açılış yoxlaması — Filial 1: Aysel', ...onOccurrence });
+    expect(render('checklist.completed', run, 'en')).toMatchObject({ title: 'Check finished', body: 'Açılış yoxlaması — Filial 1: Aysel' });
+    expect(render('checklist.completed', run, 'ru')).toMatchObject({ title: 'Проверка завершена', body: 'Açılış yoxlaması — Filial 1: Aysel' });
+    expect(() => renderNotification('checklist.completed', occurrence)).toThrow('checklist.completed cannot be rendered for a occurrence target');
+  });
+
   it('adds the due date to a send-back that has one, in the tenant timezone', () => {
     // 2026-11-03T06:00Z is 10:00 in Baku.
     expect(renderNotification('run.correction_required', { ...run, dueAt: new Date('2026-11-03T06:00:00Z') }).body).toBe(
@@ -101,7 +108,7 @@ describe('SP8 texts', () => {
 describe('every notification type', () => {
   const targetFor = (type: NotificationType) => {
     if (type === 'manual') return manual;
-    if (isAuditType(type)) return run;
+    if (isAuditType(type) || type === 'checklist.completed') return run;
     if (type === 'checklist.assigned') return assignment;
     if (type.startsWith('checklist.')) return occurrence;
     if (type.startsWith('problem.')) return problem;

@@ -20,7 +20,7 @@ export const INBOX: NotificationRoute = { pathname: '/notifications' };
 export const HOME: NotificationRoute = { pathname: '/' };
 
 /** SP8: run notifications that open the run on the Team tab when the phone does not hold it (Spec decision 15). */
-export const TEAM_RUN_TYPES: ReadonlySet<string> = new Set(['run.correction_required', 'run.resubmitted', 'audit.finished']);
+export const TEAM_RUN_TYPES: ReadonlySet<string> = new Set(['run.correction_required', 'run.resubmitted', 'audit.finished', 'checklist.completed']);
 
 export interface NotificationTarget {
   targetKind: NotificationTargetKind;
@@ -43,14 +43,18 @@ export interface RouteContext {
   reportOnPhone(id: string): Promise<boolean>;
   /** A fresh nonce for /review/[id] (SP5: every visit is a new screen). */
   nonce(): string;
+  /** Marks the tapped notification read in the inbox (Nov 2026 feedback point 15); absent in tests that do not care. */
+  markRead?(notificationId: string): Promise<void>;
 }
 
 export function createRouteContext(
   services: Pick<OfflineServices, 'userId' | 'syncNow' | 'store' | 'tasks' | 'reports' | 'newId'>,
   canManageTasks: () => boolean,
   canSeeTeam: () => boolean = () => false,
+  markRead?: (notificationId: string) => Promise<void>,
 ): RouteContext {
   return {
+    ...(markRead ? { markRead } : {}),
     userId: services.userId,
     canManageTasks,
     canSeeTeam,
@@ -109,6 +113,14 @@ export function startTapRouting(o: { events: NotificationEvents; ctx: RouteConte
       o.events.clearLastResponse();
     } catch (e) {
       console.warn('[push] Could not clear the last notification response', message(e));
+    }
+    // A tapped push has been seen: it must not wait in the inbox as unread (point 15). Best effort; offline it stays.
+    const data = readPushData(r.data);
+    if (data !== null && data.userId === o.ctx.userId && o.ctx.markRead) {
+      const markRead = o.ctx.markRead.bind(o.ctx);
+      Promise.resolve()
+        .then(() => markRead(data.notificationId))
+        .catch((e: unknown) => console.warn('[push] Could not mark the notification read', message(e)));
     }
     routeForPush(r.data, o.ctx).then(
       (route) => {

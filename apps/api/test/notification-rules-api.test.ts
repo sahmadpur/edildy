@@ -22,8 +22,13 @@ describe('notification rules API', () => {
     expect(res.body.map((r: { type: string }) => r.type)).toEqual([...RULE_TYPES]);
     const manager = await roleIdOf(s.tenantId, 'manager');
     const admin = await roleIdOf(s.tenantId, 'admin');
+    const owner = await roleIdOf(s.tenantId, 'owner');
     expect(res.body.find((r: { type: string }) => r.type === 'problem.critical')).toEqual({
-      type: 'problem.critical', enabled: true, push: true, email: true, notifyAssignees: false, notifyCreator: false, roleIds: [manager, admin], leadMinutes: null, resultFilter: null, isDefault: true,
+      type: 'problem.critical', enabled: true, push: true, email: true, notifyAssignees: false, notifyCreator: false, roleIds: [manager, admin, owner], leadMinutes: null, resultFilter: null, isDefault: true,
+    });
+    // 2026-11-07: a finished run reaches the managers, admins and owner in the app only.
+    expect(res.body.find((r: { type: string }) => r.type === 'checklist.completed')).toEqual({
+      type: 'checklist.completed', enabled: true, push: false, email: false, notifyAssignees: false, notifyCreator: false, roleIds: [manager, admin, owner], leadMinutes: null, resultFilter: null, isDefault: true,
     });
   });
 

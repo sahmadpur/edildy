@@ -19,7 +19,7 @@ export function NotificationBell({ tone = 'dark' }: { tone?: 'dark' | 'light' } 
     >
       <Ionicons name="notifications-outline" size={24} color={tone === 'light' ? colors.onDeep : colors.text} />
       {count > 0 ? (
-        <View testID="notification-bell-count" style={styles.badge}>
+        <View testID="notification-bell-count" style={[styles.badge, tone === 'light' && styles.badgeOnDeep]}>
           <Text style={styles.badgeText}>{count > 99 ? '99+' : String(count)}</Text>
         </View>
       ) : null}
@@ -30,5 +30,6 @@ export function NotificationBell({ tone = 'dark' }: { tone?: 'dark' | 'light' } 
 const styles = StyleSheet.create({
   bell: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginRight: -spacing.sm },
   badge: { position: 'absolute', top: 4, left: 24, minWidth: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: colors.surface, paddingHorizontal: 4, backgroundColor: colors.danger, alignItems: 'center', justifyContent: 'center' },
+  badgeOnDeep: { borderColor: colors.deep },
   badgeText: { color: colors.primaryText, fontSize: 9, lineHeight: 11, fontWeight: '700' },
 });

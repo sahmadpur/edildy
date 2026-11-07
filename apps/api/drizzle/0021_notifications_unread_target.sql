@@ -1,0 +1,1 @@
+CREATE INDEX "notifications_unread_target_idx" ON "notifications" USING btree ("tenant_id","target_kind","target_id") WHERE read_at is null;

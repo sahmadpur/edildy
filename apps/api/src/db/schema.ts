@@ -1040,7 +1040,7 @@ export const notificationEvents = pgTable(
     createdAt: createdAt(),
     // Null until fan-out finishes.
     processedAt: ts('processed_at'),
-    // fanned_out | disabled | no_recipients | target_gone
+    // fanned_out | disabled | no_recipients | target_gone | target_closed
     outcome: text('outcome'),
     attempts: integer('attempts').notNull().default(0),
     lastError: text('last_error'),
@@ -1081,6 +1081,8 @@ export const notifications = pgTable(
     foreignKey({ columns: [t.tenantId, t.userId], foreignColumns: [users.tenantId, users.id], name: 'notifications_user_fk' }),
     index('notifications_user_created_idx').on(t.tenantId, t.userId, t.createdAt.desc(), t.id.desc()),
     index('notifications_unread_idx').on(t.tenantId, t.userId).where(sql`read_at is null`),
+    // InboxService.markReadForTarget: a finished run or task clears its reminders.
+    index('notifications_unread_target_idx').on(t.tenantId, t.targetKind, t.targetId).where(sql`read_at is null`),
     // notifications.cleanup.
     index('notifications_created_idx').on(t.tenantId, t.createdAt),
   ],

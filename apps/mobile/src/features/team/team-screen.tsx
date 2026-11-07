@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { headerBlock } from '@/components/chip';
+import { TabHeader } from '@/components/tab-header';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { useSession } from '@/lib/session';
@@ -71,11 +71,7 @@ export function TeamScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.pad}>
-          <View style={headerBlock.block}>
-            <Text accessibilityRole="header" style={headerBlock.title}>
-              {t('mobile.team.title')}
-            </Text>
-          </View>
+          <TabHeader title={t('mobile.team.title')} />
           <TeamOffline />
         </View>
       </SafeAreaView>
@@ -105,11 +101,7 @@ export function TeamScreen() {
   const rows = runs.data ? uniqueRuns(runs.data.pages) : [];
   const header = (
     <View style={styles.header}>
-      <View style={headerBlock.block}>
-        <Text accessibilityRole="header" style={headerBlock.title}>
-          {t('mobile.team.title')}
-        </Text>
-      </View>
+      <TabHeader title={t('mobile.team.title')} />
       <Segmented options={TEAM_PERIODS.map((p) => ({ key: p, label: t(`mobile.team.periods.${p}`) }))} value={preset} onChange={setPreset} />
       {summary.data ? <CountTiles summary={summary.data} /> : summary.isPending ? <ActivityIndicator color={colors.primary} /> : null}
       <Segmented scroll options={TEAM_CHIPS.map((c) => ({ key: c, label: t(`reports.buckets.${c}`) }))} value={chip} onChange={setChip} />
@@ -147,7 +139,7 @@ export function TeamScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   pad: { paddingHorizontal: 20, paddingTop: spacing.sm, gap: 20 },
-  header: { gap: spacing.md, marginBottom: spacing.xs },
+  header: { gap: 20, marginBottom: spacing.xs },
   error: { gap: spacing.sm },
   list: { paddingHorizontal: 20, paddingTop: spacing.sm, paddingBottom: spacing.xl, gap: spacing.sm },
   muted: { fontFamily: font, fontSize: type.base, color: colors.muted },

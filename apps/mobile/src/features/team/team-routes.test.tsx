@@ -42,9 +42,9 @@ beforeEach(() => {
 });
 
 describe('Team tab (spec §7.1)', () => {
-  it('is a tab for a manager with reports.view and a wider scope, between Tapşırıqlar and Profil', async () => {
+  it('is a tab for a manager with reports.view and a wider scope, between Home (the centre) and Profil', async () => {
     await render(<AppLayout />);
-    expect(mockScreens.slice(0, 5).map((s) => s.name)).toEqual(['index', 'tasks', 'problems/index', 'team/index', 'profile']);
+    expect(mockScreens.slice(0, 5).map((s) => s.name)).toEqual(['tasks', 'problems/index', 'index', 'team/index', 'profile']);
     expect(teamTab()?.options).toMatchObject({ title: 'Komanda' });
     expect(teamTab()?.options).not.toHaveProperty('href');
     expect(mockScreens.find((s) => s.name === 'team/run/[id]')?.options).toMatchObject({ href: null });

@@ -14,11 +14,14 @@ import { FinishOrResubmit } from './resubmit-screen';
 
 const mockPush = jest.fn();
 const mockReplace = jest.fn();
+const mockNavigate = jest.fn();
 jest.mock('expo-router', () => ({
   router: {
     push: (...a: unknown[]) => mockPush(...a),
     replace: (...a: unknown[]) => mockReplace(...a),
+    navigate: (...a: unknown[]) => mockNavigate(...a),
     back: jest.fn(),
+    canGoBack: () => true,
   },
 }));
 jest.mock('./capture', () => ({
@@ -34,6 +37,7 @@ const opacity = (testID: string) => StyleSheet.flatten(screen.getByTestId(testID
 beforeEach(() => {
   mockPush.mockClear();
   mockReplace.mockClear();
+  mockNavigate.mockClear();
 });
 
 /** OCC sent back (offline, so nothing syncs behind the test's back); Temperatur and the shelf photo flagged unless `items` says otherwise. */
@@ -152,7 +156,7 @@ describe('the Resubmit screen (spec §8.1)', () => {
       disabled: true,
     });
     await fireEvent.press(screen.getByTestId(`rework-item-${t.c.temp.id}`));
-    expect(mockPush).toHaveBeenCalledWith({
+    expect(mockNavigate).toHaveBeenCalledWith({
       pathname: '/execution/[id]',
       params: expect.objectContaining({ id: OCC, itemId: t.c.temp.id }),
     });

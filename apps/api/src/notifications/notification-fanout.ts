@@ -1,5 +1,5 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { NotificationRuleDto, NotificationType } from '@taskop/contracts';
+import { CHECKLIST_REMINDER_TYPES, type NotificationRuleDto, type NotificationType, type OccurrenceStatus } from '@taskop/contracts';
 import type { Language } from '@taskop/i18n';
 import { and, asc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
@@ -14,11 +14,15 @@ import { type RenderedNotification, renderNotification } from './notification-te
 import { type DeliverJob, deliveryJobs, type FanoutJob, failureText, NOTIFICATION_LIMITS, NOTIFICATION_QUEUES, NOTIFICATION_WORKER } from './queues';
 import { NotificationRules } from './rules.service';
 
-export const NOTIFICATION_OUTCOMES = ['fanned_out', 'disabled', 'no_recipients', 'target_gone'] as const;
+export const NOTIFICATION_OUTCOMES = ['fanned_out', 'disabled', 'no_recipients', 'target_gone', 'target_closed'] as const;
 export type NotificationOutcome = (typeof NOTIFICATION_OUTCOMES)[number];
 export type FanoutResult = NotificationOutcome | 'already_processed' | 'missing' | 'failed';
 
 type DeliveryInsert = typeof notificationDeliveries.$inferInsert;
+
+/** A run that can still be done: a reminder about it is worth sending. */
+const OPEN_STATUSES: ReadonlySet<OccurrenceStatus> = new Set(['pending', 'started', 'in_progress', 'overdue']);
+const REMINDER_TYPES: ReadonlySet<NotificationType> = new Set(CHECKLIST_REMINDER_TYPES);
 
 /** Spec §6.1 step 4: one event → inbox rows and delivery rows, in one tenant transaction. */
 @Injectable()
@@ -107,6 +111,9 @@ export class NotificationFanout implements OnModuleInit {
     }
     const target = await this.targets.load(type, ev.payload, ev.actorUserId);
     if (!target) return finish('target_gone');
+    // Fan-out runs after the event's commit: a reminder recorded just before the run was finished must not land unread
+    // after the listener cleared the others (2026-11-07 feedback).
+    if (target.kind === 'occurrence' && REMINDER_TYPES.has(type) && !OPEN_STATUSES.has(target.status)) return finish('target_closed');
     // Spec §7.1 / R11: audit.finished's failed-only filter drops the role recipients of a passed audit; the executor is always told.
     const filtered = rule?.resultFilter === 'failed' && target.kind === 'run' && target.auditResult !== 'failed';
     const userIds =

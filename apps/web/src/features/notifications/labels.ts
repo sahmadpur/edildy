@@ -7,8 +7,9 @@ import type { TasksSearch } from '@/features/tasks/routes';
 
 export type NotificationLink = { to: '/schedule'; search: ScheduleSearch } | { to: '/tasks'; search: TasksSearch } | { to: '/problems'; search: ProblemsSearch };
 
-/** SP8: the run dialog tab an audit notification is about (decision 18). Problems open the execution tab. */
+/** SP8: the run dialog tab an audit notification is about (decision 18). Problems and a finished run open the execution tab. */
 const RUN_TABS: Partial<Record<NotificationType, OccurrenceTab>> = {
+  'checklist.completed': 'execution',
   'run.correction_required': 'execution',
   'run.resubmitted': 'corrections',
   'audit.finished': 'audit',

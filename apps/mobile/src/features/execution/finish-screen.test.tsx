@@ -8,13 +8,17 @@ import { ExecutionLockedError } from '@/offline/execution-store';
 import { createTestServices } from '@/offline/testing/test-services';
 import { FinishScreen } from './finish-screen';
 
-const mockPush = jest.fn();
+const mockNavigate = jest.fn();
 const mockReplace = jest.fn();
-jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a), replace: (...a: unknown[]) => mockReplace(...a), back: jest.fn() } }));
+const mockBack = jest.fn();
+jest.mock('expo-router', () => ({
+  router: { navigate: (...a: unknown[]) => mockNavigate(...a), replace: (...a: unknown[]) => mockReplace(...a), back: () => mockBack(), canGoBack: () => true },
+}));
 
 beforeEach(() => {
-  mockPush.mockClear();
+  mockNavigate.mockClear();
   mockReplace.mockClear();
+  mockBack.mockClear();
 });
 
 async function started() {
@@ -40,10 +44,12 @@ describe('FinishScreen', () => {
     expect(screen.getByRole('button', { name: 'Tamamla' }).props.accessibilityState).toMatchObject({ disabled: true });
     await fireEvent.press(row);
     await fireEvent.press(row);
-    expect(mockPush).toHaveBeenCalledTimes(2);
+    // Back to the run first (never a push, which would leave this screen behind the run; point 20), then the jump.
+    expect(mockBack).toHaveBeenCalledTimes(2);
+    expect(mockNavigate).toHaveBeenCalledTimes(2);
     type Jump = { pathname: string; params: { id: string; itemId: string; focus: string } };
-    const first = mockPush.mock.calls[0]![0] as Jump;
-    const second = mockPush.mock.calls[1]![0] as Jump;
+    const first = mockNavigate.mock.calls[0]![0] as Jump;
+    const second = mockNavigate.mock.calls[1]![0] as Jump;
     expect(first).toMatchObject({ pathname: '/execution/[id]', params: { id: OCC, itemId: t.c.problem.id } });
     expect(first.params.focus).toBeTruthy();
     expect(second.params.focus).not.toBe(first.params.focus);
@@ -59,9 +65,17 @@ describe('FinishScreen', () => {
     expect(screen.getByText('Problemlər: 1')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Tamamla' }));
     await eventually(async () => expect(await t.services.store.execution(id)).toMatchObject({ state: 'completed' }));
-    expect(alert).toHaveBeenCalledWith('Checklist tamamlandı.');
+    expect(alert).toHaveBeenCalledWith('Yoxlama bitdi.');
     expect(mockReplace).toHaveBeenCalledWith('/');
     alert.mockRestore();
+  });
+
+  it('goes back to the run with its back arrow, without pushing it again', async () => {
+    const { t } = await started();
+    await renderWithServices(t.services, <FinishScreen occurrenceId={OCC} />);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Geri' }));
+    expect(mockBack).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it('keeps "Tamamla" disabled once the execution is read-only', async () => {

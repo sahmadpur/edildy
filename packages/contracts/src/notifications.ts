@@ -12,6 +12,7 @@ export const NOTIFICATION_TYPES = [
   'checklist.due_soon',
   'checklist.overdue',
   'checklist.missed',
+  'checklist.completed',
   'problem.recorded',
   'problem.critical',
   'problem_report.created',
@@ -68,6 +69,7 @@ export const NOTIFICATION_TYPE_META: Record<RuleType, NotificationTypeMeta> = {
   'checklist.due_soon': checklistMeta(true),
   'checklist.overdue': checklistMeta(),
   'checklist.missed': checklistMeta(),
+  'checklist.completed': checklistMeta(),
   'problem.recorded': problemMeta,
   'problem.critical': problemMeta,
   'problem_report.created': reportMeta([]),
@@ -123,12 +125,14 @@ export const DEFAULT_RULES: Record<RuleType, DefaultRule> = {
   'checklist.assigned': rule(true, false, true, false),
   'checklist.available': rule(true, false, true, false),
   'checklist.due_soon': rule(true, false, true, false, [], 30),
-  'checklist.overdue': rule(true, false, true, false, ['manager']),
-  'checklist.missed': rule(false, false, false, false, ['manager', 'admin']),
-  'problem.recorded': rule(true, false, false, false, ['manager']),
-  'problem.critical': rule(true, true, false, false, ['manager', 'admin']),
-  'problem_report.created': rule(true, false, false, false, ['manager']),
-  'problem_report.critical': rule(true, true, false, false, ['manager', 'admin']),
+  'checklist.overdue': rule(true, false, true, false, ['manager', 'admin', 'owner']),
+  'checklist.missed': rule(false, false, false, false, ['manager', 'admin', 'owner']),
+  // A finished run: in the inbox of the managers, admins and the owner only (2026-11-07 feedback).
+  'checklist.completed': rule(false, false, false, false, ['manager', 'admin', 'owner']),
+  'problem.recorded': rule(true, false, false, false, ['manager', 'admin', 'owner']),
+  'problem.critical': rule(true, true, false, false, ['manager', 'admin', 'owner']),
+  'problem_report.created': rule(true, false, false, false, ['manager', 'admin', 'owner']),
+  'problem_report.critical': rule(true, true, false, false, ['manager', 'admin', 'owner']),
   'problem_report.closed': rule(true, false, false, true),
   'problem_report.resolved': rule(true, false, false, true),
   'task.assigned': rule(true, false, true, false),
@@ -141,6 +145,9 @@ export const DEFAULT_RULES: Record<RuleType, DefaultRule> = {
   'run.resubmitted': rule(false, false, false, true),
   'audit.finished': rule(false, false, true, false, ['manager'], null, 'failed'),
 };
+
+/** checklist.* reminders: pointless once the run is finished, so they are marked read then and not fanned out after. */
+export const CHECKLIST_REMINDER_TYPES = ['checklist.available', 'checklist.due_soon', 'checklist.overdue'] as const satisfies readonly NotificationType[];
 
 /** The web opens a problem notification on the execution tab. */
 export const isProblemType = (t: NotificationType): boolean => t.startsWith('problem.');

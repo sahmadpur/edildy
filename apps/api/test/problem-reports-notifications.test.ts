@@ -17,7 +17,7 @@ describe('problem report notifications', () => {
   beforeEach(() => clock.set(MONDAY_0800));
   afterAll(() => t.close());
 
-  it('a report reaches the managers whose sites cover it; a critical one also the admins, by email too', async () => {
+  it('a report reaches the managers whose sites cover it, the admins and the owner; a critical one by email too', async () => {
     const w = await reportWorld(t);
     const r = await createReport(w.workers[0].api, newReportBody(w.siteId));
     expect(await fanOutAll(t, w.s.tenantId)).toEqual(['fanned_out']);
@@ -25,12 +25,14 @@ describe('problem report notifications', () => {
       expect.objectContaining({ type: 'problem_report.created', title: 'Yeni problem bildirildi', body: 'Filial 1 — İşçi 1', target_kind: 'problem_report', target_id: r.id, target_date: null }),
     ]);
     expect(await inboxOf(w.managerThere.id)).toEqual([]);
-    expect(await inboxOf(w.admin.id)).toEqual([]);
+    expect((await inboxOf(w.admin.id)).map((n) => n.type)).toEqual(['problem_report.created']);
+    expect((await inboxOf(w.s.ownerId)).map((n) => n.type)).toEqual(['problem_report.created']);
     expect(await inboxOf(w.workers[0].id)).toEqual([]);
     const critical = await createReport(w.workers[1].api, newReportBody(w.otherSiteId, { severity: 'critical', text: 'Yanğın!' }));
     expect(await fanOutAll(t, w.s.tenantId)).toEqual(['fanned_out']);
     expect(await inboxOf(w.managerThere.id)).toEqual([expect.objectContaining({ type: 'problem_report.critical', title: 'Kritik problem bildirildi!', target_id: critical.id })]);
-    expect(await inboxOf(w.admin.id)).toEqual([expect.objectContaining({ type: 'problem_report.critical' })]);
+    expect((await inboxOf(w.admin.id)).map((n) => n.type)).toEqual(['problem_report.created', 'problem_report.critical']);
+    expect((await inboxOf(w.s.ownerId)).map((n) => n.type)).toEqual(['problem_report.created', 'problem_report.critical']);
     expect((await eventRows(w.s.tenantId)).map((e) => e.type)).toEqual(['problem_report.created', 'problem_report.critical']);
   });
 

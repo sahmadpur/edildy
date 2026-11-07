@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet } from 'react-native';
+import { TabBar } from '@/components/tab-bar';
 import { canSeeTeam } from '@/features/team/team-rules';
 import { useSession } from '@/lib/session';
-import { colors, font } from '@/lib/theme';
 import { NotificationsBridge } from '@/notifications/notifications-bridge';
 import { OfflineProvider } from '@/offline/offline-provider';
 
@@ -20,19 +19,11 @@ export default function AppLayout() {
   return (
     <OfflineProvider userId={s.me.user.id} timeZone={s.me.tenant.timezone}>
       <NotificationsBridge />
-      <Tabs
-        backBehavior="history"
-        screenOptions={{
-          headerShown: false,
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.muted,
-          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: StyleSheet.hairlineWidth, elevation: 0, shadowOpacity: 0 },
-          tabBarLabelStyle: { fontFamily: font, fontSize: 11, fontWeight: '500' },
-        }}
-      >
-        <Tabs.Screen name="index" options={{ title: t('mobile.tabs.home'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} /> }} />
+      {/* Home is the default and sits raised in the middle of the bar (TabBar). */}
+      <Tabs initialRouteName="index" backBehavior="history" tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false }}>
         <Tabs.Screen name="tasks" options={{ title: t('mobile.tabs.tasks'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'clipboard' : 'clipboard-outline'} color={color} size={size} /> }} />
         <Tabs.Screen name="problems/index" options={{ title: t('mobile.tabs.problems'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'warning' : 'warning-outline'} color={color} size={size} /> }} />
+        <Tabs.Screen name="index" options={{ title: t('mobile.tabs.home'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} /> }} />
         <Tabs.Screen
           name="team/index"
           options={{
@@ -53,6 +44,7 @@ export default function AppLayout() {
         <Tabs.Screen name="review/[id]" options={HIDDEN} />
         <Tabs.Screen name="notifications" options={HIDDEN} />
         <Tabs.Screen name="team/run/[id]" options={HIDDEN} />
+        <Tabs.Screen name="archive/[id]" options={HIDDEN} />
       </Tabs>
     </OfflineProvider>
   );

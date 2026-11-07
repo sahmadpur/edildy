@@ -45,25 +45,38 @@ describe('My checklists', () => {
     expect(mockPush).toHaveBeenCalledWith('/notifications');
   });
 
-  it('groups my checklists, marks overdue and claimed ones, and counts the tiles', async () => {
+  it('shows four equal boxes, opens Tapşırıqlar by default, and opens the list of any box tapped', async () => {
     const t = await world();
-    const id = await t.services.store.start(OCC, ME);
-    await t.services.store.patchAnswer(id, t.c.temp.id, { number: 10 }); // a rule problem
+    await t.services.store.start(OCC, ME);
     t.clock.set('2026-11-02T06:30:00.000Z'); // 10:30 in Baku: past due, before close
     await renderWithServices(t.services, <HomeScreen />);
-    for (const title of ['İndi', 'Davam edən', 'Gələcək', 'Bitmiş']) expect(await screen.findByText(title)).toBeTruthy();
-    expect(screen.getByText('Murad Həsənov icra edir')).toBeTruthy();
-    expect(within(screen.getByTestId(`occurrence-${OCC5}`)).getByText('Gecikir')).toBeTruthy();
-    expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByRole('button', { name: 'Davam et: Açılış yoxlaması' })).toBeTruthy();
-    const upcoming = within(screen.getByTestId(`occurrence-${OCC3}`));
-    expect(upcoming.getByText(formatDateTime('2026-11-02T14:00:00.000Z', { locale: 'az', timeZone: 'Asia/Baku' }))).toBeTruthy(); // "2 Noy 2026, 18:00"
-    expect(upcoming.queryByText(/açılır/)).toBeNull();
-    expect(within(screen.getByTestId(`occurrence-${OCC3}`)).queryByRole('button')).toBeNull();
-    expect(within(screen.getByTestId(`occurrence-${OCC2}`)).queryByRole('button')).toBeNull();
-    expect(within(await screen.findByTestId('stat-myTasks')).getByText('2')).toBeTruthy();
+    // The counts (point 4–9): no "Mənim", no "(bu gün)", Gələcək instead of Problemlər.
+    expect(within(await screen.findByTestId('stat-myTasks')).getByText('Tapşırıqlar')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-myTasks')).getByText('2')).toBeTruthy();
     expect(within(screen.getByTestId('stat-overdue')).getByText('2')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-completed')).getByText('Tamamlanan')).toBeTruthy();
     expect(within(screen.getByTestId('stat-completed')).getByText('1')).toBeTruthy();
-    expect(await within(screen.getByTestId('stat-issues')).findByText('1')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-upcoming')).getByText('Gələcək')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-upcoming')).getByText('1')).toBeTruthy();
+    expect(screen.queryByTestId('stat-issues')).toBeNull();
+    // Tapşırıqlar is open: my run in progress, the overdue open one, and the one Murad holds (listed, not counted).
+    expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByRole('button', { name: 'Davam et: Açılış yoxlaması' })).toBeTruthy();
+    expect(within(screen.getByTestId(`occurrence-${OCC5}`)).getByText('Gecikir')).toBeTruthy();
+    expect(screen.getByText('Murad Həsənov icra edir')).toBeTruthy();
+    expect(screen.queryByTestId(`occurrence-${OCC3}`)).toBeNull();
+    // A box opens its list and folds the others (point 10).
+    await fireEvent.press(screen.getByTestId('stat-upcoming'));
+    expect(screen.queryByTestId(`occurrence-${OCC}`)).toBeNull();
+    const upcoming = within(screen.getByTestId(`occurrence-${OCC3}`));
+    expect(upcoming.getByText(formatDateTime('2026-11-02T14:00:00.000Z', { locale: 'az', timeZone: 'Asia/Baku' }))).toBeTruthy();
+    // An upcoming run opens read-only (point 12).
+    await fireEvent.press(screen.getByTestId(`occurrence-${OCC3}`));
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/execution/[id]', params: { id: OCC3 } });
+    await fireEvent.press(screen.getByTestId('stat-completed'));
+    expect(screen.getByTestId(`occurrence-${OCC4}`)).toBeTruthy();
+    // A list's own heading folds it.
+    await fireEvent.press(screen.getByTestId('section-toggle-completed'));
+    expect(screen.queryByTestId(`occurrence-${OCC4}`)).toBeNull();
   });
 
   it('keeps the site name whole and lets a long checklist name shrink', async () => {
@@ -132,6 +145,7 @@ describe('My checklists', () => {
     const id = await t.services.store.start(OCC, ME);
     await t.db.run(`UPDATE executions SET state = 'partial', sync_note = 'errors.EXECUTION_NOT_ACTIVE' WHERE id = ?`, [id]);
     await renderWithServices(t.services, <HomeScreen />);
+    await fireEvent.press(await screen.findByTestId('stat-completed'));
     expect(await within(await screen.findByTestId(`occurrence-${OCC}`)).findByText('Server qəbul etmədi: Bu icra artıq bağlanıb və dəyişdirilə bilməz.')).toBeTruthy();
   });
 });
@@ -149,8 +163,8 @@ describe('Needs correction (spec §8.1)', () => {
     const t = await sentBack();
     await renderWithServices(t.services, <HomeScreen />);
     const card = within(await screen.findByTestId(`occurrence-${OCC}`));
-    // Empty sections are hidden, so the rework section is simply the first heading on the screen.
-    expect(screen.getAllByText(/^(Düzəliş tələb olunur|İndi|Davam edir|Gələcək|Tamamlanıb)$/)[0]?.props.children).toBe('Düzəliş tələb olunur');
+    // Runs sent back come first in the Tapşırıqlar list.
+    expect(within(screen.getByTestId('section-myTasks')).getAllByTestId(/^occurrence-/)[0]?.props.testID).toBe(`occurrence-${OCC}`);
     expect(card.getByText(`${tr('corrections.round', { round: 1 })} · 2 bənd düzəliş tələb edir`)).toBeTruthy();
     const due = card.getByText(tr('corrections.dueAt', { date: formatDateTime(REWORK_DUE, { locale: 'az', timeZone: 'Asia/Baku' }) }));
     expect(StyleSheet.flatten(due.props.style).color).toBe(colors.muted);
@@ -169,10 +183,9 @@ describe('Needs correction (spec §8.1)', () => {
     expect(StyleSheet.flatten(due.props.style).color).toBe(colors.dangerText);
   });
 
-  it('hides the group when nothing is sent back', async () => {
-    const t = await world();
+  it('counts a run sent back to me among my tasks', async () => {
+    const t = await sentBack();
     await renderWithServices(t.services, <HomeScreen />);
-    expect(await screen.findByText('İndi')).toBeTruthy();
-    expect(screen.queryByText('Düzəliş tələb olunur')).toBeNull();
+    expect(await within(await screen.findByTestId('stat-myTasks')).findByText('1')).toBeTruthy();
   });
 });

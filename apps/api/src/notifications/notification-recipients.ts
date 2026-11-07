@@ -81,15 +81,8 @@ export class NotificationRecipients {
     switch (target.kind) {
       case 'assignment':
         return rule.notifyAssignees ? target.addedUserIds : [];
-      case 'occurrence': {
-        if (!rule.notifyAssignees) return [];
-        const rows = await this.db
-          .tx()
-          .select({ id: occurrenceAssignees.userId })
-          .from(occurrenceAssignees)
-          .where(eq(occurrenceAssignees.occurrenceId, target.occurrenceId));
-        return rows.map((r) => r.id);
-      }
+      case 'occurrence':
+        return rule.notifyAssignees ? this.occurrenceAssignees(target.occurrenceId) : [];
       case 'problem':
         return [];
       case 'problem_report':
@@ -98,6 +91,8 @@ export class NotificationRecipients {
       case 'task':
         return [...(rule.notifyAssignees ? await this.taskAssignees(target) : []), ...(rule.notifyCreator ? [target.createdByUserId] : [])];
       case 'run':
+        // checklist.completed is a checklist type: "assignees" are the run's assignees, as for its reminders.
+        if (rule.type === 'checklist.completed') return rule.notifyAssignees ? this.occurrenceAssignees(target.occurrence.occurrenceId) : [];
         // Spec decision 16: "assignees" is the executor; "creator" is whoever sent the run back.
         return [...(rule.notifyAssignees ? [target.executorUserId] : []), ...(rule.notifyCreator && target.sentBackByUserId ? [target.sentBackByUserId] : [])];
       default: {
@@ -105,6 +100,11 @@ export class NotificationRecipients {
         throw new Error(`Unhandled target: ${JSON.stringify(unhandled)}`);
       }
     }
+  }
+
+  private async occurrenceAssignees(occurrenceId: string): Promise<string[]> {
+    const rows = await this.db.tx().select({ id: occurrenceAssignees.userId }).from(occurrenceAssignees).where(eq(occurrenceAssignees.occurrenceId, occurrenceId));
+    return rows.map((r) => r.id);
   }
 
   /** The assignee, or while nobody has accepted, the members of the task's active team. */

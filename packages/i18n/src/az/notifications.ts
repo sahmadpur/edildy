@@ -9,6 +9,7 @@ export default {
     'checklist.due_soon': 'Checklistin vaxtı yaxınlaşır',
     'checklist.overdue': 'Checklist gecikir',
     'checklist.missed': 'Checklist buraxıldı',
+    'checklist.completed': 'Yoxlama bitdi',
     'problem.recorded': 'Yeni problem',
     'problem.critical': 'Kritik problem',
     'problem_report.created': 'Yeni bildirilən problem',
@@ -49,6 +50,7 @@ export default {
     'checklist.due_soon': { title: 'Checklistin vaxtı yaxınlaşır', body: '{{place}}. {{time}}-dək tamamlayın.' },
     'checklist.overdue': { title: 'Checklist gecikir', body: '{{place}}. Son vaxt {{time}} idi ({{date}}).' },
     'checklist.missed': { title: 'Checklist icra olunmadı', body: '{{place}}, {{date}}.' },
+    'checklist.completed': { title: 'Yoxlama bitdi', body: '{{checklist}} — {{site}}: {{executor}}' },
     /** The problem's note, when there is one, follows the body after a colon. */
     'problem.recorded': { title: 'Yeni problem', body: '{{site}}, {{checklist}}' },
     'problem.critical': { title: 'Kritik problem!', body: '{{site}}, {{checklist}}' },

@@ -323,13 +323,13 @@ describe('notification settings', () => {
     const t = await createTestServices();
     await renderWithServices(t.services, <ProfileScreen />);
     expect(await screen.findByText('Bağlıdır')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Ayarları aç' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Telefon ayarlarını aç' }));
     expect(native.openSettings).toHaveBeenCalledTimes(1);
     native.nativePush.permission.mockResolvedValue('granted');
     const onChange = (AppState.addEventListener as jest.Mock).mock.calls.at(-1)![1] as (state: string) => void;
     await act(async () => onChange('active'));
     expect(await screen.findByText('Açıqdır')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Ayarları aç' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Telefon ayarlarını aç' })).toBeNull();
   });
 
   it('says push is not available on a simulator', async () => {

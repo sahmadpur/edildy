@@ -149,11 +149,11 @@ describe('NotificationRulesTab', () => {
     expect(await screen.findByText('Rolların siyahısı yüklənmədi; seçilmiş rollar dəyişməz qalır.')).toBeInTheDocument();
     const roles = screen.getByRole('button', { name: ctl('checklist.overdue', 'Rollar') });
     expect(roles).toBeDisabled();
-    expect(roles).toHaveTextContent('1 rol');
+    expect(roles).toHaveTextContent('3 rol');
     await userEvent.click(screen.getByRole('checkbox', { name: ctl('checklist.overdue', channels.push) }));
     await userEvent.click(screen.getByRole('button', { name: ctl('checklist.overdue', 'Yadda saxla') }));
     await waitFor(() =>
-      expect(mocks.api.notificationRules.update).toHaveBeenCalledWith('checklist.overdue', expect.objectContaining({ push: false, roleIds: [ROLE_IDS.manager] })),
+      expect(mocks.api.notificationRules.update).toHaveBeenCalledWith('checklist.overdue', expect.objectContaining({ push: false, roleIds: [ROLE_IDS.manager, ROLE_IDS.admin, ROLE_IDS.owner] })),
     );
   });
 });

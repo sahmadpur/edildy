@@ -1,11 +1,12 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { NotificationType, OccurrenceStatus } from '@taskop/contracts';
-import { and, eq, isNull } from 'drizzle-orm';
+import { CHECKLIST_REMINDER_TYPES, type NotificationType, type OccurrenceStatus } from '@taskop/contracts';
+import { and, eq, isNotNull, isNull, ne } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { DomainEvents, type TaskEvent, type TaskEventName } from '../common/domain-events';
 import { sanitiseForLog } from '../common/error.filter';
 import { DbService, type Tx } from '../db/db.service';
-import { pushDevices, tasks, users } from '../db/schema';
+import { executions, pushDevices, tasks, users } from '../db/schema';
+import { InboxService } from './inbox.service';
 import { NotificationEvents } from './notification-events';
 
 /** task.* events that become notifications of the same name (spec §6.1 step 2). task.accepted is not notified. */
@@ -15,6 +16,39 @@ const TASK_TYPES = ['task.assigned', 'task.rejected', 'task.completed', 'task.ov
 function isNotifiedStatus(status: OccurrenceStatus): status is 'overdue' | 'missed' {
   return status === 'overdue' || status === 'missed';
 }
+
+/** A run is done with (finished, closed or cancelled): its reminders are cleared for every recipient. */
+const DONE_STATUSES: ReadonlySet<OccurrenceStatus> = new Set(['completed', 'audit_pending', 'partial', 'cancelled']);
+/** The statuses a finished run lands in. partial counts only when the executor completed it (after the window). */
+const FINISHED_STATUSES: ReadonlySet<OccurrenceStatus> = new Set(['completed', 'audit_pending', 'partial']);
+/**
+ * A run leaving one of these was already finished: an audit starting or being cancelled, a correction cancelled or
+ * resubmitted. None of them is a new "check finished".
+ */
+const AFTER_FINISH_STATUSES: ReadonlySet<OccurrenceStatus> = new Set(['completed', 'audit_pending', 'audited', 'correction_required']);
+
+/** What a status change asks of the listener; null when nothing. */
+function occurrenceWork(from: OccurrenceStatus | null, to: OccurrenceStatus) {
+  const work = {
+    notify: isNotifiedStatus(to) ? to : null,
+    clearReminders: DONE_STATUSES.has(to),
+    // The resubmit (or a cancelled correction) moves the run out of correction_required: the send-back is dealt with.
+    clearCorrection: from === 'correction_required' && to !== 'correction_required',
+    finished: FINISHED_STATUSES.has(to) && (from === null || !AFTER_FINISH_STATUSES.has(from)),
+  };
+  return work.notify || work.clearReminders || work.clearCorrection || work.finished ? work : null;
+}
+type OccurrenceWork = NonNullable<ReturnType<typeof occurrenceWork>>;
+
+/** 2026-11-07 feedback: a task the executor has handed in (or that is closed) has no open to-dos left for them. */
+const EXECUTOR_TODO_TYPES = ['task.assigned', 'task.overdue', 'task.rejected'] as const satisfies readonly NotificationType[];
+/** Cleared when each task event happens: the executor's to-dos once it is handed in or closed, the reviewer's once it is reviewed. */
+const TASK_CLEARS: Partial<Record<TaskEventName, readonly NotificationType[]>> = {
+  'task.submitted': EXECUTOR_TODO_TYPES,
+  'task.rejected': ['task.submitted'],
+  'task.completed': [...EXECUTOR_TODO_TYPES, 'task.submitted'],
+  'task.cancelled': [...EXECUTOR_TODO_TYPES, 'task.submitted'],
+};
 
 /** Maps domain events to notification events. Handlers run in the caller's transaction and never throw (NFR-11.01). */
 @Injectable()
@@ -26,14 +60,15 @@ export class NotificationListeners implements OnModuleInit {
     private readonly db: DbService,
     private readonly notifications: NotificationEvents,
     private readonly clock: Clock,
+    private readonly inbox: InboxService,
   ) {}
 
   onModuleInit(): void {
     this.events.on('occurrence.status_changed', (e) => {
-      // Most status changes are not notified; skip the savepoint round-trip for them.
-      const to = e.to;
-      if (!isNotifiedStatus(to)) return Promise.resolve();
-      return this.guarded('occurrence.status_changed', () => this.onOccurrence(e.occurrenceId, to));
+      // Most status changes need nothing; skip the savepoint round-trip for them.
+      const work = occurrenceWork(e.from, e.to);
+      if (!work) return Promise.resolve();
+      return this.guarded('occurrence.status_changed', (sp) => this.onOccurrence(sp, e.occurrenceId, work));
     });
     this.events.on('assignment.assignees_changed', (e) =>
       this.guarded('assignment.assignees_changed', () => this.notifications.record('checklist.assigned', { assignmentId: e.assignmentId, addedUserIds: e.addedUserIds }, e.actorUserId)),
@@ -57,6 +92,9 @@ export class NotificationListeners implements OnModuleInit {
     );
     for (const name of TASK_TYPES) this.events.on(name, (e) => this.guarded(name, () => this.notifications.record(name, { taskId: e.taskId }, e.actorUserId)));
     this.events.on('task.submitted', (e) => this.guarded('task.submitted', (sp) => this.onSubmitted(sp, e)));
+    for (const [name, types] of Object.entries(TASK_CLEARS) as [TaskEventName, readonly NotificationType[]][]) {
+      this.events.on(name, (e) => this.guarded(`${name} (clear)`, (sp) => this.inbox.markReadForTarget({ kind: 'task', id: e.taskId }, types, sp)));
+    }
     // SP8 spec §7.1. Dedupe keys make a replayed command's second event a no-op.
     this.events.on('execution.sent_back', (e) =>
       this.guarded('execution.sent_back', () =>
@@ -88,10 +126,30 @@ export class NotificationListeners implements OnModuleInit {
     }
   }
 
-  /** The sweep has no user, so its overdue and missed events have no actor (Spec decision 5). */
-  private async onOccurrence(occurrenceId: string, to: 'overdue' | 'missed'): Promise<void> {
-    const type = to === 'overdue' ? 'checklist.overdue' : 'checklist.missed';
-    await this.notifications.record(type, { occurrenceId }, this.db.context().userId, `${type}:${occurrenceId}`);
+  private async onOccurrence(sp: Tx, occurrenceId: string, work: OccurrenceWork): Promise<void> {
+    if (work.notify) {
+      // The sweep has no user, so its overdue and missed events have no actor (Spec decision 5).
+      const type = work.notify === 'overdue' ? 'checklist.overdue' : 'checklist.missed';
+      await this.notifications.record(type, { occurrenceId }, this.db.context().userId, `${type}:${occurrenceId}`);
+    }
+    const target = { kind: 'occurrence', id: occurrenceId } as const;
+    if (work.clearReminders) await this.inbox.markReadForTarget(target, CHECKLIST_REMINDER_TYPES, sp);
+    if (work.clearCorrection) await this.inbox.markReadForTarget(target, ['run.correction_required'], sp);
+    if (work.finished) await this.onFinished(sp, occurrenceId);
+  }
+
+  /**
+   * checklist.completed (2026-11-07 feedback), once per run: the completing step and the system's audit_pending step
+   * share the dedupe key. A run the sweep closed unfinished (partial, no completed_at) is not finished. The executor is
+   * the actor, so they are never told of their own run.
+   */
+  private async onFinished(sp: Tx, occurrenceId: string): Promise<void> {
+    const [x] = await sp
+      .select({ id: executions.id, executorUserId: executions.executorUserId })
+      .from(executions)
+      .where(and(eq(executions.occurrenceId, occurrenceId), ne(executions.state, 'rejected'), isNotNull(executions.completedAt)));
+    if (!x) return;
+    await this.notifications.record('checklist.completed', { occurrenceId, executionId: x.id }, x.executorUserId, `checklist.completed:${occurrenceId}`);
   }
 
   /** Spec decision 23: only a submission that waits for review is "submitted"; one straight to completed is told as completed. */

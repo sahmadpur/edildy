@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   aggregateDeliveryStatus,
   ALL_PERMISSIONS,
+  CHECKLIST_REMINDER_TYPES,
   DEFAULT_RULES,
   DELIVERY_STATUSES,
   isAuditType,
@@ -70,6 +71,18 @@ describe('notification catalogue', () => {
       // A default that notifies nobody would be a dead rule.
       expect(d.notifyAssignees || d.notifyCreator || d.systemRoles.length > 0 || !d.push).toBe(true);
     }
+  });
+
+  it('tells managers, admins and the owner of finished runs, problems and late runs by default (2026-11-07 feedback)', () => {
+    expect(NOTIFICATION_TYPES.indexOf('checklist.completed')).toBe(NOTIFICATION_TYPES.indexOf('checklist.missed') + 1);
+    expect(NOTIFICATION_TYPE_META['checklist.completed']).toEqual({ group: 'checklist', audiences: ['assignees'], hasLeadTime: false, hasResultFilter: false });
+    expect(DEFAULT_RULES['checklist.completed']).toEqual({
+      enabled: true, push: false, email: false, notifyAssignees: false, notifyCreator: false,
+      systemRoles: ['manager', 'admin', 'owner'], leadMinutes: null, resultFilter: null,
+    });
+    for (const t of ['checklist.overdue', 'checklist.missed', 'problem.recorded', 'problem.critical', 'problem_report.created', 'problem_report.critical'] as const)
+      expect(DEFAULT_RULES[t].systemRoles, t).toEqual(['manager', 'admin', 'owner']);
+    expect(CHECKLIST_REMINDER_TYPES).toEqual(['checklist.available', 'checklist.due_soon', 'checklist.overdue']);
   });
 
   it('opens the execution tab for problem types only', () => {

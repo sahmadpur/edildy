@@ -1,6 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
+import { isWholeDayWindow } from '@taskop/contracts';
 import { formatDateTime } from '@taskop/i18n';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { StatusChip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { notAcceptedText } from '@/features/sync/refusal-text';
@@ -25,9 +27,19 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
   const e = o.execution;
   const status = e && e.state !== 'active' ? t(`executions.states.${e.state}`) : !e && o.status !== 'pending' ? t(`scheduling.statuses.${o.status}`) : null;
   // A small dot before the name carries the group colour that used to be a thick left edge.
-  const dot = card.overdue ? colors.danger : card.rework ? colors.warning : group === 'done' ? colors.success : group === 'upcoming' ? colors.planned : colors.primary;
+  const missed = !e && o.status === 'missed';
+  const dot = card.overdue || missed ? colors.danger : card.rework ? colors.warning : group === 'done' ? colors.success : group === 'upcoming' ? colors.planned : colors.primary;
+  // A finished run and one not open yet are opened by tapping anywhere on the card (Nov 2026 feedback point 12).
+  const tappable = card.action === 'view' || card.action === 'preview';
   return (
-    <View testID={`occurrence-${o.id}`} style={styles.card}>
+    <Pressable
+      testID={`occurrence-${o.id}`}
+      disabled={!tappable}
+      accessibilityRole={tappable ? 'button' : undefined}
+      accessibilityLabel={tappable ? `${t('mobile.checklists.view')}: ${o.checklistName}` : undefined}
+      onPress={onOpen}
+      style={({ pressed }) => [styles.card, tappable && pressed && styles.pressed]}
+    >
       <View style={styles.row}>
         <View style={styles.name}>
           <View style={[styles.dot, { backgroundColor: dot }]} />
@@ -43,7 +55,12 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
         </View>
       </View>
       <View style={styles.row}>
-        <Text style={styles.muted}>{t('mobile.checklists.window', { from: formatTime(o.startsAt, timeZone, locale), to: formatTime(o.closesAt, timeZone, locale) })}</Text>
+        <Text style={styles.muted}>
+          {/* An "İstənilən vaxt" run is the whole day: say so instead of 00:00–00:00 (feedback 2026-11-07). */}
+          {isWholeDayWindow(o.startsAt, o.dueAt, timeZone)
+            ? t('scheduling.builder.modes.anytime')
+            : t('mobile.checklists.window', { from: formatTime(o.startsAt, timeZone, locale), to: formatTime(o.closesAt, timeZone, locale) })}
+        </Text>
         <Text style={styles.muted}>{formatDateTime(o.startsAt, { locale, timeZone })}</Text>
       </View>
       {card.rework ? (
@@ -57,7 +74,7 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
         {card.overdue ? <StatusChip tone="danger" text={t('mobile.checklists.overdue')} /> : null}
         {card.late ? <StatusChip tone="warning" text={t('executions.flags.late')} /> : null}
         {card.claimedBy ? <StatusChip tone="active" text={t('mobile.checklists.claimedBy', { name: card.claimedBy })} /> : null}
-        {status && !card.claimedBy ? <StatusChip tone={group === 'done' ? 'success' : 'neutral'} text={status} /> : null}
+        {status && !card.claimedBy ? <StatusChip tone={missed ? 'danger' : group === 'done' ? 'success' : 'neutral'} text={status} /> : null}
       </View>
       {e?.syncNote ? <Text style={styles.note}>{notAcceptedText(t, e.syncNote)}</Text> : null}
       {card.action === 'start' ? (
@@ -70,10 +87,13 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
           onPress={onOpen}
         />
       ) : null}
-      {card.action === 'view' ? (
-        <PrimaryButton variant="outline" title={t('mobile.checklists.view')} accessibilityLabel={`${t('mobile.checklists.view')}: ${o.checklistName}`} onPress={onOpen} />
+      {tappable ? (
+        <View style={styles.viewRow}>
+          <Text style={styles.viewText}>{card.action === 'preview' ? t('mobile.checklists.preview') : t('mobile.checklists.view')}</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+        </View>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -91,4 +111,7 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginLeft: 16 },
   none: { display: 'none' },
   note: { fontFamily: font, fontSize: type.base, color: colors.dangerText },
+  pressed: { backgroundColor: colors.fill },
+  viewRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 2 },
+  viewText: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.primary },
 });
