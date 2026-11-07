@@ -24,10 +24,7 @@ describe('TenantContextInterceptor', () => {
   beforeAll(async () => {
     db = new DbService(loadConfig(testEnv()));
     interceptor = new TenantContextInterceptor(db);
-    await ownerQuery("insert into tenants (id, name, org_code) values ($1, 'T', $2)", [
-      T,
-      `int-${T.slice(-8)}`,
-    ]);
+    await ownerQuery("insert into tenants (id, name, org_code) values ($1, 'T', $2)", [T, `int-${T.slice(-8)}`]);
   });
   afterAll(() => db.onModuleDestroy());
 

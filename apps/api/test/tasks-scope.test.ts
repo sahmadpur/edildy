@@ -8,8 +8,7 @@ import { type Api, MONDAY_0800 } from './scheduling-fixtures';
 import { act, createTask, newTaskBody, taskWorld } from './task-fixtures';
 
 const T = (hhmm: string) => `2026-11-02T${hhmm}:00.000Z`;
-const list = async (api: Api, qs = '') =>
-  ((await api.get(`/api/v1/tasks${qs}`)).body.items as Array<{ id: string }>).map((i) => i.id);
+const list = async (api: Api, qs = '') => ((await api.get(`/api/v1/tasks${qs}`)).body.items as Array<{ id: string }>).map((i) => i.id);
 const sorted = (xs: string[]) => [...xs].sort();
 
 describe('listing tasks and the read scope', () => {
@@ -24,10 +23,7 @@ describe('listing tasks and the read scope', () => {
   it('filters by status, overdue, site, assignee, team, creator, source, review and due range, newest first with a cursor', async () => {
     const w = await taskWorld(t);
     const w1 = w.workers[0];
-    const a = await createTask(
-      w.manager.api,
-      newTaskBody({ userId: w1.id }, { siteId: w.siteId, dueAt: T('06:00') }),
-    );
+    const a = await createTask(w.manager.api, newTaskBody({ userId: w1.id }, { siteId: w.siteId, dueAt: T('06:00') }));
     clock.advanceMinutes(1);
     const b = await createTask(w.manager.api, newTaskBody({ teamId: w.teamId }, { dueAt: T('09:00') }));
     clock.advanceMinutes(1);
@@ -50,13 +46,7 @@ describe('listing tasks and the read scope', () => {
     expect(await list(w1.api, '?awaitingMyReview=true')).toEqual([]);
     const page1 = (await w.owner.get('/api/v1/tasks?limit=2')).body;
     expect(page1.items.map((i: { id: string }) => i.id)).toEqual([c.id, b.id]);
-    expect(page1.items[0]).toMatchObject({
-      id: c.id,
-      status: 'awaiting_review',
-      assignee: { id: w1.id, fullName: 'İşçi 1' },
-      createdBy: { id: w.s.ownerId },
-      source: 'adhoc',
-    });
+    expect(page1.items[0]).toMatchObject({ id: c.id, status: 'awaiting_review', assignee: { id: w1.id, fullName: 'İşçi 1' }, createdBy: { id: w.s.ownerId }, source: 'adhoc' });
     const page2 = (await w.owner.get(`/api/v1/tasks?limit=2&cursor=${page1.nextCursor}`)).body;
     expect([page2.items.map((i: { id: string }) => i.id), page2.nextCursor]).toEqual([[a.id], null]);
     const bad = await w.owner.get('/api/v1/tasks?status=late');
@@ -75,27 +65,13 @@ describe('listing tasks and the read scope', () => {
       const u = await createUserDirect(t, w.s.tenantId, { kind: 'staff', emailVerified: true, ...role });
       return { id: u.id, api: as(t, (await loginStaff(t, u.email!, u.secret)).accessToken) };
     };
-    expect(await visible((await staff({ roleKey: 'auditor' })).api)).toEqual(
-      sorted([a.id, b.id, c.id, d.id]),
-    );
+    expect(await visible((await staff({ roleKey: 'auditor' })).api)).toEqual(sorted([a.id, b.id, c.id, d.id]));
     expect(await visible(w.manager.api)).toEqual([a.id]);
-    const subordinates = (
-      await w.owner.post('/api/v1/roles', {
-        name: uniq('Rəhbər'),
-        dataScope: 'subordinates',
-        permissions: ['tasks.view'],
-      })
-    ).body.id as string;
+    const subordinates = (await w.owner.post('/api/v1/roles', { name: uniq('Rəhbər'), dataScope: 'subordinates', permissions: ['tasks.view'] })).body.id as string;
     const lead = await staff({ roleId: subordinates });
     await ownerQuery('update users set manager_id = $1 where id = $2', [lead.id, w3.id]);
     expect(await visible(lead.api)).toEqual(sorted([b.id, d.id]));
-    const ownOnly = (
-      await w.owner.post('/api/v1/roles', {
-        name: uniq('Özü'),
-        dataScope: 'own',
-        permissions: ['tasks.view'],
-      })
-    ).body.id as string;
+    const ownOnly = (await w.owner.post('/api/v1/roles', { name: uniq('Özü'), dataScope: 'own', permissions: ['tasks.view'] })).body.id as string;
     const own = await staff({ roleId: ownOnly });
     expect(await visible(own.api)).toEqual([]);
     expect((await own.api.get(`/api/v1/tasks/${a.id}`)).status).toBe(404);
@@ -126,15 +102,11 @@ describe('listing tasks and the read scope', () => {
     const w = await taskWorld(t);
     const outsider = w.workers[2];
     const inSite = await createTask(w.owner, newTaskBody({ userId: outsider.id }, { siteId: w.siteId }));
-    const elsewhere = await createTask(
-      w.owner,
-      newTaskBody({ userId: outsider.id }, { siteId: w.otherSiteId }),
-    );
+    const elsewhere = await createTask(w.owner, newTaskBody({ userId: outsider.id }, { siteId: w.otherSiteId }));
     const unplaced = await createTask(w.owner, newTaskBody({ userId: outsider.id }));
     expect(await list(w.manager.api, '?limit=200')).toEqual([inSite.id]);
     expect((await w.manager.api.get(`/api/v1/tasks/${inSite.id}`)).status).toBe(200);
-    for (const hidden of [elsewhere.id, unplaced.id])
-      expect((await w.manager.api.get(`/api/v1/tasks/${hidden}`)).status, hidden).toBe(404);
+    for (const hidden of [elsewhere.id, unplaced.id]) expect((await w.manager.api.get(`/api/v1/tasks/${hidden}`)).status, hidden).toBe(404);
   });
 
   it('ignores ?teamId for a worker without tasks.view once a teammate has accepted the team task', async () => {

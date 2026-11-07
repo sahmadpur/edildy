@@ -27,12 +27,7 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
   afterAll(() => t.close());
 
   /** A manual correction row for one item, as CorrectionsService writes it (Task 7). */
-  const correctionFor = async (
-    tenantId: string,
-    executionId: string,
-    actor: string,
-    itemId: string,
-  ): Promise<string> =>
+  const correctionFor = async (tenantId: string, executionId: string, actor: string, itemId: string): Promise<string> =>
     (
       await ownerQuery<{ id: string }>(
         `insert into execution_corrections (id, tenant_id, execution_id, item_id, kind, round, reason, actor_user_id, at)
@@ -42,44 +37,25 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
     ).rows[0]!.id;
 
   /** Stores `answers` and recalculates in one tenant transaction, as the correction endpoint does. */
-  const recalc = (
-    tenantId: string,
-    userId: string,
-    executionId: string,
-    answers: Answers,
-    clearedBy = new Map<string, string>(),
-  ) =>
+  const recalc = (tenantId: string, userId: string, executionId: string, answers: Answers, clearedBy = new Map<string, string>()) =>
     t.app.get(DbService).withTenant(tenantId, userId, async (tx) => {
       const [e] = await tx.select().from(executions).where(eq(executions.id, executionId));
       const [o] = await tx.select().from(occurrences).where(eq(occurrences.id, e!.occurrenceId));
       const content = await t.app.get(ExecutionLookups).content(e!.checklistVersionId);
       await tx.update(executions).set({ answers }).where(eq(executions.id, executionId));
-      return t.app
-        .get(ExecutionRecalculator)
-        .recalculate({ execution: e!, occurrence: o!, content, answers, clearedBy, now: new Date(NOW) });
+      return t.app.get(ExecutionRecalculator).recalculate({ execution: e!, occurrence: o!, content, answers, clearedBy, now: new Date(NOW) });
     });
 
   it('clears a problem with a task instead of deleting it, and updates the score', async () => {
     const { w, executionId, ruleProblemId, manualProblemId } = await closedRunWithProblems(t, clock);
-    const taskId = await insertTaskRow({
-      tenantId: w.s.tenantId,
-      createdBy: w.s.ownerId,
-      assigneeUserId: w.workers[1].id,
-      problemId: ruleProblemId,
-    });
+    const taskId = await insertTaskRow({ tenantId: w.s.tenantId, createdBy: w.s.ownerId, assigneeUserId: w.workers[1].id, problemId: ruleProblemId });
     const answers = (await executionRow(executionId)).answers;
     expect((await executionRow(executionId)).score?.percent).toBe(50);
     // 5 °C is inside 2–8: the rule problem goes; the manual problem rides along unchanged.
     const corrected: Answers = { ...answers, [w.c.temp.id]: { ...answers[w.c.temp.id], number: 5 } };
     const correctionId = await correctionFor(w.s.tenantId, executionId, w.s.ownerId, w.c.temp.id);
 
-    const result = await recalc(
-      w.s.tenantId,
-      w.s.ownerId,
-      executionId,
-      corrected,
-      new Map([[w.c.temp.id, correctionId]]),
-    );
+    const result = await recalc(w.s.tenantId, w.s.ownerId, executionId, corrected, new Map([[w.c.temp.id, correctionId]]));
 
     expect(result.score).toMatchObject({ earned: 2, possible: 2, percent: 100, problems: [] });
     expect((await executionRow(executionId)).score).toMatchObject({ percent: 100, problems: [] });
@@ -89,23 +65,14 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
     expect(rule.cleared_by_correction_id).toBe(correctionId);
     expect(rule.cleared_at?.toISOString()).toBe(NOW);
     expect(rows.find((r) => r.id === manualProblemId)!.cleared_at).toBeNull();
-    expect(
-      (await ownerQuery<{ problem_id: string }>('select problem_id from tasks where id = $1', [taskId]))
-        .rows[0]!.problem_id,
-    ).toBe(ruleProblemId);
+    expect((await ownerQuery<{ problem_id: string }>('select problem_id from tasks where id = $1', [taskId])).rows[0]!.problem_id).toBe(ruleProblemId);
   });
 
   it('inserts a problem the new answers derive beside the cleared row of the same item, and notifies it', async () => {
     const { w, executionId, ruleProblemId } = await closedRunWithProblems(t, clock);
     const answers = (await executionRow(executionId)).answers;
-    await recalc(w.s.tenantId, w.s.ownerId, executionId, {
-      ...answers,
-      [w.c.temp.id]: { ...answers[w.c.temp.id], number: 5 },
-    });
-    await recalc(w.s.tenantId, w.s.ownerId, executionId, {
-      ...answers,
-      [w.c.temp.id]: { ...answers[w.c.temp.id], number: 12 },
-    });
+    await recalc(w.s.tenantId, w.s.ownerId, executionId, { ...answers, [w.c.temp.id]: { ...answers[w.c.temp.id], number: 5 } });
+    await recalc(w.s.tenantId, w.s.ownerId, executionId, { ...answers, [w.c.temp.id]: { ...answers[w.c.temp.id], number: 12 } });
     const rule = (await problemRows(executionId)).filter((r) => r.source === 'rule');
     expect(rule.map((r) => [r.id === ruleProblemId, r.cleared_at === null])).toEqual([
       [true, false],
@@ -120,10 +87,7 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
   it('updates the severity and note of a problem the answers still derive, keeping its id', async () => {
     const { w, executionId, ruleProblemId } = await closedRunWithProblems(t, clock);
     const answers = (await executionRow(executionId)).answers;
-    await recalc(w.s.tenantId, w.s.ownerId, executionId, {
-      ...answers,
-      [w.c.temp.id]: { ...answers[w.c.temp.id], number: 12, note: 'çox isti' },
-    });
+    await recalc(w.s.tenantId, w.s.ownerId, executionId, { ...answers, [w.c.temp.id]: { ...answers[w.c.temp.id], number: 12, note: 'çox isti' } });
     const rule = (await problemRows(executionId)).filter((r) => r.source === 'rule');
     expect(rule.map((r) => [r.id, r.note, r.cleared_at])).toEqual([[ruleProblemId, 'çox isti', null]]);
   });
@@ -132,18 +96,9 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
     const { w, executionId, manualProblemId } = await closedRunWithProblems(t, clock);
     const answers = (await executionRow(executionId)).answers;
     const before = (await problemRows(executionId)).find((r) => r.id === manualProblemId)!;
-    await recalc(w.s.tenantId, w.s.ownerId, executionId, {
-      ...answers,
-      [w.c.temp.id]: { ...answers[w.c.temp.id], number: 5 },
-    });
+    await recalc(w.s.tenantId, w.s.ownerId, executionId, { ...answers, [w.c.temp.id]: { ...answers[w.c.temp.id], number: 5 } });
     const manual = (await problemRows(executionId)).find((r) => r.id === manualProblemId)!;
-    expect(manual).toMatchObject({
-      source: 'manual',
-      severity: 'critical',
-      note: 'Kondisioner xarabdır',
-      cleared_at: null,
-      cleared_by_correction_id: null,
-    });
+    expect(manual).toMatchObject({ source: 'manual', severity: 'critical', note: 'Kondisioner xarabdır', cleared_at: null, cleared_by_correction_id: null });
     expect(manual.id).toBe(before.id);
   });
 
@@ -152,13 +107,7 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
     const answers = (await executionRow(executionId)).answers;
     const { problem: _dropped, ...temp } = answers[w.c.temp.id]!;
     const correctionId = await correctionFor(w.s.tenantId, executionId, w.s.ownerId, w.c.temp.id);
-    await recalc(
-      w.s.tenantId,
-      w.s.ownerId,
-      executionId,
-      { ...answers, [w.c.temp.id]: temp },
-      new Map([[w.c.temp.id, correctionId]]),
-    );
+    await recalc(w.s.tenantId, w.s.ownerId, executionId, { ...answers, [w.c.temp.id]: temp }, new Map([[w.c.temp.id, correctionId]]));
     const rows = await problemRows(executionId);
     const manual = rows.find((r) => r.id === manualProblemId)!;
     expect(manual.cleared_at?.toISOString()).toBe(NOW);
@@ -180,13 +129,8 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
     const { w, executionId } = await closedRunWithProblems(t, clock);
     const answers = (await executionRow(executionId)).answers;
     const added = { severity: 'normal' as const, note: 'Yeni qeyd', mediaIds: [] };
-    await recalc(w.s.tenantId, w.s.ownerId, executionId, {
-      ...answers,
-      [w.c.photo.id]: { ...answers[w.c.photo.id], problem: added },
-    });
-    const manual = (await problemRows(executionId)).filter(
-      (r) => r.source === 'manual' && r.item_id === w.c.photo.id,
-    );
+    await recalc(w.s.tenantId, w.s.ownerId, executionId, { ...answers, [w.c.photo.id]: { ...answers[w.c.photo.id], problem: added } });
+    const manual = (await problemRows(executionId)).filter((r) => r.source === 'manual' && r.item_id === w.c.photo.id);
     expect(manual).toHaveLength(1);
     expect(manual[0]).toMatchObject({ severity: 'normal', note: 'Yeni qeyd', cleared_at: null });
     const recorded = await eventRows(w.s.tenantId, 'problem.recorded');
@@ -197,13 +141,8 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
     const { w, executionId, manualProblemId } = await closedRunWithProblems(t, clock);
     const answers = (await executionRow(executionId)).answers;
     const changed = { severity: 'normal' as const, note: 'Düzəldildi qismən', mediaIds: [] };
-    await recalc(w.s.tenantId, w.s.ownerId, executionId, {
-      ...answers,
-      [w.c.temp.id]: { ...answers[w.c.temp.id], problem: changed },
-    });
+    await recalc(w.s.tenantId, w.s.ownerId, executionId, { ...answers, [w.c.temp.id]: { ...answers[w.c.temp.id], problem: changed } });
     const manual = (await problemRows(executionId)).filter((r) => r.source === 'manual');
-    expect(manual.map((r) => [r.id, r.severity, r.note, r.cleared_at])).toEqual([
-      [manualProblemId, 'normal', 'Düzəldildi qismən', null],
-    ]);
+    expect(manual.map((r) => [r.id, r.severity, r.note, r.cleared_at])).toEqual([[manualProblemId, 'normal', 'Düzəldildi qismən', null]]);
   });
 });

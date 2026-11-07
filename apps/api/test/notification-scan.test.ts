@@ -6,16 +6,7 @@ import { eventRows } from './notification-fixtures';
 import { createAssignment, fixed, MONDAY_0800, occurrenceRows, schedulingWorld } from './scheduling-fixtures';
 
 const at = (hhmmss: string) => `2026-11-02T${hhmmss}Z`;
-const rule = (over: Record<string, unknown>) => ({
-  enabled: true,
-  push: true,
-  email: false,
-  notifyAssignees: true,
-  notifyCreator: false,
-  roleIds: [],
-  leadMinutes: null,
-  ...over,
-});
+const rule = (over: Record<string, unknown>) => ({ enabled: true, push: true, email: false, notifyAssignees: true, notifyCreator: false, roleIds: [], leadMinutes: null, ...over });
 
 describe('notifications.scan', () => {
   const clock = new FakeClock(MONDAY_0800);
@@ -38,9 +29,7 @@ describe('notifications.scan', () => {
       return jobs.scanAll([w.s.tenantId]);
     };
     const scanned = async () =>
-      (await eventRows(w.s.tenantId))
-        .filter((e) => e.type === 'checklist.available' || e.type === 'checklist.due_soon')
-        .map((e) => [e.type, e.dedupe_key, e.actor_user_id, e.payload]);
+      (await eventRows(w.s.tenantId)).filter((e) => e.type === 'checklist.available' || e.type === 'checklist.due_soon').map((e) => [e.type, e.dedupe_key, e.actor_user_id, e.payload]);
     return { w, today, scan, scanned };
   }
 
@@ -49,9 +38,7 @@ describe('notifications.scan', () => {
     expect(await scan(at('03:59:59'))).toBe(0);
     expect(await scan(at('04:00:00'))).toBe(1);
     expect(await scan(at('04:01:00'))).toBe(0);
-    expect(await scanned()).toEqual([
-      ['checklist.available', `checklist.available:${today.id}`, null, { occurrenceId: today.id }],
-    ]);
+    expect(await scanned()).toEqual([['checklist.available', `checklist.available:${today.id}`, null, { occurrenceId: today.id }]]);
   });
 
   it('records nothing for runs that opened more than 15 minutes ago', async () => {
@@ -68,20 +55,12 @@ describe('notifications.scan', () => {
     expect(await scan(at('05:29:59'))).toBe(0);
     expect(await scan(at('05:30:00'))).toBe(1);
     expect(await scan(at('05:45:00'))).toBe(0);
-    expect((await scanned()).at(-1)).toEqual([
-      'checklist.due_soon',
-      `checklist.due_soon:${today.id}`,
-      null,
-      { occurrenceId: today.id },
-    ]);
+    expect((await scanned()).at(-1)).toEqual(['checklist.due_soon', `checklist.due_soon:${today.id}`, null, { occurrenceId: today.id }]);
   });
 
   it('uses the tenant’s lead time and skips a window shorter than it', async () => {
     const long = await world();
-    expect(
-      (await long.w.api.put('/api/v1/notification-rules/checklist.due_soon', rule({ leadMinutes: 60 })))
-        .status,
-    ).toBe(200);
+    expect((await long.w.api.put('/api/v1/notification-rules/checklist.due_soon', rule({ leadMinutes: 60 }))).status).toBe(200);
     expect(await long.scan(at('04:59:59'))).toBe(0);
     expect(await long.scan(at('05:00:00'))).toBe(1);
     // Due 20 minutes after opening with a 30-minute lead: only checklist.available is sent.
@@ -93,24 +72,12 @@ describe('notifications.scan', () => {
 
   it('records nothing for disabled rules, or once the run is no longer pending', async () => {
     const off = await world();
-    expect(
-      (await off.w.api.put('/api/v1/notification-rules/checklist.available', rule({ enabled: false })))
-        .status,
-    ).toBe(200);
-    expect(
-      (
-        await off.w.api.put(
-          '/api/v1/notification-rules/checklist.due_soon',
-          rule({ enabled: false, leadMinutes: 30 }),
-        )
-      ).status,
-    ).toBe(200);
+    expect((await off.w.api.put('/api/v1/notification-rules/checklist.available', rule({ enabled: false }))).status).toBe(200);
+    expect((await off.w.api.put('/api/v1/notification-rules/checklist.due_soon', rule({ enabled: false, leadMinutes: 30 }))).status).toBe(200);
     expect(await off.scan(at('04:00:00'))).toBe(0);
     expect(await off.scan(at('05:30:00'))).toBe(0);
     const cancelled = await world();
-    const res = await cancelled.w.api.post(`/api/v1/occurrences/${cancelled.today.id}/cancel`, {
-      reason: 'Bu gün bağlıdır',
-    });
+    const res = await cancelled.w.api.post(`/api/v1/occurrences/${cancelled.today.id}/cancel`, { reason: 'Bu gün bağlıdır' });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(await cancelled.scan(at('04:00:00'))).toBe(0);
   });
@@ -120,8 +87,6 @@ describe('notifications.scan', () => {
     const { today, scan, scanned } = await world(fixed('08:00', 5));
     expect(await scan(at('04:10:00'))).toBe(1);
     expect(await scan(at('04:11:00'))).toBe(0);
-    expect(await scanned()).toEqual([
-      ['checklist.available', `checklist.available:${today.id}`, null, { occurrenceId: today.id }],
-    ]);
+    expect(await scanned()).toEqual([['checklist.available', `checklist.available:${today.id}`, null, { occurrenceId: today.id }]]);
   });
 });

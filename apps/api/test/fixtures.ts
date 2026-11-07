@@ -22,10 +22,7 @@ export interface SignedUpTenant {
   me: Me;
 }
 
-export async function signupTenant(
-  t: TestApp,
-  overrides: Record<string, unknown> = {},
-): Promise<SignedUpTenant> {
+export async function signupTenant(t: TestApp, overrides: Record<string, unknown> = {}): Promise<SignedUpTenant> {
   const orgCode = uniq('org');
   const body = {
     orgName: 'Acme MMC',
@@ -70,8 +67,7 @@ export async function createUserDirect(t: TestApp, tenantId: string, opts: Direc
   const hasher = t.app.get(PasswordHasher);
   const kind = opts.kind ?? 'worker';
   const credentialKind = opts.credentialKind ?? (kind === 'worker' ? 'pin' : 'password');
-  const secret =
-    opts.secret === undefined ? (credentialKind === 'pin' ? '482915' : 'staff password 1') : opts.secret;
+  const secret = opts.secret === undefined ? (credentialKind === 'pin' ? '482915' : 'staff password 1') : opts.secret;
   const username = kind === 'worker' ? (opts.username ?? uniq('w')).toLowerCase() : null;
   const email = kind === 'staff' ? (opts.email ?? `${uniq('s')}@example.az`).toLowerCase() : null;
   const credentialHash = secret ? await hasher.hash(secret) : null;
@@ -81,12 +77,7 @@ export async function createUserDirect(t: TestApp, tenantId: string, opts: Direc
       const [role] = await tx
         .select({ id: roles.id })
         .from(roles)
-        .where(
-          and(
-            eq(roles.tenantId, tenantId),
-            eq(roles.systemKey, opts.roleKey ?? (kind === 'worker' ? 'worker' : 'admin')),
-          ),
-        );
+        .where(and(eq(roles.tenantId, tenantId), eq(roles.systemKey, opts.roleKey ?? (kind === 'worker' ? 'worker' : 'admin'))));
       roleId = role!.id;
     }
     const [row] = await tx
@@ -110,13 +101,7 @@ export async function createUserDirect(t: TestApp, tenantId: string, opts: Direc
   return { id, username, email, secret: secret ?? '' };
 }
 
-export async function loginWorker(
-  t: TestApp,
-  orgCode: string,
-  username: string,
-  secret: string,
-  client = 'mobile',
-) {
+export async function loginWorker(t: TestApp, orgCode: string, username: string, secret: string, client = 'mobile') {
   const res = await t.http().post('/api/v1/auth/login/worker').send({ orgCode, username, secret, client });
   expect(res.status, JSON.stringify(res.body)).toBe(200);
   return res.body as LoginResult;
@@ -129,17 +114,10 @@ export async function loginStaff(t: TestApp, email: string, password: string, cl
 }
 
 export async function issueInvite(t: TestApp, tenantId: string) {
-  const u = await createUserDirect(t, tenantId, {
-    kind: 'staff',
-    roleKey: 'manager',
-    status: 'invited',
-    secret: null,
-  });
+  const u = await createUserDirect(t, tenantId, { kind: 'staff', roleKey: 'manager', status: 'invited', secret: null });
   const token = await t.app
     .get(DbService)
-    .withTenant(tenantId, null, () =>
-      t.app.get(OneTimeTokenService).create({ tenantId, userId: u.id, purpose: 'invite' }),
-    );
+    .withTenant(tenantId, null, () => t.app.get(OneTimeTokenService).create({ tenantId, userId: u.id, purpose: 'invite' }));
   return { userId: u.id, email: u.email!, token };
 }
 
@@ -154,17 +132,11 @@ export function as(t: TestApp, token: string) {
 }
 
 export async function roleIdOf(tenantId: string, systemKey: SystemRoleKey): Promise<string> {
-  const r = await ownerQuery<{ id: string }>(
-    'select id from roles where tenant_id = $1 and system_key = $2',
-    [tenantId, systemKey],
-  );
+  const r = await ownerQuery<{ id: string }>('select id from roles where tenant_id = $1 and system_key = $2', [tenantId, systemKey]);
   return r.rows[0]!.id;
 }
 
 export async function siteTypeIdOf(tenantId: string, name = 'Filial'): Promise<string> {
-  const r = await ownerQuery<{ id: string }>('select id from site_types where tenant_id = $1 and name = $2', [
-    tenantId,
-    name,
-  ]);
+  const r = await ownerQuery<{ id: string }>('select id from site_types where tenant_id = $1 and name = $2', [tenantId, name]);
   return r.rows[0]!.id;
 }

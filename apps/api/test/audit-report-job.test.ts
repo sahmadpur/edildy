@@ -42,38 +42,20 @@ describe('the audit report job (spec §7.2)', () => {
   /** A finished audit (failed: the temperature rejected) whose photo is in storage; recipients from the checklist plus `extra`. */
   async function finished(opts: { checklistEmails?: string[]; extra?: string[] } = {}) {
     const a = await auditWorld(t, clock);
-    await ownerQuery('update checklists set audit_report_emails = $2 where id = $1', [
-      a.w.checklistId,
-      opts.checklistEmails ?? ['qa@acme.az'],
-    ]);
+    await ownerQuery('update checklists set audit_report_emails = $2 where id = $1', [a.w.checklistId, opts.checklistEmails ?? ['qa@acme.az']]);
     await markUploaded(a.executionId);
-    const key = (
-      await ownerQuery<{ storage_key: string }>('select storage_key from execution_media where id = $1', [
-        a.photoId,
-      ])
-    ).rows[0]!.storage_key;
+    const key = (await ownerQuery<{ storage_key: string }>('select storage_key from execution_media where id = $1', [a.photoId])).rows[0]!.storage_key;
     storage.objects.set(key, { body: noisePng(16, 16, 7), contentType: 'image/jpeg' });
     clock.set('2026-11-02T05:00:00Z');
     const auditId = (await startAudit(a.auditor.api, a.executionId)).body.id as string;
-    await verdictAll(
-      a.auditor.api,
-      auditId,
-      [a.w.c.problem.id, a.w.c.temp.id, a.w.c.photo.id, a.w.c.note.id],
-      [a.w.c.temp.id],
-    );
+    await verdictAll(a.auditor.api, auditId, [a.w.c.problem.id, a.w.c.temp.id, a.w.c.photo.id, a.w.c.note.id], [a.w.c.temp.id]);
     clock.set('2026-11-02T06:00:00Z');
-    const res = await a.auditor.api.post(`/api/v1/audits/${auditId}/finish`, {
-      result: 'failed',
-      comment: 'Temperatur yüksəkdir',
-      extraEmails: opts.extra ?? [],
-    });
+    const res = await a.auditor.api.post(`/api/v1/audits/${auditId}/finish`, { result: 'failed', comment: 'Temperatur yüksəkdir', extraEmails: opts.extra ?? [] });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     return { a, auditId, job: { tenantId: a.w.s.tenantId, auditId } };
   }
-  const row = async (auditId: string) =>
-    (await ownerQuery<AuditDbRow>('select * from audits where id = $1', [auditId])).rows[0]!;
-  const run = (job: { tenantId: string; auditId: string; emails?: string[] }) =>
-    t.app.get(AuditReportJob).run(job);
+  const row = async (auditId: string) => (await ownerQuery<AuditDbRow>('select * from audits where id = $1', [auditId])).rows[0]!;
+  const run = (job: { tenantId: string; auditId: string; emails?: string[] }) => t.app.get(AuditReportJob).run(job);
 
   it('builds, stores and mails the report, one message per recipient', async () => {
     const { a, auditId, job } = await finished({ extra: ['boss@acme.az'] });
@@ -82,34 +64,18 @@ describe('the audit report job (spec §7.2)', () => {
     clock.set('2026-11-02T06:01:00Z');
     expect(await run(job)).toBe('sent');
     const r = await row(auditId);
-    expect(r).toMatchObject({
-      report_status: 'ready',
-      report_storage_key: `tenants/${a.w.s.tenantId}/audits/${auditId}/report.pdf`,
-      report_attempts: 0,
-    });
+    expect(r).toMatchObject({ report_status: 'ready', report_storage_key: `tenants/${a.w.s.tenantId}/audits/${auditId}/report.pdf`, report_attempts: 0 });
     expect(r.report_sent_at?.toISOString()).toBe('2026-11-02T06:01:00.000Z');
     const stored = storage.objects.get(r.report_storage_key!)!;
     expect(stored.contentType).toBe('application/pdf');
-    const mails = t.mailer.sent.filter(
-      (m) => m.attachments?.length && ['qa@acme.az', 'boss@acme.az'].includes(m.to),
-    );
+    const mails = t.mailer.sent.filter((m) => m.attachments?.length && ['qa@acme.az', 'boss@acme.az'].includes(m.to));
     expect(mails.map((m) => [m.to, m.subject, m.attachments![0]!.filename])).toEqual([
       ['qa@acme.az', 'Audit hesabatı: İcra yoxlaması — Filial 1, 02.11.2026', FILE],
       ['boss@acme.az', 'Audit hesabatı: İcra yoxlaması — Filial 1, 02.11.2026', FILE],
     ]);
     const { text } = await extractText(new Uint8Array(stored.body), { mergePages: true });
     const flat = text.replace(/\s+/g, ' ');
-    for (const s of [
-      'Audit hesabatı',
-      'İcra yoxlaması · Versiya 1',
-      'Filial 1',
-      'İşçi 1',
-      'Nəticə Uğursuz',
-      'Audit balı 75.0% (3/4)',
-      'Temperatur yüksəkdir',
-      'Problem: Adi — isti',
-      'Auditor',
-    ]) {
+    for (const s of ['Audit hesabatı', 'İcra yoxlaması · Versiya 1', 'Filial 1', 'İşçi 1', 'Nəticə Uğursuz', 'Audit balı 75.0% (3/4)', 'Temperatur yüksəkdir', 'Problem: Adi — isti', 'Auditor']) {
       expect(flat, s).toContain(s);
     }
     expect((stored.body.toString('latin1').match(/\/Subtype \/Image/g) ?? []).length).toBe(1);
@@ -123,10 +89,7 @@ describe('the audit report job (spec §7.2)', () => {
     expect((await a.manager.api.get(`/api/v1/audits/${auditId}/report.pdf`)).status).toBe(200);
     expect((await a.outsider.api.get(`/api/v1/audits/${auditId}/report.pdf`)).status).toBe(404);
     expect((await a.worker.api.get(`/api/v1/audits/${auditId}/report.pdf`)).status).toBe(403);
-    expect((await a.auditor.api.get(`/api/v1/audits/${auditId}`)).body).toMatchObject({
-      reportStatus: 'ready',
-      reportSentAt: '2026-11-02T06:01:00.000Z',
-    });
+    expect((await a.auditor.api.get(`/api/v1/audits/${auditId}`)).body).toMatchObject({ reportStatus: 'ready', reportSentAt: '2026-11-02T06:01:00.000Z' });
   });
 
   it('does not open the stored PDF when the file name cannot be read', async () => {
@@ -156,15 +119,10 @@ describe('the audit report job (spec §7.2)', () => {
   });
 
   it('sends to the remaining recipients when one fails', async () => {
-    const { auditId, job } = await finished({
-      checklistEmails: ['qa@acme.az', 'bad@acme.az'],
-      extra: ['boss@acme.az'],
-    });
+    const { auditId, job } = await finished({ checklistEmails: ['qa@acme.az', 'bad@acme.az'], extra: ['boss@acme.az'] });
     t.mailer.failFor.add('bad@acme.az');
     expect(await run(job)).toBe('sent');
-    expect(t.mailer.sent.filter((m) => m.attachments?.length).map((m) => m.to)).toEqual(
-      expect.arrayContaining(['qa@acme.az', 'boss@acme.az']),
-    );
+    expect(t.mailer.sent.filter((m) => m.attachments?.length).map((m) => m.to)).toEqual(expect.arrayContaining(['qa@acme.az', 'boss@acme.az']));
     expect(t.mailer.sent.map((m) => m.to)).not.toContain('bad@acme.az');
     expect(await row(auditId)).toMatchObject({ report_status: 'ready', report_attempts: 0 });
     expect((await row(auditId)).report_sent_at).not.toBeNull();
@@ -183,14 +141,8 @@ describe('the audit report job (spec §7.2)', () => {
     expect(put).toHaveBeenCalledTimes(1);
     expect(load).toHaveBeenCalledTimes(1);
     expect(await run(job)).toBe('failed');
-    expect(await row(auditId)).toMatchObject({
-      report_status: 'failed',
-      report_sent_at: null,
-      report_attempts: 5,
-    });
-    expect((await a.auditor.api.get(`/api/v1/audits/${auditId}/report.pdf`)).body.error.code).toBe(
-      'REPORT_NOT_READY',
-    );
+    expect(await row(auditId)).toMatchObject({ report_status: 'failed', report_sent_at: null, report_attempts: 5 });
+    expect((await a.auditor.api.get(`/api/v1/audits/${auditId}/report.pdf`)).body.error.code).toBe('REPORT_NOT_READY');
   });
 
   it('rebuilds a failed report through POST /report/send and sends it to the given addresses', async () => {
@@ -200,21 +152,12 @@ describe('the audit report job (spec §7.2)', () => {
     expect(await run(job)).toBe('failed');
     t.mailer.failFor.clear();
     const send = vi.spyOn(t.app.get(JobsService), 'send');
-    const res = await a.auditor.api.post(`/api/v1/audits/${auditId}/report/send`, {
-      emails: ['New@acme.az'],
-    });
+    const res = await a.auditor.api.post(`/api/v1/audits/${auditId}/report/send`, { emails: ['New@acme.az'] });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toMatchObject({ reportStatus: 'pending', reportRecipients: ['qa@acme.az'] });
     expect(await row(auditId)).toMatchObject({ report_status: 'pending', report_attempts: 0 });
-    expect(send).toHaveBeenCalledWith('audit.report', {
-      tenantId: a.w.s.tenantId,
-      auditId,
-      emails: ['new@acme.az'],
-    });
-    expect((await auditLogOf(auditId)).at(-1)).toMatchObject({
-      action: 'audit.report_sent',
-      after: { recipients: ['new@acme.az'], rebuilt: true },
-    });
+    expect(send).toHaveBeenCalledWith('audit.report', { tenantId: a.w.s.tenantId, auditId, emails: ['new@acme.az'] });
+    expect((await auditLogOf(auditId)).at(-1)).toMatchObject({ action: 'audit.report_sent', after: { recipients: ['new@acme.az'], rebuilt: true } });
     expect(await run({ ...job, emails: ['new@acme.az'] })).toBe('sent');
     expect(t.mailer.lastTo('new@acme.az')?.attachments?.[0]?.filename).toBe(FILE);
     expect((await row(auditId)).report_status).toBe('ready');
@@ -228,43 +171,28 @@ describe('the audit report job (spec §7.2)', () => {
     expect(await row(auditId)).toMatchObject({ report_status: 'pending', report_attempts: 1 });
     storage.failPut = false;
     expect(await run(job)).toBe('stored');
-    expect(await row(auditId)).toMatchObject({
-      report_status: 'ready',
-      report_sent_at: null,
-      report_attempts: 0,
-    });
+    expect(await row(auditId)).toMatchObject({ report_status: 'ready', report_sent_at: null, report_attempts: 0 });
   });
 
   it('refuses to send the report of an audit that has not finished, and skips a missing audit', async () => {
     const a = await auditWorld(t, clock);
     const auditId = (await startAudit(a.auditor.api, a.executionId)).body.id as string;
-    expect((await a.auditor.api.post(`/api/v1/audits/${auditId}/report/send`, {})).body.error.code).toBe(
-      'REPORT_NOT_READY',
-    );
+    expect((await a.auditor.api.post(`/api/v1/audits/${auditId}/report/send`, {})).body.error.code).toBe('REPORT_NOT_READY');
     expect(await run({ tenantId: a.w.s.tenantId, auditId: uuidv7() })).toBe('missing');
   });
 
   it('embeds the readable photos and counts the ones that cannot be loaded or decoded as not embedded', async () => {
     for (const broken of ['corrupt', 'png-signature-then-garbage', 'unreadable'] as const) {
       const { a, auditId, job } = await finished();
-      const key = (
-        await ownerQuery<{ storage_key: string }>('select storage_key from execution_media where id = $1', [
-          a.photoId,
-        ])
-      ).rows[0]!.storage_key;
-      if (broken === 'corrupt')
-        storage.objects.set(key, { body: Buffer.from('this is not an image'), contentType: 'image/jpeg' });
+      const key = (await ownerQuery<{ storage_key: string }>('select storage_key from execution_media where id = $1', [a.photoId])).rows[0]!.storage_key;
+      if (broken === 'corrupt') storage.objects.set(key, { body: Buffer.from('this is not an image'), contentType: 'image/jpeg' });
       else if (broken === 'png-signature-then-garbage') {
         const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-        storage.objects.set(key, {
-          body: Buffer.concat([signature, Buffer.from('garbage garbage garbage garbage')]),
-          contentType: 'image/png',
-        });
-      } else
-        vi.spyOn(storage, 'getObject').mockImplementation(async (k: string) => {
-          if (k === key) throw new Error('storage unavailable');
-          return storage.objects.get(k)?.body ?? null;
-        });
+        storage.objects.set(key, { body: Buffer.concat([signature, Buffer.from('garbage garbage garbage garbage')]), contentType: 'image/png' });
+      } else vi.spyOn(storage, 'getObject').mockImplementation(async (k: string) => {
+        if (k === key) throw new Error('storage unavailable');
+        return storage.objects.get(k)?.body ?? null;
+      });
       expect(await run(job), broken).toBe('sent');
       const stored = storage.objects.get((await row(auditId)).report_storage_key!)!;
       expect((stored.body.toString('latin1').match(/\/Subtype \/Image/g) ?? []).length, broken).toBe(0);
@@ -279,15 +207,9 @@ describe('the audit report job (spec §7.2)', () => {
     const { a, auditId } = await finished();
     const emails = Array.from({ length: 21 }, (_, i) => `u${i}@acme.az`);
     const res = await a.auditor.api.post(`/api/v1/audits/${auditId}/report/send`, { emails });
-    expect([res.status, res.body.error.code, res.body.error.fields]).toEqual([
-      400,
-      'VALIDATION_FAILED',
-      { emails: 'audits.issues.tooManyEmails' },
-    ]);
+    expect([res.status, res.body.error.code, res.body.error.fields]).toEqual([400, 'VALIDATION_FAILED', { emails: 'audits.issues.tooManyEmails' }]);
     expect((await row(auditId)).report_status).toBe('pending');
-    const ok = await a.auditor.api.post(`/api/v1/audits/${auditId}/report/send`, {
-      emails: emails.slice(0, 20),
-    });
+    const ok = await a.auditor.api.post(`/api/v1/audits/${auditId}/report/send`, { emails: emails.slice(0, 20) });
     expect(ok.status, JSON.stringify(ok.body)).toBe(200);
   });
 
@@ -301,10 +223,7 @@ describe('the audit report job (spec §7.2)', () => {
     expect(res.body).toMatchObject({ reportStatus: 'ready', reportRecipients: ['qa@acme.az'] });
     expect((await row(auditId)).report_attempts).toBe(0);
     expect(send).toHaveBeenCalledWith('audit.report', { tenantId: a.w.s.tenantId, auditId });
-    expect((await auditLogOf(auditId)).at(-1)).toMatchObject({
-      action: 'audit.report_sent',
-      after: { recipients: ['qa@acme.az'], rebuilt: false },
-    });
+    expect((await auditLogOf(auditId)).at(-1)).toMatchObject({ action: 'audit.report_sent', after: { recipients: ['qa@acme.az'], rebuilt: false } });
     const before = t.mailer.sent.length;
     expect(await run(job)).toBe('sent');
     expect(t.mailer.sent.length).toBe(before + 1);
@@ -328,8 +247,7 @@ describe('the audit report job (spec §7.2)', () => {
     const warn = vi.spyOn(Logger.prototype, 'warn');
     t.mailer.failFor.add('new@acme.az');
     const resend = { ...job, emails: ['new@acme.az'] };
-    for (let attempt = 1; attempt <= 4; attempt++)
-      await expect(run(resend)).rejects.toThrow(/Every audit report e-mail/);
+    for (let attempt = 1; attempt <= 4; attempt++) await expect(run(resend)).rejects.toThrow(/Every audit report e-mail/);
     expect(await run(resend)).toBe('failed');
     expect(await row(auditId)).toMatchObject({ report_status: 'ready', report_attempts: 5 });
     expect((await row(auditId)).report_sent_at).toEqual(sentAt);
@@ -352,14 +270,9 @@ describe('the audit report job (spec §7.2)', () => {
     const { auditId, job } = await finished();
     const send = vi.spyOn(t.app.get(JobsService), 'send');
     storage.failPut = true;
-    for (let attempt = 1; attempt <= 4; attempt++)
-      await expect(run(job)).rejects.toThrow(/storage unavailable/);
+    for (let attempt = 1; attempt <= 4; attempt++) await expect(run(job)).rejects.toThrow(/storage unavailable/);
     expect(await run(job)).toBe('failed');
-    expect(send).toHaveBeenCalledWith('audit.dead', {
-      queue: 'audit.report',
-      ...job,
-      error: 'storage unavailable',
-    });
+    expect(send).toHaveBeenCalledWith('audit.dead', { queue: 'audit.report', ...job, error: 'storage unavailable' });
     expect((await row(auditId)).report_status).toBe('failed');
 
     // A job pg-boss itself gave up on (every try expired) never reached run(): the report is still pending.

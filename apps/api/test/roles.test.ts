@@ -11,29 +11,11 @@ describe('roles', () => {
 
   it('lists built-in roles with permissions and user counts', async () => {
     const s = await signupTenant(t);
-    const roles = (await as(t, s.accessToken).get('/api/v1/roles')).body as Array<{
-      systemKey: string;
-      userCount: number;
-      permissions: string[];
-    }>;
+    const roles = (await as(t, s.accessToken).get('/api/v1/roles')).body as Array<{ systemKey: string; userCount: number; permissions: string[] }>;
     expect(roles.map((r) => r.systemKey).sort()).toEqual(['admin', 'auditor', 'manager', 'owner', 'worker']);
     expect(roles.find((r) => r.systemKey === 'owner')).toMatchObject({ userCount: 1 });
     expect(roles.find((r) => r.systemKey === 'manager')!.permissions.sort()).toEqual([
-      'assignments.manage',
-      'assignments.view',
-      'checklists.manage',
-      'checklists.view',
-      'executions.correct',
-      'notifications.send',
-      'reports.export',
-      'reports.view',
-      'shifts.manage',
-      'shifts.view',
-      'sites.view',
-      'tasks.manage',
-      'tasks.view',
-      'teams.view',
-      'users.view',
+      'assignments.manage', 'assignments.view', 'checklists.manage', 'checklists.view', 'executions.correct', 'notifications.send', 'reports.export', 'reports.view', 'shifts.manage', 'shifts.view', 'sites.view', 'tasks.manage', 'tasks.view', 'teams.view', 'users.view',
     ]);
   });
 
@@ -46,28 +28,11 @@ describe('roles', () => {
   it('creates and edits custom roles, bumping the version', async () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
-    const role = (
-      await owner.post('/api/v1/roles', {
-        name: 'Supervisor',
-        dataScope: 'subordinates',
-        permissions: ['users.view'],
-      })
-    ).body;
-    expect(role).toMatchObject({
-      name: 'Supervisor',
-      systemKey: null,
-      editable: true,
-      permissions: ['users.view'],
-      userCount: 0,
-    });
-    const perms = await owner.put(`/api/v1/roles/${role.id}/permissions`, {
-      permissions: ['users.view', 'teams.view'],
-    });
+    const role = (await owner.post('/api/v1/roles', { name: 'Supervisor', dataScope: 'subordinates', permissions: ['users.view'] })).body;
+    expect(role).toMatchObject({ name: 'Supervisor', systemKey: null, editable: true, permissions: ['users.view'], userCount: 0 });
+    const perms = await owner.put(`/api/v1/roles/${role.id}/permissions`, { permissions: ['users.view', 'teams.view'] });
     expect(perms.body.permissions.sort()).toEqual(['teams.view', 'users.view']);
-    const renamed = await owner.patch(`/api/v1/roles/${role.id}`, {
-      name: 'Senior supervisor',
-      dataScope: 'site_subtree',
-    });
+    const renamed = await owner.patch(`/api/v1/roles/${role.id}`, { name: 'Senior supervisor', dataScope: 'site_subtree' });
     expect(renamed.body).toMatchObject({ name: 'Senior supervisor', dataScope: 'site_subtree' });
   });
 
@@ -75,19 +40,11 @@ describe('roles', () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
     const ownerRole = await roleIdOf(s.tenantId, 'owner');
-    expect(
-      (await owner.put(`/api/v1/roles/${ownerRole}/permissions`, { permissions: [] })).body.error.code,
-    ).toBe('ROLE_NOT_EDITABLE');
+    expect((await owner.put(`/api/v1/roles/${ownerRole}/permissions`, { permissions: [] })).body.error.code).toBe('ROLE_NOT_EDITABLE');
     const managerRole = await roleIdOf(s.tenantId, 'manager');
-    expect((await owner.patch(`/api/v1/roles/${managerRole}`, { name: 'Boss' })).body.error.code).toBe(
-      'ROLE_NOT_EDITABLE',
-    );
-    expect((await owner.patch(`/api/v1/roles/${managerRole}`, { active: false })).body.error.code).toBe(
-      'ROLE_NOT_EDITABLE',
-    );
-    expect((await owner.patch(`/api/v1/roles/${managerRole}`, { dataScope: 'subordinates' })).status).toBe(
-      200,
-    );
+    expect((await owner.patch(`/api/v1/roles/${managerRole}`, { name: 'Boss' })).body.error.code).toBe('ROLE_NOT_EDITABLE');
+    expect((await owner.patch(`/api/v1/roles/${managerRole}`, { active: false })).body.error.code).toBe('ROLE_NOT_EDITABLE');
+    expect((await owner.patch(`/api/v1/roles/${managerRole}`, { dataScope: 'subordinates' })).status).toBe(200);
   });
 
   it('refuses to deactivate a role in use', async () => {
@@ -95,28 +52,16 @@ describe('roles', () => {
     const owner = as(t, s.accessToken);
     const role = (await owner.post('/api/v1/roles', { name: 'Custom', dataScope: 'own' })).body;
     await createUserDirect(t, s.tenantId, { roleId: role.id });
-    expect((await owner.patch(`/api/v1/roles/${role.id}`, { active: false })).body.error.code).toBe(
-      'ROLE_IN_USE',
-    );
+    expect((await owner.patch(`/api/v1/roles/${role.id}`, { active: false })).body.error.code).toBe('ROLE_IN_USE');
   });
 
   it('blocks granting permissions the actor does not hold', async () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
-    const roleAdmin = (
-      await owner.post('/api/v1/roles', {
-        name: 'Role admin',
-        dataScope: 'all',
-        permissions: ['roles.view', 'roles.manage'],
-      })
-    ).body;
+    const roleAdmin = (await owner.post('/api/v1/roles', { name: 'Role admin', dataScope: 'all', permissions: ['roles.view', 'roles.manage'] })).body;
     const u = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: roleAdmin.id });
     const actor = as(t, (await loginStaff(t, u.email!, u.secret)).accessToken);
-    const res = await actor.post('/api/v1/roles', {
-      name: 'Sneaky',
-      dataScope: 'all',
-      permissions: ['audit.view'],
-    });
+    const res = await actor.post('/api/v1/roles', { name: 'Sneaky', dataScope: 'all', permissions: ['audit.view'] });
     expect(res.status).toBe(403);
     expect(res.body.error.code).toBe('ROLE_ESCALATION');
   });
@@ -127,22 +72,14 @@ describe('roles', () => {
     const m = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'manager' });
     const manager = as(t, (await loginStaff(t, m.email!, m.secret)).accessToken);
     expect((await manager.get('/api/v1/sites')).status).toBe(200);
-    await owner.put(`/api/v1/roles/${await roleIdOf(s.tenantId, 'manager')}/permissions`, {
-      permissions: ['users.view'],
-    });
+    await owner.put(`/api/v1/roles/${await roleIdOf(s.tenantId, 'manager')}/permissions`, { permissions: ['users.view'] });
     expect((await manager.get('/api/v1/sites')).status).toBe(403);
   });
 
   it('refuses creating a role with a broader data scope than the actor', async () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
-    const mid = (
-      await owner.post('/api/v1/roles', {
-        name: 'Role admin',
-        dataScope: 'site_subtree',
-        permissions: ['roles.manage'],
-      })
-    ).body;
+    const mid = (await owner.post('/api/v1/roles', { name: 'Role admin', dataScope: 'site_subtree', permissions: ['roles.manage'] })).body;
     const u = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: mid.id });
     const api = as(t, (await loginStaff(t, u.email!, u.secret)).accessToken);
     const res = await api.post('/api/v1/roles', { name: 'Broad', dataScope: 'all', permissions: [] });
@@ -153,23 +90,9 @@ describe('roles', () => {
   it('stops a scoped role admin from editing roles that exceed them', async () => {
     const s = await signupTenant(t);
     const owner = as(t, s.accessToken);
-    const mid = (
-      await owner.post('/api/v1/roles', {
-        name: 'Role admin',
-        dataScope: 'site_subtree',
-        permissions: ['roles.view', 'roles.manage'],
-      })
-    ).body;
-    const wide = (
-      await owner.post('/api/v1/roles', { name: 'Wide', dataScope: 'all', permissions: ['roles.view'] })
-    ).body;
-    const narrow = (
-      await owner.post('/api/v1/roles', {
-        name: 'Narrow',
-        dataScope: 'site_subtree',
-        permissions: ['roles.view'],
-      })
-    ).body;
+    const mid = (await owner.post('/api/v1/roles', { name: 'Role admin', dataScope: 'site_subtree', permissions: ['roles.view', 'roles.manage'] })).body;
+    const wide = (await owner.post('/api/v1/roles', { name: 'Wide', dataScope: 'all', permissions: ['roles.view'] })).body;
+    const narrow = (await owner.post('/api/v1/roles', { name: 'Narrow', dataScope: 'site_subtree', permissions: ['roles.view'] })).body;
     const u = await createUserDirect(t, s.tenantId, { kind: 'staff', roleId: mid.id });
     const api = as(t, (await loginStaff(t, u.email!, u.secret)).accessToken);
     const adminRole = await roleIdOf(s.tenantId, 'admin');
@@ -179,20 +102,10 @@ describe('roles', () => {
     expect(stripAdmin.body.error.code).toBe('ROLE_ESCALATION');
     const narrowAdmin = await api.patch(`/api/v1/roles/${adminRole}`, { dataScope: 'own' });
     expect(narrowAdmin.body.error.code).toBe('ROLE_ESCALATION');
-    const boostWide = await api.put(`/api/v1/roles/${wide.id}/permissions`, {
-      permissions: ['roles.view', 'roles.manage'],
-    });
+    const boostWide = await api.put(`/api/v1/roles/${wide.id}/permissions`, { permissions: ['roles.view', 'roles.manage'] });
     expect(boostWide.body.error.code).toBe('ROLE_ESCALATION');
 
-    expect(
-      (
-        await api.put(`/api/v1/roles/${narrow.id}/permissions`, {
-          permissions: ['roles.view', 'roles.manage'],
-        })
-      ).status,
-    ).toBe(200);
-    expect(
-      (await api.patch('/api/v1/roles/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', { dataScope: 'all' })).status,
-    ).toBe(404);
+    expect((await api.put(`/api/v1/roles/${narrow.id}/permissions`, { permissions: ['roles.view', 'roles.manage'] })).status).toBe(200);
+    expect((await api.patch('/api/v1/roles/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', { dataScope: 'all' })).status).toBe(404);
   });
 });

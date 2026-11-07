@@ -28,12 +28,7 @@ export function redactSecrets(value: unknown): unknown {
 
 type AuditRow = typeof auditLog.$inferInsert;
 
-function toRow(
-  e: AuditEvent,
-  tenantId: string | null,
-  actorUserId: string | null,
-  actorPlatformAdminId: string | null,
-): AuditRow {
+function toRow(e: AuditEvent, tenantId: string | null, actorUserId: string | null, actorPlatformAdminId: string | null): AuditRow {
   const meta = currentRequestMeta();
   return {
     tenantId,
@@ -58,10 +53,7 @@ export class AuditService {
   async record(e: AuditEvent): Promise<void> {
     const { tenantId, userId, platformAdminId } = this.db.context();
     const actorUserId = e.actorUserId === undefined ? userId : e.actorUserId;
-    await this.db
-      .tx()
-      .insert(auditLog)
-      .values(toRow(e, tenantId, actorUserId, platformAdminId));
+    await this.db.tx().insert(auditLog).values(toRow(e, tenantId, actorUserId, platformAdminId));
   }
 
   async recordAsPlatform(e: AuditEvent & { tenantId: string; actorPlatformAdminId: string }): Promise<void> {
@@ -69,10 +61,7 @@ export class AuditService {
   }
 
   /** Writes on a caller-supplied executor (e.g. a platform-connection transaction for global templates). */
-  async recordIn(
-    executor: Executor,
-    e: AuditEvent & { tenantId: string | null; actorPlatformAdminId: string | null },
-  ): Promise<void> {
+  async recordIn(executor: Executor, e: AuditEvent & { tenantId: string | null; actorPlatformAdminId: string | null }): Promise<void> {
     await executor.insert(auditLog).values(toRow(e, e.tenantId, null, e.actorPlatformAdminId));
   }
 }

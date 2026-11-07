@@ -49,10 +49,7 @@ describe('ScopeService.usersFilter', () => {
 
   const visible = (userId: string, dataScope: DataScope) =>
     db.withTenant(tenantId, null, async (tx) => {
-      const rows = await tx
-        .select({ id: users.id })
-        .from(users)
-        .where(scope.usersFilter({ userId, dataScope }));
+      const rows = await tx.select({ id: users.id }).from(users).where(scope.usersFilter({ userId, dataScope }));
       return rows.map((r) => r.id).sort();
     });
 
@@ -75,8 +72,6 @@ describe('ScopeService.usersFilter', () => {
   });
 
   it('fails closed on an unknown data scope', () => {
-    expect(() => scope.usersFilter({ userId: ids.owner!, dataScope: 'everyone' as DataScope })).toThrow(
-      /Unhandled data scope/,
-    );
+    expect(() => scope.usersFilter({ userId: ids.owner!, dataScope: 'everyone' as DataScope })).toThrow(/Unhandled data scope/);
   });
 });

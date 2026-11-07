@@ -23,23 +23,15 @@ describe('the audit queue (GET /audits, Spec decision 13)', () => {
     await ownerQuery('update checklists set requires_audit = true where id = $1', [w.checklistId]);
     const s = await staffAt(t, w.s.tenantId, w.owner, 'auditor', [], 'Auditor');
     auditor = { id: s.id, api: s.api };
-    for (const d of ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05'])
-      runs[d] = await completeRunOn(t, clock, w, d);
+    for (const d of ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05']) runs[d] = await completeRunOn(t, clock, w, d);
     const items = [w.c.problem.id, w.c.temp.id, w.c.photo.id, w.c.note.id];
-    for (const [d, minute] of [
-      ['2026-11-03', '10'],
-      ['2026-11-04', '11'],
-      ['2026-11-05', '12'],
-    ] as const) {
+    for (const [d, minute] of [['2026-11-03', '10'], ['2026-11-04', '11'], ['2026-11-05', '12']] as const) {
       clock.set(`2026-11-06T06:${minute}:00Z`);
       const res = await startAudit(auditor.api, runs[d]!.executionId);
       expect(res.status, JSON.stringify(res.body)).toBe(201);
       auditIds[d] = res.body.id as string;
     }
-    for (const [d, result, minute] of [
-      ['2026-11-04', 'passed', '20'],
-      ['2026-11-05', 'failed', '30'],
-    ] as const) {
+    for (const [d, result, minute] of [['2026-11-04', 'passed', '20'], ['2026-11-05', 'failed', '30']] as const) {
       await verdictAll(auditor.api, auditIds[d]!, items, result === 'failed' ? [w.c.temp.id] : []);
       clock.set(`2026-11-06T06:${minute}:00Z`);
       expect((await auditor.api.post(`/api/v1/audits/${auditIds[d]}/finish`, { result })).status).toBe(200);
@@ -81,28 +73,15 @@ describe('the audit queue (GET /audits, Spec decision 13)', () => {
       startedAt: '2026-11-06T06:12:00.000Z',
       finishedAt: '2026-11-06T06:30:00.000Z',
     });
-    expect((await page(auditor.api, 'queue=waiting')).items[0]).toMatchObject({
-      auditId: null,
-      auditState: 'waiting',
-      auditor: null,
-      result: null,
-      percent: null,
-      status: 'audit_pending',
-    });
+    expect((await page(auditor.api, 'queue=waiting')).items[0]).toMatchObject({ auditId: null, auditState: 'waiting', auditor: null, result: null, percent: null, status: 'audit_pending' });
   });
 
   it('filters by result, dates, site, checklist and auditor', async () => {
     expect(ids(await page(auditor.api, 'queue=finished&result=passed'))).toEqual(of('2026-11-04'));
-    expect(ids(await page(auditor.api, 'queue=finished&from=2026-11-04&to=2026-11-04'))).toEqual(
-      of('2026-11-04'),
-    );
+    expect(ids(await page(auditor.api, 'queue=finished&from=2026-11-04&to=2026-11-04'))).toEqual(of('2026-11-04'));
     expect(ids(await page(auditor.api, `queue=finished&siteId=${w.otherSiteId}`))).toEqual([]);
-    expect(
-      ids(await page(auditor.api, `queue=finished&siteId=${w.siteId}&checklistId=${w.checklistId}`)),
-    ).toEqual(of('2026-11-05', '2026-11-04'));
-    expect(ids(await page(auditor.api, `queue=finished&auditorId=${auditor.id}`))).toEqual(
-      of('2026-11-05', '2026-11-04'),
-    );
+    expect(ids(await page(auditor.api, `queue=finished&siteId=${w.siteId}&checklistId=${w.checklistId}`))).toEqual(of('2026-11-05', '2026-11-04'));
+    expect(ids(await page(auditor.api, `queue=finished&auditorId=${auditor.id}`))).toEqual(of('2026-11-05', '2026-11-04'));
     expect(ids(await page(auditor.api, `queue=finished&auditorId=${w.s.ownerId}`))).toEqual([]);
     const long = await auditor.api.get('/api/v1/audits?queue=finished&from=2026-01-01&to=2027-01-02');
     expect([long.status, long.body.error.fields]).toEqual([400, { to: 'audits.issues.rangeTooLong' }]);
@@ -116,16 +95,8 @@ describe('the audit queue (GET /audits, Spec decision 13)', () => {
   });
 
   it('follows the data scope and needs audits.perform', async () => {
-    const role = await w.owner.post('/api/v1/roles', {
-      name: uniq('Rol'),
-      dataScope: 'site_subtree',
-      permissions: ['audits.perform'],
-    });
-    const u = await createUserDirect(t, w.s.tenantId, {
-      kind: 'staff',
-      roleId: role.body.id,
-      emailVerified: true,
-    });
+    const role = await w.owner.post('/api/v1/roles', { name: uniq('Rol'), dataScope: 'site_subtree', permissions: ['audits.perform'] });
+    const u = await createUserDirect(t, w.s.tenantId, { kind: 'staff', roleId: role.body.id, emailVerified: true });
     expect((await w.owner.put(`/api/v1/users/${u.id}/sites`, { siteIds: [w.otherSiteId] })).status).toBe(200);
     const elsewhere = as(t, (await loginStaff(t, u.email!, u.secret, 'web')).accessToken);
     expect(ids(await page(elsewhere, 'queue=finished'))).toEqual([]);

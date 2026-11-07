@@ -36,28 +36,14 @@ export type AuditListQuery = z.input<typeof auditListQuerySchema>;
  * Audited task actions, entity type `task`. The manager's actions (spec §6.6) plus the worker's accept, start and submit,
  * so the usage log shows what people do in the mobile app; those also go to task_status_history.
  */
-export const TASK_AUDIT_ACTIONS = [
-  'task.created',
-  'task.updated',
-  'task.reassigned',
-  'task.cancelled',
-  'task.approved',
-  'task.rejected',
-  'task.accepted',
-  'task.started',
-  'task.submitted',
-] as const;
+export const TASK_AUDIT_ACTIONS = ['task.created', 'task.updated', 'task.reassigned', 'task.cancelled', 'task.approved', 'task.rejected', 'task.accepted', 'task.started', 'task.submitted'] as const;
 export type TaskAuditAction = (typeof TASK_AUDIT_ACTIONS)[number];
 
 /**
  * Audited notification actions (spec §4). `notification_rule.*` use entity type `notification_rule` with a null entity id and
  * `{ type, … }` in before/after; `notification.message_sent` uses entity type `notification_message`, entity id = the event id.
  */
-export const NOTIFICATION_AUDIT_ACTIONS = [
-  'notification_rule.updated',
-  'notification_rule.reset',
-  'notification.message_sent',
-] as const;
+export const NOTIFICATION_AUDIT_ACTIONS = ['notification_rule.updated', 'notification_rule.reset', 'notification.message_sent'] as const;
 export type NotificationAuditAction = (typeof NOTIFICATION_AUDIT_ACTIONS)[number];
 
 /**

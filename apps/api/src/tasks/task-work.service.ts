@@ -1,13 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  type MediaKind,
-  TASK_LIMITS,
-  type TaskDetail,
-  type TaskEvidence,
-  type TaskStatus,
-  taskEvidenceMet,
-  taskTransition,
-} from '@taskop/contracts';
+import { type MediaKind, TASK_LIMITS, type TaskDetail, type TaskEvidence, type TaskStatus, taskEvidenceMet, taskTransition } from '@taskop/contracts';
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -63,10 +55,7 @@ export class TaskWorkService {
       .set({ status: 'in_progress', startedAt: at, rev: sql`${tasks.rev} + 1`, updatedAt: receivedAt })
       .where(eq(tasks.id, id));
     await this.writer.history(t, [{ from: 'accepted', to: 'in_progress', at, actorUserId: p.userId }]);
-    await this.writer.record('task.started', id, {
-      before: { status: 'accepted' },
-      after: { status: 'in_progress', startedAt: at.toISOString() },
-    });
+    await this.writer.record('task.started', id, { before: { status: 'accepted' }, after: { status: 'in_progress', startedAt: at.toISOString() } });
     return this.queries.detail(p, id);
   }
 
@@ -79,10 +68,7 @@ export class TaskWorkService {
     const tx = this.db.tx();
     const t = await this.scope.lock(id);
     await this.scope.assertWorker(p, t);
-    const [known] = await tx
-      .select({ taskId: taskSubmissions.taskId })
-      .from(taskSubmissions)
-      .where(eq(taskSubmissions.id, cmd.id));
+    const [known] = await tx.select({ taskId: taskSubmissions.taskId }).from(taskSubmissions).where(eq(taskSubmissions.id, cmd.id));
     if (known) {
       if (known.taskId !== id) throw new AppError('NOT_FOUND');
       return this.queries.detail(p, id);
@@ -94,11 +80,7 @@ export class TaskWorkService {
     const media = await this.responseMedia(p, id, cmd.mediaIds);
     const evidence = taskEvidenceMet(t.evidence as TaskEvidence, media);
     if (!evidence.ok) {
-      throw new AppError('EVIDENCE_REQUIRED', {
-        fields: Object.fromEntries(
-          evidence.missing.map((k) => [`evidence.${k}`, `tasks.issues.${k}Required`]),
-        ),
-      });
+      throw new AppError('EVIDENCE_REQUIRED', { fields: Object.fromEntries(evidence.missing.map((k) => [`evidence.${k}`, `tasks.issues.${k}Required`])) });
     }
     const at = boundTaskTime(new Date(cmd.submittedAt), t.startedAt ?? t.createdAt, receivedAt);
     await tx.insert(taskSubmissions).values({
@@ -111,28 +93,16 @@ export class TaskWorkService {
       submittedAt: at,
       receivedAt,
     });
-    if (cmd.mediaIds.length)
-      await tx.update(taskMedia).set({ submissionId: cmd.id }).where(inArray(taskMedia.id, cmd.mediaIds));
+    if (cmd.mediaIds.length) await tx.update(taskMedia).set({ submissionId: cmd.id }).where(inArray(taskMedia.id, cmd.mediaIds));
     const [row] = await tx
       .update(tasks)
-      .set({
-        status: next,
-        submittedAt: at,
-        completedAt: next === 'completed' ? at : null,
-        rev: sql`${tasks.rev} + 1`,
-        updatedAt: receivedAt,
-      })
+      .set({ status: next, submittedAt: at, completedAt: next === 'completed' ? at : null, rev: sql`${tasks.rev} + 1`, updatedAt: receivedAt })
       .where(eq(tasks.id, id))
       .returning();
     await this.writer.history(t, [{ from: t.status, to: next, at, actorUserId: p.userId }]);
     await this.writer.record('task.submitted', id, {
       before: { status: t.status },
-      after: {
-        status: next,
-        submissionId: cmd.id,
-        submittedAt: at.toISOString(),
-        mediaCount: cmd.mediaIds.length,
-      },
+      after: { status: next, submissionId: cmd.id, submittedAt: at.toISOString(), mediaCount: cmd.mediaIds.length },
     });
     await this.writer.emit('task.submitted', row!, p.userId);
     if (next === 'completed') await this.writer.emit('task.completed', row!, p.userId);
@@ -143,13 +113,8 @@ export class TaskWorkService {
    * The listed media (spec Decision 12): distinct, response media of this task, captured by the caller and not used
    * by an earlier submission; at most 10 photos and 3 videos.
    */
-  private async responseMedia(
-    p: Principal,
-    taskId: string,
-    ids: string[],
-  ): Promise<Array<{ id: string; kind: MediaKind }>> {
-    const unknown = () =>
-      new AppError('VALIDATION_FAILED', { fields: { mediaIds: 'tasks.issues.unknownMedia' } });
+  private async responseMedia(p: Principal, taskId: string, ids: string[]): Promise<Array<{ id: string; kind: MediaKind }>> {
+    const unknown = () => new AppError('VALIDATION_FAILED', { fields: { mediaIds: 'tasks.issues.unknownMedia' } });
     if (new Set(ids).size !== ids.length) throw unknown();
     const rows = ids.length
       ? await this.db
@@ -185,20 +150,11 @@ export class TaskWorkService {
     const [row] = await this.db
       .tx()
       .update(tasks)
-      .set({
-        assigneeUserId: p.userId,
-        status: 'accepted',
-        acceptedAt: at,
-        rev: sql`${tasks.rev} + 1`,
-        updatedAt: receivedAt,
-      })
+      .set({ assigneeUserId: p.userId, status: 'accepted', acceptedAt: at, rev: sql`${tasks.rev} + 1`, updatedAt: receivedAt })
       .where(eq(tasks.id, t.id))
       .returning();
     await this.writer.history(t, [{ from: 'new', to: 'accepted', at, actorUserId: p.userId }]);
-    await this.writer.record('task.accepted', t.id, {
-      before: { status: 'new' },
-      after: { status: 'accepted', assigneeUserId: p.userId, acceptedAt: at.toISOString() },
-    });
+    await this.writer.record('task.accepted', t.id, { before: { status: 'new' }, after: { status: 'accepted', assigneeUserId: p.userId, acceptedAt: at.toISOString() } });
     await this.writer.emit('task.accepted', row!, p.userId);
   }
 }

@@ -26,15 +26,11 @@ async function asTenant<T>(tenantId: string, fn: () => Promise<T>): Promise<T> {
 describe('row-level security', () => {
   beforeAll(async () => {
     await ownerQuery("insert into tenants (id, name, org_code) values ($1, 'A', $2), ($3, 'B', $4)", [
-      A,
-      `rls-a-${A.slice(-8)}`,
-      B,
-      `rls-b-${B.slice(-8)}`,
+      A, `rls-a-${A.slice(-8)}`, B, `rls-b-${B.slice(-8)}`,
     ]);
-    await ownerQuery(
-      "insert into site_types (id, tenant_id, name) values ($1, $2, 'Type A'), ($3, $4, 'Type B')",
-      [typeA, A, typeB, B],
-    );
+    await ownerQuery("insert into site_types (id, tenant_id, name) values ($1, $2, 'Type A'), ($3, $4, 'Type B')", [
+      typeA, A, typeB, B,
+    ]);
     app = new pg.Client({ connectionString: inject('db').appUrl });
     await app.connect();
   });
@@ -57,28 +53,20 @@ describe('row-level security', () => {
 
   it('rejects writes into another tenant', async () => {
     await expect(
-      asTenant(A, () =>
-        app.query("insert into site_types (id, tenant_id, name) values ($1, $2, 'x')", [uuidv7(), B]),
-      ),
+      asTenant(A, () => app.query("insert into site_types (id, tenant_id, name) values ($1, $2, 'x')", [uuidv7(), B])),
     ).rejects.toThrow(/row-level security/);
   });
 
   it('composite foreign keys block cross-tenant references', async () => {
     await expect(
       asTenant(B, () =>
-        app.query("insert into sites (id, tenant_id, type_id, name, path) values ($1, $2, $3, 'x', 'x')", [
-          uuidv7(),
-          B,
-          typeA,
-        ]),
+        app.query("insert into sites (id, tenant_id, type_id, name, path) values ($1, $2, $3, 'x', 'x')", [uuidv7(), B, typeA]),
       ),
     ).rejects.toMatchObject({ code: '23503' });
   });
 
   it('forbids updating or deleting audit_log', async () => {
-    await expect(asTenant(A, () => app.query('update audit_log set action = action'))).rejects.toThrow(
-      /permission denied/,
-    );
+    await expect(asTenant(A, () => app.query('update audit_log set action = action'))).rejects.toThrow(/permission denied/);
     await expect(asTenant(A, () => app.query('delete from audit_log'))).rejects.toThrow(/permission denied/);
   });
 

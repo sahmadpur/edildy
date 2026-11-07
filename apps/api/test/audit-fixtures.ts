@@ -1,16 +1,7 @@
 import type { Answers } from '@taskop/contracts';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
-import {
-  claimOk,
-  completeExecution,
-  type ExecutionWorld,
-  executionWorld,
-  fullAnswers,
-  occurrenceOn,
-  registerPhoto,
-  type TestWorker,
-} from './execution-fixtures';
+import { claimOk, completeExecution, type ExecutionWorld, executionWorld, fullAnswers, occurrenceOn, registerPhoto, type TestWorker } from './execution-fixtures';
 import type { FakeClock } from './fake-clock';
 import { staffAt } from './notification-fixtures';
 import { ownerQuery } from './owner-db';
@@ -45,25 +36,16 @@ export interface AuditWorld {
  * `problemYes`: "Bəli" with a photo and the follow-up comment "Su axır", a critical rule problem), 10 °C with the note
  * "isti" (a normal rule problem), one photo. `requiresAudit` sets the checklist flag before the run completes.
  */
-export async function auditWorld(
-  t: TestApp,
-  clock: FakeClock,
-  opts: { requiresAudit?: boolean; problemYes?: boolean } = {},
-): Promise<AuditWorld> {
+export async function auditWorld(t: TestApp, clock: FakeClock, opts: { requiresAudit?: boolean; problemYes?: boolean } = {}): Promise<AuditWorld> {
   const w = await executionWorld(t);
-  if (opts.requiresAudit)
-    await ownerQuery('update checklists set requires_audit = true where id = $1', [w.checklistId]);
+  if (opts.requiresAudit) await ownerQuery('update checklists set requires_audit = true where id = $1', [w.checklistId]);
   const worker = w.workers[0];
   clock.set('2026-11-02T04:20:00Z');
   const executionId = await claimOk(worker.api, w.occurrenceId, '2026-11-02T04:10:00.000Z');
   const photoId = await registerPhoto(worker.api, executionId, w.c.photo.id);
-  const problemPhotoId = opts.problemYes
-    ? await registerPhoto(worker.api, executionId, w.c.problem.id)
-    : null;
+  const problemPhotoId = opts.problemYes ? await registerPhoto(worker.api, executionId, w.c.problem.id) : null;
   const answers: Answers = {
-    [w.c.problem.id]: problemPhotoId
-      ? { optionIds: [w.c.yes.id], photos: [problemPhotoId] }
-      : { optionIds: [w.c.no.id] },
+    [w.c.problem.id]: problemPhotoId ? { optionIds: [w.c.yes.id], photos: [problemPhotoId] } : { optionIds: [w.c.no.id] },
     ...(problemPhotoId ? { [w.c.comment.id]: { text: 'Su axır' } } : {}),
     [w.c.temp.id]: { number: 10, note: 'isti' },
     [w.c.photo.id]: { photos: [photoId] },
@@ -87,21 +69,12 @@ export async function auditWorld(
   };
 }
 
-export const correct = (api: Api, executionId: string, body: object) =>
-  api.post(`/api/v1/executions/${executionId}/corrections`, body);
-export const sendBack = (api: Api, executionId: string, body: object) =>
-  api.post(`/api/v1/executions/${executionId}/send-back`, body);
-export const withdraw = (api: Api, executionId: string) =>
-  api.post(`/api/v1/executions/${executionId}/send-back/cancel`);
+export const correct = (api: Api, executionId: string, body: object) => api.post(`/api/v1/executions/${executionId}/corrections`, body);
+export const sendBack = (api: Api, executionId: string, body: object) => api.post(`/api/v1/executions/${executionId}/send-back`, body);
+export const withdraw = (api: Api, executionId: string) => api.post(`/api/v1/executions/${executionId}/send-back/cancel`);
 export const resubmit = (api: Api, executionId: string, at: string, round = 1) =>
-  api.post(`/api/v1/executions/${executionId}/resubmit`, {
-    round,
-    resubmittedAt: at,
-    deviceTime: at,
-    clientOffsetMs: 0,
-  });
-export const startAudit = (api: Api, executionId: string) =>
-  api.post(`/api/v1/executions/${executionId}/audits`);
+  api.post(`/api/v1/executions/${executionId}/resubmit`, { round, resubmittedAt: at, deviceTime: at, clientOffsetMs: 0 });
+export const startAudit = (api: Api, executionId: string) => api.post(`/api/v1/executions/${executionId}/audits`);
 
 export interface CorrectionDbRow {
   id: string;
@@ -117,12 +90,7 @@ export interface CorrectionDbRow {
 }
 
 export const correctionRows = async (executionId: string): Promise<CorrectionDbRow[]> =>
-  (
-    await ownerQuery<CorrectionDbRow>(
-      'select * from execution_corrections where execution_id = $1 order by at, id',
-      [executionId],
-    )
-  ).rows;
+  (await ownerQuery<CorrectionDbRow>('select * from execution_corrections where execution_id = $1 order by at, id', [executionId])).rows;
 
 export interface ReworkDbRow {
   id: string;
@@ -138,12 +106,7 @@ export interface ReworkDbRow {
 }
 
 export const reworkRows = async (executionId: string): Promise<ReworkDbRow[]> =>
-  (
-    await ownerQuery<ReworkDbRow>(
-      'select * from execution_rework_requests where execution_id = $1 order by round',
-      [executionId],
-    )
-  ).rows;
+  (await ownerQuery<ReworkDbRow>('select * from execution_rework_requests where execution_id = $1 order by round', [executionId])).rows;
 
 export interface AuditLogDbRow {
   action: string;
@@ -186,17 +149,10 @@ export const problemRows = async (executionId: string): Promise<ProblemDbRow[]> 
 
 /** Marks every medium of the execution uploaded, as if the phone had finished its uploads. */
 export const markUploaded = (executionId: string) =>
-  ownerQuery("update execution_media set status = 'uploaded', uploaded_at = now() where execution_id = $1", [
-    executionId,
-  ]);
+  ownerQuery("update execution_media set status = 'uploaded', uploaded_at = now() where execution_id = $1", [executionId]);
 
 /** İşçi 1 completes the run of `date` (YYYY-MM-DD) at 08:20 Baku that day, with every required answer. */
-export async function completeRunOn(
-  t: TestApp,
-  clock: FakeClock,
-  w: ExecutionWorld,
-  date: string,
-): Promise<{ occurrenceId: string; executionId: string }> {
+export async function completeRunOn(t: TestApp, clock: FakeClock, w: ExecutionWorld, date: string): Promise<{ occurrenceId: string; executionId: string }> {
   const occurrenceId = await occurrenceOn(w.assignmentId, date);
   const at = `${date}T04:20:00.000Z`;
   clock.set(at);
@@ -210,16 +166,9 @@ export async function completeRunOn(
 }
 
 /** Approves every item of `itemIds`, rejecting those in `rejected` with a comment. */
-export async function verdictAll(
-  api: Api,
-  auditId: string,
-  itemIds: readonly string[],
-  rejected: readonly string[] = [],
-): Promise<void> {
+export async function verdictAll(api: Api, auditId: string, itemIds: readonly string[], rejected: readonly string[] = []): Promise<void> {
   for (const itemId of itemIds) {
-    const body = rejected.includes(itemId)
-      ? { verdict: 'rejected', comment: 'Uyğun deyil' }
-      : { verdict: 'approved' };
+    const body = rejected.includes(itemId) ? { verdict: 'rejected', comment: 'Uyğun deyil' } : { verdict: 'approved' };
     const res = await api.put(`/api/v1/audits/${auditId}/items/${itemId}`, body);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
   }

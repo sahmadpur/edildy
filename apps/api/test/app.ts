@@ -55,10 +55,7 @@ export function testEnv(overrides: Record<string, string> = {}): Record<string, 
   };
 }
 
-export async function createTestApp(
-  overrides: Record<string, string> = {},
-  opts: { clock?: Clock; storage?: object } = {},
-): Promise<TestApp> {
+export async function createTestApp(overrides: Record<string, string> = {}, opts: { clock?: Clock; storage?: object } = {}): Promise<TestApp> {
   const config = loadConfig(testEnv(overrides));
   const mailer = new MemoryMailer();
   let builder = Test.createTestingModule({ imports: [AppModule.forRoot(config)] })

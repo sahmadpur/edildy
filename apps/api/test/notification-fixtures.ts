@@ -12,11 +12,7 @@ import { ownerQuery } from './owner-db';
 import type { Api } from './scheduling-fixtures';
 
 /** An Android device row straight in the DB (owner connection). */
-export async function addDevice(
-  tenantId: string,
-  userId: string,
-  token = `ExponentPushToken[${randomUUID()}]`,
-): Promise<{ id: string; token: string }> {
+export async function addDevice(tenantId: string, userId: string, token = `ExponentPushToken[${randomUUID()}]`): Promise<{ id: string; token: string }> {
   const id = uuidv7();
   await ownerQuery(
     `insert into push_devices (id, tenant_id, user_id, expo_token, platform, last_seen_at) values ($1, $2, $3, $4, 'android', now())`,
@@ -63,15 +59,7 @@ export async function asApp<T>(tenantId: string, fn: (c: pg.PoolClient) => Promi
 }
 
 /** A staff user with a built-in role, linked to `siteIds`, logged in (on the web unless `client` says otherwise). */
-export async function staffAt(
-  t: TestApp,
-  tenantId: string,
-  owner: Api,
-  roleKey: SystemRoleKey,
-  siteIds: string[],
-  fullName = `Staff ${roleKey}`,
-  client = 'web',
-) {
+export async function staffAt(t: TestApp, tenantId: string, owner: Api, roleKey: SystemRoleKey, siteIds: string[], fullName = `Staff ${roleKey}`, client = 'web') {
   const u = await createUserDirect(t, tenantId, { kind: 'staff', roleKey, fullName, emailVerified: true });
   if (siteIds.length) {
     const res = await owner.put(`/api/v1/users/${u.id}/sites`, { siteIds });
@@ -83,10 +71,7 @@ export async function staffAt(
 
 /** Runs fan-out for every unprocessed event of the tenant, oldest first, as the worker would. */
 export async function fanOutAll(t: TestApp, tenantId: string): Promise<FanoutResult[]> {
-  const r = await ownerQuery<{ id: string }>(
-    'select id from notification_events where tenant_id = $1 and processed_at is null order by created_at, id',
-    [tenantId],
-  );
+  const r = await ownerQuery<{ id: string }>('select id from notification_events where tenant_id = $1 and processed_at is null order by created_at, id', [tenantId]);
   const out: FanoutResult[] = [];
   for (const { id } of r.rows) out.push(await t.app.get(NotificationFanout).run({ tenantId, eventId: id }));
   return out;
@@ -146,13 +131,9 @@ export const pushSender = (t: TestApp) => t.app.get<FakePushSender>(PUSH_SENDER)
 
 /** Runs the delivery worker for every queued delivery of the tenant: push rows in one job, each email in its own. */
 export async function deliverAll(t: TestApp, tenantId: string): Promise<void> {
-  const r = await ownerQuery<{ id: string; channel: string }>(
-    "select id, channel from notification_deliveries where tenant_id = $1 and status = 'queued' order by id",
-    [tenantId],
-  );
+  const r = await ownerQuery<{ id: string; channel: string }>("select id, channel from notification_deliveries where tenant_id = $1 and status = 'queued' order by id", [tenantId]);
   const push = r.rows.filter((d) => d.channel === 'push').map((d) => d.id);
   const delivery = t.app.get(NotificationDelivery);
   if (push.length) await delivery.run({ tenantId, deliveryIds: push });
-  for (const d of r.rows.filter((x) => x.channel === 'email'))
-    await delivery.run({ tenantId, deliveryIds: [d.id] });
+  for (const d of r.rows.filter((x) => x.channel === 'email')) await delivery.run({ tenantId, deliveryIds: [d.id] });
 }

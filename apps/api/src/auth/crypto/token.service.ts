@@ -36,10 +36,9 @@ export class TokenService implements OnModuleInit {
   private readonly keys: Promise<{ privateKey: CryptoKey; publicKey: CryptoKey }>;
 
   constructor(@Inject(APP_CONFIG) config: AppConfig) {
-    this.keys = Promise.all([
-      importPKCS8(config.JWT_PRIVATE_KEY, 'EdDSA'),
-      importSPKI(config.JWT_PUBLIC_KEY, 'EdDSA'),
-    ]).then(([privateKey, publicKey]) => ({ privateKey, publicKey }));
+    this.keys = Promise.all([importPKCS8(config.JWT_PRIVATE_KEY, 'EdDSA'), importSPKI(config.JWT_PUBLIC_KEY, 'EdDSA')]).then(
+      ([privateKey, publicKey]) => ({ privateKey, publicKey }),
+    );
     this.keys.catch(() => undefined); // surfaced by onModuleInit
   }
 
@@ -50,14 +49,7 @@ export class TokenService implements OnModuleInit {
   async signAccess(c: AccessClaims): Promise<{ token: string; expiresAt: Date }> {
     const { privateKey } = await this.keys;
     const expiresAt = new Date(Date.now() + ACCESS_TOKEN_TTL_MS);
-    const token = await new SignJWT({
-      tid: c.tid,
-      rid: c.rid,
-      rv: c.rv,
-      kind: c.kind,
-      sid: c.sid,
-      ...(c.client ? { client: c.client } : {}),
-    })
+    const token = await new SignJWT({ tid: c.tid, rid: c.rid, rv: c.rv, kind: c.kind, sid: c.sid, ...(c.client ? { client: c.client } : {}) })
       .setProtectedHeader({ alg: 'EdDSA' })
       .setSubject(c.sub)
       .setIssuer(ISSUER)

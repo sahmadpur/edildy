@@ -25,11 +25,7 @@ describe('web reads of executions and problems', () => {
     const photo = await registerPhoto(w0.api, executionId, w.c.photo.id);
     const answers = {
       [w.c.problem.id]: { optionIds: [w.c.no.id] },
-      [w.c.temp.id]: {
-        number: 10,
-        note: 'isti',
-        problem: { severity: 'critical', note: 'Kondisioner xarabdır', mediaIds: [] },
-      },
+      [w.c.temp.id]: { number: 10, note: 'isti', problem: { severity: 'critical', note: 'Kondisioner xarabdır', mediaIds: [] } },
       [w.c.photo.id]: { photos: [photo] },
     };
     const res = await w0.api.post(`/api/v1/executions/${executionId}/complete`, {
@@ -43,11 +39,7 @@ describe('web reads of executions and problems', () => {
     return { w, executionId, lostId: lost.id, photo, answers };
   }
   async function manager(w: Awaited<ReturnType<typeof scenario>>['w'], siteId: string) {
-    const u = await createUserDirect(t, w.s.tenantId, {
-      kind: 'staff',
-      roleKey: 'manager',
-      emailVerified: true,
-    });
+    const u = await createUserDirect(t, w.s.tenantId, { kind: 'staff', roleKey: 'manager', emailVerified: true });
     await w.owner.put(`/api/v1/users/${u.id}/sites`, { siteIds: [siteId] });
     return as(t, (await loginStaff(t, u.email!, u.secret)).accessToken);
   }
@@ -72,17 +64,9 @@ describe('web reads of executions and problems', () => {
       mediaPending: 1,
     });
     expect(detail.rejectedExecutions).toEqual([
-      expect.objectContaining({
-        id: lostId,
-        state: 'rejected',
-        rejectedReason: 'ALREADY_CLAIMED',
-        executor: { id: w.workers[1].id, fullName: 'İşçi 2' },
-        problemCount: 0,
-      }),
+      expect.objectContaining({ id: lostId, state: 'rejected', rejectedReason: 'ALREADY_CLAIMED', executor: { id: w.workers[1].id, fullName: 'İşçi 2' }, problemCount: 0 }),
     ]);
-    const list = (
-      await w.owner.get(`/api/v1/occurrences?from=2026-11-02&to=2026-11-03&assignmentId=${w.assignmentId}`)
-    ).body.items;
+    const list = (await w.owner.get(`/api/v1/occurrences?from=2026-11-02&to=2026-11-03&assignmentId=${w.assignmentId}`)).body.items;
     expect(list[0].executionBrief).toEqual({
       executionId,
       executorName: 'İşçi 1',
@@ -110,51 +94,25 @@ describe('web reads of executions and problems', () => {
       clockOffsetMs: 0,
       device: { platform: 'android', osVersion: '15', appVersion: '1.0.0' },
       occurrence: { id: w.occurrenceId, status: 'completed' },
-      media: [
-        {
-          id: photo,
-          itemId: w.c.photo.id,
-          kind: 'photo',
-          source: 'camera',
-          status: 'pending',
-          capturedBy: { id: w.workers[0].id, fullName: 'İşçi 1' },
-        },
-      ],
+      media: [{ id: photo, itemId: w.c.photo.id, kind: 'photo', source: 'camera', status: 'pending', capturedBy: { id: w.workers[0].id, fullName: 'İşçi 1' } }],
     });
     expect(res.body.content.sections[0].items).toHaveLength(4);
-    expect(
-      res.body.problems.map((p: { source: string; severity: string; note: string }) => [
-        p.source,
-        p.severity,
-        p.note,
-      ]),
-    ).toEqual([
+    expect(res.body.problems.map((p: { source: string; severity: string; note: string }) => [p.source, p.severity, p.note])).toEqual([
       ['rule', 'normal', 'isti'],
       ['manual', 'critical', 'Kondisioner xarabdır'],
     ]);
     expect((await w.workers[0].api.get(`/api/v1/executions/${executionId}`)).status).toBe(200);
     expect((await w.workers[1].api.get(`/api/v1/executions/${executionId}`)).status).toBe(404);
-    expect((await w.workers[1].api.get(`/api/v1/executions/${lostId}`)).body).toMatchObject({
-      state: 'rejected',
-      rejectedReason: 'ALREADY_CLAIMED',
-    });
+    expect((await w.workers[1].api.get(`/api/v1/executions/${lostId}`)).body).toMatchObject({ state: 'rejected', rejectedReason: 'ALREADY_CLAIMED' });
     expect((await (await manager(w, w.siteId)).get(`/api/v1/executions/${executionId}`)).status).toBe(200);
-    expect((await (await manager(w, w.otherSiteId)).get(`/api/v1/executions/${executionId}`)).status).toBe(
-      404,
-    );
+    expect((await (await manager(w, w.otherSiteId)).get(`/api/v1/executions/${executionId}`)).status).toBe(404);
   });
 
   it('lists problems newest first with filters, labels, a cursor and a 92-day range', async () => {
     const { w } = await scenario();
     const get = (qs: string) => w.owner.get(`/api/v1/problems?from=2026-11-01&to=2026-11-30${qs}`);
     const all = (await get('')).body;
-    expect(
-      all.items.map((p: { itemLabel: string; source: string; severity: string }) => [
-        p.itemLabel,
-        p.source,
-        p.severity,
-      ]),
-    ).toEqual([
+    expect(all.items.map((p: { itemLabel: string; source: string; severity: string }) => [p.itemLabel, p.source, p.severity])).toEqual([
       ['Temperatur', 'manual', 'critical'],
       ['Temperatur', 'rule', 'normal'],
     ]);
@@ -181,9 +139,6 @@ describe('web reads of executions and problems', () => {
     const long = await w.owner.get('/api/v1/problems?from=2026-11-01&to=2027-02-01');
     expect([long.status, long.body.error.fields]).toEqual([400, { to: 'executions.issues.rangeTooLong' }]);
     expect((await w.workers[0].api.get('/api/v1/problems?from=2026-11-01&to=2026-11-30')).status).toBe(403);
-    expect(
-      (await (await manager(w, w.otherSiteId)).get('/api/v1/problems?from=2026-11-01&to=2026-11-30')).body
-        .items,
-    ).toEqual([]);
+    expect((await (await manager(w, w.otherSiteId)).get('/api/v1/problems?from=2026-11-01&to=2026-11-30')).body.items).toEqual([]);
   });
 });

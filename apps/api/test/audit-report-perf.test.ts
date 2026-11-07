@@ -1,10 +1,6 @@
 // Run the memory check with `pnpm --filter @taskop/api perf:audit-report` (RUN_PERF=1); the regular suite checks time and images only.
 import { describe, expect, it } from 'vitest';
-import {
-  type AuditReportData,
-  buildAuditReport,
-  type ReportSection,
-} from '../src/audits/report/audit-report-builder';
+import { type AuditReportData, buildAuditReport, type ReportSection } from '../src/audits/report/audit-report-builder';
 import { noisePng } from './png';
 
 const MB = 1024 * 1024;
@@ -38,28 +34,13 @@ describe('audit report performance', () => {
       }),
     }));
     const data: AuditReportData = {
-      auditId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f',
-      tenantName: 'Acme MMC',
-      timezone: 'Asia/Baku',
-      checklistName: 'Böyük yoxlama',
-      versionNumber: 1,
-      siteName: 'Filial 1',
-      executorName: 'İşçi 1',
-      localDate: '2026-11-02',
+      auditId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', tenantName: 'Acme MMC', timezone: 'Asia/Baku', checklistName: 'Böyük yoxlama', versionNumber: 1,
+      siteName: 'Filial 1', executorName: 'İşçi 1', localDate: '2026-11-02',
       window: { startsAt: new Date('2026-11-02T04:00:00Z'), closesAt: new Date('2026-11-02T07:00:00Z') },
-      startedAt: new Date('2026-11-02T04:10:00Z'),
-      completedAt: new Date('2026-11-02T05:00:00Z'),
-      syncedAt: new Date('2026-11-02T05:00:00Z'),
-      auditorName: 'Auditor',
-      finishedAt: new Date('2026-11-02T06:00:00Z'),
-      result: 'passed',
-      auditScore: { approved: 171, rejected: 29, reviewed: 200, percent: 85.5 },
-      runScore: 90,
-      originalScore: 80,
-      comment: null,
-      sections,
-      generatedAt: new Date('2026-11-02T06:01:00Z'),
-      locale: 'az',
+      startedAt: new Date('2026-11-02T04:10:00Z'), completedAt: new Date('2026-11-02T05:00:00Z'), syncedAt: new Date('2026-11-02T05:00:00Z'),
+      auditorName: 'Auditor', finishedAt: new Date('2026-11-02T06:00:00Z'), result: 'passed',
+      auditScore: { approved: 171, rejected: 29, reviewed: 200, percent: 85.5 }, runScore: 90, originalScore: 80, comment: null,
+      sections, generatedAt: new Date('2026-11-02T06:01:00Z'), locale: 'az',
     };
     // maxRSS is a high-water mark, so it does not depend on when V8 collects (spec §7.2). Collect first when node runs with --expose-gc (optional).
     (globalThis as { gc?: () => void }).gc?.();

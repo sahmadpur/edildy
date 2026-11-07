@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, FolderInput, Pencil, Plus, Power, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfirmButton } from '@/components/confirm-button';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,7 @@ function SiteTreeItem({ node, ...props }: Props & { node: SiteNode }) {
   const [open, setOpen] = useState(true);
   const hasChildren = node.children.length > 0;
   const nested = node.depth > 0;
-  const iconButton = (label: string, icon: React.ReactNode, onClick: () => void) => (
+  const iconButton = (label: string, icon: ReactNode, onClick: () => void) => (
     <Button variant="ghost" size="icon" className="size-7" aria-label={label} title={label} onClick={onClick}>
       {icon}
     </Button>

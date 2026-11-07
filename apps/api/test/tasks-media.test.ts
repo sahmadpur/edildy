@@ -3,15 +3,7 @@ import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
 import { ownerQuery } from './owner-db';
 import { MONDAY_0800 } from './scheduling-fixtures';
-import {
-  act,
-  createTask,
-  newTaskBody,
-  registerTaskMedia,
-  taskMediaBody,
-  taskWorld,
-  videoExtra,
-} from './task-fixtures';
+import { act, createTask, newTaskBody, registerTaskMedia, taskMediaBody, taskWorld, videoExtra } from './task-fixtures';
 
 describe('task media registration', () => {
   const clock = new FakeClock(MONDAY_0800);
@@ -28,16 +20,9 @@ describe('task media registration', () => {
     const body = taskMediaBody('instruction');
     const res = await w.manager.api.post(`/api/v1/tasks/${task.id}/media`, body);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
-    expect(res.body).toMatchObject({
-      mediaId: body.id,
-      status: 'pending',
-      headers: { 'Content-Type': 'image/jpeg', 'Content-Length': '1000' },
-    });
+    expect(res.body).toMatchObject({ mediaId: body.id, status: 'pending', headers: { 'Content-Type': 'image/jpeg', 'Content-Length': '1000' } });
     expect(res.body.uploadUrl).toContain(`/t/${w.s.tenantId}/k/${task.id}/${body.id}.jpg`);
-    expect((await w.manager.api.post(`/api/v1/tasks/${task.id}/media`, body)).body).toMatchObject({
-      mediaId: body.id,
-      status: 'pending',
-    });
+    expect((await w.manager.api.post(`/api/v1/tasks/${task.id}/media`, body)).body).toMatchObject({ mediaId: body.id, status: 'pending' });
     await act(w.workers[0].api, task.id, 'start', '2026-11-02T04:00:00.000Z');
     const response = await registerTaskMedia(w.workers[0].api, task.id, 'response', videoExtra);
     const rows = await ownerQuery<{ id: string; role: string; kind: string; captured_by_user_id: string }>(
@@ -48,23 +33,14 @@ describe('task media registration', () => {
       { id: body.id, role: 'instruction', kind: 'photo', captured_by_user_id: w.manager.id },
       { id: response, role: 'response', kind: 'video', captured_by_user_id: w.workers[0].id },
     ]);
-    expect(
-      (await w.workers[0].api.get(`/api/v1/tasks/${task.id}`)).body.media.map((m: { id: string }) => m.id),
-    ).toEqual([body.id, response]);
+    expect((await w.workers[0].api.get(`/api/v1/tasks/${task.id}`)).body.media.map((m: { id: string }) => m.id)).toEqual([body.id, response]);
   });
 
   it('refuses the wrong role or status, gallery media on live-only tasks, kinds set to none, bad types and sizes, and future times', async () => {
     const w = await taskWorld(t);
     const [w1, w2] = w.workers;
-    const task = await createTask(
-      w.manager.api,
-      newTaskBody({ userId: w1.id }, { evidence: { photo: 'required', video: 'none', liveOnly: true } }),
-    );
-    const code = async (
-      api: typeof w1.api,
-      extra: Record<string, unknown>,
-      role: 'instruction' | 'response' = 'response',
-    ) => {
+    const task = await createTask(w.manager.api, newTaskBody({ userId: w1.id }, { evidence: { photo: 'required', video: 'none', liveOnly: true } }));
+    const code = async (api: typeof w1.api, extra: Record<string, unknown>, role: 'instruction' | 'response' = 'response') => {
       const res = await api.post(`/api/v1/tasks/${task.id}/media`, taskMediaBody(role, extra));
       return [res.status, res.body.error?.code];
     };
@@ -91,10 +67,7 @@ describe('task media registration', () => {
     await act(w.workers[0].api, task.id, 'start', '2026-11-02T04:00:00.000Z');
     // Room for retakes: max(3 × 3, 10) = 10 unsubmitted videos.
     for (let i = 0; i < 10; i++) await registerTaskMedia(w.workers[0].api, task.id, 'response', videoExtra);
-    const eleventh = await w.workers[0].api.post(
-      `/api/v1/tasks/${task.id}/media`,
-      taskMediaBody('response', videoExtra),
-    );
+    const eleventh = await w.workers[0].api.post(`/api/v1/tasks/${task.id}/media`, taskMediaBody('response', videoExtra));
     expect([eleventh.status, eleventh.body.error.code]).toEqual([422, 'MEDIA_LIMIT_REACHED']);
   });
 
@@ -103,19 +76,11 @@ describe('task media registration', () => {
     const task = await createTask(w.manager.api, newTaskBody({ userId: w.workers[0].id }));
     const body = taskMediaBody('instruction');
     await w.manager.api.post(`/api/v1/tasks/${task.id}/media`, body);
-    await ownerQuery("update task_media set status = 'uploaded', uploaded_at = now() where id = $1", [
-      body.id,
-    ]);
+    await ownerQuery("update task_media set status = 'uploaded', uploaded_at = now() where id = $1", [body.id]);
     await ownerQuery("update tasks set status = 'completed' where id = $1", [task.id]);
     const replay = await w.manager.api.post(`/api/v1/tasks/${task.id}/media`, body);
     expect(replay.status, JSON.stringify(replay.body)).toBe(200);
-    expect(replay.body).toEqual({
-      mediaId: body.id,
-      status: 'uploaded',
-      uploadUrl: null,
-      headers: {},
-      expiresAt: null,
-    });
+    expect(replay.body).toEqual({ mediaId: body.id, status: 'uploaded', uploadUrl: null, headers: {}, expiresAt: null });
     expect((await w.workers[0].api.post(`/api/v1/tasks/${task.id}/media`, body)).status).toBe(404);
   });
 
@@ -128,10 +93,7 @@ describe('task media registration', () => {
     expect((await w1.api.post(`/api/v1/tasks/${task.id}/media`, body)).status).toBe(200);
     // Whatever the status, the current assignee still gets the stored result.
     await ownerQuery("update tasks set status = 'awaiting_review' where id = $1", [task.id]);
-    expect((await w1.api.post(`/api/v1/tasks/${task.id}/media`, body)).body).toMatchObject({
-      mediaId: body.id,
-      status: 'pending',
-    });
+    expect((await w1.api.post(`/api/v1/tasks/${task.id}/media`, body)).body).toMatchObject({ mediaId: body.id, status: 'pending' });
     await ownerQuery('update tasks set assignee_user_id = $2 where id = $1', [task.id, w2.id]);
     const replay = await w1.api.post(`/api/v1/tasks/${task.id}/media`, body);
     expect([replay.status, replay.body.error.code]).toEqual([404, 'NOT_FOUND']);

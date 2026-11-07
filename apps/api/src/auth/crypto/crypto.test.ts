@@ -7,16 +7,9 @@ import { PasswordHasher } from './password-hasher';
 import { generatePassword, generatePin } from './secret-generator';
 import { TokenService } from './token.service';
 
+
 const config = loadConfig(testEnv());
-const claims = {
-  sub: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f',
-  tid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e60',
-  rid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e61',
-  rv: 3,
-  kind: 'staff' as const,
-  sid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e62',
-  client: 'mobile' as const,
-};
+const claims = { sub: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f', tid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e60', rid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e61', rv: 3, kind: 'staff' as const, sid: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e62', client: 'mobile' as const };
 
 describe('PasswordHasher', () => {
   const hasher = new PasswordHasher(config);

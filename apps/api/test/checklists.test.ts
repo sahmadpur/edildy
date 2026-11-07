@@ -23,13 +23,7 @@ describe('checklists lifecycle', () => {
     const { s, api } = await owner();
     const created = await api.post(B, { name: 'Gündəlik yoxlama', category: 'cleaning' });
     expect(created.status, JSON.stringify(created.body)).toBe(201);
-    expect(created.body).toMatchObject({
-      name: 'Gündəlik yoxlama',
-      status: 'active',
-      currentVersionNumber: null,
-      draftRevision: 1,
-      versions: [{ state: 'draft' }],
-    });
+    expect(created.body).toMatchObject({ name: 'Gündəlik yoxlama', status: 'active', currentVersionNumber: null, draftRevision: 1, versions: [{ state: 'draft' }] });
     const id = created.body.id as string;
 
     const draft = (await api.get(`${B}/${id}/draft`)).body;
@@ -39,12 +33,7 @@ describe('checklists lifecycle', () => {
 
     const v1 = await api.post(`${B}/${id}/publish`, { revision: 2, changeNote: 'İlk versiya' });
     expect(v1.status, JSON.stringify(v1.body)).toBe(200);
-    expect(v1.body).toMatchObject({
-      number: 1,
-      state: 'published',
-      changeNote: 'İlk versiya',
-      publishedBy: { kind: 'user', name: 'Elvin Əhmədov' },
-    });
+    expect(v1.body).toMatchObject({ number: 1, state: 'published', changeNote: 'İlk versiya', publishedBy: { kind: 'user', name: 'Elvin Əhmədov' } });
     const v1Content = (await api.get(`${B}/${id}/versions/${v1.body.id}`)).body.content;
 
     const d2 = await api.post(`${B}/${id}/draft`, {});
@@ -60,16 +49,8 @@ describe('checklists lifecycle', () => {
     expect(detail.versions.map((v: { number: number }) => v.number)).toEqual([2, 1]);
     expect((await api.get(`${B}/${id}/versions/${v1.body.id}`)).body.content).toEqual(v1Content);
 
-    const audit = await ownerQuery<{ action: string }>(
-      'select action from audit_log where tenant_id = $1 and entity_id = $2 order by occurred_at, id',
-      [s.tenantId, id],
-    );
-    expect(audit.rows.map((r) => r.action)).toEqual([
-      'checklist.created',
-      'checklist.published',
-      'checklist.draft_started',
-      'checklist.published',
-    ]);
+    const audit = await ownerQuery<{ action: string }>('select action from audit_log where tenant_id = $1 and entity_id = $2 order by occurred_at, id', [s.tenantId, id]);
+    expect(audit.rows.map((r) => r.action)).toEqual(['checklist.created', 'checklist.published', 'checklist.draft_started', 'checklist.published']);
   });
 
   it('stale revision on save and publish', async () => {
@@ -89,14 +70,9 @@ describe('checklists lifecycle', () => {
     await api.put(`${B}/${id}/draft`, { content: sampleContent(), revision: 1 });
     expect((await api.post(`${B}/${id}/publish`, { revision: 2 })).body.number).toBe(1);
     await api.post(`${B}/${id}/draft`, {});
-    expect((await api.put(`${B}/${id}/draft`, { content: sampleContent(), revision: 1 })).body.revision).toBe(
-      2,
-    );
+    expect((await api.put(`${B}/${id}/draft`, { content: sampleContent(), revision: 1 })).body.revision).toBe(2);
 
-    const results = await Promise.all([
-      api.post(`${B}/${id}/publish`, { revision: 2 }),
-      api.post(`${B}/${id}/publish`, { revision: 2 }),
-    ]);
+    const results = await Promise.all([api.post(`${B}/${id}/publish`, { revision: 2 }), api.post(`${B}/${id}/publish`, { revision: 2 })]);
     const statuses = results.map((r) => r.status).sort();
     // Publishes serialise on the checklist row lock; the loser finds the draft already published.
     expect(statuses, JSON.stringify(results.map((r) => r.body))).toEqual([200, 404]);
@@ -116,14 +92,9 @@ describe('checklists lifecycle', () => {
       api.put(`${B}/${id}/draft`, { content: sampleContent(), revision: 1 }),
       api.put(`${B}/${id}/draft`, { content: sampleContent(), revision: 1 }),
     ]);
-    expect(results.map((r) => r.status).sort(), JSON.stringify(results.map((r) => r.body))).toEqual([
-      200, 409,
-    ]);
+    expect(results.map((r) => r.status).sort(), JSON.stringify(results.map((r) => r.body))).toEqual([200, 409]);
     expect(results.find((r) => r.status === 200)!.body.revision).toBe(2);
-    expect(results.find((r) => r.status === 409)!.body.error).toMatchObject({
-      code: 'CHECKLIST_DRAFT_CONFLICT',
-      currentRevision: 2,
-    });
+    expect(results.find((r) => r.status === 409)!.body.error).toMatchObject({ code: 'CHECKLIST_DRAFT_CONFLICT', currentRevision: 2 });
   });
 
   it('returns strict issues on save and refuses to publish invalid content', async () => {
@@ -131,10 +102,7 @@ describe('checklists lifecycle', () => {
     const id = (await api.post(B, { name: 'X' })).body.id;
     const saved = await api.put(`${B}/${id}/draft`, { content: blankContent(), revision: 1 });
     expect(saved.status).toBe(200);
-    expect(saved.body.issues.map((i: { code: string }) => i.code)).toEqual([
-      'checklists.issues.titleRequired',
-      'checklists.issues.noItems',
-    ]);
+    expect(saved.body.issues.map((i: { code: string }) => i.code)).toEqual(['checklists.issues.titleRequired', 'checklists.issues.noItems']);
     const pub = await api.post(`${B}/${id}/publish`, { revision: 2 });
     expect(pub.status).toBe(422);
     expect(pub.body.error.code).toBe('CHECKLIST_INVALID_CONTENT');
@@ -144,23 +112,12 @@ describe('checklists lifecycle', () => {
   it('rejects structurally invalid and oversized drafts', async () => {
     const { api } = await owner();
     const id = (await api.post(B, { name: 'X' })).body.id;
-    const bad = await api.put(`${B}/${id}/draft`, {
-      content: { schemaVersion: 1, sections: 'nope' },
-      revision: 1,
-    });
+    const bad = await api.put(`${B}/${id}/draft`, { content: { schemaVersion: 1, sections: 'nope' }, revision: 1 });
     expect(bad.status).toBe(422);
     expect(bad.body.error.code).toBe('CHECKLIST_INVALID_CONTENT');
     const huge = sampleContent();
     huge.instructions = 'x'.repeat(5000);
-    huge.sections = Array.from({ length: 50 }, () => ({
-      ...newSection('S'),
-      instructions: 'y'.repeat(2000),
-      items: Array.from({ length: 10 }, () => ({
-        ...newItem('text'),
-        label: 'z'.repeat(500),
-        helpText: 'h'.repeat(1500),
-      })),
-    }));
+    huge.sections = Array.from({ length: 50 }, () => ({ ...newSection('S'), instructions: 'y'.repeat(2000), items: Array.from({ length: 10 }, () => ({ ...newItem('text'), label: 'z'.repeat(500), helpText: 'h'.repeat(1500) })) }));
     const big = await api.put(`${B}/${id}/draft`, { content: huge, revision: 1 });
     expect(big.status).toBe(413);
     expect(big.body.error.code).toBe('CHECKLIST_CONTENT_TOO_LARGE');
@@ -215,11 +172,8 @@ describe('checklists lifecycle', () => {
 
   it('lists with filters and cursor pagination', async () => {
     const { api } = await owner();
-    for (const name of ['Alfa', 'Beta', 'Qamma'])
-      await api.post(B, { name, category: name === 'Beta' ? 'retail' : 'cleaning' });
-    expect((await api.get(`${B}?category=retail`)).body.items.map((c: { name: string }) => c.name)).toEqual([
-      'Beta',
-    ]);
+    for (const name of ['Alfa', 'Beta', 'Qamma']) await api.post(B, { name, category: name === 'Beta' ? 'retail' : 'cleaning' });
+    expect((await api.get(`${B}?category=retail`)).body.items.map((c: { name: string }) => c.name)).toEqual(['Beta']);
     expect((await api.get(`${B}?q=amm`)).body.items).toHaveLength(1);
     expect((await api.get(`${B}?hasDraft=false`)).body.items).toHaveLength(0);
     const page1 = (await api.get(`${B}?limit=2`)).body;
@@ -231,21 +185,11 @@ describe('checklists lifecycle', () => {
   it('enforces permissions: manager drafts but cannot publish; auditor reads; worker gets 403', async () => {
     const { s, api } = await owner();
     const id = (await api.post(B, { name: 'X' })).body.id;
-    const mgr = await createUserDirect(t, s.tenantId, {
-      kind: 'staff',
-      roleKey: 'manager',
-      emailVerified: true,
-    });
+    const mgr = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'manager', emailVerified: true });
     const managerApi = as(t, (await loginStaff(t, mgr.email!, mgr.secret)).accessToken);
-    expect((await managerApi.put(`${B}/${id}/draft`, { content: sampleContent(), revision: 1 })).status).toBe(
-      200,
-    );
+    expect((await managerApi.put(`${B}/${id}/draft`, { content: sampleContent(), revision: 1 })).status).toBe(200);
     expect((await managerApi.post(`${B}/${id}/publish`, { revision: 2 })).status).toBe(403);
-    const aud = await createUserDirect(t, s.tenantId, {
-      kind: 'staff',
-      roleKey: 'auditor',
-      emailVerified: true,
-    });
+    const aud = await createUserDirect(t, s.tenantId, { kind: 'staff', roleKey: 'auditor', emailVerified: true });
     const auditorApi = as(t, (await loginStaff(t, aud.email!, aud.secret)).accessToken);
     expect((await auditorApi.get(`${B}/${id}`)).status).toBe(200);
     expect((await auditorApi.post(B, { name: 'Y' })).status).toBe(403);

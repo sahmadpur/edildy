@@ -23,11 +23,7 @@ describe('task media against SeaweedFS', () => {
   });
 
   const upload = (ticket: MediaUploadTicket, body: Buffer) =>
-    fetch(ticket.uploadUrl!, {
-      method: 'PUT',
-      body: new Uint8Array(body),
-      headers: { 'Content-Type': ticket.headers['Content-Type']! },
-    });
+    fetch(ticket.uploadUrl!, { method: 'PUT', body: new Uint8Array(body), headers: { 'Content-Type': ticket.headers['Content-Type']! } });
 
   async function register(api: Api, taskId: string, role: 'instruction' | 'response', bytes: number) {
     const body = taskMediaBody(role, { bytes, capturedAt: new Date().toISOString() });
@@ -51,9 +47,7 @@ describe('task media against SeaweedFS', () => {
     const { id, ticket } = await register(api, taskId, 'response', bytes.length);
     const early = await api.post(`/api/v1/task-media/${id}/uploaded`);
     expect([early.status, early.body.error.code]).toEqual([422, 'MEDIA_NOT_FOUND_IN_STORAGE']);
-    expect((await api.get(`/api/v1/task-media/${id}/url`)).body.error.code).toBe(
-      'MEDIA_NOT_FOUND_IN_STORAGE',
-    );
+    expect((await api.get(`/api/v1/task-media/${id}/url`)).body.error.code).toBe('MEDIA_NOT_FOUND_IN_STORAGE');
     expect((await upload(ticket, bytes)).status).toBe(200);
     expect((await w.manager.api.post(`/api/v1/task-media/${id}/uploaded`)).status).toBe(403);
     expect((await w.workers[1].api.post(`/api/v1/task-media/${id}/uploaded`)).status).toBe(404);
@@ -81,21 +75,13 @@ describe('task media against SeaweedFS', () => {
       1,
       {
         [w.c.problem.id]: { optionIds: [w.c.no.id] },
-        [w.c.temp.id]: {
-          number: 5,
-          problem: { severity: 'critical', note: 'Qapı sınıqdır', mediaIds: [evidence.id] },
-        },
+        [w.c.temp.id]: { number: 5, problem: { severity: 'critical', note: 'Qapı sınıqdır', mediaIds: [evidence.id] } },
         [w.c.photo.id]: { photos: [item.id] },
       },
       new Date().toISOString(),
     );
     expect(done.status, JSON.stringify(done.body)).toBe(200);
-    const problemId = (
-      await ownerQuery<{ id: string }>(
-        "select id from execution_problems where execution_id = $1 and source = 'manual'",
-        [executionId],
-      )
-    ).rows[0]!.id;
+    const problemId = (await ownerQuery<{ id: string }>("select id from execution_problems where execution_id = $1 and source = 'manual'", [executionId])).rows[0]!.id;
     const task = await createTask(w.owner, newTaskBody({ userId: w.workers[1].id }, { problemId }));
     // The card says what to draw before anything is signed (Spec decision 24).
     expect(task.problem!.media).toEqual([{ id: evidence.id, kind: 'photo', status: 'uploaded' }]);
@@ -105,9 +91,7 @@ describe('task media against SeaweedFS', () => {
     expect(signed.status, JSON.stringify(signed.body)).toBe(200);
     expect(Buffer.from(await (await fetch(signed.body.url)).arrayBuffer())).toEqual(bytes);
     expect((await assignee.get(`/api/v1/tasks/${task.id}/problem-media/${item.id}/url`)).status).toBe(404);
-    expect(
-      (await w.workers[0].api.get(`/api/v1/tasks/${task.id}/problem-media/${evidence.id}/url`)).status,
-    ).toBe(404);
+    expect((await w.workers[0].api.get(`/api/v1/tasks/${task.id}/problem-media/${evidence.id}/url`)).status).toBe(404);
   });
 
   it('deletes the objects of task media never confirmed after 14 days, once, and keeps the rows', async () => {
@@ -117,29 +101,20 @@ describe('task media against SeaweedFS', () => {
     expect((await upload(old.ticket, Buffer.alloc(10))).status).toBe(200);
     expect((await upload(recent.ticket, Buffer.alloc(10))).status).toBe(200);
     await ownerQuery("update task_media set created_at = now() - interval '15 days' where id = $1", [old.id]);
-    await ownerQuery("update task_media set created_at = now() - interval '13 days' where id = $1", [
-      recent.id,
-    ]);
+    await ownerQuery("update task_media set created_at = now() - interval '13 days' where id = $1", [recent.id]);
     const jobs = t.app.get(TaskJobs);
     const s3 = t.app.get(S3Service);
     expect(await jobs.cleanupAll([w.s.tenantId])).toBe(1);
     expect(await jobs.cleanupAll([w.s.tenantId])).toBe(0);
     const row = async (id: string) =>
-      (
-        await ownerQuery<{ status: string; storage_key: string; purged: boolean }>(
-          'select status, storage_key, storage_purged_at is not null as purged from task_media where id = $1',
-          [id],
-        )
-      ).rows[0]!;
+      (await ownerQuery<{ status: string; storage_key: string; purged: boolean }>('select status, storage_key, storage_purged_at is not null as purged from task_media where id = $1', [id])).rows[0]!;
     const o = await row(old.id);
     expect([o.status, o.purged]).toEqual(['pending', true]);
     expect(await s3.head(o.storage_key)).toBeNull();
     const r = await row(recent.id);
     expect([r.status, r.purged]).toEqual(['pending', false]);
     expect(await s3.head(r.storage_key)).not.toBeNull();
-    expect((await w.workers[0].api.post(`/api/v1/task-media/${old.id}/uploaded`)).body.error.code).toBe(
-      'MEDIA_NOT_FOUND_IN_STORAGE',
-    );
+    expect((await w.workers[0].api.post(`/api/v1/task-media/${old.id}/uploaded`)).body.error.code).toBe('MEDIA_NOT_FOUND_IN_STORAGE');
     // The purged medium stays in the task, still pending (Interfaces: there is no purged status).
     const detail = (await w.manager.api.get(`/api/v1/tasks/${taskId}`)).body as TaskDetail;
     expect(detail.media.find((m) => m.id === old.id)).toMatchObject({ status: 'pending', uploadedAt: null });
@@ -150,10 +125,7 @@ describe('task media against SeaweedFS', () => {
     const bytes = Buffer.alloc(64, 2);
     const { id, ticket } = await register(w.workers[0].api, taskId, 'response', bytes.length);
     expect((await upload(ticket, bytes)).status).toBe(200);
-    expect(
-      (await w.manager.api.patch(`/api/v1/tasks/${taskId}`, { assignee: { userId: w.workers[1].id } }))
-        .status,
-    ).toBe(200);
+    expect((await w.manager.api.patch(`/api/v1/tasks/${taskId}`, { assignee: { userId: w.workers[1].id } })).status).toBe(200);
     expect((await w.workers[0].api.post(`/api/v1/task-media/${id}/uploaded`)).status).toBe(404);
     expect((await w.workers[0].api.get(`/api/v1/task-media/${id}/url`)).status).toBe(404);
   });
@@ -162,14 +134,7 @@ describe('task media against SeaweedFS', () => {
     const { w, taskId } = await startedTask();
     const { id, ticket } = await register(w.workers[0].api, taskId, 'response', 10);
     const preflight = (origin: string) =>
-      fetch(ticket.uploadUrl!, {
-        method: 'OPTIONS',
-        headers: {
-          Origin: origin,
-          'Access-Control-Request-Method': 'PUT',
-          'Access-Control-Request-Headers': 'content-type',
-        },
-      });
+      fetch(ticket.uploadUrl!, { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'PUT', 'Access-Control-Request-Headers': 'content-type' } });
     for (const origin of ['http://localhost:5173', 'http://localhost:4173']) {
       const ok = await preflight(origin);
       expect(ok.status, origin).toBe(200);
@@ -180,20 +145,13 @@ describe('task media against SeaweedFS', () => {
     // A bucket rule replaces SeaweedFS's default `-s3.allowedOrigins=*`.
     expect((await preflight('https://evil.example')).status).toBe(403);
     // The PUT and the GET answer the dev origin with the headers the browser checks; ETag is readable.
-    const put = await fetch(ticket.uploadUrl!, {
-      method: 'PUT',
-      body: new Uint8Array(10),
-      headers: { 'Content-Type': ticket.headers['Content-Type']!, Origin: 'http://localhost:5173' },
-    });
+    const put = await fetch(ticket.uploadUrl!, { method: 'PUT', body: new Uint8Array(10), headers: { 'Content-Type': ticket.headers['Content-Type']!, Origin: 'http://localhost:5173' } });
     expect(put.status, await put.clone().text()).toBe(200);
     expect(put.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
     expect(put.headers.get('access-control-expose-headers')).toContain('ETag');
     expect((await w.workers[0].api.post(`/api/v1/task-media/${id}/uploaded`)).status).toBe(200);
     const view = (await w.manager.api.get(`/api/v1/task-media/${id}/url`)).body as MediaUrl;
     const get = await fetch(view.url, { headers: { Origin: 'http://localhost:5173' } });
-    expect([get.status, get.headers.get('access-control-allow-origin')]).toEqual([
-      200,
-      'http://localhost:5173',
-    ]);
+    expect([get.status, get.headers.get('access-control-allow-origin')]).toEqual([200, 'http://localhost:5173']);
   });
 });

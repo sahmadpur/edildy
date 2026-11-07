@@ -20,9 +20,7 @@ describe('execution data scope', () => {
     photo = await registerPhoto(w.workers[0].api, executionId, w.c.photo.id);
     await w.workers[0].api.put(`/api/v1/executions/${executionId}/answers`, {
       rev: 1,
-      answers: {
-        [w.c.temp.id]: { number: 5, problem: { severity: 'normal', note: 'Qapı sınıqdır', mediaIds: [] } },
-      },
+      answers: { [w.c.temp.id]: { number: 5, problem: { severity: 'normal', note: 'Qapı sınıqdır', mediaIds: [] } } },
       deviceTime: '2026-11-02T04:20:00.000Z',
       clientOffsetMs: 0,
     });
@@ -47,13 +45,7 @@ describe('execution data scope', () => {
   });
 
   it('needs assignments.view to read someone else’s execution even with the occurrence in scope', async () => {
-    const noView = (
-      await w.owner.post('/api/v1/roles', {
-        name: uniq('Baxmır'),
-        dataScope: 'all',
-        permissions: ['checklists.view'],
-      })
-    ).body.id as string;
+    const noView = (await w.owner.post('/api/v1/roles', { name: uniq('Baxmır'), dataScope: 'all', permissions: ['checklists.view'] })).body.id as string;
     const u = await staff({ roleId: noView }, []);
     expect((await u.get(`/api/v1/executions/${executionId}`)).status).toBe(404);
     expect((await u.get(`/api/v1/problems?${RANGE}`)).status).toBe(403);

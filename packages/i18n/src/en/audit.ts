@@ -1,12 +1,6 @@
 export default {
   title: 'Usage log',
-  filters: {
-    action: 'Action (e.g. user.created)',
-    entityType: 'Entity type',
-    from: 'Start date',
-    to: 'End date',
-    client: 'Source',
-  },
+  filters: { action: 'Action (e.g. user.created)', entityType: 'Entity type', from: 'Start date', to: 'End date', client: 'Source' },
   columns: { time: 'Time', actor: 'Actor', action: 'Action', entity: 'Entity', client: 'Source' },
   clients: { web: 'Web', mobile: 'Mobile' },
   actorPlatform: 'Taskop support',

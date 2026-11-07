@@ -15,26 +15,14 @@ describe('DomainEvents', () => {
     const off = events.on('roster.changed', (e) => {
       seen.push(`b:${e.siteId}`);
     });
-    await events.emit('roster.changed', {
-      tenantId: 't',
-      siteId: 's1',
-      from: '2026-11-02',
-      to: '2026-11-08',
-    });
+    await events.emit('roster.changed', { tenantId: 't', siteId: 's1', from: '2026-11-02', to: '2026-11-08' });
     off();
-    await events.emit('roster.changed', {
-      tenantId: 't',
-      siteId: 's2',
-      from: '2026-11-02',
-      to: '2026-11-08',
-    });
+    await events.emit('roster.changed', { tenantId: 't', siteId: 's2', from: '2026-11-02', to: '2026-11-08' });
     expect(seen).toEqual(['a:s1', 'b:s1', 'a:s2']);
     events.on('checklist.deactivated', () => {
       throw new Error('boom');
     });
-    await expect(events.emit('checklist.deactivated', { tenantId: 't', checklistId: 'c' })).rejects.toThrow(
-      'boom',
-    );
+    await expect(events.emit('checklist.deactivated', { tenantId: 't', checklistId: 'c' })).rejects.toThrow('boom');
   });
 });
 

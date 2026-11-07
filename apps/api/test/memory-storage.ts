@@ -30,11 +30,7 @@ export class MemoryStorage {
   }
 
   async presignPut(key: string, contentType: string, contentLength: number): Promise<PresignedPut> {
-    return {
-      url: `http://files.taskop.test/${key}`,
-      headers: { 'Content-Type': contentType, 'Content-Length': String(contentLength) },
-      expiresAt: new Date(Date.now() + 900_000),
-    };
+    return { url: `http://files.taskop.test/${key}`, headers: { 'Content-Type': contentType, 'Content-Length': String(contentLength) }, expiresAt: new Date(Date.now() + 900_000) };
   }
 
   async presignGet(key: string): Promise<{ url: string; expiresAt: Date }> {

@@ -64,11 +64,7 @@ export class ExecutionsService {
       if (known.executorUserId !== p.userId) throw new AppError('NOT_EXECUTOR');
       return this.claimResult(known);
     }
-    const bounds = assertDeviceTimes(
-      [new Date(cmd.deviceTime), new Date(cmd.startedAt)],
-      receivedAt,
-      cmd.clientOffsetMs,
-    );
+    const bounds = assertDeviceTimes([new Date(cmd.deviceTime), new Date(cmd.startedAt)], receivedAt, cmd.clientOffsetMs);
     const [o] = await tx.select().from(occurrences).where(eq(occurrences.id, cmd.occurrenceId)).for('update');
     if (!o) throw new AppError('NOT_FOUND');
     // A replay of this very command may have committed while we waited for the lock.
@@ -79,9 +75,7 @@ export class ExecutionsService {
     }
     const start = clampStart(new Date(cmd.startedAt), o.startsAt, receivedAt);
 
-    let reason: ClaimRejectionReason | null = (await this.lookups.claims([o.id])).has(o.id)
-      ? 'ALREADY_CLAIMED'
-      : null;
+    let reason: ClaimRejectionReason | null = (await this.lookups.claims([o.id])).has(o.id) ? 'ALREADY_CLAIMED' : null;
     if (!reason) {
       const r = await this.eligibility.canStart(o.id, p.userId, start.startedAt, { allowMissed: true });
       if (!r.ok) reason = r.reason === 'NOT_FOUND' ? 'NOT_STARTABLE' : r.reason;
@@ -118,35 +112,18 @@ export class ExecutionsService {
       if (!row) reason = 'ALREADY_CLAIMED';
     }
     if (!row) {
-      [row] = await tx
-        .insert(executions)
-        .values({ ...values, state: 'rejected', rejectedReason: reason })
-        .returning();
-      this.logger.log(
-        { executionId: cmd.id, occurrenceId: o.id, userId: p.userId, reason },
-        'Claim rejected',
-      );
+      [row] = await tx.insert(executions).values({ ...values, state: 'rejected', rejectedReason: reason }).returning();
+      this.logger.log({ executionId: cmd.id, occurrenceId: o.id, userId: p.userId, reason }, 'Claim rejected');
     } else {
       await this.writer.applyTransitions([
-        {
-          occurrenceId: o.id,
-          from: o.status,
-          to: 'started',
-          at: start.startedAt,
-          reason: o.status === 'missed' ? 'late_sync' : null,
-        },
+        { occurrenceId: o.id, from: o.status, to: 'started', at: start.startedAt, reason: o.status === 'missed' ? 'late_sync' : null },
       ]);
       // Only the claim that created the run reaches the usage log; replays and rejected claims returned earlier.
       await this.audit.record({
         action: 'execution.started',
         entityType: 'execution',
         entityId: row.id,
-        after: {
-          occurrenceId: o.id,
-          checklistVersionId: versionId,
-          startedAt: start.startedAt.toISOString(),
-          late: row.late,
-        },
+        after: { occurrenceId: o.id, checklistVersionId: versionId, startedAt: start.startedAt.toISOString(), late: row.late },
       });
     }
     return this.claimResult(row!);
@@ -163,8 +140,7 @@ export class ExecutionsService {
     // Answers made inside the window count, even when they sync after the sweep made the execution partial;
     // nothing made at or after closes_at does, whether or not the sweep has run yet. Rejected executions store anything.
     const closed = e.state === 'completed' || (e.state === 'partial' && e.completedAt !== null);
-    if (closed || (e.state !== 'rejected' && deviceTime >= o.closesAt))
-      throw new AppError('EXECUTION_NOT_ACTIVE');
+    if (closed || (e.state !== 'rejected' && deviceTime >= o.closesAt)) throw new AppError('EXECUTION_NOT_ACTIVE');
     const content = await this.lookups.content(e.checklistVersionId);
     await this.assertValidAnswers(content, e.id, cmd.answers);
     const counted = e.state !== 'rejected';
@@ -174,23 +150,14 @@ export class ExecutionsService {
       .set({
         ...this.answersColumns(e, cmd.answers, cmd.rev, cmd.clientOffsetMs, bounds.clockSuspect, receivedAt),
         // Rejected executions keep the answers only: stored, never counted.
-        ...(counted
-          ? { progress: progress(content, cmd.answers), score: computeScore(content, cmd.answers) }
-          : {}),
+        ...(counted ? { progress: progress(content, cmd.answers), score: computeScore(content, cmd.answers) } : {}),
       })
       .where(eq(executions.id, id))
       .returning();
     if (counted) {
       await this.problems.rewrite(e, o, content, cmd.answers, receivedAt);
       if (o.status === 'started') {
-        await this.writer.applyTransitions([
-          {
-            occurrenceId: o.id,
-            from: 'started',
-            to: 'in_progress',
-            at: deviceTime > e.startedAt ? deviceTime : e.startedAt,
-          },
-        ]);
+        await this.writer.applyTransitions([{ occurrenceId: o.id, from: 'started', to: 'in_progress', at: deviceTime > e.startedAt ? deviceTime : e.startedAt }]);
       }
     }
     return this.answersResult(row!, false);
@@ -201,12 +168,7 @@ export class ExecutionsService {
    * hide) only, whatever closes_at says. Score and problems are recalculated by the resubmit. No open request (withdrawn)
    * is EXECUTION_NOT_ACTIVE.
    */
-  private async saveReworkAnswers(
-    e: ExecutionRow,
-    cmd: SaveAnswersCommandDto,
-    suspect: boolean,
-    receivedAt: Date,
-  ): Promise<SaveAnswersResult> {
+  private async saveReworkAnswers(e: ExecutionRow, cmd: SaveAnswersCommandDto, suspect: boolean, receivedAt: Date): Promise<SaveAnswersResult> {
     const request = await this.reworkRequests.open(e.id);
     if (!request) throw new AppError('EXECUTION_NOT_ACTIVE');
     const content = await this.lookups.content(e.checklistVersionId);
@@ -214,20 +176,13 @@ export class ExecutionsService {
     // Spec decision 28: the follow-ups a flagged change reveals or hides may change too.
     const outside = reworkViolations(content, request.answersBefore as Answers, cmd.answers, flagged);
     if (outside.length) {
-      throw new AppError('ITEM_NOT_IN_REWORK', {
-        fields: Object.fromEntries(
-          outside.map((itemId) => [`answers.${itemId}`, 'errors.ITEM_NOT_IN_REWORK']),
-        ),
-      });
+      throw new AppError('ITEM_NOT_IN_REWORK', { fields: Object.fromEntries(outside.map((itemId) => [`answers.${itemId}`, 'errors.ITEM_NOT_IN_REWORK'])) });
     }
     await this.assertValidAnswers(content, e.id, cmd.answers);
     const [row] = await this.db
       .tx()
       .update(executions)
-      .set({
-        ...this.answersColumns(e, cmd.answers, cmd.rev, cmd.clientOffsetMs, suspect, receivedAt),
-        progress: progress(content, cmd.answers),
-      })
+      .set({ ...this.answersColumns(e, cmd.answers, cmd.rev, cmd.clientOffsetMs, suspect, receivedAt), progress: progress(content, cmd.answers) })
       .where(eq(executions.id, e.id))
       .returning();
     return this.answersResult(row!, false);
@@ -240,11 +195,7 @@ export class ExecutionsService {
   async complete(p: Principal, id: string, cmd: CompleteCommandDto): Promise<CompleteResult> {
     const receivedAt = this.clock.now();
     const { e, o } = await lockOwnRun(this.db, p, id);
-    const bounds = assertDeviceTimes(
-      [new Date(cmd.deviceTime), new Date(cmd.completedAt)],
-      receivedAt,
-      cmd.clientOffsetMs,
-    );
+    const bounds = assertDeviceTimes([new Date(cmd.deviceTime), new Date(cmd.completedAt)], receivedAt, cmd.clientOffsetMs);
     if (e.completedAt) return this.completeResult(e);
     const content = await this.lookups.content(e.checklistVersionId);
     const completedAt = new Date(Math.max(+new Date(cmd.completedAt), +e.startedAt));
@@ -255,14 +206,7 @@ export class ExecutionsService {
     if (fresh) await this.assertValidAnswers(content, e.id, cmd.answers);
     const answers: Answers = fresh ? cmd.answers : (e.answers as Answers);
     const base = {
-      ...this.answersColumns(
-        e,
-        answers,
-        fresh ? cmd.rev : e.answersRev,
-        cmd.clientOffsetMs,
-        bounds.clockSuspect,
-        receivedAt,
-      ),
+      ...this.answersColumns(e, answers, fresh ? cmd.rev : e.answersRev, cmd.clientOffsetMs, bounds.clockSuspect, receivedAt),
       completedAt,
       completedReceivedAt: receivedAt,
     };
@@ -294,29 +238,12 @@ export class ExecutionsService {
     });
     await this.problems.rewrite(e, o, content, answers, receivedAt);
     if (inWindow) {
-      const steps: Transition[] = [
-        {
-          occurrenceId: o.id,
-          from: o.status,
-          to: 'completed',
-          at: completedAt,
-          reason: o.status === 'partial' ? 'late_sync' : null,
-        },
-      ];
+      const steps: Transition[] = [{ occurrenceId: o.id, from: o.status, to: 'completed', at: completedAt, reason: o.status === 'partial' ? 'late_sync' : null }];
       // SP8 Spec decision 10: a checklist that requires audit puts the run in the audit queue in the same transaction.
-      if (await this.auditLookup.requiresAudit(o.checklistId))
-        steps.push({
-          occurrenceId: o.id,
-          from: 'completed',
-          to: 'audit_pending',
-          at: completedAt,
-          system: true,
-        });
+      if (await this.auditLookup.requiresAudit(o.checklistId)) steps.push({ occurrenceId: o.id, from: 'completed', to: 'audit_pending', at: completedAt, system: true });
       await this.writer.applyTransitions(steps);
     } else if (o.status !== 'partial') {
-      await this.writer.applyTransitions([
-        { occurrenceId: o.id, from: o.status, to: 'partial', at: o.closesAt },
-      ]);
+      await this.writer.applyTransitions([{ occurrenceId: o.id, from: o.status, to: 'partial', at: o.closesAt }]);
     }
     return this.completeResult(row!);
   }
@@ -333,14 +260,7 @@ export class ExecutionsService {
   }
 
   /** The columns every accepted answers save (PUT or complete) writes. */
-  private answersColumns(
-    e: ExecutionRow,
-    answers: Answers,
-    rev: number,
-    clientOffsetMs: number,
-    suspect: boolean,
-    receivedAt: Date,
-  ) {
+  private answersColumns(e: ExecutionRow, answers: Answers, rev: number, clientOffsetMs: number, suspect: boolean, receivedAt: Date) {
     return {
       answers,
       answersRev: rev,
@@ -352,34 +272,20 @@ export class ExecutionsService {
   }
 
   /** Item ids, value types and media against the pinned version (spec §6.3) → 400 VALIDATION_FAILED with issues. */
-  private async assertValidAnswers(
-    content: ChecklistContent,
-    executionId: string,
-    answers: Answers,
-  ): Promise<void> {
+  private async assertValidAnswers(content: ChecklistContent, executionId: string, answers: Answers): Promise<void> {
     const issues = answerIssues(content, answers, await this.lookups.registeredMedia(executionId));
     if (issues.length) throw new AppError('VALIDATION_FAILED', { details: { issues } });
   }
 
   private answersResult(e: ExecutionRow, stale: boolean): SaveAnswersResult {
-    return {
-      executionId: e.id,
-      rev: e.answersRev,
-      stale,
-      state: e.state,
-      progress: e.progress as ExecutionProgress,
-    };
+    return { executionId: e.id, rev: e.answersRev, stale, state: e.state, progress: e.progress as ExecutionProgress };
   }
 
   /** The occurrence's pinned version, pinning the current one first if needed (spec §5.1). */
   private async pinnedVersion(o: OccurrenceRow): Promise<string> {
     if (o.checklistVersionId) return o.checklistVersionId;
     await this.writer.pinVersions([o.id]);
-    const [row] = await this.db
-      .tx()
-      .select({ v: occurrences.checklistVersionId })
-      .from(occurrences)
-      .where(eq(occurrences.id, o.id));
+    const [row] = await this.db.tx().select({ v: occurrences.checklistVersionId }).from(occurrences).where(eq(occurrences.id, o.id));
     if (!row?.v) throw new AppError('CHECKLIST_NOT_PUBLISHED');
     return row.v;
   }
@@ -387,11 +293,7 @@ export class ExecutionsService {
   /** The pinned version, else the checklist's current one, without pinning anything. */
   private async visibleVersion(o: OccurrenceRow): Promise<string> {
     if (o.checklistVersionId) return o.checklistVersionId;
-    const [c] = await this.db
-      .tx()
-      .select({ v: checklists.currentVersionId })
-      .from(checklists)
-      .where(eq(checklists.id, o.checklistId));
+    const [c] = await this.db.tx().select({ v: checklists.currentVersionId }).from(checklists).where(eq(checklists.id, o.checklistId));
     if (c?.v) return c.v;
     // Never fail a rejected claim (it must answer 200): fall back to the newest published version.
     const [latest] = await this.db

@@ -34,10 +34,8 @@ export async function schedulingWorld(t: TestApp, workerCount = 2): Promise<Sche
   const s = await signupTenant(t);
   const api = as(t, s.accessToken);
   const typeId = await siteTypeIdOf(s.tenantId);
-  const siteId = (await api.post('/api/v1/sites', { parentId: null, typeId, name: 'Filial 1' })).body
-    .id as string;
-  const otherSiteId = (await api.post('/api/v1/sites', { parentId: null, typeId, name: 'Filial 2' })).body
-    .id as string;
+  const siteId = (await api.post('/api/v1/sites', { parentId: null, typeId, name: 'Filial 1' })).body.id as string;
+  const otherSiteId = (await api.post('/api/v1/sites', { parentId: null, typeId, name: 'Filial 2' })).body.id as string;
   const workers: string[] = [];
   for (let i = 0; i < workerCount; i++) {
     const w = await createUserDirect(t, s.tenantId, { fullName: `İşçi ${i + 1}` });
@@ -49,35 +47,15 @@ export async function schedulingWorld(t: TestApp, workerCount = 2): Promise<Sche
 }
 
 /** A staff user with a built-in role, linked to `siteIds`, logged in. */
-export async function staffWithRole(
-  t: TestApp,
-  w: SchedulingWorld,
-  roleKey: SystemRoleKey,
-  siteIds: string[],
-) {
+export async function staffWithRole(t: TestApp, w: SchedulingWorld, roleKey: SystemRoleKey, siteIds: string[]) {
   const { id, api } = await staffAt(t, w.s.tenantId, w.api, roleKey, siteIds, `Staff ${roleKey}`, 'mobile');
   return { id, api };
 }
 
-export const daily = (startDate = TODAY, extra: Record<string, unknown> = {}) => ({
-  kind: 'daily',
-  every: 1,
-  startDate,
-  endDate: null,
-  skipDates: [],
-  ...extra,
-});
-export const fixed = (startTime = '08:00', dueAfterMinutes = 120, graceMinutes = 60) => ({
-  mode: 'fixed',
-  startTime,
-  dueAfterMinutes,
-  graceMinutes,
-});
+export const daily = (startDate = TODAY, extra: Record<string, unknown> = {}) => ({ kind: 'daily', every: 1, startDate, endDate: null, skipDates: [], ...extra });
+export const fixed = (startTime = '08:00', dueAfterMinutes = 120, graceMinutes = 60) => ({ mode: 'fixed', startTime, dueAfterMinutes, graceMinutes });
 
-export async function createAssignment(
-  w: SchedulingWorld,
-  body: Record<string, unknown> = {},
-): Promise<AssignmentDetail> {
+export async function createAssignment(w: SchedulingWorld, body: Record<string, unknown> = {}): Promise<AssignmentDetail> {
   const res = await w.api.post('/api/v1/assignments', {
     checklistId: w.checklistId,
     siteId: w.siteId,
