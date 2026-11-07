@@ -1,7 +1,7 @@
-import { isProblemType, type NotificationTargetKind, type NotificationType } from '@taskop/contracts';
+import { isProblemReportType, isProblemType, type NotificationTargetKind, type NotificationType } from '@taskop/contracts';
 import { interpolate, type Language, translationsFor } from '@taskop/i18n';
 import type { MailMessage } from '../mail/mailer';
-import type { NotificationTarget, OccurrenceTarget, ProblemTarget, RunTarget, TaskTarget } from './notification-targets';
+import type { NotificationTarget, OccurrenceTarget, ProblemReportTarget, ProblemTarget, RunTarget, TaskTarget } from './notification-targets';
 
 /** What one inbox row stores and every channel sends (spec §5 `notifications`). */
 export interface RenderedNotification {
@@ -30,6 +30,7 @@ const cut = (s: string) => (s.length > NOTE_MAX ? `${s.slice(0, NOTE_MAX)}…` :
 
 const onOccurrence = (o: OccurrenceTarget) => ({ targetKind: 'occurrence' as const, targetId: o.occurrenceId, targetDate: o.localDate });
 const onTask = (t: TaskTarget) => ({ targetKind: 'task' as const, targetId: t.taskId, targetDate: null });
+const onReport = (r: ProblemReportTarget) => ({ targetKind: 'problem_report' as const, targetId: r.reportId, targetDate: null });
 const nowhere = { targetKind: 'none' as const, targetId: null, targetDate: null };
 
 const place = (o: OccurrenceTarget) => `${o.checklistName} — ${o.siteName}`;
@@ -37,6 +38,7 @@ const place = (o: OccurrenceTarget) => `${o.checklistName} — ${o.siteName}`;
 type OccurrenceType = Exclude<Extract<NotificationType, `checklist.${string}`>, 'checklist.assigned'>;
 type ProblemType = Extract<NotificationType, `problem.${string}`>;
 type TaskType = Extract<NotificationType, `task.${string}`>;
+type ReportType = Extract<NotificationType, `problem_report.${string}`>;
 type Templates = ReturnType<typeof translationsFor>['notifications']['templates'];
 
 const mismatch = (type: NotificationType, target: NotificationTarget) =>
@@ -56,6 +58,13 @@ const problemText = (T: Templates, type: NotificationType, p: ProblemTarget): { 
   if (!PROBLEM_TYPES.has(type)) return null;
   const t = T[type as ProblemType];
   return { title: t.title, body: `${interpolate(t.body, { site: p.occurrence.siteName, checklist: p.occurrence.checklistName })}${p.note ? `: ${cut(p.note)}` : ''}` };
+};
+
+/** 2026-11-06 design §6.4: the site and the reporter; a close carries the manager's comment. */
+const reportText = (T: Templates, type: NotificationType, r: ProblemReportTarget): { title: string; body: string } | null => {
+  if (!isProblemReportType(type)) return null;
+  const tpl = T[type as ReportType];
+  return { title: tpl.title, body: interpolate(tpl.body, { site: r.siteName, reporter: r.reporterName, comment: r.closeComment ? cut(r.closeComment) : '' }) };
 };
 
 const taskText = (T: Templates, type: NotificationType, t: TaskTarget): { title: string; body: string } | null => {
@@ -113,6 +122,11 @@ export function renderNotification(type: NotificationType, target: NotificationT
       if (!text) throw mismatch(type, target);
       return { ...text, ...onOccurrence(target.occurrence) };
     }
+    case 'problem_report': {
+      const text = reportText(T, type, target);
+      if (!text) throw mismatch(type, target);
+      return { ...text, ...onReport(target) };
+    }
     case 'task': {
       const text = taskText(T, type, target);
       if (!text) throw mismatch(type, target);
@@ -139,6 +153,7 @@ export function notificationLink(
     return `${webUrl}/schedule?date=${n.targetDate}&occurrence=${n.targetId}${isProblemType(n.type) ? '&tab=execution' : ''}`;
   }
   if (n.targetKind === 'task' && n.targetId) return `${webUrl}/tasks?task=${n.targetId}`;
+  if (n.targetKind === 'problem_report' && n.targetId) return `${webUrl}/problems?tab=reports&report=${n.targetId}`;
   return `${webUrl}/notifications`;
 }
 

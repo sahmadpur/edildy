@@ -15,6 +15,11 @@ export interface ProblemPayload {
   occurrenceId: string;
 }
 
+/** 2026-11-06 design §6.4. */
+export interface ProblemReportPayload {
+  reportId: string;
+}
+
 export interface TaskPayload {
   taskId: string;
 }
@@ -45,6 +50,10 @@ export interface PayloadOf extends Record<NotificationType, object> {
   'checklist.missed': OccurrencePayload;
   'problem.recorded': ProblemPayload;
   'problem.critical': ProblemPayload;
+  'problem_report.created': ProblemReportPayload;
+  'problem_report.critical': ProblemReportPayload;
+  'problem_report.closed': ProblemReportPayload;
+  'problem_report.resolved': ProblemReportPayload;
   'task.assigned': TaskPayload;
   'task.submitted': TaskPayload;
   'task.rejected': TaskPayload;

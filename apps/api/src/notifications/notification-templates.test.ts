@@ -1,6 +1,6 @@
 import { isAuditType, NOTIFICATION_TYPES, type NotificationType } from '@taskop/contracts';
 import { describe, expect, it } from 'vitest';
-import type { AssignmentTarget, ManualTarget, NotificationTarget, OccurrenceTarget, ProblemTarget, RunTarget, TaskTarget } from './notification-targets';
+import type { AssignmentTarget, ManualTarget, NotificationTarget, OccurrenceTarget, ProblemReportTarget, ProblemTarget, RunTarget, TaskTarget } from './notification-targets';
 import type { RenderedNotification } from './notification-templates';
 import { notificationLink, notificationMail, renderNotification as render } from './notification-templates';
 
@@ -25,6 +25,9 @@ const run: RunTarget = {
   dueAt: null, sentBackByUserId: TASK, auditResult: 'failed', auditPercent: 66.7,
 };
 const manual: ManualTarget = { kind: 'manual', title: 'Diqqət', body: 'Sabah iclas var.', userIds: [], teamIds: [], siteIds: [], email: false, senderUserId: null };
+const REPORT = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e03';
+const report: ProblemReportTarget = { kind: 'problem_report', reportId: REPORT, siteId: OCC, siteName: 'Filial 1', reporterUserId: TASK, reporterName: 'Aysel', severity: 'critical', text: 'Qapı sınıb', closeComment: 'Yerində düzəldildi' };
+const onReport = { targetKind: 'problem_report', targetId: REPORT, targetDate: null } as const;
 const onOccurrence = { targetKind: 'occurrence', targetId: OCC, targetDate: '2026-11-02' } as const;
 const onTask = { targetKind: 'task', targetId: TASK, targetDate: null } as const;
 const nowhere = { targetKind: 'none', targetId: null, targetDate: null } as const;
@@ -102,6 +105,7 @@ describe('every notification type', () => {
     if (type === 'checklist.assigned') return assignment;
     if (type.startsWith('checklist.')) return occurrence;
     if (type.startsWith('problem.')) return problem;
+    if (type.startsWith('problem_report.')) return report;
     return task;
   };
 
@@ -117,6 +121,19 @@ describe('every notification type', () => {
     expect(() => renderNotification('problem.critical', assignment)).toThrow('problem.critical cannot be rendered for a assignment target');
     expect(() => renderNotification('manual', problem)).toThrow('manual cannot be rendered for a problem target');
     expect(() => renderNotification('checklist.assigned', manual)).toThrow('checklist.assigned cannot be rendered for a manual target');
+  });
+});
+
+describe('problem report texts (2026-11-06 design §6.4)', () => {
+  it('renders the four types on the report', () => {
+    expect(renderNotification('problem_report.created', report)).toEqual({ title: 'Yeni problem bildirildi', body: 'Filial 1 — Aysel', ...onReport });
+    expect(renderNotification('problem_report.critical', report)).toEqual({ title: 'Kritik problem bildirildi!', body: 'Filial 1 — Aysel', ...onReport });
+    expect(renderNotification('problem_report.closed', report)).toEqual({ title: 'Probleminiz bağlandı', body: 'Filial 1: Yerində düzəldildi', ...onReport });
+    expect(renderNotification('problem_report.resolved', report)).toEqual({ title: 'Probleminiz həll olundu', body: 'Filial 1', ...onReport });
+    expect(() => renderNotification('task.assigned', report)).toThrow(/cannot be rendered/);
+  });
+  it('links the report to the Problems page’s reports tab', () => {
+    expect(notificationLink('http://localhost:5173', { type: 'problem_report.created', ...onReport })).toBe(`http://localhost:5173/problems?tab=reports&report=${REPORT}`);
   });
 });
 

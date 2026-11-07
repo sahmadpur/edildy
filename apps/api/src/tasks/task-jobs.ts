@@ -4,7 +4,7 @@ import { and, asc, inArray, isNull, lte, notInArray, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { perTenant, tenantsWith } from '../common/per-tenant';
 import { DbService } from '../db/db.service';
-import { taskMedia, tasks } from '../db/schema';
+import { problemReportMedia, taskMedia, tasks } from '../db/schema';
 import { JobsService } from '../scheduling/jobs.service';
 import { purgeStalePending } from '../storage/purge-pending-media';
 import { S3Service } from '../storage/s3.service';
@@ -62,7 +62,10 @@ export class TaskJobs implements OnModuleInit {
   }
 
   /** task-media.cleanup (spec §6.5, Decision 3): deletes objects of media still pending after 14 days; rows stay. */
-  cleanupAll(only?: string[]): Promise<number> {
-    return purgeStalePending({ db: this.db, clock: this.clock, s3: this.s3, logger: this.logger }, taskMedia, taskMedia.taskId, 'Task media cleanup', only);
+  async cleanupAll(only?: string[]): Promise<number> {
+    const deps = { db: this.db, clock: this.clock, s3: this.s3, logger: this.logger };
+    const purged = await purgeStalePending(deps, taskMedia, taskMedia.taskId, 'Task media cleanup', only);
+    // Problem report media (2026-11-06 design §6.4) share the job and the 14-day rule.
+    return purged + (await purgeStalePending(deps, problemReportMedia, problemReportMedia.reportId, 'Problem report media cleanup', only));
   }
 }

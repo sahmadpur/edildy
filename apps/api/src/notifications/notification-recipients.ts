@@ -3,7 +3,8 @@ import type { NotificationRuleDto } from '@taskop/contracts';
 import { and, asc, eq, inArray, ne, or, type SQL, sql } from 'drizzle-orm';
 import { ScopeService } from '../common/scope.service';
 import { DbService } from '../db/db.service';
-import { assignments, occurrenceAssignees, occurrences, sites, tasks, teams, users, userSites, userTeams } from '../db/schema';
+import { assignments, occurrenceAssignees, occurrences, problemReports, sites, tasks, teams, users, userSites, userTeams } from '../db/schema';
+import { ProblemReportScope } from '../problem-reports/problem-report-scope';
 import { SchedulingScope } from '../scheduling/scheduling-scope';
 import { TaskScope } from '../tasks/task-scope';
 import type { ManualTarget, RuleTarget, TaskTarget } from './notification-targets';
@@ -18,6 +19,7 @@ export class NotificationRecipients {
     private readonly scheduling: SchedulingScope,
     private readonly taskScope: TaskScope,
     private readonly scope: ScopeService,
+    private readonly reportScope: ProblemReportScope,
   ) {}
 
   /** Direct audience ∪ role audience in scope; active users only; the actor removed; one entry per user, by id. */
@@ -90,6 +92,9 @@ export class NotificationRecipients {
       }
       case 'problem':
         return [];
+      case 'problem_report':
+        // 2026-11-06 design §6.4: "creator" is the reporter.
+        return rule.notifyCreator ? [target.reporterUserId] : [];
       case 'task':
         return [...(rule.notifyAssignees ? await this.taskAssignees(target) : []), ...(rule.notifyCreator ? [target.createdByUserId] : [])];
       case 'run':
@@ -130,6 +135,11 @@ export class NotificationRecipients {
         if (!s.permissions.has('assignments.view')) return false;
         const id = target.kind === 'occurrence' ? target.occurrenceId : target.occurrence.occurrenceId;
         const [r] = await tx.select({ id: occurrences.id }).from(occurrences).where(and(eq(occurrences.id, id), this.scheduling.occurrences(s)));
+        return r !== undefined;
+      }
+      case 'problem_report': {
+        if (!s.permissions.has('assignments.view')) return false;
+        const [r] = await tx.select({ id: problemReports.id }).from(problemReports).where(and(eq(problemReports.id, target.reportId), this.reportScope.readable(s)));
         return r !== undefined;
       }
       case 'assignment': {
