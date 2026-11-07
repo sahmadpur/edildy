@@ -59,7 +59,7 @@ test('owner builds a checklist from a template, publishes v1 and v2, and v1 stay
   await expect(page.getByRole('cell', { name: 'v1' })).toBeVisible();
 
   // Edit → publish v2.
-  await page.getByRole('button', { name: 'Redaktə et' }).click();
+  await page.getByRole('button', { name: 'Suallara düzəliş et' }).click();
   const v2DraftSaved = waitForDraftSave(page);
   await page.getByLabel('Bölmənin adı').fill('Giriş və dəhliz (yenilənib)');
   await v2DraftSaved;

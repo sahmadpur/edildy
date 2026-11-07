@@ -134,7 +134,10 @@ test('a worker executes an occurrence through the API, then the owner reads it i
   }
   await expect(binRow).toContainText('Adi');
   await expect(binRow).toContainText('Qayda üzrə');
-  await page.getByLabel('Ciddilik').selectOption('critical');
+  // The type filter is a tick-box multi-select (feedback 2026-11-07).
+  await page.getByRole('button', { name: 'Növ', exact: true }).click();
+  await page.getByRole('group', { name: 'Növ' }).getByRole('checkbox', { name: 'Kritik' }).click();
+  await page.keyboard.press('Escape');
   await expect(binRow).toHaveCount(0);
   await expect(glassRow).toBeVisible();
 
