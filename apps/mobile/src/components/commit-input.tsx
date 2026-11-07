@@ -1,6 +1,6 @@
 import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, type TextInputProps } from 'react-native';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 
 export const COMMIT_DELAY_MS = 500;
 
@@ -12,9 +12,13 @@ interface Props extends Omit<TextInputProps, 'value' | 'onChangeText'> {
   flushRef?: RefObject<(() => void) | null>;
 }
 
-/** A text field that autosaves (spec §7.3) without writing SQLite and the outbox on every keystroke. */
-export function CommitInput({ value, onCommit, flushRef, onBlur, style, ...rest }: Props) {
+/**
+ * A text field that autosaves (spec §7.3) without writing SQLite and the outbox on every keystroke. Drawn like `Field`:
+ * one line is an underline, several lines a light box; either turns primary while focused.
+ */
+export function CommitInput({ value, onCommit, flushRef, onFocus, onBlur, style, ...rest }: Props) {
   const [text, setText] = useState(value);
+  const [focused, setFocused] = useState(false);
   const pending = useRef<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const commit = useRef(onCommit);
@@ -44,14 +48,19 @@ export function CommitInput({ value, onCommit, flushRef, onBlur, style, ...rest 
       {...rest}
       value={text}
       placeholderTextColor={colors.muted}
-      style={[styles.input, rest.multiline ? styles.multiline : null, style]}
+      style={[rest.multiline ? styles.multiline : styles.input, focused ? (rest.multiline ? styles.multilineFocused : styles.inputFocused) : null, style]}
       onChangeText={(next) => {
         setText(next);
         pending.current = next;
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(flush, COMMIT_DELAY_MS);
       }}
+      onFocus={(e) => {
+        setFocused(true);
+        onFocus?.(e);
+      }}
       onBlur={(e) => {
+        setFocused(false);
         flush();
         onBlur?.(e);
       }}
@@ -62,13 +71,26 @@ export function CommitInput({ value, onCommit, flushRef, onBlur, style, ...rest 
 const styles = StyleSheet.create({
   input: {
     minHeight: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    fontSize: 16,
-    backgroundColor: colors.surface,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
+    paddingHorizontal: 0,
+    paddingVertical: spacing.xs,
+    fontFamily: font,
+    fontSize: type.md,
     color: colors.text,
   },
-  multiline: { minHeight: 96, paddingTop: spacing.sm, textAlignVertical: 'top' },
+  inputFocused: { borderBottomColor: colors.primary },
+  multiline: {
+    minHeight: 96,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 12,
+    fontFamily: font,
+    fontSize: type.md,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    textAlignVertical: 'top',
+  },
+  multilineFocused: { borderColor: colors.primary },
 });

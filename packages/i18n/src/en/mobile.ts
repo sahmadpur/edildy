@@ -11,6 +11,9 @@ export default {
     password: 'Password',
     submit: 'Log in',
     hint: 'Get your login details from your manager.',
+    staffHint: 'Use the email and password of your manager account.',
+    asStaff: 'Log in as a manager',
+    asWorker: 'Log in as a worker',
   },
   home: {
     greeting: 'Hello, {{name}}!',

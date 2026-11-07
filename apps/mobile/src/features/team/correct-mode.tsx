@@ -19,8 +19,9 @@ import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { AnswerInput, needsNote } from '@/features/execution/item-field';
 import { api } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import type { RunCommand } from './queries';
+import { ButtonRow, Grow, OfflineNote, sheet } from './team-controls';
 
 type CorrectionAnswer = NonNullable<CorrectAnswersInput['changes'][number]['answer']>;
 
@@ -161,16 +162,20 @@ export function CorrectMode({ detail, online, command, reload, onDone, onCancel 
       })}
       <FormError message={problem} />
       {conflict ? <PrimaryButton variant="outline" title={t('mobile.team.correct.reload')} disabled={!online} onPress={() => void reloadNow()} /> : null}
-      {!online ? <Text style={styles.offline}>{t('mobile.team.offline')}</Text> : null}
-      <View style={styles.actions}>
-        <PrimaryButton variant="outline" title={t('common.cancel')} onPress={onCancel} />
-        <PrimaryButton title={t('mobile.team.correct.next')} disabled={conflict} onPress={next} />
-      </View>
+      {!online ? <OfflineNote text={t('mobile.team.offline')} /> : null}
+      <ButtonRow>
+        <Grow>
+          <PrimaryButton variant="outline" title={t('common.cancel')} onPress={onCancel} />
+        </Grow>
+        <Grow>
+          <PrimaryButton title={t('mobile.team.correct.next')} disabled={conflict} onPress={next} />
+        </Grow>
+      </ButtonRow>
       {asking ? (
         <Modal visible transparent animationType="slide" onRequestClose={() => setAsking(false)}>
-          <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <View testID="reason-sheet" style={styles.sheet}>
-              <Text style={styles.title}>{t('corrections.fields.reason')}</Text>
+          <KeyboardAvoidingView style={sheet.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View testID="reason-sheet" style={sheet.body}>
+              <Text style={sheet.title}>{t('corrections.fields.reason')}</Text>
               <TextInput
                 accessibilityLabel={t('corrections.fields.reason')}
                 value={reason}
@@ -181,14 +186,18 @@ export function CorrectMode({ detail, online, command, reload, onDone, onCancel 
                 multiline
                 maxLength={AUDIT_LIMITS.reason}
                 placeholderTextColor={colors.muted}
-                style={styles.input}
+                style={sheet.input}
               />
               <FormError message={reasonError} />
-              {!online ? <Text style={styles.offline}>{t('mobile.team.offline')}</Text> : null}
-              <View style={styles.actions}>
-                <PrimaryButton variant="outline" title={t('common.cancel')} onPress={() => setAsking(false)} />
-                <PrimaryButton title={t('corrections.actions.correct')} disabled={!online || command.busy} onPress={() => void save()} />
-              </View>
+              {!online ? <OfflineNote text={t('mobile.team.offline')} /> : null}
+              <ButtonRow>
+                <Grow>
+                  <PrimaryButton variant="outline" title={t('common.cancel')} onPress={() => setAsking(false)} />
+                </Grow>
+                <Grow>
+                  <PrimaryButton title={t('corrections.actions.correct')} disabled={!online || command.busy} onPress={() => void save()} />
+                </Grow>
+              </ButtonRow>
             </View>
           </KeyboardAvoidingView>
         </Modal>
@@ -199,17 +208,12 @@ export function CorrectMode({ detail, online, command, reload, onDone, onCancel 
 
 const styles = StyleSheet.create({
   block: { gap: spacing.sm },
-  title: { fontSize: 20, fontWeight: '700', color: colors.text },
-  section: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: spacing.sm },
-  muted: { color: colors.muted },
-  offline: { color: colors.muted, fontSize: 16 },
-  card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
+  title: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  section: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
   cardMissing: { borderColor: colors.warning },
   cardChanged: { borderColor: colors.primary },
-  label: { fontSize: 16, fontWeight: '600', color: colors.text },
-  missing: { color: colors.danger, fontSize: 13 },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.4)' },
-  sheet: { backgroundColor: colors.background, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: spacing.lg, gap: spacing.sm },
-  input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
+  label: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  missing: { fontFamily: font, fontSize: type.sm, color: colors.dangerText },
 });

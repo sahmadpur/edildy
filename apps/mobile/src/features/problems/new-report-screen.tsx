@@ -2,13 +2,14 @@ import { MEDIA_KINDS, type MediaKind, PROBLEM_REPORT_LIMITS, PROBLEM_SEVERITIES,
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FormError } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { CaptureModal, pickFromGallery } from '@/features/execution/capture';
 import { CaptureError } from '@/features/execution/media-capture';
 import { Chip, Choice } from '@/features/execution/parts';
+import { MultilineInput } from '@/features/tasks/multiline-input';
 import { ScreenHeader } from '@/features/tasks/screen-header';
 import { useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
@@ -147,7 +148,7 @@ export function NewReportScreen({ location = nativeLocation }: { location?: Loca
         ))}
       </View>
       <Text style={styles.label}>{t('mobile.problems.new.text')}</Text>
-      <TextInput
+      <MultilineInput
         accessibilityLabel={t('mobile.problems.new.text')}
         placeholder={t('mobile.problems.new.textPlaceholder')}
         value={text}
@@ -155,10 +156,7 @@ export function NewReportScreen({ location = nativeLocation }: { location?: Loca
           setFields(({ text: _cleared, ...rest }) => rest);
           setText(v);
         }}
-        multiline
         maxLength={PROBLEM_REPORT_LIMITS.textMax}
-        placeholderTextColor={colors.muted}
-        style={styles.input}
       />
       <FormError message={fields.text ?? null} />
       <Text style={styles.label}>{t('mobile.problems.new.media')}</Text>
@@ -215,13 +213,12 @@ export function NewReportScreen({ location = nativeLocation }: { location?: Loca
 }
 
 const styles = StyleSheet.create({
-  label: { fontFamily: font, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  label: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
   text: { fontFamily: font, fontSize: type.base, color: colors.text },
-  muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
   warning: { fontFamily: font, fontSize: type.base, color: colors.dangerText },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   location: { minHeight: 44, justifyContent: 'center' },
-  input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
-  thumb: { width: 64, height: 64, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' },
-  play: { fontSize: 24, color: colors.text },
+  thumb: { width: 64, height: 64, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.fill, alignItems: 'center', justifyContent: 'center' },
+  play: { fontSize: 22, color: colors.muted },
 });

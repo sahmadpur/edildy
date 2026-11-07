@@ -16,7 +16,7 @@ import {
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Field } from '@/components/field';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
@@ -26,10 +26,11 @@ import { toAnswerDatetime } from '@/features/execution/datetime-format';
 import { CaptureError } from '@/features/execution/media-capture';
 import { Chip, Choice } from '@/features/execution/parts';
 import { api, useSession } from '@/lib/session';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import type { CapturedMedia } from '@/offline/execution-store';
 import { useLiveQuery, useSyncStatus } from '@/offline/hooks';
+import { MultilineInput } from './multiline-input';
 import { ScreenHeader } from './screen-header';
 
 const ASSIGNEE_SEARCH_DELAY_MS = 300;
@@ -213,15 +214,7 @@ export function CreateTaskScreen({ problemReportId = null }: { problemReportId?:
       <ScreenHeader title={t('mobile.tasks.create.title')} />
       <Field label={t('mobile.tasks.create.name')} value={title} onChangeText={setTitle} error={fieldError('title')} />
       <Text style={styles.label}>{t('mobile.tasks.create.instructions')}</Text>
-      <TextInput
-        accessibilityLabel={t('mobile.tasks.create.instructions')}
-        value={instructions}
-        onChangeText={setInstructions}
-        multiline
-        maxLength={TASK_LIMITS.instructionsMax}
-        placeholderTextColor={colors.muted}
-        style={styles.input}
-      />
+      <MultilineInput accessibilityLabel={t('mobile.tasks.create.instructions')} value={instructions} onChangeText={setInstructions} maxLength={TASK_LIMITS.instructionsMax} />
       <Text style={styles.label}>{t('mobile.tasks.create.priority')}</Text>
       <View style={styles.row}>
         {TASK_PRIORITIES.map((p) => (
@@ -343,12 +336,11 @@ export function CreateTaskScreen({ problemReportId = null }: { problemReportId?:
 }
 
 const styles = StyleSheet.create({
-  label: { fontWeight: '600', color: colors.text, marginTop: spacing.sm },
-  muted: { color: colors.muted },
-  text: { color: colors.text },
-  card: { backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
+  label: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  text: { fontFamily: font, fontSize: type.base, lineHeight: 22, color: colors.text },
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 6 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   evidence: { gap: spacing.xs },
-  input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
-  thumb: { width: 64, height: 64, borderRadius: 8, overflow: 'hidden', backgroundColor: colors.border },
+  thumb: { width: 64, height: 64, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.fill },
 });

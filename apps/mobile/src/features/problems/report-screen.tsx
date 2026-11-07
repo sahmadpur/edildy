@@ -3,12 +3,13 @@ import { formatDateTime } from '@taskop/i18n';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusChip } from '@/components/chip';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { notAcceptedText } from '@/features/sync/refusal-text';
+import { MultilineInput } from '@/features/tasks/multiline-input';
 import { RemoteMediaStrip } from '@/features/tasks/remote-media';
 import { ScreenHeader } from '@/features/tasks/screen-header';
 import { useLocale } from '@/lib/language';
@@ -114,7 +115,7 @@ export function ReportScreen({ id, remote }: Props) {
         <Text style={styles.text}>{t('mobile.problems.detail.closedBy', { name: report.closedBy?.fullName ?? '', comment: report.closeComment ?? '' })}</Text>
       ) : null}
       {report.taskId ? (
-        <Pressable accessibilityRole="button" accessibilityLabel={t('mobile.problems.detail.task')} onPress={() => router.push({ pathname: '/task/[id]', params: { id: report.taskId! } })} style={styles.taskRow}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('mobile.problems.detail.task')} onPress={() => router.push({ pathname: '/task/[id]', params: { id: report.taskId! } })} style={({ pressed }) => [styles.taskRow, pressed && styles.pressed]}>
           <Text style={styles.link}>{`${t('mobile.problems.detail.task')}: ${report.taskStatus ? t(`tasks.statuses.${report.taskStatus}`) : ''}`}</Text>
         </Pressable>
       ) : null}
@@ -142,8 +143,8 @@ export function ReportScreen({ id, remote }: Props) {
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.fact}>
-      <Text style={styles.muted}>{label}</Text>
-      <Text style={styles.text}>{value}</Text>
+      <Text style={styles.factLabel}>{label}</Text>
+      <Text style={styles.factValue}>{value}</Text>
     </View>
   );
 }
@@ -180,17 +181,14 @@ function CloseSheet({ id, onClose, onClosed }: { id: string; onClose: () => void
         <ScrollView style={styles.sheet} contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
           <Text style={styles.sheetTitle}>{t('executions.reportsTab.closeTitle')}</Text>
           <Text style={styles.label}>{t('mobile.problems.detail.closeComment')}</Text>
-          <TextInput
+          <MultilineInput
             accessibilityLabel={t('mobile.problems.detail.closeComment')}
             value={comment}
             onChangeText={(v) => {
               setError(null);
               setComment(v);
             }}
-            multiline
             maxLength={PROBLEM_REPORT_LIMITS.closeCommentMax}
-            placeholderTextColor={colors.muted}
-            style={styles.input}
           />
           <FormError message={error} />
           <View style={styles.actions}>
@@ -205,21 +203,25 @@ function CloseSheet({ id, onClose, onClosed }: { id: string; onClose: () => void
 
 const styles = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
-  text: { fontFamily: font, fontSize: type.base, color: colors.text },
-  muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
-  warning: { fontFamily: font, fontSize: type.base, color: colors.dangerText },
-  label: { fontFamily: font, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
-  facts: { gap: spacing.xs },
-  fact: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
+  text: { fontFamily: font, fontSize: type.md, lineHeight: 24, color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  // A real alert (the server refused a change): the one place a tinted background is used.
+  warning: { fontFamily: font, fontSize: type.base, color: colors.dangerText, backgroundColor: colors.dangerSoft, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, overflow: 'hidden' },
+  label: { fontFamily: font, fontSize: type.base, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  // Label and value rows between hairlines.
+  facts: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  fact: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingVertical: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  factLabel: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  factValue: { fontFamily: font, fontSize: type.base, color: colors.text, flexShrink: 1, textAlign: 'right' },
   strip: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  thumb: { width: 72, height: 72, borderRadius: 8, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  play: { fontSize: 24, color: colors.text },
-  link: { fontFamily: font, fontSize: type.base, color: colors.primaryDeep, fontWeight: '600' },
-  taskRow: { minHeight: 44, justifyContent: 'center' },
+  thumb: { width: 72, height: 72, borderRadius: 10, backgroundColor: colors.fill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  play: { fontSize: 22, color: colors.muted },
+  link: { fontFamily: font, fontSize: type.base, color: colors.primary, fontWeight: '600' },
+  taskRow: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', paddingHorizontal: spacing.xs, marginLeft: -spacing.xs, borderRadius: 10 },
+  pressed: { backgroundColor: colors.fill },
   actions: { gap: spacing.sm },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.4)' },
-  sheet: { flexGrow: 0, maxHeight: '90%', backgroundColor: colors.background, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.32)' },
+  sheet: { flexGrow: 0, maxHeight: '90%', backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
   sheetContent: { padding: spacing.lg, gap: spacing.sm },
-  sheetTitle: { fontFamily: font, fontSize: type.lg, fontWeight: '700', color: colors.text },
-  input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
+  sheetTitle: { fontFamily: font, fontSize: type.lg, fontWeight: '600', color: colors.text, letterSpacing: -0.3 },
 });

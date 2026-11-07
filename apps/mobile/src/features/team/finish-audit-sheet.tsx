@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { FormError } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
-import { Choice } from '@/features/execution/parts';
 import { colors, spacing } from '@/lib/theme';
+import { ButtonRow, ChoiceButton, Grow, OfflineNote, sheet } from './team-controls';
 
 /** Extra report addresses as typed: separated by commas, semicolons or spaces. */
 export const parseEmails = (text: string): string[] => text.split(/[\s,;]+/).filter(Boolean);
@@ -27,6 +27,7 @@ export function FinishAuditSheet({ reportEmails, online, busy, onSave, onClose }
   const [comment, setComment] = useState('');
   const [emails, setEmails] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [emailsFocused, setEmailsFocused] = useState(false);
   const save = async () => {
     const extraEmails = parseEmails(emails);
     // The server refuses the merged list (the checklist's addresses plus these), not just the extras.
@@ -37,16 +38,18 @@ export function FinishAuditSheet({ reportEmails, online, busy, onSave, onClose }
   };
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={sheet.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView testID="finish-sheet" style={styles.sheet} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>{t('mobile.team.audit.finishTitle')}</Text>
-          <Text style={styles.label}>{t('audits.fields.result')}</Text>
-          <View style={styles.row}>
+          <Text style={sheet.title}>{t('mobile.team.audit.finishTitle')}</Text>
+          <Text style={sheet.label}>{t('audits.fields.result')}</Text>
+          <ButtonRow>
             {AUDIT_RESULTS.map((r) => (
-              <Choice key={r} role="radio" label={t(`audits.results.${r}`)} selected={result === r} onPress={() => setResult(r)} />
+              <Grow key={r}>
+                <ChoiceButton role="radio" danger={r === 'failed'} label={t(`audits.results.${r}`)} selected={result === r} onPress={() => setResult(r)} />
+              </Grow>
             ))}
-          </View>
-          <Text style={styles.label}>{t('audits.fields.comment')}</Text>
+          </ButtonRow>
+          <Text style={sheet.label}>{t('audits.fields.comment')}</Text>
           <TextInput
             accessibilityLabel={t('audits.fields.comment')}
             value={comment}
@@ -54,12 +57,12 @@ export function FinishAuditSheet({ reportEmails, online, busy, onSave, onClose }
             multiline
             maxLength={AUDIT_LIMITS.finalComment}
             placeholderTextColor={colors.muted}
-            style={styles.input}
+            style={sheet.input}
           />
-          <Text style={styles.muted}>
+          <Text style={sheet.muted}>
             {reportEmails.length > 0 ? t('mobile.team.audit.reportTo', { emails: reportEmails.join(', ') }) : t('mobile.team.audit.noReportEmails')}
           </Text>
-          <Text style={styles.label}>{t('audits.fields.extraEmails')}</Text>
+          <Text style={sheet.label}>{t('audits.fields.extraEmails')}</Text>
           <TextInput
             accessibilityLabel={t('audits.fields.extraEmails')}
             value={emails}
@@ -71,13 +74,21 @@ export function FinishAuditSheet({ reportEmails, online, busy, onSave, onClose }
             autoCapitalize="none"
             keyboardType="email-address"
             placeholderTextColor={colors.muted}
-            style={styles.line}
+            onFocus={() => setEmailsFocused(true)}
+            onBlur={() => setEmailsFocused(false)}
+            style={[sheet.line, emailsFocused && sheet.lineFocused]}
           />
           <FormError message={error} />
-          {!online ? <Text style={styles.muted}>{t('mobile.team.offline')}</Text> : null}
+          {!online ? <OfflineNote text={t('mobile.team.offline')} /> : null}
           <View style={styles.actions}>
-            <PrimaryButton variant="outline" title={t('common.cancel')} onPress={onClose} />
-            <PrimaryButton title={t('audits.actions.finish')} disabled={!online || busy} onPress={() => void save()} />
+            <ButtonRow>
+              <Grow>
+                <PrimaryButton variant="outline" title={t('common.cancel')} onPress={onClose} />
+              </Grow>
+              <Grow>
+                <PrimaryButton title={t('audits.actions.finish')} disabled={!online || busy} onPress={() => void save()} />
+              </Grow>
+            </ButtonRow>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -86,14 +97,7 @@ export function FinishAuditSheet({ reportEmails, online, busy, onSave, onClose }
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.4)' },
-  sheet: { flexGrow: 0, maxHeight: '90%', backgroundColor: colors.background, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  content: { padding: spacing.lg, gap: spacing.sm },
-  title: { fontSize: 18, fontWeight: '700', color: colors.text },
-  label: { fontWeight: '600', color: colors.text, marginTop: spacing.sm },
-  muted: { color: colors.muted },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
-  line: { minHeight: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 10, paddingHorizontal: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md, marginTop: spacing.sm },
+  sheet: { flexGrow: 0, maxHeight: '90%', backgroundColor: colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  content: { padding: 20, paddingBottom: spacing.lg, gap: spacing.sm },
+  actions: { marginTop: spacing.sm },
 });

@@ -4,6 +4,7 @@ import { ChangeSecretScreen } from './change-secret-screen';
 
 const mockChangeCredential = jest.fn();
 jest.mock('@/lib/session', () => ({ api: { auth: { changeCredential: (...a: unknown[]) => mockChangeCredential(...a) } } }));
+jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 
 describe('ChangeSecretScreen', () => {
   it('shows the weak-PIN field error', async () => {

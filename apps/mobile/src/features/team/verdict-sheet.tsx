@@ -1,10 +1,11 @@
 import { AUDIT_LIMITS, auditVerdictInputSchema } from '@taskop/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Text, TextInput, View } from 'react-native';
 import { FormError } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
-import { colors, spacing } from '@/lib/theme';
+import { colors } from '@/lib/theme';
+import { ButtonRow, Grow, OfflineNote, sheet } from './team-controls';
 
 interface Props {
   itemLabel: string;
@@ -28,10 +29,10 @@ export function VerdictSheet({ itemLabel, initial, online, busy, onSave, onClose
   };
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View testID="verdict-sheet" style={styles.sheet}>
-          <Text style={styles.title}>{t('mobile.team.audit.rejectTitle')}</Text>
-          <Text style={styles.muted}>{itemLabel}</Text>
+      <KeyboardAvoidingView style={sheet.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View testID="verdict-sheet" style={sheet.body}>
+          <Text style={sheet.title}>{t('mobile.team.audit.rejectTitle')}</Text>
+          <Text style={sheet.muted}>{itemLabel}</Text>
           <TextInput
             accessibilityLabel={t('audits.fields.comment')}
             value={comment}
@@ -42,25 +43,20 @@ export function VerdictSheet({ itemLabel, initial, online, busy, onSave, onClose
             multiline
             maxLength={AUDIT_LIMITS.verdictComment}
             placeholderTextColor={colors.muted}
-            style={styles.input}
+            style={sheet.input}
           />
           <FormError message={error} />
-          {!online ? <Text style={styles.muted}>{t('mobile.team.offline')}</Text> : null}
-          <View style={styles.actions}>
-            <PrimaryButton variant="outline" title={t('common.cancel')} onPress={onClose} />
-            <PrimaryButton title={t('audits.actions.reject')} disabled={!online || busy} onPress={() => void save()} />
-          </View>
+          {!online ? <OfflineNote text={t('mobile.team.offline')} /> : null}
+          <ButtonRow>
+            <Grow>
+              <PrimaryButton variant="outline" title={t('common.cancel')} onPress={onClose} />
+            </Grow>
+            <Grow>
+              <PrimaryButton title={t('audits.actions.reject')} disabled={!online || busy} onPress={() => void save()} />
+            </Grow>
+          </ButtonRow>
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(17,24,39,0.4)' },
-  sheet: { backgroundColor: colors.background, borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: spacing.lg, gap: spacing.sm },
-  title: { fontSize: 18, fontWeight: '700', color: colors.text },
-  muted: { color: colors.muted },
-  input: { minHeight: 96, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: spacing.md, fontSize: 16, backgroundColor: colors.surface, color: colors.text, textAlignVertical: 'top' },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md },
-});

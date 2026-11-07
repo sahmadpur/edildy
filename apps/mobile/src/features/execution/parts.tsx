@@ -2,7 +2,7 @@ import type { Item, MediaKind, MediaSource } from '@taskop/contracts';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, font, radius, spacing, type } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import type { LocalMedia } from '@/offline/local-model';
 
 export function Choice(p: { label: string; selected: boolean; role: 'radio' | 'checkbox'; disabled?: boolean; onPress: () => void }) {
@@ -139,17 +139,18 @@ export function EvidenceRow(p: {
 
 const styles = StyleSheet.create({
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  choice: { minHeight: 48, minWidth: 72, borderWidth: 1.5, borderColor: colors.borderStrong, borderRadius: radius.control, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
-  choiceOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  // Minimal pass: a quiet grey fill unselected, a soft primary fill selected; no borders.
+  choice: { minHeight: 48, minWidth: 72, borderRadius: 12, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.fill },
+  choiceOn: { backgroundColor: colors.primarySoft },
   choiceText: { fontFamily: font, color: colors.text, fontSize: type.md, fontWeight: '500' },
-  choiceTextOn: { color: colors.primaryText, fontWeight: '600' },
-  chip: { minHeight: 44, borderRadius: 22, borderWidth: 1.5, borderColor: colors.primary, backgroundColor: colors.surface, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
-  chipText: { fontFamily: font, fontSize: type.base, color: colors.primary, fontWeight: '600' },
+  choiceTextOn: { color: colors.primaryDeep, fontWeight: '600' },
+  chip: { minHeight: 44, borderRadius: 12, backgroundColor: colors.fill, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
+  chipText: { fontFamily: font, fontSize: type.base, color: colors.text, fontWeight: '500' },
   dim: { opacity: 0.5 },
   strip: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  thumb: { width: 72, height: 72, borderRadius: radius.control, backgroundColor: colors.plannedSoft, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  thumb: { width: 72, height: 72, borderRadius: 12, backgroundColor: colors.fill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   thumbImage: { width: 72, height: 72 },
-  thumbText: { color: colors.muted, fontSize: 11, textAlign: 'center' },
+  thumbText: { fontFamily: font, color: colors.muted, fontSize: 11, textAlign: 'center' },
   evidence: { gap: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   hint: { fontFamily: font, color: colors.muted, fontSize: type.sm },

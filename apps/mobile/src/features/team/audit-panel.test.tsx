@@ -148,7 +148,7 @@ describe('Audit (spec §8.2, FR-19.02–06)', () => {
     await fireEvent.press(within(screen.getByTestId('finish-sheet')).getByRole('button', { name: tr('audits.actions.finish') }));
     expect(await screen.findByText(tr('errors.AUDIT_INCOMPLETE'))).toBeTruthy();
     expect(border(c.note.id)).toBe(colors.warning);
-    expect(border(c.temp.id)).toBe(colors.border);
+    expect(border(c.temp.id)).toBeUndefined(); // only a refused item is outlined
   });
 
   it('a paused audit says the run was sent back, still takes verdicts, and cannot finish', async () => {

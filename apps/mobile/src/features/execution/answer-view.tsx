@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { type RemoteMedia, RemoteMediaStrip } from '@/features/tasks/remote-media';
 import { Badge } from '@/features/tasks/task-row';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { fromAnswerDatetime } from './datetime-format';
 import { choiceOptions, Options } from './parts';
 
@@ -106,7 +106,7 @@ export function ReadOnlyProblems(p: { content: ChecklistContent; problems: reado
     <View style={styles.list}>
       <Text style={styles.section}>{t('reports.tabs.problems')}</Text>
       {p.problems.map((x) => (
-        <View key={x.id} testID={`problem-${x.id}`} style={[styles.card, x.severity === 'critical' ? styles.critical : null]}>
+        <View key={x.id} testID={`problem-${x.id}`} style={styles.card}>
           <Text style={styles.label}>{labels.get(x.itemId) ?? t('executions.problemsPage.unknownItem')}</Text>
           <View style={styles.badges}>
             <Badge text={t(`executions.severities.${x.severity}`)} tone={x.severity === 'critical' ? 'danger' : 'warning'} />
@@ -124,12 +124,12 @@ export function ReadOnlyProblems(p: { content: ChecklistContent; problems: reado
 
 const styles = StyleSheet.create({
   list: { gap: spacing.sm },
-  section: { fontSize: 18, fontWeight: '700', color: colors.text, marginTop: spacing.sm },
-  card: { backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
-  critical: { borderColor: colors.danger },
-  label: { fontSize: 16, fontWeight: '600', color: colors.text },
-  value: { fontSize: 16, color: colors.text },
-  muted: { color: colors.muted },
-  problem: { color: colors.danger, fontWeight: '600', fontSize: 13 },
+  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, marginTop: spacing.sm },
+  // The severity badge carries "critical"; the card itself stays neutral.
+  card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.sm },
+  label: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },
+  value: { fontFamily: font, fontSize: type.base, color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  problem: { fontFamily: font, color: colors.dangerText, fontWeight: '600', fontSize: type.sm },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
 });

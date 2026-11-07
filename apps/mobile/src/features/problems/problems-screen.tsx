@@ -2,11 +2,11 @@ import type { ProblemReportDto } from '@taskop/contracts';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { headerBlock } from '@/components/chip';
 import { mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { Choice } from '@/features/execution/parts';
 import { SyncIndicator } from '@/features/sync/sync-indicator';
 import { api, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
@@ -32,22 +32,29 @@ export function ProblemsScreen() {
 
   return (
     <Screen>
-      <View style={styles.top}>
-        <Text accessibilityRole="header" style={styles.heading}>
-          {t('mobile.problems.title')}
-        </Text>
-        <SyncIndicator compact />
-      </View>
-      {sites === undefined ? null : sites.length === 0 ? (
-        <Text style={styles.muted}>{t('mobile.problems.noSites')}</Text>
-      ) : (
-        <PrimaryButton title={`+ ${t('mobile.problems.report')}`} accessibilityLabel={t('mobile.problems.report')} onPress={() => router.push({ pathname: '/problems/new', params: { n: services.newId() } })} />
-      )}
-      {all ? (
-        <View style={styles.row}>
-          <Choice role="radio" label={t('mobile.problems.mine')} selected={segment === 'mine'} onPress={() => setSegment('mine')} />
-          <Choice role="radio" label={t('mobile.problems.all')} selected={segment === 'all'} onPress={() => setSegment('all')} />
+      <View style={headerBlock.block}>
+        <View style={styles.top}>
+          <Text accessibilityRole="header" style={[headerBlock.title, styles.title]}>
+            {t('mobile.problems.title')}
+          </Text>
+          <View style={styles.tools}>
+            <SyncIndicator compact />
+          </View>
         </View>
+        {sites && sites.length === 0 ? <Text style={headerBlock.subtitle}>{t('mobile.problems.noSites')}</Text> : null}
+      </View>
+      {sites && sites.length > 0 ? (
+        <PrimaryButton title={`+ ${t('mobile.problems.report')}`} accessibilityLabel={t('mobile.problems.report')} onPress={() => router.push({ pathname: '/problems/new', params: { n: services.newId() } })} />
+      ) : null}
+      {all ? (
+        <Segments
+          options={[
+            { key: 'mine', label: t('mobile.problems.mine') },
+            { key: 'all', label: t('mobile.problems.all') },
+          ]}
+          value={segment}
+          onChange={setSegment}
+        />
       ) : null}
       {segment === 'mine' ? (
         mine === undefined ? (
@@ -96,11 +103,7 @@ function AllReports({ online, timeZone, onOpen }: { online: boolean; timeZone: s
   if (!online) return <Text style={styles.muted}>{t('mobile.problems.online')}</Text>;
   return (
     <View style={styles.group}>
-      <View style={styles.row}>
-        {REPORT_FILTERS.map((f) => (
-          <Choice key={f} role="radio" label={t(`mobile.problems.filters.${f}`)} selected={filter === f} onPress={() => setFilter(f)} />
-        ))}
-      </View>
+      <Segments options={REPORT_FILTERS.map((f) => ({ key: f, label: t(`mobile.problems.filters.${f}`) }))} value={filter} onChange={setFilter} />
       {error ? <Text style={styles.warning}>{error}</Text> : null}
       {items === null ? (
         <ActivityIndicator color={colors.primary} />
@@ -114,10 +117,41 @@ function AllReports({ online, timeZone, onOpen }: { online: boolean; timeZone: s
   );
 }
 
+/** A segmented control: a quiet grey track, the chosen segment white. Each segment is a radio for a screen reader. */
+function Segments<K extends string>({ options, value, onChange }: { options: { key: K; label: string }[]; value: K; onChange: (key: K) => void }) {
+  return (
+    <View accessibilityRole="radiogroup" style={styles.segments}>
+      {options.map((o) => {
+        const on = o.key === value;
+        return (
+          <Pressable
+            key={o.key}
+            accessibilityRole="radio"
+            accessibilityLabel={o.label}
+            accessibilityState={{ selected: on, checked: on }}
+            onPress={() => onChange(o.key)}
+            hitSlop={{ top: 5, bottom: 5 }}
+            style={[styles.segment, on && styles.segmentOn]}
+          >
+            <Text style={[styles.segmentText, on && styles.segmentTextOn]} numberOfLines={1}>
+              {o.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  heading: { fontFamily: font, fontSize: type.display, fontWeight: '600', color: colors.text, flexShrink: 1, letterSpacing: -0.5 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  title: { flexShrink: 1 },
+  tools: { flexDirection: 'row', alignItems: 'center', marginRight: -spacing.sm },
+  segments: { flexDirection: 'row', backgroundColor: colors.fill, borderRadius: 10, padding: 3 },
+  segment: { flex: 1, minHeight: 34, paddingHorizontal: spacing.sm, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  segmentOn: { backgroundColor: colors.surface, shadowColor: colors.text, shadowOpacity: 0.08, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
+  segmentText: { fontFamily: font, fontSize: type.sm, fontWeight: '500', color: colors.muted },
+  segmentTextOn: { color: colors.text, fontWeight: '600' },
   group: { gap: spacing.sm },
   muted: { fontFamily: font, fontSize: type.base, color: colors.muted },
   warning: { fontFamily: font, fontSize: type.base, color: colors.dangerText },

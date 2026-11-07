@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
-import { colors, spacing } from '@/lib/theme';
+import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
 import { ExecutionLockedError, flaggedItems, reworkEditable } from '@/offline/execution-store';
 import { useNow } from '@/offline/hooks';
@@ -102,45 +102,56 @@ export function ResubmitScreen({ occurrenceId }: { occurrenceId: string }) {
       </View>
       {execution.state !== 'rework' ? <Text style={styles.sent}>{t('mobile.rework.sentBanner')}</Text> : null}
       <Text style={styles.section}>{t('mobile.rework.flaggedTitle')}</Text>
-      {rows.map(({ itemId, comment }) => {
-        const itemMissing = missing.filter((m) => m.itemId === itemId);
-        return (
-          <Pressable
-            key={itemId}
-            testID={`rework-item-${itemId}`}
-            accessibilityRole="button"
-            accessibilityLabel={labels.get(itemId) ?? ''}
-            onPress={() => jump(itemId)}
-            style={[styles.row, itemMissing.length > 0 ? styles.rowMissing : null]}
-          >
-            <Text style={styles.rowLabel}>{labels.get(itemId) ?? ''}</Text>
-            <Text style={styles.muted}>{comment !== null ? t('mobile.rework.managerComment', { comment }) : t('mobile.rework.newQuestion')}</Text>
-            {itemMissing.length > 0 ? (
-              itemMissing.map((m) => (
-                <Text key={m.kind} style={styles.missing}>
-                  {t(`mobile.finish.missingKinds.${m.kind}`)}
-                </Text>
-              ))
-            ) : (
-              <Text style={styles.ready}>{t('mobile.rework.ready')}</Text>
-            )}
-          </Pressable>
-        );
-      })}
-      {/* Anything else the store reports missing (it cannot change, but the button must not be off without a reason). */}
-      {missing
-        .filter((m) => !listed.has(m.itemId))
-        .map((m) => (
-          <Pressable
-            key={`${m.itemId}-${m.kind}`}
-            accessibilityRole="button"
-            accessibilityLabel={`${labels.get(m.itemId) ?? ''}: ${t(`mobile.finish.missingKinds.${m.kind}`)}`}
-            onPress={() => jump(m.itemId)}
-            style={[styles.row, styles.rowMissing]}
-          >
-            <Text style={styles.rowLabel}>{`${labels.get(m.itemId) ?? ''}: ${t(`mobile.finish.missingKinds.${m.kind}`)}`}</Text>
-          </Pressable>
-        ))}
+      <View style={styles.list}>
+        {rows.map(({ itemId, comment }) => {
+          const itemMissing = missing.filter((m) => m.itemId === itemId);
+          return (
+            <Pressable
+              key={itemId}
+              testID={`rework-item-${itemId}`}
+              accessibilityRole="button"
+              accessibilityLabel={labels.get(itemId) ?? ''}
+              onPress={() => jump(itemId)}
+              style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}
+            >
+              {/* The status colour as a small dot (it used to be a coloured border): amber while something is missing. */}
+              <View style={[styles.dot, itemMissing.length > 0 ? styles.dotMissing : styles.dotReady]} />
+              <View style={styles.flex}>
+                <Text style={styles.rowLabel}>{labels.get(itemId) ?? ''}</Text>
+                <Text style={styles.muted}>{comment !== null ? t('mobile.rework.managerComment', { comment }) : t('mobile.rework.newQuestion')}</Text>
+                {itemMissing.length > 0 ? (
+                  itemMissing.map((m) => (
+                    <Text key={m.kind} style={styles.missing}>
+                      {t(`mobile.finish.missingKinds.${m.kind}`)}
+                    </Text>
+                  ))
+                ) : (
+                  <Text style={styles.ready}>{t('mobile.rework.ready')}</Text>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </Pressable>
+          );
+        })}
+        {/* Anything else the store reports missing (it cannot change, but the button must not be off without a reason). */}
+        {missing
+          .filter((m) => !listed.has(m.itemId))
+          .map((m) => (
+            <Pressable
+              key={`${m.itemId}-${m.kind}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${labels.get(m.itemId) ?? ''}: ${t(`mobile.finish.missingKinds.${m.kind}`)}`}
+              onPress={() => jump(m.itemId)}
+              style={({ pressed }) => [styles.row, pressed ? styles.pressed : null]}
+            >
+              <View style={[styles.dot, styles.dotMissing]} />
+              <View style={styles.flex}>
+                <Text style={styles.rowLabel}>{`${labels.get(m.itemId) ?? ''}: ${t(`mobile.finish.missingKinds.${m.kind}`)}`}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </Pressable>
+          ))}
+      </View>
       <PrimaryButton title={t('mobile.rework.resubmit')} disabled={busy || !open || missing.length > 0} onPress={() => void resubmit()} />
     </Screen>
   );
@@ -154,19 +165,32 @@ export function FinishOrResubmit({ occurrenceId }: { occurrenceId: string }) {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginLeft: -spacing.sm },
   back: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  flex: { flex: 1 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  muted: { color: colors.muted },
-  section: { fontSize: 16, fontWeight: '600', color: colors.text },
-  banner: { borderRadius: 10, padding: spacing.md, backgroundColor: colors.warningSoft, gap: spacing.xs },
-  bannerTitle: { color: colors.warningText, fontWeight: '700' },
-  bannerText: { color: colors.warningText },
-  sent: { color: colors.text, fontWeight: '600' },
-  row: { minHeight: 44, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: spacing.xs },
-  rowMissing: { borderColor: colors.warning },
-  rowLabel: { color: colors.text, fontWeight: '500' },
-  missing: { color: colors.danger },
-  ready: { color: colors.success, fontWeight: '600' },
+  flex: { flex: 1, gap: 2 },
+  title: { fontFamily: font, fontSize: type.lg, fontWeight: '600', color: colors.text },
+  muted: { fontFamily: font, fontSize: type.sm, color: colors.muted },
+  section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text, marginBottom: -spacing.sm },
+  banner: { borderRadius: 12, padding: spacing.md, backgroundColor: colors.warningSoft, gap: spacing.xs },
+  bannerTitle: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '600' },
+  bannerText: { fontFamily: font, fontSize: type.base, color: colors.warningText },
+  sent: { fontFamily: font, fontSize: type.base, color: colors.text, fontWeight: '600' },
+  // Hairline rows instead of a bordered box per item.
+  list: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  row: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  pressed: { backgroundColor: colors.fill },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  dotMissing: { backgroundColor: colors.warning },
+  dotReady: { backgroundColor: colors.success },
+  rowLabel: { fontFamily: font, fontSize: type.base, color: colors.text, fontWeight: '500' },
+  missing: { fontFamily: font, fontSize: type.sm, color: colors.dangerText },
+  ready: { fontFamily: font, fontSize: type.sm, color: colors.successText, fontWeight: '600' },
 });

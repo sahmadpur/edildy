@@ -1,7 +1,7 @@
 import { ApiError } from '@taskop/api-client';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text } from 'react-native';
-import { colors } from '@/lib/theme';
+import { colors, font, type } from '@/lib/theme';
 
 export function mobileErrorText(t: TFunction, e: unknown): string {
   if (e instanceof ApiError) {
@@ -20,4 +20,4 @@ export function FormError({ message }: { message: string | null }) {
   );
 }
 
-const styles = StyleSheet.create({ error: { color: colors.danger, fontSize: 14 } });
+const styles = StyleSheet.create({ error: { fontFamily: font, color: colors.dangerText, fontSize: type.sm, lineHeight: 18 } });

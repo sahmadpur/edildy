@@ -11,6 +11,9 @@ export default {
     password: 'Şifrə',
     submit: 'Daxil ol',
     hint: 'Giriş məlumatlarını rəhbərinizdən alın.',
+    staffHint: 'Rəhbər hesabınızın e-poçtu və şifrəsi ilə daxil olun.',
+    asStaff: 'Rəhbər kimi daxil ol',
+    asWorker: 'İşçi kimi daxil ol',
   },
   home: {
     greeting: 'Salam, {{name}}!',

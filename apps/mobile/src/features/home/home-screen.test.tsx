@@ -149,7 +149,8 @@ describe('Needs correction (spec §8.1)', () => {
     const t = await sentBack();
     await renderWithServices(t.services, <HomeScreen />);
     const card = within(await screen.findByTestId(`occurrence-${OCC}`));
-    expect(screen.getAllByText(/^(Düzəliş tələb olunur|İndi)$/).map((n) => n.props.children)).toEqual(['Düzəliş tələb olunur', 'İndi']);
+    // Empty sections are hidden, so the rework section is simply the first heading on the screen.
+    expect(screen.getAllByText(/^(Düzəliş tələb olunur|İndi|Davam edir|Gələcək|Tamamlanıb)$/)[0]?.props.children).toBe('Düzəliş tələb olunur');
     expect(card.getByText(`${tr('corrections.round', { round: 1 })} · 2 bənd düzəliş tələb edir`)).toBeTruthy();
     const due = card.getByText(tr('corrections.dueAt', { date: formatDateTime(REWORK_DUE, { locale: 'az', timeZone: 'Asia/Baku' }) }));
     expect(StyleSheet.flatten(due.props.style).color).toBe(colors.muted);
