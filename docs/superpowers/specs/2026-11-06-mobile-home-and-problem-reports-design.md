@@ -1,7 +1,7 @@
 # Taskop — Mobile home page refresh and problem reports — Design Spec
 
 - **Date:** 2026-11-06
-- **Status:** Draft for review
+- **Status:** Implemented (branch claude/mobile-main-page-redesign-bc8a0a, 2026-11-07)
 - **Source:** the owner's change list of 6 November 2026 for the mobile app, refined in a brainstorming conversation (recorded in §1).
 - **Builds on:**
   - `2026-10-07-foundation-design.md`: tenancy, RLS, roles, data scopes, `user_sites`, `audit_log`.
