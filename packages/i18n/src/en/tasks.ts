@@ -53,6 +53,7 @@ export default {
     clear: 'Clear',
   },
   dialog: {
+    send: 'Send',
     createTitle: 'New task',
     editTitle: 'Edit task',
     fromProblem: 'Task from a problem',

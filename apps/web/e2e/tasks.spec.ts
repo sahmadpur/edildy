@@ -130,7 +130,7 @@ test('a closed run’s problem becomes a task on the web; the worker answers thr
   const option = dialog.getByRole('option', { name: 'Nigar Səfərli' });
   await expect(option).toBeVisible();
   await option.click();
-  await dialog.getByRole('button', { name: 'Yarat', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Göndər', exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(glassRow.getByRole('link', { name: 'Açıq' })).toBeVisible();
 

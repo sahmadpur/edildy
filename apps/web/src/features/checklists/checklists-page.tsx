@@ -96,9 +96,17 @@ export function ChecklistsPage() {
             </CardHeader>
             <CardContent className="grid gap-3">
               {c.description && <p className="text-muted-foreground text-sm">{c.description}</p>}
-              <p className="text-muted-foreground text-xs tabular-nums">
-                {t('checklists.updated')}: {formatDateTime(c.updatedAt, { locale, timeZone: ws.timeZone })}
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-muted-foreground text-xs tabular-nums">
+                  {t('checklists.updated')}: {formatDateTime(c.updatedAt, { locale, timeZone: ws.timeZone })}
+                </p>
+                {/* Read-only view of the published questions (feedback 2026-11-08). */}
+                {c.currentVersionId && (
+                  <Button asChild size="sm" variant="outline">
+                    <WsLink to={`/checklists/${c.id}/versions/${c.currentVersionId}`}>{t('checklists.detail.open')}</WsLink>
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}

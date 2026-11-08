@@ -187,7 +187,7 @@ describe('ProblemsPage resolution', () => {
     expect(within(dialog).getByText('Obyekt problemdən götürülür: Anbar')).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('combobox', { name: 'İcraçı' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Nigar Səfərli' }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(mocks.api.tasks.create).toHaveBeenCalledWith(expect.objectContaining({ problemId: 'p1', siteId: null, requiresReview: true }));
     await waitFor(() => expect(mocks.api.problems.list).toHaveBeenCalledTimes(2));

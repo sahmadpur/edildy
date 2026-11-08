@@ -38,7 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
     permission: ['assignments.view', 'checklists.view'],
     fallbacks: [{ to: '/checklists', permission: 'checklists.view' }],
     group: 'operations',
-    also: ['/schedule', '/checklists', '/templates'],
+    also: ['/calendar', '/schedule', '/checklists', '/templates'],
   },
   { to: '/tasks', labelKey: 'nav.tasks', icon: ClipboardCheck, permission: ['tasks.view', 'tasks.manage'], group: 'operations' },
   { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'other' },

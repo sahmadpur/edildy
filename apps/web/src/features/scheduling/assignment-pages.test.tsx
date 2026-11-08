@@ -59,18 +59,45 @@ describe('AssignmentsPage', () => {
     await userEvent.type(screen.getByRole('searchbox'), 'səh');
     await waitFor(() => expect(mocks.api.assignments.list).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'səh' })));
   });
+
+  it('has Redaktə et, Dayandır and Ləğv et in each row (feedback 2026-11-08)', async () => {
+    mocks.api.assignments.pause.mockResolvedValue(detail({ status: 'paused' }));
+    mocks.api.assignments.end.mockResolvedValue(detail({ status: 'ended' }));
+    renderWithRouter(<AssignmentsPage />);
+    await screen.findByRole('link', { name: 'Səhər' });
+    const row = screen.getAllByRole('row')[1]!;
+    expect(within(row).getByRole('link', { name: 'Redaktə et' })).toHaveAttribute('href', '/assignments/a1');
+    await userEvent.click(within(row).getByRole('button', { name: 'Dayandır' }));
+    await waitFor(() => expect(mocks.api.assignments.pause).toHaveBeenCalledWith('a1'));
+    await userEvent.click(within(row).getByRole('button', { name: 'Ləğv et' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Təsdiqlə' }));
+    await waitFor(() => expect(mocks.api.assignments.end).toHaveBeenCalledWith('a1'));
+  });
+
+  it('offers Davam etdir for a paused assignment and no actions for a cancelled one', async () => {
+    mocks.api.assignments.list.mockResolvedValue({ items: [detail({ status: 'paused' }), detail({ id: 'a2', name: 'Axşam', status: 'ended' })], nextCursor: null });
+    renderWithRouter(<AssignmentsPage />);
+    await screen.findByRole('link', { name: 'Axşam' });
+    const [, paused, ended] = screen.getAllByRole('row');
+    expect(within(paused!).getByRole('button', { name: 'Davam etdir' })).toBeInTheDocument();
+    expect(within(ended!).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(ended!).queryByRole('link', { name: 'Redaktə et' })).not.toBeInTheDocument();
+  });
 });
 
 describe('AssignmentDetailPage', () => {
-  it('shows upcoming occurrences and pauses, ends and copies the assignment', async () => {
+  it('shows the next checks as a calendar (no Yaxın icralar box) and pauses, cancels and copies the assignment', async () => {
     mocks.api.assignments.pause.mockResolvedValue(detail({ status: 'paused' }));
     mocks.api.assignments.end.mockResolvedValue(detail({ status: 'ended' }));
     const router = renderWithRouter(<AssignmentDetailPage assignmentId="a1" />, '/assignments/a1');
     expect(await screen.findByRole('heading', { name: 'Səhər' })).toBeInTheDocument();
-    expect(within(screen.getByRole('region', { name: 'Yaxın icralar' })).getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.queryByRole('region', { name: 'Yaxın icralar' })).not.toBeInTheDocument();
+    const calendar = within(screen.getByRole('group', { name: 'Növbəti yoxlamalar' }));
+    // A daily rule puts one check on every day from the start date on.
+    expect(calendar.getAllByRole('button', { name: /, 1 yoxlama$/ }).length).toBeGreaterThan(0);
     await userEvent.click(screen.getByRole('button', { name: 'Dayandır' }));
     await waitFor(() => expect(mocks.api.assignments.pause).toHaveBeenCalledWith('a1'));
-    await userEvent.click(screen.getByRole('button', { name: 'Bitir' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Təsdiqlə' }));
     await waitFor(() => expect(mocks.api.assignments.end).toHaveBeenCalledWith('a1'));
     await userEvent.click(screen.getByRole('button', { name: 'Digər obyektlərə köçür' }));

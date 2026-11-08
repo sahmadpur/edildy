@@ -1,10 +1,11 @@
 /** One line under each page title saying what the page is for (feedback 2026-11-07, item 13). */
 export default {
-  home: 'Seçilmiş dövr üzrə yoxlamaların, problemlərin və tapşırıqların qısa mənzərəsi.',
+  home: 'Yoxlama, problem və tapşırıqlar üzrə xülasə.',
   problems: 'Yoxlamalarda qeydə alınan və əməkdaşların bildirdiyi problemlər. Problemdən tapşırıq yaradıb həllini izləyin.',
   reports: 'Dövr, obyekt, əməkdaş və yoxlama vərəqəsi üzrə nəticələr. Cədvəlləri Excel-ə yükləyə bilərsiniz.',
   assignments: 'Kim, harada, hansı yoxlamanı və nə vaxt edəcək. Yeni təyinat yaradın və ya mövcud olanı dəyişin.',
   schedule: 'Təyinatlardan yaranan icralar həftə üzrə. İcranın üzərinə klikləyib cavablarına baxın.',
+  calendar: 'Ay üzrə planlaşdırılmış və keçirilmiş yoxlamalar. Üzərinə gəlib təfərrüatlara baxın.',
   checklists: 'Yoxlama zamanı cavablandırılan sual siyahıları. Vərəqəni boş yaradın və ya şablondan götürün.',
   templates: 'Yeni yoxlama vərəqəsi üçün hazır nümunələr: Taskop şablonları və öz şablonlarınız.',
   tasks: '«Hamısı» sizə görünən bütün tapşırıqlardır; «Mənim yaratdıqlarım» yalnız sizin yaratdıqlarınızdır.',

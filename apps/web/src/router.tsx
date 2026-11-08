@@ -35,7 +35,7 @@ import { messagesSearch } from '@/features/notifications/routes';
 import { ReportsPage } from '@/features/reports/reports-page';
 import { reportsPageSearch } from '@/features/reports/search';
 import { RolesPage } from '@/features/roles/roles-page';
-import { AssignmentDetailRoute, AssignmentsRoute, NewAssignmentRoute, RosterRoute, ScheduleRoute, scheduleSearch, ShiftsRoute } from '@/features/scheduling/routes';
+import { AssignmentDetailRoute, AssignmentsRoute, CalendarRoute, NewAssignmentRoute, RosterRoute, ScheduleRoute, scheduleSearch, ShiftsRoute } from '@/features/scheduling/routes';
 import { tasksSearch } from '@/features/tasks/routes';
 import { TasksPage } from '@/features/tasks/tasks-page';
 import { SettingsPage } from '@/features/settings/settings-page';
@@ -113,6 +113,7 @@ const sitesRoute = createRoute({ getParentRoute: () => appLayout, path: '/sites'
 const teamsRoute = createRoute({ getParentRoute: () => appLayout, path: '/teams', component: TeamsPage });
 const rosterRoute = createRoute({ getParentRoute: () => appLayout, path: '/roster', component: RosterRoute });
 const shiftsRoute = createRoute({ getParentRoute: () => appLayout, path: '/shifts', component: ShiftsRoute });
+const calendarRoute = createRoute({ getParentRoute: () => appLayout, path: '/calendar', component: CalendarRoute });
 const scheduleRoute = createRoute({ getParentRoute: () => appLayout, path: '/schedule', component: ScheduleRoute, validateSearch: scheduleSearch });
 const problemsRoute = createRoute({ getParentRoute: () => appLayout, path: '/problems', component: ProblemsRoute, validateSearch: problemsSearch });
 function ProblemsRoute() {
@@ -246,6 +247,7 @@ export const routeTree = rootRoute.addChildren([
     assignmentsRoute,
     newAssignmentRoute,
     assignmentDetailRoute,
+    calendarRoute,
     scheduleRoute,
     problemsRoute,
     tasksRoute,

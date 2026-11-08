@@ -64,7 +64,7 @@ describe('TaskDialog from a problem report (2026-11-06 design §8)', () => {
     expect(screen.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' })).toBeChecked();
     expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
     await pickAssignee('Nigar Səfərli');
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(mocks.api.tasks.create).toHaveBeenCalled());
     expect(mocks.api.tasks.create.mock.calls[0]![0]).toMatchObject({ problemReportId: 'r1', problemId: null, siteId: null, requiresReview: true });
   });
@@ -94,7 +94,7 @@ describe('TaskDialog', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' }));
     await userEvent.selectOptions(screen.getByLabelText('Foto'), 'required');
     await userEvent.click(screen.getByRole('checkbox', { name: 'Yalnız kamera ilə çəkilmiş (qalereyadan yox)' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(mocks.api.tasks.create).toHaveBeenCalledWith({
       id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-/),
@@ -116,7 +116,7 @@ describe('TaskDialog', () => {
   it('checks the title, the assignee and a time without a date before sending', async () => {
     renderDialog();
     fireEvent.change(screen.getByLabelText('Saat'), { target: { value: '09:00' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     expect(screen.getAllByText('Bu xana mütləqdir.')).toHaveLength(2);
     expect(screen.getByText('Saat üçün tarix seçin.')).toBeInTheDocument();
     expect(mocks.api.tasks.create).not.toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe('TaskDialog', () => {
     renderDialog();
     await paste('Başlıq', 'Qapı');
     await pickAssignee('Texniki xidmət');
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() =>
       expect(mocks.api.tasks.create).toHaveBeenCalledWith(expect.objectContaining({ assignee: { teamId: 'team1' }, requiresReview: false, dueAt: null, siteId: null })),
     );
@@ -148,7 +148,7 @@ describe('TaskDialog', () => {
     // No site list for a problem task: nothing is asked for until the picker opens.
     expect(mocks.api.tasks.assignees).not.toHaveBeenCalled();
     await pickAssignee('Nigar Səfərli');
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(mocks.api.tasks.create).toHaveBeenCalledWith(
       expect.objectContaining({ problemId: 'p1', siteId: null, title: 'Temperatur', instructions: 'Kondisioner xarabdır', priority: 'high', requiresReview: true }),
@@ -165,7 +165,7 @@ describe('TaskDialog', () => {
     const files = await screen.findByRole('list', { name: 'Seçilmiş fayllar' });
     expect(files).toHaveTextContent('qapi.jpg');
     expect(files).toHaveTextContent('Gözləyir');
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     const taskId = mocks.api.tasks.create.mock.calls[0]![0].id;
     const mediaId = mocks.api.tasks.registerMedia.mock.calls[0]![1].id;
@@ -185,7 +185,7 @@ describe('TaskDialog', () => {
     const { onClose, onSaved } = renderDialog();
     await fillMinimum();
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     expect(await screen.findByText('Tapşırıq yadda saxlanıldı, amma 1 fayl yüklənmədi. Yenidən cəhd edin və ya pəncərəni bağlayın.')).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Seçilmiş fayllar' })).toHaveTextContent('Yüklənmədi');
     expect(onClose).not.toHaveBeenCalled();
@@ -203,7 +203,7 @@ describe('TaskDialog', () => {
     const { onClose, onSaved } = renderDialog();
     await fillMinimum();
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await screen.findByRole('button', { name: 'Faylları yenidən yüklə' });
     await userEvent.click(screen.getByRole('button', { name: 'İmtina et' }));
     expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: mocks.api.tasks.create.mock.calls[0]![0].id }));
@@ -246,7 +246,7 @@ describe('TaskDialog', () => {
     await fillMinimum();
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
     await screen.findByRole('list', { name: 'Seçilmiş fayllar' });
-    const save = screen.getByRole('button', { name: 'Yarat' });
+    const save = screen.getByRole('button', { name: 'Göndər' });
     // Both presses land before React renders the disabled button.
     act(() => {
       save.click();
@@ -267,7 +267,7 @@ describe('TaskDialog', () => {
     const { onClose } = renderDialog();
     await fillMinimum();
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(mocks.api.tasks.registerMedia.mock.calls[0]![1].capturedAt).toBe('2020-01-01T00:00:00.000Z');
   });
@@ -327,7 +327,7 @@ describe('TaskDialog', () => {
     mocks.api.tasks.create.mockImplementation(() => new Promise((resolve) => (finish = resolve)));
     const { onClose } = renderDialog();
     await fillMinimum();
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(mocks.api.tasks.create).toHaveBeenCalled());
     expect(screen.getByRole('button', { name: 'İmtina et' })).toBeDisabled();
     await userEvent.keyboard('{Escape}');
@@ -343,7 +343,7 @@ describe('TaskDialog', () => {
     renderDialog();
     await fillMinimum();
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await screen.findByRole('button', { name: 'Faylları yenidən yüklə' });
     for (const label of ['Başlıq', 'Təlimat', 'Prioritet', 'Son tarix', 'Saat']) expect(screen.getByLabelText(label)).toBeDisabled();
     expect(screen.getByRole('combobox', { name: 'İcraçı' })).toBeDisabled();
@@ -358,7 +358,7 @@ describe('TaskDialog', () => {
     await fillMinimum();
     await within(screen.getByLabelText('Obyekt')).findByRole('option', { name: 'Anbar №1' }, { timeout: 3000 });
     await userEvent.selectOptions(screen.getByLabelText('Obyekt'), 'site1');
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(screen.getByLabelText('Obyekt')).toHaveAttribute('aria-invalid', 'true'));
     expect(screen.getAllByText('Obyekt aktiv deyil.').length).toBeGreaterThan(0);
   });
@@ -387,7 +387,7 @@ describe('TaskDialog', () => {
     renderDialog();
     await fillMinimum();
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
-    await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     expect(await screen.findByText('Təlimat faylları limiti dolub (5).')).toBeInTheDocument();
   });
 });

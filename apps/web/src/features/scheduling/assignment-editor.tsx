@@ -1,5 +1,5 @@
 import { ApiError } from '@taskop/api-client';
-import type { AssignmentDetail, PreviewAssignmentInput, Recurrence, Timing } from '@taskop/contracts';
+import { type AssignmentDetail, expandSchedule, type PreviewAssignmentInput, type Recurrence, type Slot, type Timing } from '@taskop/contracts';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';
@@ -14,7 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSites } from '@/features/sites/queries';
 import { errorText } from '@/lib/errors';
-import { api } from '@/lib/session';
+import { api, useMe } from '@/lib/session';
+import { MonthCalendar } from '@/components/month-calendar';
+import { monthGrid, monthOf } from '@/components/month-grid';
 import { formatLocalDate, scheduleSummary, useDebounced, useTenantToday, useWindowText } from './labels';
 import { useAssignableChecklists, useShifts, useSiteUsers } from './queries';
 import { defaultRecurrence, defaultTiming, RecurrenceEditor, TimingEditor } from './schedule-builder';
@@ -46,6 +48,7 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
   const tenantToday = useTenantToday();
   const today = todayProp ?? tenantToday;
   const windowText = useWindowText();
+  const timeZone = useMe().tenant.timezone;
   const source = initial ?? preset?.copyFrom;
   const [name, setName] = useState(source?.name ?? '');
   const [checklistId, setChecklistId] = useState(source?.checklistId ?? preset?.checklistId ?? '');
@@ -82,6 +85,30 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
     enabled: previewInput !== null,
     retry: false,
   });
+
+  // The calendar works the runs out here, for any month, from the same pure rule the server uses.
+  const [month, setMonth] = useState(monthOf(today));
+  const [pickedDay, setPickedDay] = useState<string | null>(null);
+  const shiftHours = timing.mode === 'shift' ? (shifts.data?.find((s) => s.id === timing.shiftId) ?? null) : null;
+  const calendar = useMemo(() => {
+    const grid = monthGrid(month);
+    const marks = new Map<string, number>();
+    const byDay = new Map<string, { startsAt: string; dueAt: string }[]>();
+    let slots: Slot[] = [];
+    try {
+      if (timing.mode !== 'shift' || shiftHours) slots = expandSchedule(schedule, timing, shiftHours, timeZone, grid[0]!, grid[grid.length - 1]!);
+    } catch {
+      slots = [];
+    }
+    for (const s of slots) {
+      marks.set(s.localDate, (marks.get(s.localDate) ?? 0) + 1);
+      byDay.set(s.localDate, [...(byDay.get(s.localDate) ?? []), { startsAt: s.startsAt.toISOString(), dueAt: s.dueAt.toISOString() }]);
+    }
+    return { marks, byDay };
+  }, [month, schedule, timing, shiftHours, timeZone]);
+  const skipped = useMemo(() => new Set(schedule.kind === 'once' || schedule.kind === 'dates' ? [] : schedule.skipDates), [schedule]);
+  const firstUpcoming = preview.data?.slots[0]?.localDate ?? null;
+  const day = pickedDay ?? (firstUpcoming && monthOf(firstUpcoming) === month ? firstUpcoming : null);
 
   const changeSite = (id: string) => {
     setSiteId(id);
@@ -159,9 +186,36 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
           </Button>
         </div>
       </div>
-      <aside aria-label={t('scheduling.assignments.preview')} className="grid content-start gap-2 bg-card shadow-card rounded-xl p-4">
+      <aside aria-label={t('scheduling.assignments.preview')} className="grid content-start gap-3 bg-card shadow-card rounded-xl p-4">
         <h2 className="font-semibold">{t('scheduling.assignments.preview')}</h2>
-        <p className="text-sm">{scheduleSummary(t, schedule, timing, shiftName)}</p>
+        <p className="text-muted-foreground text-sm">{scheduleSummary(t, schedule, timing, shiftName)}</p>
+        {/* A month calendar with a dot (or a count) on each day with runs (feedback 2026-11-08). */}
+        <MonthCalendar
+          label={t('scheduling.assignments.preview')}
+          month={month}
+          onMonthChange={setMonth}
+          today={today}
+          marks={calendar.marks}
+          struck={skipped}
+          active={day}
+          onDayClick={setPickedDay}
+        />
+        {day && (
+          <div className="grid gap-1 border-t pt-3">
+            <h3 className="text-sm font-medium">{formatLocalDate(day, locale)}</h3>
+            {(calendar.byDay.get(day) ?? []).length === 0 ? (
+              <p className="text-muted-foreground text-sm">{t('scheduling.assignments.noRunsOnDay')}</p>
+            ) : (
+              <ol className="flex flex-wrap gap-1.5 text-xs tabular-nums">
+                {calendar.byDay.get(day)!.map((s) => (
+                  <li key={s.startsAt} className="bg-muted rounded-full px-2 py-0.5">
+                    {windowText(s.startsAt, s.dueAt)}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        )}
         {preview.error && <p className="text-destructive text-sm">{errorText(t, preview.error)}</p>}
         {preview.data?.warnings.map((w) => (
           <Alert key={w}>
@@ -169,13 +223,6 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
           </Alert>
         ))}
         {preview.data && preview.data.slots.length === 0 && <EmptyState title={t('scheduling.assignments.previewEmpty')} />}
-        <ol className="grid gap-1 text-sm">
-          {preview.data?.slots.map((s) => (
-            <li key={s.startsAt}>
-              {formatLocalDate(s.localDate, locale)} · {windowText(s.startsAt, s.dueAt)}
-            </li>
-          ))}
-        </ol>
       </aside>
     </div>
   );

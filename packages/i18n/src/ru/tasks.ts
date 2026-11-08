@@ -53,6 +53,7 @@ export default {
     clear: 'Очистить',
   },
   dialog: {
+    send: 'Отправить',
     createTitle: 'Новая задача',
     editTitle: 'Редактировать задачу',
     fromProblem: 'Задача из проблемы',

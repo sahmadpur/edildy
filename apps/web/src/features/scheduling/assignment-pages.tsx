@@ -1,4 +1,4 @@
-import { ASSIGNMENT_STATUSES, toListParam } from '@taskop/contracts';
+import { ASSIGNMENT_STATUSES, type AssignmentDto, toListParam } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type ReactNode, useDeferredValue, useState } from 'react';
@@ -16,10 +16,56 @@ import { useSites } from '@/features/sites/queries';
 import { errorText } from '@/lib/errors';
 import { api, useCan } from '@/lib/session';
 import { AssignmentEditor } from './assignment-editor';
-import { assignmentVariant, formatLocalDate, occurrenceVariant, scheduleSummary, useWindowText } from './labels';
+import { assignmentVariant, scheduleSummary } from './labels';
 import { useAssignment, useAssignments } from './queries';
 import { useLocale } from '@/lib/i18n';
 import { LoadingState } from '@/components/states';
+
+/** Pause, resume and cancel (end) an assignment, shared by the list rows and the assignment page. */
+function useAssignmentActions() {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  return async (fn: () => Promise<unknown>) => {
+    try {
+      await fn();
+      await qc.invalidateQueries({ queryKey: ['assignments'] });
+    } catch (e) {
+      toast.error(errorText(t, e));
+    }
+  };
+}
+
+/** Word actions in a Təyinatlar row (feedback 2026-11-08): Redaktə et opens the assignment page with its editor. */
+function AssignmentRowActions({ a }: { a: AssignmentDto }) {
+  const { t } = useTranslation();
+  const act = useAssignmentActions();
+  const title = a.name ?? a.checklistName;
+  if (a.status === 'ended') return null;
+  return (
+    <div className="flex justify-end gap-1">
+      <Link to="/assignments/$assignmentId" params={{ assignmentId: a.id }} className={buttonVariants({ variant: 'ghost', size: 'xs' })}>
+        {t('scheduling.assignments.edit')}
+      </Link>
+      {a.status === 'active' ? (
+        <Button variant="ghost" size="xs" onClick={() => void act(() => api.assignments.pause(a.id))}>
+          {t('scheduling.assignments.pause')}
+        </Button>
+      ) : (
+        <Button variant="ghost" size="xs" onClick={() => void act(() => api.assignments.resume(a.id))}>
+          {t('scheduling.assignments.resume')}
+        </Button>
+      )}
+      <ConfirmButton
+        variant="ghost"
+        size="xs"
+        label={t('scheduling.assignments.end')}
+        title={t('scheduling.assignments.end')}
+        description={t('scheduling.assignments.confirmEnd', { name: title })}
+        onConfirm={() => act(() => api.assignments.end(a.id))}
+      />
+    </div>
+  );
+}
 
 export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
   const { t } = useTranslation();
@@ -72,6 +118,7 @@ export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
             <TableHead>{t('scheduling.assignments.schedule')}</TableHead>
             <TableHead>{t('scheduling.assignments.assignees')}</TableHead>
             <TableHead>{t('common.status')}</TableHead>
+            {canManage && <TableHead className="text-right">{t('common.actions')}</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -89,11 +136,16 @@ export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
               <TableCell>
                 <Badge variant={assignmentVariant(a.status)}>{t(`scheduling.assignments.status.${a.status}`)}</Badge>
               </TableCell>
+              {canManage && (
+                <TableCell>
+                  <AssignmentRowActions a={a} />
+                </TableCell>
+              )}
             </TableRow>
           ))}
           {list.isSuccess && items.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-muted-foreground text-center">
+              <TableCell colSpan={canManage ? 6 : 5} className="text-muted-foreground text-center">
                 {t('scheduling.assignments.empty')}
               </TableCell>
             </TableRow>
@@ -135,21 +187,12 @@ export function NewAssignmentPage({ checklistId, copyFrom }: { checklistId?: str
 
 export function AssignmentDetailPage({ assignmentId }: { assignmentId: string }) {
   const { t } = useTranslation();
-  const locale = useLocale();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const canManage = useCan('assignments.manage');
-  const windowText = useWindowText();
   const detail = useAssignment(assignmentId);
   const refresh = () => qc.invalidateQueries({ queryKey: ['assignments'] });
-  const act = async (fn: () => Promise<unknown>) => {
-    try {
-      await fn();
-      await refresh();
-    } catch (e) {
-      toast.error(errorText(t, e));
-    }
-  };
+  const act = useAssignmentActions();
 
   if (detail.isPending) return <LoadingState />;
   if (detail.error) return <p className="text-destructive">{errorText(t, detail.error)}</p>;
@@ -195,24 +238,6 @@ export function AssignmentDetailPage({ assignmentId }: { assignmentId: string })
         <span>{a.siteName}</span>
         <span>{scheduleSummary(t, a.schedule, a.timing, a.shiftName)}</span>
       </div>
-      <section aria-label={t('scheduling.assignments.upcoming')} className="grid gap-2">
-        <h2 className="text-lg font-semibold">{t('scheduling.assignments.upcoming')}</h2>
-        {a.upcoming.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t('scheduling.assignments.noUpcoming')}</p>
-        ) : (
-          <ul className="grid gap-1 text-sm">
-            {a.upcoming.map((o) => (
-              <li key={o.id} className="flex items-center gap-3">
-                <span>
-                  {formatLocalDate(o.localDate, locale)} · {windowText(o.startsAt, o.dueAt)}
-                </span>
-                <Badge variant={occurrenceVariant(o.status)}>{t(`scheduling.statuses.${o.status}`)}</Badge>
-                {o.unassigned && <Badge variant="destructive">{t('scheduling.schedule.unassigned')}</Badge>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
       {canManage && a.status !== 'ended' && (
         <AssignmentEditor
           key={a.revision}
