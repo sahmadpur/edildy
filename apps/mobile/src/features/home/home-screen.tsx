@@ -24,9 +24,9 @@ const TONE: Record<HomeBox, string> = {
 };
 
 /**
- * "My checklists" (spec §7.3, FR-10.01–02), reshaped by the Nov 2026 feedback: the runs I can work on now (İndi) are
- * always listed on top — the Tapşırıqlar box went on 8 Nov 2026 — then three equal boxes (Gecikən, Tamamlanan, Gələcək)
- * over three folding lists of the same names. A box opens its list, folds the others and scrolls to it; a list's own
+ * "My checklists" (spec §7.3, FR-10.01–02), reshaped by the Nov 2026 feedback: three equal boxes with counts
+ * (Gecikən, Tamamlanan, Gələcək) come first, then the runs I can work on now (İndi), always listed — the Tapşırıqlar
+ * box went on 8 Nov 2026 — then three folding lists named as the boxes. A box opens its list, folds the others and scrolls to it; a list's own
  * heading opens or folds it. Nothing is folded open at first.
  */
 export function HomeScreen() {
@@ -74,18 +74,6 @@ export function HomeScreen() {
           <Text style={styles.offlineText}>{t('mobile.home.offline')}</Text>
         </View>
       ) : null}
-      {sections && stats ? (
-        <View testID="section-myTasks" style={styles.group}>
-          <View style={styles.sectionRow}>
-            <Text accessibilityRole="header" style={styles.section}>
-              {t('mobile.checklists.sections.now')}
-            </Text>
-            <Text style={styles.count}>{stats.myTasks}</Text>
-          </View>
-          {sections.myTasks.length === 0 ? <Text style={styles.subtitle}>{t('mobile.checklists.emptySection')}</Text> : null}
-          {sections.myTasks.map((card) => cardOf('myTasks', card))}
-        </View>
-      ) : null}
       <View style={styles.boxes}>
         {HOME_BOXES.map((key) => {
           const value = stats ? stats[key] : null;
@@ -109,6 +97,18 @@ export function HomeScreen() {
           );
         })}
       </View>
+      {sections && stats ? (
+        <View testID="section-myTasks" style={styles.group}>
+          <View style={styles.sectionRow}>
+            <Text accessibilityRole="header" style={styles.section}>
+              {t('mobile.checklists.sections.now')}
+            </Text>
+            <Text style={styles.count}>{stats.myTasks}</Text>
+          </View>
+          {sections.myTasks.length === 0 ? <Text style={styles.subtitle}>{t('mobile.checklists.emptySection')}</Text> : null}
+          {sections.myTasks.map((card) => cardOf('myTasks', card))}
+        </View>
+      ) : null}
       {sections ? (
         HOME_BOXES.map((key) => {
           const cards = sections[key];

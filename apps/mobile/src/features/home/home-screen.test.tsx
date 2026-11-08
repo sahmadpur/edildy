@@ -89,6 +89,20 @@ describe('My checklists', () => {
     expect(screen.queryByTestId(`occurrence-${OCC4}`)).toBeNull();
   });
 
+  it('puts the three count boxes above the İndi list, and every card is the same height whatever it shows', async () => {
+    const t = await world();
+    await t.services.store.start(OCC, ME);
+    t.clock.set('2026-11-02T06:30:00.000Z');
+    await renderWithServices(t.services, <HomeScreen />);
+    const order = (await screen.findAllByTestId(/^(stat-overdue|stat-completed|stat-upcoming|section-myTasks)$/)).map((n) => n.props.testID);
+    expect(order).toEqual(['stat-overdue', 'stat-completed', 'stat-upcoming', 'section-myTasks']);
+    // A run in progress, an overdue one with a chip and a colleague's: one fixed height, one-line rows.
+    const cards = within(screen.getByTestId('section-myTasks')).getAllByTestId(/^occurrence-/);
+    const heights = cards.map((c) => StyleSheet.flatten(typeof c.props.style === 'function' ? c.props.style({ pressed: false }) : c.props.style).height);
+    expect(new Set(heights)).toEqual(new Set([98]));
+    expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByText('Açılış yoxlaması').props.numberOfLines).toBe(1);
+  });
+
   it('keeps the site name whole and lets a long checklist name shrink', async () => {
     const t = await createTestServices();
     await t.seed(
