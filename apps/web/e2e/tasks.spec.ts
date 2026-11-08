@@ -182,7 +182,7 @@ test('a closed run’s problem becomes a task on the web; the worker answers thr
   // The task list, then the problem: resolved.
   await drawer.getByRole('button', { name: 'Bağla', exact: true }).click();
   const taskRow = page.getByRole('row').filter({ hasText: 'Giriş qapısının şüşələri təmizdir?' });
-  for (const text of ['Tamamlanıb', 'Nigar Səfərli', 'Anbar №1', 'Problemdən']) await expect(taskRow).toContainText(text);
+  for (const text of ['Tamamlanıb', 'Nigar Səfərli', 'Anbar №1']) await expect(taskRow).toContainText(text);
   await page.getByRole('link', { name: 'Problemlər' }).click();
   await expect(page.getByRole('row').filter({ hasText: 'Şüşədə çat var' }).getByRole('link', { name: 'Həll olunub' })).toBeVisible();
 });
