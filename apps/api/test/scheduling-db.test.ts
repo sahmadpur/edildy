@@ -39,11 +39,11 @@ async function seedOccurrence(tenantId: string, ownerId: string) {
      values (gen_random_uuid(), $1, $2, $3, '{}'::jsonb, '{}'::jsonb, $4) returning id`,
     [tenantId, checklist.rows[0]!.id, site.rows[0]!.id, ownerId],
   );
-  const occ = (status: string) =>
+  const occ = (status: string, startsAt = '2026-11-02T04:00Z') =>
     ownerQuery<{ id: string }>(
       `insert into occurrences (id, tenant_id, assignment_id, checklist_id, site_id, local_date, starts_at, due_at, closes_at, status)
-       values (gen_random_uuid(), $1, $2, $3, $4, '2026-11-02', '2026-11-02T04:00Z', '2026-11-02T06:00Z', '2026-11-02T07:00Z', $5) returning id`,
-      [tenantId, assignment.rows[0]!.id, checklist.rows[0]!.id, site.rows[0]!.id, status],
+       values (gen_random_uuid(), $1, $2, $3, $4, '2026-11-02', $6, '2026-11-02T06:00Z', '2026-11-02T07:00Z', $5) returning id`,
+      [tenantId, assignment.rows[0]!.id, checklist.rows[0]!.id, site.rows[0]!.id, status, startsAt],
     );
   return { assignmentId: assignment.rows[0]!.id, occ };
 }
@@ -73,12 +73,14 @@ describe('scheduling tables', () => {
     expect((await asApp(a.tenantId, (c) => c.query('select id from occurrences'))).rowCount).toBe(1);
   });
 
-  it('allows one live occurrence per assignment and day, ignoring cancelled ones', async () => {
+  it('allows one live occurrence per assignment and start time, ignoring cancelled ones', async () => {
     const s = await signupTenant(t);
     const { occ } = await seedOccurrence(s.tenantId, s.ownerId);
     await occ('cancelled');
     await occ('pending');
-    await expect(occ('pending')).rejects.toThrow(/occurrences_live_day_uq/);
+    await expect(occ('pending')).rejects.toThrow(/occurrences_live_start_uq/);
+    // A second run the same day at another time is fine ("repeat" timing).
+    await expect(occ('pending', '2026-11-02T05:00Z')).resolves.toBeTruthy();
   });
 
   it('keeps the status history append-only for the app account', async () => {

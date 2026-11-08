@@ -9,6 +9,7 @@ import {
   type Slot,
   type Timing,
   validateSchedule,
+  validateTiming,
   windowMinutes,
 } from '@taskop/contracts';
 import { eq, inArray, sql } from 'drizzle-orm';
@@ -81,6 +82,8 @@ export class AssignmentRules {
 
   /** FR-09.05/06: ≤ 24h, or ≤ 7 days with assignments.extended_window (platform admins hold every permission). */
   window(a: Actor, timing: Timing, shift: ShiftHours | null): void {
+    const issues = validateTiming(timing);
+    if (issues.length) throw new AppError('SCHEDULE_INVALID', { details: { issues: issues.map((i) => ({ ...i, path: ['timing', ...i.path] })) } });
     const minutes = windowMinutes(timing, shift);
     if (minutes > SCHEDULING_LIMITS.maxExtendedWindowMinutes) throw new AppError('WINDOW_INVALID');
     const extended = !a || a.permissions.has('assignments.extended_window');

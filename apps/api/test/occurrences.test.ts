@@ -87,6 +87,36 @@ describe('occurrences', () => {
     expect(items.map((o: { unassigned: boolean }) => o.unassigned)).toEqual([false, true, true]);
   });
 
+  it('calendar returns stored runs and planned checks after the horizon, with filters', async () => {
+    const w = await schedulingWorld(t);
+    const a = await createAssignment(w, { assigneeIds: [w.workers[0]] });
+    const res = await w.api.get(`/api/v1/occurrences/calendar?from=${TODAY}&to=2026-11-30`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const mine = res.body.items.filter((i: { assignmentId: string }) => i.assignmentId === a.id);
+    // 2–16 Nov are stored (today + 14), 17–30 Nov are planned from the daily schedule.
+    const runs = mine.filter((i: { kind: string }) => i.kind === 'run');
+    const planned = mine.filter((i: { kind: string }) => i.kind === 'planned');
+    expect(runs).toHaveLength(15);
+    expect(planned).toHaveLength(14);
+    expect(planned[0]).toMatchObject({ localDate: '2026-11-17', status: 'planned', occurrenceId: null, checklistName: 'Açılış yoxlaması' });
+    expect(runs[0].assigneeNames).toHaveLength(1);
+    expect(planned[0].assigneeNames).toEqual(runs[0].assigneeNames);
+    expect(res.body.truncated).toBe(false);
+
+    const onlyPlanned = await w.api.get(`/api/v1/occurrences/calendar?from=${TODAY}&to=2026-11-30&status=planned`);
+    expect(onlyPlanned.body.items.every((i: { kind: string }) => i.kind === 'planned')).toBe(true);
+    const onlyPending = await w.api.get(`/api/v1/occurrences/calendar?from=${TODAY}&to=2026-11-30&status=pending&assigneeId=${w.workers[0]}`);
+    expect(onlyPending.body.items.filter((i: { assignmentId: string }) => i.assignmentId === a.id)).toHaveLength(15);
+    const other = await w.api.get(`/api/v1/occurrences/calendar?from=${TODAY}&to=2026-11-30&assigneeId=${w.workers[1]}`);
+    expect(other.body.items.filter((i: { assignmentId: string }) => i.assignmentId === a.id)).toHaveLength(0);
+    expect((await w.api.get(`/api/v1/occurrences/calendar?from=${TODAY}&to=2027-02-01`)).status).toBe(400);
+
+    // A paused assignment plans nothing more.
+    await w.api.post(`/api/v1/assignments/${a.id}/pause`, {});
+    const paused = await w.api.get(`/api/v1/occurrences/calendar?from=${TODAY}&to=2026-11-30&status=planned`);
+    expect(paused.body.items.filter((i: { assignmentId: string }) => i.assignmentId === a.id)).toHaveLength(0);
+  });
+
   it('lets a worker list only their own occurrences', async () => {
     const w = await schedulingWorld(t);
     const me = await createUserDirect(t, w.s.tenantId, { fullName: 'Mən' });

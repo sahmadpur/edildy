@@ -27,6 +27,8 @@ import {
   occurrenceDetailSchema,
   occurrenceDtoSchema,
   type OccurrenceListQuery,
+  type CalendarQuery,
+  calendarResponseSchema,
   type PreviewAssignmentInput,
   type PutRosterInput,
   rosterCopyResultSchema,
@@ -324,6 +326,8 @@ export function createSchedulingApi(c: ApiClient) {
       get: (id: string) => c.request('GET', `/occurrences/${id}`, { schema: occurrenceDetailSchema }),
       cancel: (id: string, body: CancelOccurrenceInput) => c.request('POST', `/occurrences/${id}/cancel`, { body, schema: occurrenceDetailSchema }),
       mine: (query: MyOccurrenceQuery) => c.request('GET', '/me/occurrences', { query: q(query), schema: pageOf(occurrenceDtoSchema) }),
+      /** The "Yoxlama cədvəli" month view: runs plus planned checks. */
+      calendar: (query: CalendarQuery) => c.request('GET', '/occurrences/calendar', { query: q(query), schema: calendarResponseSchema }),
     },
   };
 }
