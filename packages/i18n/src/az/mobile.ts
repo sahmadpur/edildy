@@ -1,5 +1,21 @@
 export default {
-  tabs: { home: 'Əsas', tasks: 'Tapşırıqlar', problems: 'Problemlər', team: 'Komanda', profile: 'Profil' },
+  tabs: { home: 'Əsas', tasks: 'Tapşırıqlar', problems: 'Problemlər', team: 'Komanda', profile: 'Profil', calendar: 'Cədvəl' },
+  /** The Cədvəl tab: my own runs as a calendar (feedback 2026-11-08). */
+  calendar: {
+    day: 'Gün',
+    threeDays: '3 gün',
+    month: 'Ay',
+    today: 'Bu gün',
+    allDay: 'Bütün gün',
+    empty: 'Bu tarixdə yoxlama yoxdur.',
+    offline: 'İnternet yoxdur: yalnız telefondakı yoxlamalar göstərilir.',
+    prev: 'Əvvəlki',
+    next: 'Növbəti',
+    /** Monday first. */
+    weekdays: { w1: 'B.e.', w2: 'Ç.a.', w3: 'Ç.', w4: 'C.a.', w5: 'C.', w6: 'Ş.', w7: 'B.' },
+    /** Standalone month names, for the month view's title. */
+    months: { m1: 'Yanvar', m2: 'Fevral', m3: 'Mart', m4: 'Aprel', m5: 'May', m6: 'İyun', m7: 'İyul', m8: 'Avqust', m9: 'Sentyabr', m10: 'Oktyabr', m11: 'Noyabr', m12: 'Dekabr' },
+  },
   login: {
     title: 'Daxil ol',
     worker: 'İşçi',
@@ -168,6 +184,8 @@ export default {
     window: '{{from}}–{{to}}',
     overdue: 'Gecikir',
     claimedBy: '{{name}} icra edir',
+    /** A run assigned to me that a colleague did (the calendar and the archive; only its executor can open it). */
+    doneBy: 'İcra edən: {{name}}',
     start: 'Başla',
     continue: 'Davam et',
     view: 'Bax',

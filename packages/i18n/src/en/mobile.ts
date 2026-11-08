@@ -1,5 +1,21 @@
 export default {
-  tabs: { home: 'Home', tasks: 'Tasks', problems: 'Problems', team: 'Team', profile: 'Profile' },
+  tabs: { home: 'Home', tasks: 'Tasks', problems: 'Problems', team: 'Team', profile: 'Profile', calendar: 'Calendar' },
+  /** The Cədvəl tab: my own runs as a calendar (feedback 2026-11-08). */
+  calendar: {
+    day: 'Day',
+    threeDays: '3 days',
+    month: 'Month',
+    today: 'Today',
+    allDay: 'All day',
+    empty: 'No checks on this day.',
+    offline: 'No internet: showing only the checks on this phone.',
+    prev: 'Previous',
+    next: 'Next',
+    /** Monday first. */
+    weekdays: { w1: 'Mo', w2: 'Tu', w3: 'We', w4: 'Th', w5: 'Fr', w6: 'Sa', w7: 'Su' },
+    /** Standalone month names, for the month view's title. */
+    months: { m1: 'January', m2: 'February', m3: 'March', m4: 'April', m5: 'May', m6: 'June', m7: 'July', m8: 'August', m9: 'September', m10: 'October', m11: 'November', m12: 'December' },
+  },
   login: {
     title: 'Log in',
     worker: 'Worker',
@@ -167,6 +183,8 @@ export default {
     window: '{{from}}–{{to}}',
     overdue: 'Late',
     claimedBy: '{{name}} is running this',
+    /** A run assigned to me that a colleague did (the calendar and the archive; only its executor can open it). */
+    doneBy: 'Done by {{name}}',
     start: 'Start',
     continue: 'Continue',
     view: 'View',

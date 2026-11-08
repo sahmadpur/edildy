@@ -91,6 +91,9 @@ function doneAt(c: CardModel): number {
 /** The four Home boxes, each opening the list of the same name below them (Nov 2026 feedback points 4–10). */
 export const HOME_SECTIONS = ['myTasks', 'overdue', 'completed', 'upcoming'] as const;
 export type HomeSection = (typeof HOME_SECTIONS)[number];
+/** The boxes over the folding lists. Tapşırıqlar has no box since the 8 Nov 2026 feedback: its list is always open on top. */
+export const HOME_BOXES = ['overdue', 'completed', 'upcoming'] as const satisfies readonly HomeSection[];
+export type HomeBox = (typeof HOME_BOXES)[number];
 export type HomeSections = Record<HomeSection, CardModel[]>;
 export type HomeStats = Record<HomeSection, number>;
 
