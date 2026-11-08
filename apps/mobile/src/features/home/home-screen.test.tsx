@@ -45,28 +45,38 @@ describe('My checklists', () => {
     expect(mockPush).toHaveBeenCalledWith('/notifications');
   });
 
-  it('shows four equal boxes, opens Tapşırıqlar by default, and opens the list of any box tapped', async () => {
+  it('lists my open runs on top with no Tapşırıqlar box, then three boxes that each open their own list', async () => {
     const t = await world();
     await t.services.store.start(OCC, ME);
     t.clock.set('2026-11-02T06:30:00.000Z'); // 10:30 in Baku: past due, before close
     await renderWithServices(t.services, <HomeScreen />);
-    // The counts (point 4–9): no "Mənim", no "(bu gün)", Gələcək instead of Problemlər.
-    expect(within(await screen.findByTestId('stat-myTasks')).getByText('Tapşırıqlar')).toBeTruthy();
-    expect(within(screen.getByTestId('stat-myTasks')).getByText('2')).toBeTruthy();
+    // 8 Nov 2026: the Tapşırıqlar box is gone; its runs are always listed under "İndi" with the count.
+    const now = within(await screen.findByTestId('section-myTasks'));
+    expect(screen.queryByTestId('stat-myTasks')).toBeNull();
+    expect(now.getByRole('header', { name: 'İndi' })).toBeTruthy();
+    expect(now.getByText('2')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-overdue')).getByText('Gecikən')).toBeTruthy();
     expect(within(screen.getByTestId('stat-overdue')).getByText('2')).toBeTruthy();
     expect(within(screen.getByTestId('stat-completed')).getByText('Tamamlanan')).toBeTruthy();
     expect(within(screen.getByTestId('stat-completed')).getByText('1')).toBeTruthy();
     expect(within(screen.getByTestId('stat-upcoming')).getByText('Gələcək')).toBeTruthy();
     expect(within(screen.getByTestId('stat-upcoming')).getByText('1')).toBeTruthy();
     expect(screen.queryByTestId('stat-issues')).toBeNull();
-    // Tapşırıqlar is open: my run in progress, the overdue open one, and the one Murad holds (listed, not counted).
+    // The open list: my run in progress, the overdue open one, and the one Murad holds (listed, not counted).
+    expect(now.getAllByTestId(/^occurrence-/)).toHaveLength(3);
+    // No box list is open at first.
+    expect(screen.queryByTestId('section-toggle-myTasks')).toBeNull();
+    expect(screen.getByTestId('section-toggle-overdue').props.accessibilityState).toEqual({ expanded: false });
     expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByRole('button', { name: 'Davam et: Açılış yoxlaması' })).toBeTruthy();
     expect(within(screen.getByTestId(`occurrence-${OCC5}`)).getByText('Gecikir')).toBeTruthy();
     expect(screen.getByText('Murad Həsənov icra edir')).toBeTruthy();
     expect(screen.queryByTestId(`occurrence-${OCC3}`)).toBeNull();
-    // A box opens its list and folds the others (point 10).
+    // A box opens its list and folds the others (point 10); the open list on top stays.
+    await fireEvent.press(screen.getByTestId('stat-overdue'));
+    expect(within(screen.getByTestId('section-overdue')).getAllByTestId(/^occurrence-/)).toHaveLength(2);
     await fireEvent.press(screen.getByTestId('stat-upcoming'));
-    expect(screen.queryByTestId(`occurrence-${OCC}`)).toBeNull();
+    expect(within(screen.getByTestId('section-overdue')).queryAllByTestId(/^occurrence-/)).toHaveLength(0);
+    expect(within(screen.getByTestId('section-myTasks')).getAllByTestId(/^occurrence-/)).toHaveLength(3);
     const upcoming = within(screen.getByTestId(`occurrence-${OCC3}`));
     expect(upcoming.getByText(formatDateTime('2026-11-02T14:00:00.000Z', { locale: 'az', timeZone: 'Asia/Baku' }))).toBeTruthy();
     // An upcoming run opens read-only (point 12).
@@ -186,6 +196,6 @@ describe('Needs correction (spec §8.1)', () => {
   it('counts a run sent back to me among my tasks', async () => {
     const t = await sentBack();
     await renderWithServices(t.services, <HomeScreen />);
-    expect(await within(await screen.findByTestId('stat-myTasks')).findByText('1')).toBeTruthy();
+    expect(await within(await screen.findByTestId('section-myTasks')).findByText('1')).toBeTruthy();
   });
 });

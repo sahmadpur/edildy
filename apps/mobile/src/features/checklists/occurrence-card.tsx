@@ -19,6 +19,12 @@ interface Props {
   onOpen: () => void;
 }
 
+/** The small dot before a run's name (the group colour that used to be a thick left edge); the calendar uses it too. */
+export function cardDot(card: CardModel, group: GroupKey): string {
+  const missed = !card.occurrence.execution && card.occurrence.status === 'missed';
+  return card.overdue || missed ? colors.danger : card.rework ? colors.warning : group === 'done' ? colors.success : group === 'upcoming' ? colors.planned : colors.primary;
+}
+
 /** One run on the Home list: `name | site` over `window | opening moment`, the chips, and the one action the worker can take. */
 export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props) {
   const { t } = useTranslation();
@@ -26,9 +32,8 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
   const o = card.occurrence;
   const e = o.execution;
   const status = e && e.state !== 'active' ? t(`executions.states.${e.state}`) : !e && o.status !== 'pending' ? t(`scheduling.statuses.${o.status}`) : null;
-  // A small dot before the name carries the group colour that used to be a thick left edge.
   const missed = !e && o.status === 'missed';
-  const dot = card.overdue || missed ? colors.danger : card.rework ? colors.warning : group === 'done' ? colors.success : group === 'upcoming' ? colors.planned : colors.primary;
+  const dot = cardDot(card, group);
   // A finished run and one not open yet are opened by tapping anywhere on the card (Nov 2026 feedback point 12).
   const tappable = card.action === 'view' || card.action === 'preview';
   return (

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, type ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { TabHeader } from '@/components/tab-header';
-import { groupOccurrences, HOME_SECTIONS, type HomeSection, homeSections, homeStats } from '@/features/checklists/group-occurrences';
+import { type CardModel, groupOccurrences, HOME_BOXES, type HomeBox, type HomeSection, homeSections, homeStats } from '@/features/checklists/group-occurrences';
 import { OccurrenceCard } from '@/features/checklists/occurrence-card';
 import { useSession } from '@/lib/session';
 import { localDate } from '@/lib/time';
@@ -17,17 +17,17 @@ import { ArchiveMore } from './archive';
 import { useStartOccurrence } from './use-start-occurrence';
 
 /** A count takes its colour only when it is not zero, so a calm day reads calm. */
-const TONE: Record<HomeSection, string> = {
-  myTasks: colors.primary,
+const TONE: Record<HomeBox, string> = {
   overdue: colors.dangerText,
   completed: colors.successText,
   upcoming: colors.plannedText,
 };
 
 /**
- * "My checklists" (spec §7.3, FR-10.01–02), reshaped by the Nov 2026 feedback: four equal boxes (Tapşırıqlar, Gecikən,
- * Tamamlanan, Gələcək) over four folding lists of the same names. A box opens its list, folds the others and scrolls
- * to it; a list's own heading opens or folds it.
+ * "My checklists" (spec §7.3, FR-10.01–02), reshaped by the Nov 2026 feedback: the runs I can work on now (İndi) are
+ * always listed on top — the Tapşırıqlar box went on 8 Nov 2026 — then three equal boxes (Gecikən, Tamamlanan, Gələcək)
+ * over three folding lists of the same names. A box opens its list, folds the others and scrolls to it; a list's own
+ * heading opens or folds it. Nothing is folded open at first.
  */
 export function HomeScreen() {
   const { t } = useTranslation();
@@ -40,21 +40,31 @@ export function HomeScreen() {
   const groups = list ? groupOccurrences(list, services.userId, now, today) : null;
   const sections = groups ? homeSections(groups) : null;
   const stats = sections ? homeStats(sections) : null;
-  const [open, setOpen] = useState<HomeSection | null>('myTasks');
+  const [open, setOpen] = useState<HomeBox | null>(null);
   const scroll = useRef<ScrollView>(null);
-  const offsets = useRef<Partial<Record<HomeSection, number>>>({});
+  const offsets = useRef<Partial<Record<HomeBox, number>>>({});
   if (s.status !== 'authenticated') return null;
 
-  const show = (key: HomeSection) => {
+  const show = (key: HomeBox) => {
     setOpen(key);
     const y = offsets.current[key];
     if (y !== undefined) scroll.current?.scrollTo({ y: Math.max(0, y - spacing.sm), animated: true });
   };
-  const toggle = (key: HomeSection) => setOpen((cur) => (cur === key ? null : key));
+  const toggle = (key: HomeBox) => setOpen((cur) => (cur === key ? null : key));
 
   // The route param is the OCCURRENCE id: an execution's id can change when the sync engine adopts another
   // install's claim, so the execution screen resolves the current execution from the occurrence on every change.
   const openRun = (o: OccurrenceView) => router.push({ pathname: '/execution/[id]', params: { id: o.id } });
+  const cardOf = (key: HomeSection, card: CardModel) => (
+    <OccurrenceCard
+      key={card.occurrence.id}
+      card={card}
+      group={key === 'completed' ? 'done' : key === 'upcoming' ? 'upcoming' : card.rework ? 'rework' : card.action === 'continue' ? 'inProgress' : card.action === 'start' || card.claimedBy ? 'now' : 'done'}
+      timeZone={services.timeZone}
+      onStart={() => void start(card.occurrence)}
+      onOpen={() => openRun(card.occurrence)}
+    />
+  );
 
   return (
     <Screen scrollRef={scroll}>
@@ -64,8 +74,20 @@ export function HomeScreen() {
           <Text style={styles.offlineText}>{t('mobile.home.offline')}</Text>
         </View>
       ) : null}
+      {sections && stats ? (
+        <View testID="section-myTasks" style={styles.group}>
+          <View style={styles.sectionRow}>
+            <Text accessibilityRole="header" style={styles.section}>
+              {t('mobile.checklists.sections.now')}
+            </Text>
+            <Text style={styles.count}>{stats.myTasks}</Text>
+          </View>
+          {sections.myTasks.length === 0 ? <Text style={styles.subtitle}>{t('mobile.checklists.emptySection')}</Text> : null}
+          {sections.myTasks.map((card) => cardOf('myTasks', card))}
+        </View>
+      ) : null}
       <View style={styles.boxes}>
-        {HOME_SECTIONS.map((key) => {
+        {HOME_BOXES.map((key) => {
           const value = stats ? stats[key] : null;
           const on = open === key;
           return (
@@ -88,7 +110,7 @@ export function HomeScreen() {
         })}
       </View>
       {sections ? (
-        HOME_SECTIONS.map((key) => {
+        HOME_BOXES.map((key) => {
           const cards = sections[key];
           const expanded = open === key;
           return (
@@ -115,16 +137,7 @@ export function HomeScreen() {
               {expanded ? (
                 <>
                   {cards.length === 0 && key !== 'completed' ? <Text style={styles.subtitle}>{t('mobile.checklists.emptySection')}</Text> : null}
-                  {cards.map((card) => (
-                    <OccurrenceCard
-                      key={card.occurrence.id}
-                      card={card}
-                      group={key === 'completed' ? 'done' : key === 'upcoming' ? 'upcoming' : card.rework ? 'rework' : card.action === 'continue' ? 'inProgress' : card.action === 'start' || card.claimedBy ? 'now' : 'done'}
-                      timeZone={services.timeZone}
-                      onStart={() => void start(card.occurrence)}
-                      onOpen={() => openRun(card.occurrence)}
-                    />
-                  ))}
+                  {cards.map((card) => cardOf(key, card))}
                   {key === 'completed' ? <ArchiveMore knownIds={new Set(cards.map((c) => c.occurrence.id))} today={today} timeZone={services.timeZone} /> : null}
                 </>
               ) : null}
@@ -143,7 +156,7 @@ const styles = StyleSheet.create({
   offline: { backgroundColor: colors.warningSoft, borderRadius: 12, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   offlineText: { fontFamily: font, fontSize: type.base, color: colors.warningText, fontWeight: '500' },
   subtitle: { fontFamily: font, fontSize: type.base, color: colors.muted },
-  // Four equal boxes: same width and height whatever the language.
+  // Three equal boxes: same width and height whatever the language.
   boxes: { flexDirection: 'row', gap: spacing.sm },
   box: { flex: 1, minHeight: 76, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.fill, paddingHorizontal: 4, paddingVertical: 10, alignItems: 'center', justifyContent: 'center', gap: 2 },
   boxOn: { borderColor: colors.primary, borderWidth: 1.5, backgroundColor: colors.primarySoft },

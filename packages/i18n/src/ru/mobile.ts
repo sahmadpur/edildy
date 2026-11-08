@@ -1,5 +1,21 @@
 export default {
-  tabs: { home: 'Главная', tasks: 'Задачи', problems: 'Проблемы', team: 'Команда', profile: 'Профиль' },
+  tabs: { home: 'Главная', tasks: 'Задачи', problems: 'Проблемы', team: 'Команда', profile: 'Профиль', calendar: 'Календарь' },
+  /** The Cədvəl tab: my own runs as a calendar (feedback 2026-11-08). */
+  calendar: {
+    day: 'День',
+    threeDays: '3 дня',
+    month: 'Месяц',
+    today: 'Сегодня',
+    allDay: 'Весь день',
+    empty: 'На этот день проверок нет.',
+    offline: 'Нет интернета: показаны только проверки на телефоне.',
+    prev: 'Назад',
+    next: 'Вперёд',
+    /** Monday first. */
+    weekdays: { w1: 'Пн', w2: 'Вт', w3: 'Ср', w4: 'Чт', w5: 'Пт', w6: 'Сб', w7: 'Вс' },
+    /** Standalone month names, for the month view's title. */
+    months: { m1: 'Январь', m2: 'Февраль', m3: 'Март', m4: 'Апрель', m5: 'Май', m6: 'Июнь', m7: 'Июль', m8: 'Август', m9: 'Сентябрь', m10: 'Октябрь', m11: 'Ноябрь', m12: 'Декабрь' },
+  },
   login: {
     title: 'Вход',
     worker: 'Сотрудник',
@@ -167,6 +183,8 @@ export default {
     window: '{{from}}–{{to}}',
     overdue: 'Опоздание',
     claimedBy: 'Выполняет {{name}}',
+    /** A run assigned to me that a colleague did (the calendar and the archive; only its executor can open it). */
+    doneBy: 'Выполнил(а): {{name}}',
     start: 'Начать',
     continue: 'Продолжить',
     view: 'Открыть',

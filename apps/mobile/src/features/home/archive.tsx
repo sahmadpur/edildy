@@ -9,7 +9,7 @@ import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { percentText } from '@/features/team/team-format';
 import { useLocale } from '@/lib/language';
-import { api } from '@/lib/session';
+import { api, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
 import { useSyncStatus } from '@/offline/hooks';
 
@@ -54,6 +54,8 @@ interface State {
 export function ArchiveMore({ knownIds, today, timeZone }: { knownIds: ReadonlySet<string>; today: string; timeZone: string }) {
   const { t } = useTranslation();
   const { online } = useSyncStatus();
+  const session = useSession();
+  const myName = session.status === 'authenticated' ? session.me.user.fullName : '';
   const [s, setS] = useState<State>({ rows: [], before: shiftDate(today, 1), loading: false, exhausted: false, error: null });
 
   const load = async () => {
@@ -80,7 +82,7 @@ export function ArchiveMore({ knownIds, today, timeZone }: { knownIds: ReadonlyS
   return (
     <View style={styles.wrap}>
       {s.rows.map((r) => (
-        <ArchiveRow key={r.id} row={r} timeZone={timeZone} />
+        <ArchiveRow key={r.id} row={r} timeZone={timeZone} myName={myName} />
       ))}
       {s.error ? <FormError message={mobileErrorText(t, s.error)} /> : null}
       {s.loading ? (
@@ -96,17 +98,23 @@ export function ArchiveMore({ knownIds, today, timeZone }: { knownIds: ReadonlyS
   );
 }
 
-function ArchiveRow({ row, timeZone }: { row: OccurrenceDto; timeZone: string }) {
+/**
+ * GET /me/occurrences also lists runs assigned to me that a colleague did, but GET /executions/:id answers 404 to a
+ * worker who is not the executor: those rows say who did them and do not open (the brief carries the name, not the id).
+ */
+function ArchiveRow({ row, timeZone, myName }: { row: OccurrenceDto; timeZone: string; myName: string }) {
   const { t } = useTranslation();
   const locale = useLocale();
   const brief = row.executionBrief!;
+  const mine = brief.executorName === myName;
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={mine ? 'button' : undefined}
       accessibilityLabel={`${row.checklistName}, ${row.siteName}`}
       testID={`archive-${row.id}`}
+      disabled={!mine}
       onPress={() => router.push({ pathname: '/archive/[id]', params: { id: brief.executionId } })}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.card, mine && pressed && styles.pressed]}
     >
       <View style={styles.row}>
         <View style={styles.name}>
@@ -123,6 +131,7 @@ function ArchiveRow({ row, timeZone }: { row: OccurrenceDto; timeZone: string })
         <Text style={styles.mutedIndented}>{formatDateTime(row.startsAt, { locale, timeZone })}</Text>
         {brief.scorePercent !== null ? <Text style={styles.mutedIndented}>{percentText(t, brief.scorePercent)}</Text> : null}
       </View>
+      {mine ? null : <Text style={styles.mutedIndented}>{t('mobile.checklists.doneBy', { name: brief.executorName })}</Text>}
       <View style={styles.badges}>
         <StatusChip tone="success" text={t(`executions.states.${brief.state}`)} />
         {brief.late ? <StatusChip tone="warning" text={t('executions.flags.late')} /> : null}

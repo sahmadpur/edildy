@@ -24,6 +24,8 @@ export default function AppLayout() {
         <Tabs.Screen name="tasks" options={{ title: t('mobile.tabs.tasks'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'clipboard' : 'clipboard-outline'} color={color} size={size} /> }} />
         <Tabs.Screen name="problems/index" options={{ title: t('mobile.tabs.problems'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'warning' : 'warning-outline'} color={color} size={size} /> }} />
         <Tabs.Screen name="index" options={{ title: t('mobile.tabs.home'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} /> }} />
+        {/* Cədvəl (feedback 2026-11-08): my own runs as a calendar, right of Home. */}
+        <Tabs.Screen name="calendar" options={{ title: t('mobile.tabs.calendar'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'calendar' : 'calendar-outline'} color={color} size={size} /> }} />
         <Tabs.Screen
           name="team/index"
           options={{
