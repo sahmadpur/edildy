@@ -21,13 +21,17 @@ function Tabs({
   )
 }
 
+/*
+ * Skeuomorphic tabs: the list is a recessed track and the open tab a raised key with a lit LED.
+ * The look lives in styles.css (.tp-tabs-list / .tp-tab); both variants share it.
+ */
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit max-w-full items-center justify-center text-muted-foreground group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=pill]:rounded-lg data-[variant=pill]:bg-muted data-[variant=pill]:p-[3px] group-data-horizontal/tabs:data-[variant=pill]:h-8",
+  "tp-tabs-list group/tabs-list inline-flex w-fit max-w-full items-center overflow-x-auto group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
   {
     variants: {
       variant: {
         pill: "",
-        line: "gap-1 overflow-x-auto border-b bg-transparent group-data-horizontal/tabs:h-10",
+        line: "",
       },
     },
     defaultVariants: {
@@ -54,10 +58,7 @@ function TabsList({
 
 /** The trigger's look, shared with link-based page tabs (PageTabs). */
 const tabsTriggerClassName = cn(
-  "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 dark:text-muted-foreground dark:hover:text-foreground group-data-[variant=pill]/tabs-list:data-active:shadow-sm group-data-[variant=line]/tabs-list:data-active:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-  "group-data-[variant=line]/tabs-list:px-3 group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:text-primary dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
-  "data-active:bg-background data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 dark:data-active:text-foreground",
-  "after:absolute after:bg-primary after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-1px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100"
+  "tp-tab relative inline-flex shrink-0 items-center justify-center gap-2 text-sm font-medium whitespace-nowrap group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
 )
 
 function TabsTrigger({

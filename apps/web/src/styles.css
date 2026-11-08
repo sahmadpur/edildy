@@ -139,3 +139,125 @@
   background-color: --value(--color-status-*-soft);
   color: --value(--color-status-*-text);
 }
+
+/*
+ * Skeuomorphic tabs (components/ui/tabs.tsx, components/page-tabs.tsx).
+ * The list is a recessed track pressed into the page; each tab is a key with an LED. The open tab is raised out of
+ * the track, its LED lit in the primary colour.
+ */
+@layer components {
+  .tp-tabs-list {
+    --tab-led-off: color-mix(in oklab, var(--tp-ink2) 35%, var(--tp-line));
+    --tab-led-on: var(--tp-primary);
+    gap: 4px;
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid var(--tp-line);
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--tp-canvas) 55%, var(--tp-line)) 0%,
+      var(--tp-canvas) 100%
+    );
+    box-shadow:
+      inset 0 2px 4px rgb(2 27 43 / 0.12),
+      inset 0 1px 1px rgb(2 27 43 / 0.08),
+      0 1px 0 rgb(255 255 255 / 0.9);
+    scrollbar-width: none;
+  }
+
+  .tp-tab {
+    height: 32px;
+    padding: 0 14px 0 12px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    color: var(--tp-ink2);
+    text-shadow: 0 1px 0 rgb(255 255 255 / 0.7);
+    transition:
+      color 160ms ease,
+      background 160ms ease,
+      box-shadow 200ms ease,
+      transform 120ms ease;
+  }
+  /* The LED: dark and sunk while off, lit on the open tab. */
+  .tp-tab::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--tab-led-off);
+    box-shadow: inset 0 1px 1px rgb(2 27 43 / 0.35);
+    transition:
+      background 200ms ease,
+      box-shadow 200ms ease;
+  }
+  .tp-tab:hover:not(:is([data-active], [data-state='active'])) {
+    color: var(--tp-ink);
+    background: rgb(255 255 255 / 0.55);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8);
+  }
+  .tp-tab:active:not(:is([data-active], [data-state='active'])) {
+    transform: translateY(1px);
+  }
+  .tp-tab:is([data-active], [data-state='active']) {
+    color: var(--tp-primary-deep);
+    border-color: color-mix(in oklab, var(--tp-primary) 30%, var(--tp-line));
+    background: linear-gradient(
+      180deg,
+      #ffffff 0%,
+      color-mix(in oklab, var(--tp-surface) 88%, var(--tp-line)) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 1),
+      inset 0 -1px 0 rgb(2 27 43 / 0.06),
+      0 1px 2px rgb(2 27 43 / 0.14),
+      0 3px 8px -2px rgb(2 27 43 / 0.16);
+  }
+  .tp-tab:is([data-active], [data-state='active'])::before {
+    background: radial-gradient(
+      circle at 35% 35%,
+      color-mix(in oklab, var(--tab-led-on) 30%, white) 0%,
+      var(--tab-led-on) 70%
+    );
+    box-shadow: inset 0 -1px 1px rgb(0 0 0 / 0.2);
+  }
+
+  :is(.dark, [data-theme='dark']) .tp-tabs-list {
+    --tab-led-off: #0b1220;
+    border-color: color-mix(in oklab, var(--tp-line) 70%, black);
+    background: linear-gradient(180deg, #060b15 0%, #0c1422 100%);
+    box-shadow:
+      inset 0 2px 6px rgb(0 0 0 / 0.65),
+      inset 0 1px 1px rgb(0 0 0 / 0.5),
+      0 1px 0 rgb(255 255 255 / 0.05);
+  }
+  :is(.dark, [data-theme='dark']) .tp-tab {
+    text-shadow: 0 -1px 0 rgb(0 0 0 / 0.6);
+  }
+  :is(.dark, [data-theme='dark']) .tp-tab::before {
+    box-shadow:
+      inset 0 1px 1px rgb(0 0 0 / 0.8),
+      0 1px 0 rgb(255 255 255 / 0.06);
+  }
+  :is(.dark, [data-theme='dark']) .tp-tab:hover:not(:is([data-active], [data-state='active'])) {
+    background: rgb(255 255 255 / 0.04);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  }
+  :is(.dark, [data-theme='dark']) .tp-tab:is([data-active], [data-state='active']) {
+    color: var(--tp-primary-deep);
+    border-color: color-mix(in oklab, var(--tp-primary) 40%, var(--tp-line-strong));
+    background: linear-gradient(180deg, #273650 0%, #1a2539 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      inset 0 -1px 0 rgb(0 0 0 / 0.35),
+      0 4px 10px -2px rgb(0 0 0 / 0.6);
+  }
+  :is(.dark, [data-theme='dark']) .tp-tab:is([data-active], [data-state='active'])::before {
+    background: radial-gradient(
+      circle at 35% 35%,
+      color-mix(in oklab, var(--tp-primary) 25%, white) 0%,
+      var(--tp-primary) 70%
+    );
+    box-shadow: inset 0 -1px 1px rgb(0 0 0 / 0.3);
+  }
+}
