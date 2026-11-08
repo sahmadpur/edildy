@@ -38,6 +38,12 @@ function describeDays(r: Recurrence, t: Translate): string {
 function describeTime(timing: Timing, shiftName: string | null, t: Translate): string {
   if (timing.mode === 'shift') return t('scheduling.summary.shift', { shift: shiftName ?? '—' });
   if (timing.mode === 'anytime') return t('scheduling.summary.anytime');
+  if (timing.mode === 'repeat') {
+    const every = timing.everyMinutes % 60 === 0
+      ? t('scheduling.summary.everyHours', { n: timing.everyMinutes / 60 })
+      : t('scheduling.summary.everyMinutes', { n: timing.everyMinutes });
+    return t('scheduling.summary.repeat', { every, range: `${timing.startTime}–${timing.endTime}` });
+  }
   const end = timeToMinutes(timing.startTime) + timing.dueAfterMinutes;
   const range = `${timing.startTime}–${minutesToTime(end)}`;
   const days = Math.floor(end / 1440);

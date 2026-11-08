@@ -41,34 +41,37 @@ export function AuditSettings({ checklist, editable, onSave }: { checklist: Chec
   };
 
   return (
-    <section aria-labelledby="audit-settings-title" className="grid max-w-xl gap-3 bg-card shadow-card rounded-xl p-4">
+    // Heading above the card, like Təyinatlar and Versiyalar (feedback 2026-11-08).
+    <section aria-labelledby="audit-settings-title" className="grid gap-2">
       <h2 id="audit-settings-title" className="text-lg font-semibold">
         {t('audits.web.settings.title')}
       </h2>
-      <div className="flex items-start gap-3">
-        <Switch id="requires-audit" checked={requiresAudit} disabled={!editable} onCheckedChange={setRequiresAudit} aria-describedby="requires-audit-hint" />
-        <div className="grid gap-0.5">
-          <Label htmlFor="requires-audit">{t('audits.fields.requiresAudit')}</Label>
-          <p id="requires-audit-hint" className="text-muted-foreground text-xs">
-            {t('audits.web.settings.requiresAuditHint')}
-          </p>
+      <div className="grid gap-3 bg-card shadow-card rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <Switch id="requires-audit" checked={requiresAudit} disabled={!editable} onCheckedChange={setRequiresAudit} aria-describedby="requires-audit-hint" />
+          <div className="grid gap-0.5">
+            <Label htmlFor="requires-audit">{t('audits.fields.requiresAudit')}</Label>
+            <p id="requires-audit-hint" className="text-muted-foreground text-xs">
+              {t('audits.web.settings.requiresAuditHint')}
+            </p>
+          </div>
         </div>
+        <EmailListInput
+          id="audit-report-emails"
+          label={t('audits.fields.reportEmails')}
+          hint={t('audits.web.settings.emailsHint')}
+          value={emails}
+          onChange={setEmails}
+          max={AUDIT_LIMITS.reportEmails}
+          disabled={!editable}
+        />
+        <FormError message={error} />
+        {editable && (
+          <Button className="w-fit" disabled={!dirty || busy} onClick={() => void save()}>
+            {t('common.save')}
+          </Button>
+        )}
       </div>
-      <EmailListInput
-        id="audit-report-emails"
-        label={t('audits.fields.reportEmails')}
-        hint={t('audits.web.settings.emailsHint')}
-        value={emails}
-        onChange={setEmails}
-        max={AUDIT_LIMITS.reportEmails}
-        disabled={!editable}
-      />
-      <FormError message={error} />
-      {editable && (
-        <Button className="w-fit" disabled={!dirty || busy} onClick={() => void save()}>
-          {t('common.save')}
-        </Button>
-      )}
     </section>
   );
 }

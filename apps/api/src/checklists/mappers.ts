@@ -7,6 +7,7 @@ export interface ChecklistRow {
   category: ChecklistSummary['category'];
   status: ChecklistSummary['status'];
   latestVersionNumber: number;
+  currentVersionId: string | null;
   draftRevision: number | null;
   updatedAt: Date;
 }
@@ -18,6 +19,7 @@ export const toChecklistSummary = (r: ChecklistRow): ChecklistSummary => ({
   category: r.category,
   status: r.status,
   currentVersionNumber: r.latestVersionNumber > 0 ? r.latestVersionNumber : null,
+  currentVersionId: r.currentVersionId,
   draftRevision: r.draftRevision,
   updatedAt: r.updatedAt.toISOString(),
 });

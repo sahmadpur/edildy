@@ -7,7 +7,6 @@ import {
   TASK_HISTORY_REASONS,
   TASK_STATUSES,
   type TaskListQuery,
-  type TaskSourceFilter,
   type TaskStatus,
   type TaskSummary,
   timeToMinutes,
@@ -52,18 +51,17 @@ export interface AssigneeChoice {
 
 export const sameChoice = (a: AssigneeChoice | null, b: AssigneeChoice | null): boolean => a?.type === b?.type && a?.id === b?.id;
 
-/** Status, site and source are multi-select (feedback 2026-11-07): an empty list means all. */
+/** Status and site are multi-select (feedback 2026-11-07): an empty list means all. The source filter was dropped on 2026-11-08. */
 export interface TaskFilters {
   status: TaskStatus[];
   siteId: string[];
   assignee: AssigneeChoice | null;
-  source: TaskSourceFilter[];
   /** Tenant-local dates, YYYY-MM-DD or ''. */
   dueFrom: string;
   dueTo: string;
 }
 
-export const EMPTY_TASK_FILTERS: TaskFilters = { status: [], siteId: [], assignee: null, source: [], dueFrom: '', dueTo: '' };
+export const EMPTY_TASK_FILTERS: TaskFilters = { status: [], siteId: [], assignee: null, dueFrom: '', dueTo: '' };
 
 export const dueRangeInverted = (f: TaskFilters): boolean => Boolean(f.dueFrom && f.dueTo && f.dueTo < f.dueFrom);
 
@@ -80,7 +78,6 @@ export function taskListQuery(tab: TaskTab, f: TaskFilters, ctx: { userId: strin
   if (f.siteId.length) q.siteId = f.siteId.join(',');
   if (f.assignee?.type === 'user') q.assigneeUserId = f.assignee.id;
   if (f.assignee?.type === 'team') q.teamId = f.assignee.id;
-  if (f.source.length) q.source = f.source.join(',');
   // Whole tenant-local days, both ends included.
   if (f.dueFrom) q.dueFrom = zonedTimeToUtc(f.dueFrom, 0, ctx.timeZone).toISOString();
   if (f.dueTo) q.dueTo = new Date(zonedTimeToUtc(addDays(f.dueTo, 1), 0, ctx.timeZone).getTime() - 1).toISOString();

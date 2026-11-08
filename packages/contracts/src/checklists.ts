@@ -16,6 +16,8 @@ export const checklistSummarySchema = z.object({
   status: checklistStatusSchema,
   /** null until the first publish. */
   currentVersionNumber: z.number().int().nullable(),
+  /** The published version cards open with "Bax" (feedback 2026-11-08); null until the first publish. */
+  currentVersionId: idSchema.nullable(),
   /** Revision of the open draft, null when there is none. */
   draftRevision: z.number().int().nullable(),
   updatedAt: isoDateTimeSchema,
@@ -38,7 +40,6 @@ export type ChecklistVersionSummary = z.infer<typeof checklistVersionSummarySche
 
 export const checklistSourceSchema = z.object({ kind: z.enum(['global', 'tenant', 'version']), id: idSchema });
 export const checklistDetailSchema = checklistSummarySchema.extend({
-  currentVersionId: idSchema.nullable(),
   source: checklistSourceSchema.nullable(),
   /** Draft first, then published versions newest first. */
   versions: z.array(checklistVersionSummarySchema),

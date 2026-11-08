@@ -105,57 +105,61 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
         {c.source && <span>{t(`checklists.detail.source.${c.source.kind}`)}</span>}
         {c.description && <span>{c.description}</span>}
       </div>
-      <h2 className="text-lg font-semibold">{t('checklists.detail.versions')}</h2>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('checklists.version')}</TableHead>
-            <TableHead>{t('checklists.detail.publishedAt')}</TableHead>
-            <TableHead>{t('checklists.detail.publishedBy')}</TableHead>
-            <TableHead>{t('checklists.detail.changeNote')}</TableHead>
-            <TableHead />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {c.versions.map((v) => (
-            <TableRow key={v.id}>
-              <TableCell>{v.number ? t('checklists.versionN', { n: v.number }) : <Badge variant="outline">{t('checklists.draft')}</Badge>}</TableCell>
-              <TableCell>{v.publishedAt ? formatDateTime(v.publishedAt, { locale, timeZone: ws.timeZone }) : '—'}</TableCell>
-              <TableCell>{v.publishedBy ? (v.publishedBy.kind === 'platform' ? t('checklists.detail.taskop') : v.publishedBy.name) : '—'}</TableCell>
-              <TableCell>{v.changeNote ?? '—'}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  <WsLink to={v.state === 'draft' ? `/checklists/${c.id}/draft` : `/checklists/${c.id}/versions/${v.id}`} className="px-2 py-1 text-sm hover:underline">
-                    {t('checklists.detail.open')}
-                  </WsLink>
-                  {v.state === 'published' && editable && !hasDraft && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        void act(async () => {
-                          await ws.checklists.startDraft(checklistId, { fromVersionId: v.id });
-                          ws.go(`/checklists/${checklistId}/draft`);
-                        })
-                      }
-                    >
-                      {t('checklists.detail.restore')}
-                    </Button>
-                  )}
-                  {v.state === 'published' && ws.can.templates && (
-                    <Button size="sm" variant="ghost" onClick={() => setDialog({ saveAsTemplate: v })}>
-                      {t('checklists.detail.saveAsTemplate')}
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
+      {/* Order (feedback 2026-11-08): Təyinatlar, Versiyalar, then the audit settings. */}
       {/* Only tenant users have a session to check assignment permissions against; platform admins use the API. */}
       {ws.scope === 'tenant' && <ChecklistAssignments checklistId={c.id} canAssign={active && c.currentVersionId !== null} />}
+
+      <section aria-label={t('checklists.detail.versions')} className="grid gap-2">
+        <h2 className="text-lg font-semibold">{t('checklists.detail.versions')}</h2>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('checklists.version')}</TableHead>
+              <TableHead>{t('checklists.detail.publishedAt')}</TableHead>
+              <TableHead>{t('checklists.detail.publishedBy')}</TableHead>
+              <TableHead>{t('checklists.detail.changeNote')}</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {c.versions.map((v) => (
+              <TableRow key={v.id}>
+                <TableCell>{v.number ? t('checklists.versionN', { n: v.number }) : <Badge variant="outline">{t('checklists.draft')}</Badge>}</TableCell>
+                <TableCell>{v.publishedAt ? formatDateTime(v.publishedAt, { locale, timeZone: ws.timeZone }) : '—'}</TableCell>
+                <TableCell>{v.publishedBy ? (v.publishedBy.kind === 'platform' ? t('checklists.detail.taskop') : v.publishedBy.name) : '—'}</TableCell>
+                <TableCell>{v.changeNote ?? '—'}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    <WsLink to={v.state === 'draft' ? `/checklists/${c.id}/draft` : `/checklists/${c.id}/versions/${v.id}`} className="px-2 py-1 text-sm hover:underline">
+                      {t('checklists.detail.open')}
+                    </WsLink>
+                    {v.state === 'published' && editable && !hasDraft && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() =>
+                          void act(async () => {
+                            await ws.checklists.startDraft(checklistId, { fromVersionId: v.id });
+                            ws.go(`/checklists/${checklistId}/draft`);
+                          })
+                        }
+                      >
+                        {t('checklists.detail.restore')}
+                      </Button>
+                    )}
+                    {v.state === 'published' && ws.can.templates && (
+                      <Button size="sm" variant="ghost" onClick={() => setDialog({ saveAsTemplate: v })}>
+                        {t('checklists.detail.saveAsTemplate')}
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </section>
+
 
       {/* The audit settings come last: they are set once and rarely looked at again (feedback 2026-11-07). */}
       {/* Keyed by the stored values, so the section starts from the server's state again after a save. */}

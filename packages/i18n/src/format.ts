@@ -175,6 +175,19 @@ export function formatCompactDate(date: string, locale: string): string {
 }
 
 /** A number in the language's digits and separators (az: "1 234,5"). */
+/** "Noyabr 2026" for a 'YYYY-MM' month, the title of a month calendar; capitalised, no "г." in Russian. */
+export function formatMonthYear(month: string, locale: string): string {
+  const [y, m] = month.split('-').map(Number) as [number, number];
+  if (locale === 'az') {
+    const name = AZ_MONTHS_LONG[m - 1] ?? '';
+    return `${name.charAt(0).toLocaleUpperCase('az')}${name.slice(1)} ${y}`;
+  }
+  const text = new Intl.DateTimeFormat(intlLocale(locale), { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(y, m - 1, 1)))
+    .replace(/\s?г\.$/, '');
+  return text.charAt(0).toLocaleUpperCase(intlLocale(locale)) + text.slice(1);
+}
+
 export function formatNumber(value: number, locale: string, options: Intl.NumberFormatOptions = {}): string {
   const text = new Intl.NumberFormat(intlLocale(locale), options).format(value);
   // Engines without az data fall back to "1,234.5"; CLDR az is "1.234,5", and the apps use a space to keep it unambiguous.

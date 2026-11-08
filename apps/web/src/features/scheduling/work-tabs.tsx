@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { isPlainClick, PageTabs } from '@/components/page-tabs';
 import { useMe } from '@/lib/session';
 
-export type WorkTabPath = '/assignments' | '/schedule' | '/checklists' | '/templates';
+export type WorkTabPath = '/assignments' | '/calendar' | '/schedule' | '/checklists' | '/templates';
 
 /**
  * The Yoxlamalar menu item's tabs; a tab shows only to those who may open it. The İcra cədvəli page (/schedule) is no
@@ -13,11 +13,13 @@ export type WorkTabPath = '/assignments' | '/schedule' | '/checklists' | '/templ
  */
 export const WORK_TABS: readonly { to: Exclude<WorkTabPath, '/schedule'>; labelKey: string; permission: PermissionKey }[] = [
   { to: '/assignments', labelKey: 'scheduling.assignments.title', permission: 'assignments.view' },
+  // The month calendar of checks (feedback 2026-11-08).
+  { to: '/calendar', labelKey: 'nav.calendar', permission: 'assignments.view' },
   { to: '/checklists', labelKey: 'nav.checklists', permission: 'checklists.view' },
   { to: '/templates', labelKey: 'nav.templates', permission: 'checklists.manage' },
 ];
 
-/** Təyinatlar, Yoxlama vərəqələri and Şablonlar as the tabs of one page (the menu's "Yoxlamalar"). */
+/** Təyinatlar, Yoxlama cədvəli, Yoxlama vərəqələri and Şablonlar as the tabs of one page (the menu's "Yoxlamalar"). */
 export function WorkTabs({ active }: { active: WorkTabPath }) {
   const { t } = useTranslation();
   const navigate = useNavigate();

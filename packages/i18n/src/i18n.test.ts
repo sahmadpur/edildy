@@ -61,6 +61,7 @@ import {
   formatCompactDate,
   formatDateTime,
   formatLocalDate,
+  formatMonthYear,
   formatNumber,
   formatPercent,
   formatShortDate,
@@ -191,6 +192,12 @@ describe('formatting', () => {
     expect(formatCompactDate('2026-11-06', 'az')).toBe('6 Noy 26');
     expect(formatCompactDate('2026-11-06', 'en')).toBe('6 Nov 26');
     expect(formatCompactDate('2026-11-06', 'ru')).toBe('6 нояб. 26');
+  });
+
+  it('titles a month calendar', () => {
+    expect(formatMonthYear('2026-11', 'az')).toBe('Noyabr 2026');
+    expect(formatMonthYear('2026-11', 'en')).toBe('November 2026');
+    expect(formatMonthYear('2026-11', 'ru')).toBe('Ноябрь 2026');
   });
   it('formats numbers and percentages per language', () => {
     expect(formatNumber(1234.5, 'az')).toBe('1 234,5');

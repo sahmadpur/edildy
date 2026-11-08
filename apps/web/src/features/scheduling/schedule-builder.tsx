@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Field } from '@/components/field';
 import { cn } from '@/lib/utils';
+import { MonthCalendar } from '@/components/month-calendar';
+import { monthOf } from '@/components/month-grid';
 import { formatLocalDate } from './labels';
 import { useLocale } from '@/lib/i18n';
 
@@ -38,8 +40,13 @@ export function defaultTiming(mode: Timing['mode'], shifts: ShiftDto[]): Timing 
       return { mode, shiftId: shifts.find((s) => s.active)?.id ?? '', graceMinutes: 0 };
     case 'anytime':
       return { mode };
+    case 'repeat':
+      return { mode, startTime: '08:00', endTime: '20:00', everyMinutes: 60 };
   }
 }
+
+/** Interval choices of "Gün ərzində təkrar", in minutes. */
+const REPEAT_EVERY = [15, 30, 60, 120, 180, 240, 360] as const;
 
 function NumberField({ id, label, value, min, max, onChange }: { id: string; label: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
   // The draft is what the user is typing; it re-syncs whenever `value` changes from outside.
@@ -88,44 +95,49 @@ function DateField({ id, label, value, onChange }: { id: string; label: string; 
   );
 }
 
-/** A list of dates with an "add" input. `min` dates can never be removed. */
-function DateList({ id, label, values, min, onChange }: { id: string; label: string; values: string[]; min: number; onChange: (v: string[]) => void }) {
+/**
+ * Dates picked by clicking days in one month calendar (feedback 2026-11-08), instead of adding them one at a time.
+ * Clicking a picked day unpicks it; `min` dates always stay. The picked dates are also listed as removable chips.
+ */
+function DatePickerCalendar({ label, values, min, today, onChange }: { label: string; values: string[]; min: number; today: string; onChange: (v: string[]) => void }) {
   const { t } = useTranslation();
   const locale = useLocale();
-  const [next, setNext] = useState('');
+  const [month, setMonth] = useState(monthOf(values[0] ?? today));
+  const selected = new Set(values);
+  const toggle = (d: string) => {
+    if (selected.has(d)) {
+      if (values.length > min) onChange(values.filter((x) => x !== d));
+    } else onChange([...values, d].sort());
+  };
   return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <ul className="flex flex-wrap gap-2">
-        {values.map((d) => (
-          <li key={d} className="flex items-center gap-1 rounded border px-2 py-0.5 text-sm">
-            {formatLocalDate(d, locale)}
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              aria-label={`${t('scheduling.builder.remove')} ${d}`}
-              disabled={values.length <= min}
-              onClick={() => onChange(values.filter((x) => x !== d))}
-            >
-              ×
-            </Button>
-          </li>
-        ))}
-      </ul>
-      <div className="flex gap-2">
-        <Input id={id} type="date" value={next} onChange={(e) => setNext(e.target.value)} className="w-48" />
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!next}
-          onClick={() => {
-            if (next && !values.includes(next)) onChange([...values, next].sort());
-            setNext('');
-          }}
-        >
-          {t('scheduling.builder.addDate')}
-        </Button>
+    <div className="grid gap-2">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="grid gap-3 sm:grid-cols-[18rem_minmax(0,1fr)] sm:items-start">
+        <MonthCalendar label={label} month={month} onMonthChange={setMonth} today={today} selected={selected} onDayClick={toggle} className="bg-card shadow-card rounded-xl p-3" />
+        <div className="grid content-start gap-2">
+          <p className="text-muted-foreground text-xs">{t('scheduling.builder.pickDatesHint')}</p>
+          {values.length > 0 && <p className="text-sm font-medium">{t('scheduling.builder.selectedDates', { count: values.length })}</p>}
+          <ul className="flex flex-wrap gap-1.5">
+            {values.map((d) => (
+              <li key={d} className="bg-muted flex items-center gap-0.5 rounded-full py-0.5 pr-0.5 pl-2.5 text-xs">
+                <button type="button" className="hover:underline" onClick={() => setMonth(monthOf(d))}>
+                  {formatLocalDate(d, locale)}
+                </button>
+                <Button
+                  type="button"
+                  size="icon-xs"
+                  variant="ghost"
+                  className="rounded-full"
+                  aria-label={`${t('scheduling.builder.remove')} ${d}`}
+                  disabled={values.length <= min}
+                  onClick={() => onChange(values.filter((x) => x !== d))}
+                >
+                  ×
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
@@ -144,8 +156,8 @@ export function RecurrenceEditor({ value, onChange, today, disabled }: Recurrenc
   const everyLabel = { daily: 'everyDays', weekly: 'everyWeeks', monthly: 'everyMonths' } as const;
   const maxEvery = { daily: 365, weekly: 52, monthly: 12 } as const;
   return (
-    <fieldset className="grid gap-3" disabled={disabled}>
-      <legend className="mb-1 text-sm font-medium">{t('scheduling.assignments.schedule')}</legend>
+    // No visible "Cədvəl" heading any more (feedback 2026-11-08); the fieldset keeps it as its accessible name.
+    <fieldset className="grid gap-3" disabled={disabled} aria-label={t('scheduling.assignments.schedule')}>
       <div className="grid gap-1.5">
         <Label htmlFor={`${id}-kind`}>{t('scheduling.builder.kind')}</Label>
         <NativeSelect id={`${id}-kind`} value={value.kind} onChange={(e) => onChange(defaultRecurrence(e.target.value as RecurrenceKind, today))}>
@@ -159,7 +171,7 @@ export function RecurrenceEditor({ value, onChange, today, disabled }: Recurrenc
 
       {value.kind === 'once' && <DateField id={`${id}-date`} label={t('scheduling.builder.date')} value={value.date} onChange={(date) => date && onChange({ ...value, date })} />}
       {value.kind === 'dates' && (
-        <DateList id={`${id}-dates`} label={t('scheduling.builder.dates')} values={value.dates} min={1} onChange={(dates) => onChange({ ...value, dates })} />
+        <DatePickerCalendar label={t('scheduling.builder.dates')} values={value.dates} min={1} today={today} onChange={(dates) => onChange({ ...value, dates })} />
       )}
 
       {(value.kind === 'daily' || value.kind === 'weekly' || value.kind === 'monthly') && (
@@ -254,7 +266,7 @@ export function RecurrenceEditor({ value, onChange, today, disabled }: Recurrenc
             <DateField id={`${id}-start`} label={t('scheduling.builder.startDate')} value={value.startDate} onChange={(startDate) => startDate && onChange({ ...value, startDate })} />
             <DateField id={`${id}-end`} label={t('scheduling.builder.endDate')} value={value.endDate ?? ''} onChange={(end) => onChange({ ...value, endDate: end || null })} />
           </div>
-          <DateList id={`${id}-skip`} label={t('scheduling.builder.skipDates')} values={value.skipDates} min={0} onChange={(skipDates) => onChange({ ...value, skipDates })} />
+          <DatePickerCalendar label={t('scheduling.builder.skipDates')} values={value.skipDates} min={0} today={today} onChange={(skipDates) => onChange({ ...value, skipDates })} />
         </>
       )}
     </fieldset>
@@ -274,7 +286,7 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
   const max = SCHEDULING_LIMITS.maxExtendedWindowMinutes;
   return (
     <fieldset className="grid gap-3" disabled={disabled}>
-      {/* Three tick boxes side by side, one ticked at a time (feedback 2026-11-07), instead of a dropdown. */}
+      {/* Tick boxes side by side, one ticked at a time (feedback 2026-11-07), instead of a dropdown. */}
       <div role="group" aria-label={t('scheduling.builder.mode')} className="grid gap-1.5">
         <span className="text-sm font-medium">{t('scheduling.builder.mode')}</span>
         <div className="flex flex-wrap gap-2">
@@ -299,6 +311,34 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
       </div>
       {value.mode === 'anytime' ? (
         <p className="text-muted-foreground text-sm">{t('scheduling.builder.anytimeHint')}</p>
+      ) : value.mode === 'repeat' ? (
+        <div className="grid gap-2">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor={`${id}-rstart`}>{t('scheduling.builder.startTime')}</Label>
+              <Input id={`${id}-rstart`} type="time" value={value.startTime} onChange={(e) => e.target.value && onChange({ ...value, startTime: e.target.value })} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor={`${id}-rend`}>{t('scheduling.builder.endTime')}</Label>
+              <Input id={`${id}-rend`} type="time" value={value.endTime} onChange={(e) => e.target.value && onChange({ ...value, endTime: e.target.value })} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor={`${id}-every`}>{t('scheduling.builder.every')}</Label>
+              <NativeSelect id={`${id}-every`} value={String(value.everyMinutes)} onChange={(e) => onChange({ ...value, everyMinutes: Number(e.target.value) })}>
+                {REPEAT_EVERY.map((n) => (
+                  <option key={n} value={n}>
+                    {n % 60 === 0 ? t('scheduling.builder.everyHoursOption', { n: n / 60 }) : t('scheduling.builder.everyMinutesOption', { n })}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+          </div>
+          {value.endTime <= value.startTime ? (
+            <p className="text-destructive text-sm">{t('scheduling.issues.repeatEndBeforeStart')}</p>
+          ) : (
+            <p className="text-muted-foreground text-sm">{t('scheduling.builder.repeatHint')}</p>
+          )}
+        </div>
       ) : value.mode === 'fixed' ? (
         <div className="grid grid-cols-3 gap-3">
           <div className="grid gap-1.5">

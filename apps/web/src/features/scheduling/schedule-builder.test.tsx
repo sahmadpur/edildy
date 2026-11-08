@@ -54,17 +54,24 @@ describe('RecurrenceEditor', () => {
     expect(json().by).toEqual({ nth: -1, weekday: 3 });
     fireEvent.change(screen.getByLabelText('Bitmə (istəyə bağlı)'), { target: { value: '2027-03-31' } });
     expect(json().endDate).toBe('2027-03-31');
-    fireEvent.change(screen.getByLabelText('İstisna tarixləri'), { target: { value: '2026-12-31' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Tarix əlavə et' }));
+    const skip = within(screen.getByRole('group', { name: 'İstisna tarixləri' }));
+    await userEvent.click(skip.getByRole('button', { name: 'Növbəti ay' }));
+    await userEvent.click(skip.getByRole('button', { name: '31 Dek 2026' }));
     expect(json().skipDates).toEqual(['2026-12-31']);
     await userEvent.click(screen.getByRole('button', { name: 'Sil 2026-12-31' }));
     expect(json().skipDates).toEqual([]);
   });
 
-  it('edits one-off and explicit dates', async () => {
+  it('picks several dates by clicking days in one calendar (feedback 2026-11-08)', async () => {
     render(<RecurrenceHarness initial={defaultRecurrence('dates', '2026-11-04')} />);
-    fireEvent.change(screen.getByLabelText('Tarixlər'), { target: { value: '2026-11-20' } });
-    await userEvent.click(screen.getByRole('button', { name: 'Tarix əlavə et' }));
+    const calendar = within(screen.getByRole('group', { name: 'Tarixlər' }));
+    expect(calendar.getByRole('button', { name: '4 Noy 2026' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(calendar.getByRole('button', { name: '20 Noy 2026' }));
+    await userEvent.click(calendar.getByRole('button', { name: '12 Noy 2026' }));
+    expect(json().dates).toEqual(['2026-11-04', '2026-11-12', '2026-11-20']);
+    expect(screen.getByText('3 tarix seçilib')).toBeInTheDocument();
+    // Clicking a picked day unpicks it.
+    await userEvent.click(calendar.getByRole('button', { name: '12 Noy 2026' }));
     expect(json().dates).toEqual(['2026-11-04', '2026-11-20']);
     // The last date cannot be removed (a rule needs at least one).
     await userEvent.click(screen.getByRole('button', { name: 'Sil 2026-11-04' }));
@@ -108,7 +115,7 @@ describe('TimingEditor', () => {
     fireEvent.change(screen.getByLabelText('İcra müddəti (dəqiqə)'), { target: { value: '90' } });
     expect(json()).toMatchObject({ startTime: '09:30', dueAfterMinutes: 90 });
     const modes = within(screen.getByRole('group', { name: 'Vaxt növü' }));
-    expect(modes.getAllByRole('checkbox').map((c) => c.closest('label')?.textContent)).toEqual(['Sabit vaxt', 'Növbəyə görə', 'İstənilən vaxt']);
+    expect(modes.getAllByRole('checkbox').map((c) => c.closest('label')?.textContent)).toEqual(['Sabit vaxt', 'Növbəyə görə', 'İstənilən vaxt', 'Gün ərzində təkrar']);
     expect(modes.getByRole('checkbox', { name: 'Sabit vaxt' })).toBeChecked();
     await userEvent.click(modes.getByRole('checkbox', { name: 'Növbəyə görə' }));
     expect(json()).toEqual({ mode: 'shift', shiftId: 's1', graceMinutes: 0 });
@@ -123,5 +130,15 @@ describe('TimingEditor', () => {
     expect(json()).toEqual({ mode: 'anytime' });
     expect(screen.queryByLabelText('Başlama vaxtı')).toBeNull();
     expect(screen.getByText(/gün ərzində istənilən vaxt/)).toBeInTheDocument();
+  });
+
+  it('repeats during the day: start, end and interval (feedback 2026-11-08)', async () => {
+    render(<TimingHarness initial={defaultTiming('fixed', [])} />);
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Gün ərzində təkrar' }));
+    expect(json()).toEqual({ mode: 'repeat', startTime: '08:00', endTime: '20:00', everyMinutes: 60 });
+    await userEvent.selectOptions(screen.getByLabelText('Hər'), '30');
+    expect(json().everyMinutes).toBe(30);
+    fireEvent.change(screen.getByLabelText('Son vaxt'), { target: { value: '07:00' } });
+    expect(screen.getByText('Son vaxt başlama vaxtından sonra olmalıdır.')).toBeInTheDocument();
   });
 });

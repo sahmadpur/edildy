@@ -10,6 +10,7 @@ export default {
   templates: 'Templates',
   assignments: 'Checks',
   schedule: 'Schedule',
+  calendar: 'Check calendar',
   shifts: 'Shifts',
   roster: 'Roster',
   problems: 'Problems',

@@ -8,10 +8,11 @@ import {
   recurrenceSchema,
   SCHEDULING_LIMITS,
   type ShiftHours,
+  type Slot,
   timingSchema,
   zonedTimeToUtc,
 } from '@taskop/contracts';
-import { and, between, eq, gt, inArray, type SQL, sql } from 'drizzle-orm';
+import { and, between, eq, gt, gte, inArray, lte, ne, type SQL, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { Clock } from '../common/clock';
 import { DomainEvents } from '../common/domain-events';
@@ -68,9 +69,10 @@ export class OccurrenceWriter {
     const until = a.materializedUntil;
     // First run: look back far enough for a window of up to 7 days that is still open.
     const from = until ? localDateOf(until, tz) : addDays(today, -8);
-    const slots = expandSchedule(recurrenceSchema.parse(a.schedule), timing, shift, tz, from, addDays(today, SCHEDULING_LIMITS.horizonDays)).filter(
+    const candidates = expandSchedule(recurrenceSchema.parse(a.schedule), timing, shift, tz, from, addDays(today, SCHEDULING_LIMITS.horizonDays)).filter(
       (s) => (!until || s.startsAt >= until) && s.closesAt > now,
     );
+    const slots = await this.withoutClashes(a.id, timing.mode === 'repeat', candidates);
     let created: { id: string }[] = [];
     if (slots.length) {
       created = await tx
@@ -90,8 +92,8 @@ export class OccurrenceWriter {
             createdAt: now, // the clock's time, matching the creation history row
           })),
         )
-        // Targets the partial unique index occurrences_live_day_uq.
-        .onConflictDoNothing({ target: [occurrences.assignmentId, occurrences.localDate], where: sql`status <> 'cancelled'` })
+        // Targets the partial unique index occurrences_live_start_uq.
+        .onConflictDoNothing({ target: [occurrences.assignmentId, occurrences.startsAt], where: sql`status <> 'cancelled'` })
         .returning({ id: occurrences.id });
     }
     const horizon = zonedTimeToUtc(addDays(today, SCHEDULING_LIMITS.horizonDays + 1), 0, tz);
@@ -105,6 +107,33 @@ export class OccurrenceWriter {
       await this.recordTransitions(ids.map((occurrenceId) => ({ occurrenceId, from: null, to: 'pending', at: now })));
     }
     return created.length;
+  }
+
+  /**
+   * Drops slots that clash with a live (not cancelled) occurrence of the assignment, so an edit never duplicates a
+   * run that is still open: one live run a day for most timings, and no overlapping windows for "repeat" timing.
+   */
+  private async withoutClashes(assignmentId: string, repeat: boolean, slots: Slot[]): Promise<Slot[]> {
+    const first = slots[0];
+    if (!first) return slots;
+    const live = await this.db
+      .tx()
+      .select({ localDate: occurrences.localDate, startsAt: occurrences.startsAt, closesAt: occurrences.closesAt })
+      .from(occurrences)
+      .where(
+        and(
+          eq(occurrences.assignmentId, assignmentId),
+          ne(occurrences.status, 'cancelled'),
+          gte(occurrences.localDate, first.localDate),
+          lte(occurrences.localDate, slots[slots.length - 1]!.localDate),
+        ),
+      );
+    if (!live.length) return slots;
+    if (!repeat) {
+      const days = new Set(live.map((o) => o.localDate));
+      return slots.filter((s) => !days.has(s.localDate));
+    }
+    return slots.filter((s) => !live.some((o) => s.startsAt < o.closesAt && s.closesAt > o.startsAt));
   }
 
   /** Recomputes who may do pending occurrences that have not started yet (spec §5.1 snapshot refresh). */

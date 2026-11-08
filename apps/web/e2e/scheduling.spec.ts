@@ -61,14 +61,17 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await page.getByLabel('Obyekt').selectOption({ label: 'Anbar №1' });
   await page.getByRole('checkbox', { name: 'Nigar Səfərli' }).click();
   await page.getByRole('checkbox', { name: 'Növbəyə görə' }).click();
-  const preview = page.getByRole('complementary', { name: 'Növbəti icralar' });
+  const preview = page.getByRole('complementary', { name: 'Növbəti yoxlamalar' });
   await expect(preview.getByText('Hər gün, Səhər növbəsi')).toBeVisible();
-  await expect(preview.getByRole('listitem').first()).toBeVisible();
+  // The preview is a month calendar with the checks marked on their days (feedback 2026-11-08).
+  await expect(preview.getByRole('button', { name: /, 1 yoxlama$/ }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Yadda saxla' }).click();
 
-  // The assignment page lists the generated occurrences.
+  // The assignment page opens; its runs show on the Yoxlama cədvəli month calendar.
   await expect(page.getByRole('heading', { name: 'E2E açılış' })).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Yaxın icralar' }).getByRole('listitem').first()).toBeVisible();
+  await page.getByRole('link', { name: 'Yoxlamalar' }).click();
+  await page.getByRole('link', { name: 'Yoxlama cədvəli' }).click();
+  await expect(page.getByRole('gridcell').getByRole('button', { name: /E2E açılış/ }).first()).toBeVisible();
 
   // The schedule is no longer a Yoxlamalar tab (feedback 2026-11-07); run links still open it, under Təyinatlar.
   await page.getByRole('link', { name: 'Yoxlamalar' }).click();

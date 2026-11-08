@@ -10,6 +10,7 @@ export default {
   templates: 'Şablonlar',
   assignments: 'Yoxlamalar',
   schedule: 'İcra cədvəli',
+  calendar: 'Yoxlama cədvəli',
   shifts: 'Növbələr',
   roster: 'Növbə cədvəli',
   problems: 'Problemlər',

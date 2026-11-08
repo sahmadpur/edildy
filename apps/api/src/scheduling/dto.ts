@@ -3,6 +3,8 @@ import {
   assignmentDtoSchema,
   assignmentListQuerySchema,
   assignmentPreviewSchema,
+  calendarQuerySchema,
+  calendarResponseSchema,
   cancelOccurrenceInputSchema,
   myOccurrenceQuerySchema,
   occurrenceDetailSchema,
@@ -47,3 +49,5 @@ export class MyOccurrenceQueryDto extends createZodDto(myOccurrenceQuerySchema) 
 export class CancelOccurrenceDto extends createZodDto(cancelOccurrenceInputSchema) {}
 export class OccurrencePageResponse extends createZodDto(pageOf(occurrenceDtoSchema)) {}
 export class OccurrenceDetailResponse extends createZodDto(occurrenceDetailSchema) {}
+export class CalendarQueryDto extends createZodDto(calendarQuerySchema) {}
+export class CalendarResponseDto extends createZodDto(calendarResponseSchema) {}

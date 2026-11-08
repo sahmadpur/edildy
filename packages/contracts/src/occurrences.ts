@@ -86,3 +86,53 @@ export type MyOccurrenceQuery = z.input<typeof myOccurrenceQuerySchema>;
 
 export const cancelOccurrenceInputSchema = z.object({ reason: z.string().trim().min(1).max(500) });
 export type CancelOccurrenceInput = z.input<typeof cancelOccurrenceInputSchema>;
+
+/**
+ * "Yoxlama cədvəli" month calendar (feedback 2026-11-08): stored runs plus the checks active assignments will still
+ * create after their generated horizon ("planned", worked out from the schedule). `planned` is also a status filter.
+ */
+export const CALENDAR_STATUSES = [...OCCURRENCE_STATUSES, 'planned'] as const;
+export const calendarStatusSchema = z.enum(CALENDAR_STATUSES);
+export type CalendarStatus = z.infer<typeof calendarStatusSchema>;
+
+export const calendarItemSchema = z.object({
+  kind: z.enum(['run', 'planned']),
+  /** null for a planned check. */
+  occurrenceId: idSchema.nullable(),
+  assignmentId: idSchema,
+  assignmentName: z.string().nullable(),
+  checklistId: idSchema,
+  checklistName: z.string(),
+  siteId: idSchema,
+  siteName: z.string(),
+  shiftName: z.string().nullable(),
+  localDate: localDateSchema,
+  startsAt: isoDateTimeSchema,
+  dueAt: isoDateTimeSchema,
+  status: calendarStatusSchema,
+  /** Who may do it: the run's snapshot, or the assignment's assignees for a planned check. */
+  assigneeNames: z.array(z.string()),
+  executionBrief: executionBriefSchema.nullable(),
+});
+export type CalendarItem = z.infer<typeof calendarItemSchema>;
+
+export const calendarQuerySchema = z
+  .object({
+    from: localDateSchema,
+    to: localDateSchema,
+    siteId: idListParam.optional(),
+    checklistId: idListParam.optional(),
+    assigneeId: idListParam.optional(),
+    status: z
+      .string()
+      .transform((s) => s.split(',').filter(Boolean))
+      .pipe(z.array(calendarStatusSchema).min(1))
+      .optional(),
+  })
+  .superRefine(localRangeCheck(SCHEDULING_LIMITS.maxListDays));
+export type CalendarQuery = z.input<typeof calendarQuerySchema>;
+
+/** At most this many items come back; `truncated` says more existed (narrow the filters). */
+export const CALENDAR_MAX_ITEMS = 5000;
+export const calendarResponseSchema = z.object({ items: z.array(calendarItemSchema), truncated: z.boolean() });
+export type CalendarResponse = z.infer<typeof calendarResponseSchema>;

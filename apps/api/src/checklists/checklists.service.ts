@@ -62,7 +62,6 @@ export class ChecklistsService {
       .orderBy(sql`${checklistVersions.number} desc nulls first`);
     return {
       ...toChecklistSummary(row),
-      currentVersionId: row.currentVersionId,
       source: row.sourceTemplateKind
         ? { kind: row.sourceTemplateKind, id: row.sourceTemplateId! }
         : row.sourceVersionId

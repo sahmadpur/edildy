@@ -1,12 +1,13 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { OccurrenceDetail, OccurrenceDto, Page } from '@taskop/contracts';
+import type { CalendarResponse, OccurrenceDetail, OccurrenceDto, Page } from '@taskop/contracts';
 import { controllerDecorators, named, perm, permAny, type RouteMode } from '../checklists/route-mode';
 import { CurrentPrincipal } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
 import { type Actor, CurrentActor } from './actor';
-import { CancelOccurrenceDto, MyOccurrenceQueryDto, OccurrenceDetailResponse, OccurrenceListQueryDto, OccurrencePageResponse } from './dto';
+import { CalendarQueryDto, CalendarResponseDto, CancelOccurrenceDto, MyOccurrenceQueryDto, OccurrenceDetailResponse, OccurrenceListQueryDto, OccurrencePageResponse } from './dto';
+import { OccurrenceCalendar } from './occurrence-calendar';
 import { OccurrencesService } from './occurrences.service';
 
 export function occurrencesControllerFor(mode: RouteMode) {
@@ -17,13 +18,24 @@ export function occurrencesControllerFor(mode: RouteMode) {
 
   @controllerDecorators(mode, 'occurrences', 'scheduling')
   class OccurrencesController {
-    constructor(@Inject(OccurrencesService) private readonly occurrences: OccurrencesService) {}
+    constructor(
+      @Inject(OccurrencesService) private readonly occurrences: OccurrencesService,
+      @Inject(OccurrenceCalendar) private readonly calendarOf: OccurrenceCalendar,
+    ) {}
 
     @Get()
     @view
     @ApiOkResponse({ type: OccurrencePageResponse })
     list(@CurrentActor() a: Actor, @Query() q: OccurrenceListQueryDto): Promise<Page<OccurrenceDto>> {
       return this.occurrences.list(a, q);
+    }
+
+    /** The "Yoxlama cədvəli" month view: runs plus planned checks (feedback 2026-11-08). Declared before `:id`. */
+    @Get('calendar')
+    @view
+    @ApiOkResponse({ type: CalendarResponseDto })
+    calendar(@CurrentActor() a: Actor, @Query() q: CalendarQueryDto): Promise<CalendarResponse> {
+      return this.calendarOf.list(a, q);
     }
 
     @Get(':id')

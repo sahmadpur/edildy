@@ -1,4 +1,4 @@
-import { TASK_SOURCE_FILTERS, TASK_STATUSES, type TaskSourceFilter, type TaskStatus } from '@taskop/contracts';
+import { TASK_STATUSES, type TaskStatus } from '@taskop/contracts';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +22,8 @@ import { TaskDialog } from './task-dialog';
 import { TaskDrawer } from './task-drawer';
 import { LoadingState, EmptyState } from '@/components/states';
 
-const COLUMNS = ['title', 'status', 'assignee', 'site', 'due', 'source'] as const;
+// The Mənbə column and filter were removed (feedback 2026-11-08); the API still accepts `source`.
+const COLUMNS = ['title', 'status', 'assignee', 'site', 'due'] as const;
 
 /** Spec §8: every task the caller can read, by tab and filters; `?task=<id>` opens its drawer. */
 export function TasksPage() {
@@ -79,14 +80,6 @@ export function TasksPage() {
             <AssigneePicker label={t('tasks.page.assignee')} value={filters.assignee} onChange={(c) => set('assignee', c)} clearable />
           </div>
         )}
-        <MultiSelectFilter
-          label={t('tasks.page.source')}
-          allLabel={t('tasks.page.allSources')}
-          options={TASK_SOURCE_FILTERS.map((s) => ({ value: s, label: t(`tasks.sources.${s}`) }))}
-          value={filters.source}
-          onChange={(v) => set('source', v as TaskSourceFilter[])}
-          className="w-44"
-        />
         <div className="grid gap-1">
           <Label htmlFor="tasks-due-from">{t('tasks.page.dueFrom')}</Label>
           <Input id="tasks-due-from" type="date" value={filters.dueFrom} onChange={(e) => set('dueFrom', e.target.value)} className="w-44" />
@@ -127,7 +120,6 @@ export function TasksPage() {
                 <TableCell>{assigneeText(t, s)}</TableCell>
                 <TableCell>{s.site?.name ?? '—'}</TableCell>
                 <TableCell>{s.dueAt ? formatDateTime(s.dueAt) : '—'}</TableCell>
-                <TableCell>{t(`tasks.sources.${s.problemReportId ? 'report' : s.source}`)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -53,6 +53,7 @@ export default {
     clear: 'Təmizlə',
   },
   dialog: {
+    send: 'Göndər',
     createTitle: 'Yeni tapşırıq',
     editTitle: 'Tapşırığı redaktə et',
     fromProblem: 'Problemdən tapşırıq',

@@ -33,7 +33,7 @@ describe('Yoxlamalar tabs', () => {
     const router = renderWithRouter(<AssignmentsRoute />, '/assignments');
     expect(await screen.findByRole('heading', { level: 1, name: 'Yoxlamalar' })).toBeInTheDocument();
     const tabs = within(screen.getByRole('navigation', { name: 'Yoxlamalar' }));
-    expect(tabs.getAllByRole('link').map((l) => l.textContent)).toEqual(['Təyinatlar', 'Yoxlama vərəqələri', 'Şablonlar']);
+    expect(tabs.getAllByRole('link').map((l) => l.textContent)).toEqual(['Təyinatlar', 'Yoxlama cədvəli', 'Yoxlama vərəqələri', 'Şablonlar']);
     expect(tabs.getByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('aria-current', 'page');
     const checklists = tabs.getByRole('link', { name: 'Yoxlama vərəqələri' });
     expect(checklists).toHaveAttribute('href', '/checklists');

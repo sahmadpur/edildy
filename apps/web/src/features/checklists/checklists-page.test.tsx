@@ -12,6 +12,7 @@ const row = (over: Partial<ChecklistSummary> = {}): ChecklistSummary => ({
   category: 'cleaning',
   status: 'active',
   currentVersionNumber: 2,
+  currentVersionId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e99',
   draftRevision: 3,
   updatedAt: '2026-10-08T08:00:00.000Z',
   ...over,
@@ -61,6 +62,21 @@ describe('ChecklistsPage', () => {
     expect(screen.queryByRole('button', { name: 'Aç' })).toBeNull();
     await userEvent.click(screen.getByText('v2'));
     expect(ws.go).toHaveBeenCalledWith('/checklists/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01');
+  });
+
+  it('has a Bax button that opens the published version read-only, and none before the first publish (feedback 2026-11-08)', async () => {
+    const ws = fakeWorkspace();
+    ws.checklists.list.mockResolvedValue({
+      items: [row(), row({ id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e02', name: 'Anbar', currentVersionNumber: null, currentVersionId: null })],
+      nextCursor: null,
+    });
+    renderInWorkspace(<ChecklistsPage />, ws);
+    await screen.findByText('Anbar');
+    const view = screen.getAllByRole('link', { name: 'Bax' });
+    expect(view).toHaveLength(1);
+    await userEvent.click(view[0]!);
+    expect(ws.go).toHaveBeenCalledWith('/checklists/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01/versions/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e99');
+    expect(ws.go).not.toHaveBeenCalledWith('/checklists/0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01');
   });
 
   it('creates a blank checklist and opens its draft', async () => {

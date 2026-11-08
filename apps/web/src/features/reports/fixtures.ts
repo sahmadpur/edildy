@@ -207,6 +207,7 @@ const checklist = (over: Partial<ChecklistSummary>): ChecklistSummary => ({
   category: null,
   status: 'active',
   currentVersionNumber: 1,
+  currentVersionId: null,
   draftRevision: null,
   updatedAt: '2026-11-01T08:00:00.000Z',
   ...over,

@@ -548,8 +548,9 @@ export const occurrences = pgTable(
   },
   (t) => [
     unique('occurrences_tenant_id_uq').on(t.tenantId, t.id),
-    // One live occurrence per assignment and day; cancelled ones never block a regenerated slot.
-    uniqueIndex('occurrences_live_day_uq').on(t.assignmentId, t.localDate).where(sql`status <> 'cancelled'`),
+    // One live occurrence per assignment and start time ("repeat" timing makes several a day; feedback 2026-11-08);
+    // cancelled ones never block a regenerated slot. The writer keeps other timings at one live run a day.
+    uniqueIndex('occurrences_live_start_uq').on(t.assignmentId, t.startsAt).where(sql`status <> 'cancelled'`),
     foreignKey({ columns: [t.tenantId, t.assignmentId], foreignColumns: [assignments.tenantId, assignments.id], name: 'occurrences_assignment_fk' }),
     foreignKey({ columns: [t.tenantId, t.checklistId], foreignColumns: [checklists.tenantId, checklists.id], name: 'occurrences_checklist_fk' }),
     foreignKey({ columns: [t.tenantId, t.siteId], foreignColumns: [sites.tenantId, sites.id], name: 'occurrences_site_fk' }),

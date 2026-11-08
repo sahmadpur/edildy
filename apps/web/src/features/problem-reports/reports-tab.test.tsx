@@ -90,7 +90,7 @@ describe('ReportsTab (2026-11-06 design §8)', () => {
     expect(within(dialog).queryByLabelText('Obyekt')).not.toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('combobox', { name: 'İcraçı' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Nigar Səfərli' }, { timeout: 3000 }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(mocks.api.tasks.create).toHaveBeenCalled());
     expect(mocks.api.tasks.create.mock.calls[0]![0]).toMatchObject({ problemReportId: 'r1', problemId: null, siteId: null, requiresReview: true, priority: 'high', assignee: { userId: 'w1' } });
   });

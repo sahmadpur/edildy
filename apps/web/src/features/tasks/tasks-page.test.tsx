@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe('TasksPage', () => {
-  it('lists tasks with status and overdue badges, assignee or team, site, due and source, and opens a row in the drawer', async () => {
+  it('lists tasks with status and overdue badges, assignee or team, site and due (no source column), and opens a row in the drawer', async () => {
     mocks.api.tasks.list.mockResolvedValue({
       items: [
         taskSummary({ status: 'in_progress', overdueAt: '2026-11-03T14:00:00.000Z' }),
@@ -48,8 +48,10 @@ describe('TasksPage', () => {
     const router = renderWithRouter(<TasksPage />, '/tasks');
     await screen.findByRole('link', { name: 'Kameranı yoxlayın' });
     const [, first, second] = screen.getAllByRole('row');
-    for (const text of ['Soyuducunun qapısını təmir edin', 'İcradadır', 'Gecikib', 'Nigar Səfərli', 'Anbar №1', '18:00', 'Birbaşa']) expect(first).toHaveTextContent(text);
-    for (const text of ['Texniki xidmət (komanda)', 'Problemdən', '—']) expect(second).toHaveTextContent(text);
+    for (const text of ['Soyuducunun qapısını təmir edin', 'İcradadır', 'Gecikib', 'Nigar Səfərli', 'Anbar №1', '18:00']) expect(first).toHaveTextContent(text);
+    for (const text of ['Texniki xidmət (komanda)', '—']) expect(second).toHaveTextContent(text);
+    expect(second).not.toHaveTextContent('Problemdən');
+    expect(screen.queryByRole('columnheader', { name: 'Mənbə' })).not.toBeInTheDocument();
     expect(mocks.api.tasks.list).toHaveBeenCalledWith(expect.objectContaining({ limit: 50 }));
     await userEvent.click(screen.getByRole('link', { name: 'Kameranı yoxlayın' }));
     await waitFor(() => expect(router.state.location.search).toEqual({ task: 't2' }));
@@ -74,13 +76,12 @@ describe('TasksPage', () => {
     expect(mocks.api.tasks.list.mock.lastCall![0]).not.toHaveProperty('overdue');
   });
 
-  it("sends status, site, assignee, source and the due range in the tenant's zone, and refuses an inverted range", async () => {
+  it("sends status, site, assignee and the due range in the tenant's zone, and refuses an inverted range", async () => {
     mocks.api.tasks.list.mockResolvedValue(empty);
     renderWithRouter(<TasksPage />, '/tasks');
     await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
     await tickOptions('Status', ['İcradadır', 'Yeni']);
     await tickOptions('Obyekt', ['Anbar №1']);
-    await tickOptions('Mənbə', ['Problemdən']);
     await userEvent.click(screen.getByRole('combobox', { name: 'İcraçı və ya komanda' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Texniki xidmət' }));
     fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-11-01' } });
@@ -91,7 +92,6 @@ describe('TasksPage', () => {
           status: 'in_progress,new',
           siteId: 'site1',
           teamId: 'team1',
-          source: 'problem',
           dueFrom: '2026-10-31T20:00:00.000Z',
           dueTo: '2026-11-02T19:59:59.999Z',
         }),
@@ -123,7 +123,7 @@ describe('TasksPage', () => {
     await userEvent.type(within(dialog).getByLabelText('Başlıq'), 'Qapı');
     await userEvent.click(within(dialog).getByRole('combobox', { name: 'İcraçı' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Nigar Səfərli' }));
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Yarat' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Göndər' }));
     const id = await waitFor(() => mocks.api.tasks.create.mock.calls[0]![0].id as string);
     await waitFor(() => expect(router.state.location.search).toEqual({ task: id }));
     await waitFor(() => expect(mocks.api.tasks.get).toHaveBeenCalledWith(id));

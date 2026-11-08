@@ -1,9 +1,10 @@
 export default {
-  home: 'A short overview of checks, problems and tasks for the chosen period.',
+  home: 'An overview of checks, problems and tasks.',
   problems: 'Problems recorded during checks and reported by staff. Create a task from a problem and follow it up.',
   reports: 'Results by period, site, employee and checklist. Tables can be downloaded to Excel.',
   assignments: 'Who does which check, where and when. Create a new assignment or change an existing one.',
   schedule: 'The runs your assignments create, week by week. Click a run to see its answers.',
+  calendar: 'Planned and completed checks by month. Hover over a check to see its details.',
   checklists: 'The lists of questions answered during a check. Start a checklist from scratch or from a template.',
   templates: 'Ready-made starting points for new checklists: Taskop templates and your own.',
   tasks: '"All" is every task you can see; "Created by me" is only the ones you created.',

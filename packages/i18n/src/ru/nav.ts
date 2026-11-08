@@ -10,6 +10,7 @@ export default {
   templates: 'Шаблоны',
   assignments: 'Проверки',
   schedule: 'Расписание',
+  calendar: 'Календарь проверок',
   shifts: 'Смены',
   roster: 'График смен',
   problems: 'Проблемы',

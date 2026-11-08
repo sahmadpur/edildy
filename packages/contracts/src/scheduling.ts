@@ -58,6 +58,8 @@ export type Recurrence = z.infer<typeof recurrenceSchema>;
 export type RecurrenceKind = Recurrence['kind'];
 export const RECURRENCE_KINDS = ['once', 'daily', 'weekly', 'monthly', 'dates'] as const satisfies readonly RecurrenceKind[];
 
+export const REPEAT_LIMITS = { minEveryMinutes: 15, maxEveryMinutes: 720 } as const;
+
 const graceMinutes = z.number().int().min(0).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes);
 export const timingSchema = z.discriminatedUnion('mode', [
   z.object({
@@ -69,9 +71,19 @@ export const timingSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('shift'), shiftId: idSchema, graceMinutes }),
   /** "İstənilən vaxt" (feedback 2026-11-07): any time on the scheduled day, local midnight to midnight; no grace. */
   z.object({ mode: z.literal('anytime') }),
+  /**
+   * "Gün ərzində təkrar" (feedback 2026-11-08): runs every `everyMinutes` from `startTime` while the start is before
+   * `endTime`, e.g. a toilet check every hour 08:00–20:00. Each run is open until the next one starts; no grace.
+   */
+  z.object({
+    mode: z.literal('repeat'),
+    startTime: localTimeSchema,
+    endTime: localTimeSchema,
+    everyMinutes: z.number().int().min(REPEAT_LIMITS.minEveryMinutes).max(REPEAT_LIMITS.maxEveryMinutes),
+  }),
 ]);
 export type TimingMode = Timing['mode'];
-export const TIMING_MODES = ['fixed', 'shift', 'anytime'] as const satisfies readonly TimingMode[];
+export const TIMING_MODES = ['fixed', 'shift', 'anytime', 'repeat'] as const satisfies readonly TimingMode[];
 /** An "anytime" slot is the whole local day. */
 export const ANYTIME_WINDOW_MINUTES = 1440;
 export type Timing = z.infer<typeof timingSchema>;
@@ -98,6 +110,7 @@ export function shiftDurationMinutes(s: ShiftHours): number {
 export function windowMinutes(timing: Timing, shift: ShiftHours | null): number {
   if (timing.mode === 'fixed') return timing.dueAfterMinutes + timing.graceMinutes;
   if (timing.mode === 'anytime') return ANYTIME_WINDOW_MINUTES;
+  if (timing.mode === 'repeat') return timing.everyMinutes;
   if (!shift) throw new Error('shift timing needs the shift hours');
   return shiftDurationMinutes(shift) + timing.graceMinutes;
 }
@@ -143,7 +156,33 @@ export function scheduleDates(r: Recurrence, from: LocalDate, to: LocalDate): Lo
   return out;
 }
 
+/** Start minutes of each repeat run within the day: startTime, +every, … while before endTime. */
+export function repeatStarts(timing: Extract<Timing, { mode: 'repeat' }>): number[] {
+  const start = timeToMinutes(timing.startTime);
+  const end = timeToMinutes(timing.endTime);
+  const out: number[] = [];
+  for (let m = start; m < end; m += timing.everyMinutes) out.push(m);
+  return out;
+}
+
+/** Every slot on one scheduled day: one for most timings, several for "repeat". */
+export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | null, tz: string): Slot[] {
+  if (timing.mode !== 'repeat') return [slotFor(date, timing, shift, tz)];
+  const end = timeToMinutes(timing.endTime);
+  return repeatStarts(timing).map((m) => {
+    const startsAt = zonedTimeToUtc(date, m, tz);
+    const dueAt = zonedTimeToUtc(date, Math.min(m + timing.everyMinutes, end), tz);
+    return { localDate: date, startsAt, dueAt, closesAt: dueAt };
+  });
+}
+
+/** One slot for a day; a "repeat" timing gives its first run (use `slotsFor` for all of them). */
 export function slotFor(date: LocalDate, timing: Timing, shift: ShiftHours | null, tz: string): Slot {
+  if (timing.mode === 'repeat') {
+    const first = slotsFor(date, timing, shift, tz)[0];
+    if (!first) throw new Error('repeat timing has no run');
+    return first;
+  }
   if (timing.mode === 'fixed') {
     const startsAt = zonedTimeToUtc(date, timeToMinutes(timing.startTime), tz);
     const dueAt = new Date(+startsAt + timing.dueAfterMinutes * 60_000);
@@ -173,7 +212,7 @@ export function isWholeDayWindow(startsAt: string | Date, dueAt: string | Date, 
 }
 
 export function expandSchedule(r: Recurrence, timing: Timing, shift: ShiftHours | null, tz: string, from: LocalDate, to: LocalDate): Slot[] {
-  return scheduleDates(r, from, to).map((d) => slotFor(d, timing, shift, tz));
+  return scheduleDates(r, from, to).flatMap((d) => slotsFor(d, timing, shift, tz));
 }
 
 export const SCHEDULING_ISSUE_CODES = [
@@ -183,6 +222,7 @@ export const SCHEDULING_ISSUE_CODES = [
   'scheduling.issues.shiftZeroLength',
   'scheduling.issues.rangeTooLong',
   'scheduling.issues.dateOutOfRange',
+  'scheduling.issues.repeatEndBeforeStart',
 ] as const;
 export type SchedulingIssueCode = (typeof SCHEDULING_ISSUE_CODES)[number];
 
@@ -203,6 +243,12 @@ export function validateSchedule(r: Recurrence): ContentIssue[] {
     issues.push({ path: ['weekdays'], code: 'scheduling.issues.duplicateWeekday' });
   }
   return issues;
+}
+
+/** Cross-field timing checks. Paths are relative to the timing. */
+export function validateTiming(timing: Timing): ContentIssue[] {
+  if (timing.mode !== 'repeat') return [];
+  return timeToMinutes(timing.endTime) <= timeToMinutes(timing.startTime) ? [{ path: ['endTime'], code: 'scheduling.issues.repeatEndBeforeStart' }] : [];
 }
 
 export const PREVIEW_WARNINGS = ['NO_ROSTERED_ASSIGNEES', 'SKIP_DATE_OUT_OF_RANGE'] as const;

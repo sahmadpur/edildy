@@ -37,6 +37,39 @@ describe('changing assignments', () => {
     expect(stale.body.error).toMatchObject({ code: 'REVISION_CONFLICT', currentRevision: 2 });
   });
 
+  it('repeat timing makes a run every interval and an edit keeps the open one without overlap', async () => {
+    const w = await schedulingWorld(t);
+    const repeat = (everyMinutes: number) => ({ mode: 'repeat', startTime: '08:00', endTime: '12:00', everyMinutes });
+    const a = await createAssignment(w, { timing: repeat(60) });
+    const rows = await occurrenceRows(a.id);
+    const today = rows.filter((r) => r.local_date === TODAY).map((r) => r.starts_at.toISOString());
+    expect(today).toEqual(['2026-11-02T04:00:00.000Z', '2026-11-02T05:00:00.000Z', '2026-11-02T06:00:00.000Z', '2026-11-02T07:00:00.000Z']);
+    expect(rows).toHaveLength(15 * 4);
+
+    clock.set('2026-11-02T04:30:00Z'); // 08:30: the 08:00 run is open until 09:00
+    const res = await w.api.put(`/api/v1/assignments/${a.id}`, { revision: 1, timing: repeat(30) });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const after = live(await occurrenceRows(a.id))
+      .filter((r) => r.local_date === TODAY)
+      .map((r) => r.starts_at.toISOString().slice(11, 16));
+    // 08:30 would overlap the open 08:00–09:00 run, so the new runs start at 09:00 (local 09:00 = 05:00Z).
+    expect(after).toEqual(['04:00', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30']);
+  });
+
+  it('rejects a repeat timing that ends before it starts', async () => {
+    const w = await schedulingWorld(t);
+    const res = await w.api.post('/api/v1/assignments', {
+      checklistId: w.checklistId,
+      siteId: w.siteId,
+      assigneeIds: w.workers,
+      schedule: daily(),
+      timing: { mode: 'repeat', startTime: '12:00', endTime: '08:00', everyMinutes: 60 },
+    });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatchObject({ code: 'SCHEDULE_INVALID' });
+    expect(res.body.error.issues).toEqual([{ path: ['timing', 'endTime'], code: 'scheduling.issues.repeatEndBeforeStart' }]);
+  });
+
   it('re-ordering weekdays and skip dates is not a schedule change', async () => {
     const w = await schedulingWorld(t);
     const weekly = (weekdays: number[], skipDates: string[]) => ({ kind: 'weekly', every: 1, weekdays, startDate: TODAY, endDate: null, skipDates });

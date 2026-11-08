@@ -319,7 +319,7 @@ export function TaskDialog({ task: latest, problem, problemReport, onClose, onSa
             {t('common.cancel')}
           </Button>
           <Button disabled={busy || done} onClick={() => void submit()}>
-            {saved ? t('tasks.dialog.retryUpload') : t(task ? 'common.save' : 'common.create')}
+            {saved ? t('tasks.dialog.retryUpload') : t(task ? 'common.save' : 'tasks.dialog.send')}
           </Button>
         </DialogFooter>
       </DialogContent>

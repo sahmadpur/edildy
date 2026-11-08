@@ -46,7 +46,6 @@ describe('task labels', () => {
       status: ['in_progress', 'new'],
       siteId: ['site1', 'site2'],
       assignee: { type: 'team', id: 'team1', name: 'Texniki xidmət' },
-      source: ['problem'],
       dueFrom: '2026-11-01',
       dueTo: '2026-11-02',
     };
@@ -56,7 +55,6 @@ describe('task labels', () => {
       status: 'in_progress,new',
       siteId: 'site1,site2',
       teamId: 'team1',
-      source: 'problem',
       dueFrom: '2026-10-31T20:00:00.000Z',
       dueTo: '2026-11-02T19:59:59.999Z',
     });

@@ -4,6 +4,7 @@ import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isPlainClick, PageTabs } from '@/components/page-tabs';
 import { AssignmentDetailPage, AssignmentsPage, NewAssignmentPage } from './assignment-pages';
+import { CalendarPage } from './calendar-page';
 import { OCCURRENCE_TABS, type OccurrenceTab } from './occurrence-dialog';
 import { RosterPage } from './roster-page';
 import { SchedulePage } from './schedule-page';
@@ -36,6 +37,10 @@ function ShiftTabs({ active }: { active: '/shifts' | '/roster' }) {
 
 export function AssignmentsRoute() {
   return <AssignmentsPage tabs={<WorkTabs active="/assignments" />} />;
+}
+
+export function CalendarRoute() {
+  return <CalendarPage tabs={<WorkTabs active="/calendar" />} />;
 }
 
 export function ShiftsRoute() {

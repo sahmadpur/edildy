@@ -7,8 +7,10 @@ import {
   scheduleWarnings,
   isWholeDayWindow,
   slotFor,
+  slotsFor,
   timingSchema,
   validateSchedule,
+  validateTiming,
   windowMinutes,
 } from './scheduling.js';
 
@@ -151,5 +153,38 @@ describe('validateSchedule and warnings', () => {
   it('warns about skip dates outside the range', () => {
     expect(scheduleWarnings({ kind: 'daily', every: 1, ...range('2026-11-02', { skipDates: ['2026-10-01'] }) })).toEqual(['SKIP_DATE_OUT_OF_RANGE']);
     expect(scheduleWarnings({ kind: 'daily', every: 1, ...range('2026-11-02', { skipDates: ['2026-11-03'] }) })).toEqual([]);
+  });
+});
+
+describe('repeat timing', () => {
+  const repeat = { mode: 'repeat' as const, startTime: '08:00', endTime: '20:00', everyMinutes: 60 };
+  it('makes a run every interval within the day, each open until the next starts', () => {
+    const slots = slotsFor('2026-11-02', repeat, null, 'Asia/Baku');
+    expect(slots).toHaveLength(12);
+    expect(slots[0]).toEqual({
+      localDate: '2026-11-02',
+      startsAt: new Date('2026-11-02T04:00:00Z'),
+      dueAt: new Date('2026-11-02T05:00:00Z'),
+      closesAt: new Date('2026-11-02T05:00:00Z'),
+    });
+    expect(slots[11]!.startsAt).toEqual(new Date('2026-11-02T15:00:00Z'));
+    expect(windowMinutes(repeat, null)).toBe(60);
+  });
+  it('cuts the last run at the end time', () => {
+    const slots = slotsFor('2026-11-02', { ...repeat, endTime: '10:30', everyMinutes: 90 }, null, 'UTC');
+    expect(slots.map((s) => [s.startsAt.toISOString(), s.dueAt.toISOString()])).toEqual([
+      ['2026-11-02T08:00:00.000Z', '2026-11-02T09:30:00.000Z'],
+      ['2026-11-02T09:30:00.000Z', '2026-11-02T10:30:00.000Z'],
+    ]);
+  });
+  it('expands every scheduled day and keeps slotFor on the first run', () => {
+    const r: Recurrence = { kind: 'daily', every: 1, ...range('2026-11-02') };
+    expect(expandSchedule(r, repeat, null, 'UTC', '2026-11-02', '2026-11-03')).toHaveLength(24);
+    expect(slotFor('2026-11-02', repeat, null, 'UTC').startsAt).toEqual(new Date('2026-11-02T08:00:00Z'));
+  });
+  it('validates the interval bounds and the end time', () => {
+    expect(timingSchema.safeParse({ ...repeat, everyMinutes: 10 }).success).toBe(false);
+    expect(validateTiming(repeat)).toEqual([]);
+    expect(validateTiming({ ...repeat, endTime: '08:00' })).toEqual([{ path: ['endTime'], code: 'scheduling.issues.repeatEndBeforeStart' }]);
   });
 });
