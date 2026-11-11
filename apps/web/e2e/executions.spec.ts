@@ -157,8 +157,10 @@ test('a worker executes an occurrence through the API, then the owner reads it i
   await expect(drawer.getByRole('listitem', { name: 'Zibil qutuları boşaldılıb?' })).toContainText('Xeyr');
   await expect(drawer.getByRole('listitem', { name: 'Ümumi görünüşün fotosu' }).getByRole('img', { name: 'Foto hələ yüklənməyib' })).toBeVisible();
 
-  // The schedule row shows the counted execution.
+  // Behind the drawer is Yoxlama cədvəli (feedback 2026-11-11); the run's hover card shows the counted execution.
   await drawer.getByRole('button', { name: 'Bağla', exact: true }).click();
-  const row = page.getByRole('button', { name: /E2E icra/ });
-  for (const text of ['Tamamlanıb', 'Nigar Səfərli', '9/10']) await expect(row).toContainText(text);
+  const chip = page.getByRole('gridcell').getByRole('button', { name: /E2E icra/ }).first();
+  await chip.hover();
+  const card = page.locator('[data-slot="hover-card-content"]');
+  for (const text of ['Tamamlanıb', 'Nigar Səfərli', '9/10']) await expect(card).toContainText(text);
 });

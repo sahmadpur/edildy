@@ -21,7 +21,8 @@ export function ShiftsPage({ tabs }: { tabs?: ReactNode } = {}) {
   const shifts = useShifts();
   const sites = useSites();
   const [editing, setEditing] = useState<ShiftDto | 'new' | null>(null);
-  const refresh = () => qc.invalidateQueries({ queryKey: ['shifts'] });
+  // The roster lists the shifts as its columns, and it is often already loaded (it opens on the first object).
+  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ['shifts'] }), qc.invalidateQueries({ queryKey: ['roster'] })]);
   const toggle = async (s: ShiftDto) => {
     try {
       await api.shifts.update(s.id, { active: !s.active });
