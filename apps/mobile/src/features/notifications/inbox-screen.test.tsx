@@ -3,7 +3,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 import { formatDateTime } from '@edildy/i18n';
 import { StyleSheet } from 'react-native';
 import '@/lib/i18n';
-import { ME, NOTIFICATION, NOTIFICATION2, NOTIFICATION3, notificationItem, OCC, OCC3, syncResponse, syncTask, T, TASK, versionOf } from '@/offline/testing/fixtures';
+import { ME, NOTIFICATION, NOTIFICATION2, NOTIFICATION3, notificationItem, OCC, OCC3, syncResponse, syncTask, T, TASK, versionOf, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { readUnreadNotifications } from '@/offline/unread';
@@ -21,7 +21,8 @@ jest.mock('expo-router', () => ({
     react.useEffect(() => (focused ? effect() : undefined), [effect, focused]);
   },
 }));
-const mockMe = { current: { permissions: [] as string[], role: { dataScope: 'own' } } };
+const mockTenant = { subscription: XL_SUBSCRIPTION };
+const mockMe = { current: { permissions: [] as string[], role: { dataScope: 'own' }, tenant: mockTenant } };
 const mockList = jest.fn();
 const mockMarkRead = jest.fn();
 const mockMarkAllRead = jest.fn();
@@ -64,7 +65,7 @@ async function world(o: { online?: boolean } = {}) {
 
 beforeEach(() => {
   mockPush.mockReset();
-  mockMe.current = { permissions: [], role: { dataScope: 'own' } };
+  mockMe.current = { permissions: [], role: { dataScope: 'own' }, tenant: mockTenant };
   mockFocus.set = () => undefined;
   mockList.mockReset();
   mockList.mockResolvedValue({ items: [A, B], nextCursor: null });
@@ -200,7 +201,7 @@ describe('Bildirişlər inbox', () => {
   });
 
   it('opens a resubmitted run on the Team tab for a viewer who has it and does not hold it', async () => {
-    mockMe.current = { permissions: ['reports.view'], role: { dataScope: 'tenant' } };
+    mockMe.current = { permissions: ['reports.view'], role: { dataScope: 'tenant' }, tenant: mockTenant };
     const R = notificationItem({ id: NOTIFICATION3, type: 'run.resubmitted', title: 'Yoxlama yenidən təqdim edildi', targetKind: 'occurrence', targetId: OCC3, targetDate: '2026-11-02' });
     mockList.mockResolvedValue({ items: [R], nextCursor: null });
     const t = await world();

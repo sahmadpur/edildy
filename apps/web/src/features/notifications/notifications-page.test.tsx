@@ -10,7 +10,9 @@ import { NotificationsPage } from './notifications-page';
 const mocks = vi.hoisted(() => ({
   api: { notifications: { list: vi.fn(), unreadCount: vi.fn(), markRead: vi.fn(), markAllRead: vi.fn() } },
 }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 /** Lets a test make opening a row reject (e.g. a navigation that throws); otherwise the real hook runs. */
 const open = vi.hoisted(() => ({ failure: null as Error | null }));
 vi.mock('./open-notification', async (importOriginal) => {

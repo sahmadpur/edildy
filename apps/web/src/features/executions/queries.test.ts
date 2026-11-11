@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { taskKeys } from '@/features/tasks/queries';
 import { refreshRunViews } from './queries';
 
-vi.mock('@/lib/session', () => ({ api: {} }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: {} }));
 
 describe('refreshRunViews', () => {
   it('invalidates the run views and the task views', async () => {

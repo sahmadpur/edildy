@@ -13,7 +13,7 @@ import {
   type SiteReportRow,
 } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
-import { CurrentPrincipal, RequirePermission } from '../common/decorators';
+import { CurrentPrincipal, RequireFeature, RequirePermission } from '../common/decorators';
 import type { Principal } from '../common/request';
 import {
   EmployeeReportRowResponse,
@@ -49,6 +49,7 @@ export class ReportsController {
   }
 
   @Get('sites')
+  @RequireFeature('reports')
   @RequirePermission('reports.view')
   @ApiOkResponse({ type: SiteReportRowResponse, isArray: true })
   sites(@CurrentPrincipal() p: Principal, @Query() q: ReportFiltersDto): Promise<SiteReportRow[]> {
@@ -56,6 +57,7 @@ export class ReportsController {
   }
 
   @Get('employees')
+  @RequireFeature('reports')
   @RequirePermission('reports.view')
   @ApiOkResponse({ type: EmployeeReportRowResponse, isArray: true })
   employees(@CurrentPrincipal() p: Principal, @Query() q: ReportFiltersDto): Promise<EmployeeReportRow[]> {
@@ -70,6 +72,7 @@ export class ReportsController {
   }
 
   @Get('problems')
+  @RequireFeature('reports')
   @RequirePermission('reports.view')
   @ApiOkResponse({ type: ReportProblemsResponse })
   problems(@CurrentPrincipal() p: Principal, @Query() q: ReportProblemsQueryDto): Promise<ReportProblems> {
@@ -77,6 +80,7 @@ export class ReportsController {
   }
 
   @Get('tasks')
+  @RequireFeature('reports')
   @RequirePermission('reports.view')
   @ApiOkResponse({ type: ReportTasksResponse })
   tasks(@CurrentPrincipal() p: Principal, @Query() q: ReportTasksQueryDto): Promise<ReportTasks> {
@@ -85,6 +89,7 @@ export class ReportsController {
 
   /** Spec §5.4: the whole file in one response; `full` takes xlsx or pdf. An unknown kind is 404. */
   @Get(':kind/export')
+  @RequireFeature('data_export')
   @RequirePermission('reports.view', 'reports.export')
   @ApiParam({ name: 'kind', enum: REPORT_EXPORT_KINDS })
   @ApiProduces(...Object.values(REPORT_CONTENT_TYPES))

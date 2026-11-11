@@ -11,7 +11,9 @@ import { MessagesPage } from './messages-page';
 const mocks = vi.hoisted(() => ({
   api: { messages: { list: vi.fn(), get: vi.fn(), options: vi.fn(), preview: vi.fn(), send: vi.fn() } },
 }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 const L = az.notifications.deliveryStatuses;
 

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { MessageDetail, MessagePreview, MessageSummary, MessageTargetOptions, Page } from '@edildy/contracts';
-import { CurrentPrincipal, RequirePermission } from '../common/decorators';
+import { CurrentPrincipal, RequireFeature, RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
 import {
@@ -20,6 +20,7 @@ import { MessagesService } from './messages.service';
 /** Spec §6.4 "Manual messages" (notifications.send). */
 @ApiTags('notifications')
 @ApiBearerAuth()
+@RequireFeature('notifications')
 @Controller('notifications/messages')
 @RequirePermission('notifications.send')
 export class MessagesController {

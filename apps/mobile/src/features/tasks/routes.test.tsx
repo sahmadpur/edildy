@@ -1,9 +1,12 @@
 import { render } from '@testing-library/react-native';
+import { XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import ReviewRoute from '../../../app/(app)/review/[id]';
 import NewTaskRoute from '../../../app/(app)/task/new';
 
 let mockParams: Record<string, string> = {};
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams }));
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams, Redirect: () => null }));
+const mockSession = { status: 'authenticated', offline: false, me: { tenant: { subscription: XL_SUBSCRIPTION } } };
+jest.mock('@/lib/session', () => ({ useSession: () => mockSession }));
 
 // Counts mounts and unmounts: a screen that the route re-keys is a new instance.
 const mockLog: string[] = [];

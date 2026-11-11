@@ -17,7 +17,7 @@ describe('GET /audit-log', () => {
     expect(all.items[0]).toMatchObject({ action: 'team.created', actor: { type: 'user', id: s.ownerId, name: 'Elvin Əhmədov' } });
     expect(all.items[0].after).toMatchObject({ name: 'Audit me' });
 
-    const filtered = (await owner.get('/api/v1/audit-log?action=tenant.created')).body;
+    const filtered = (await owner.get('/api/v1/audit-log?action=team.created')).body;
     expect(filtered.items).toHaveLength(1);
     expect(filtered.items[0].actor.type).toBe('user');
 
@@ -48,9 +48,9 @@ describe('GET /audit-log', () => {
     const byName = (name: string) => all.items.find((e: { after: { name?: string } | null }) => e.after?.name === name);
     expect(byName('From the web').client).toBe('web');
     expect(byName('From the phone').client).toBe('mobile');
-    // The login itself is tagged too: signup from the web, the second login from the phone.
-    expect(all.items.find((e: { action: string }) => e.action === 'tenant.created').client).toBe('web');
-    expect(all.items.find((e: { action: string }) => e.action === 'auth.login_succeeded').client).toBe('mobile');
+    // The logins are tagged too: the first from the web, the second from the phone (newest first).
+    const logins = all.items.filter((e: { action: string }) => e.action === 'auth.login_succeeded').map((e: { client: string }) => e.client);
+    expect(logins).toEqual(['mobile', 'web']);
 
     const web = (await owner.get('/api/v1/audit-log?client=web')).body;
     expect(web.items.every((e: { client: string }) => e.client === 'web')).toBe(true);

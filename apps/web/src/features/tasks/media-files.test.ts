@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mediaFileIssue, mediaKindOfMime, type PendingMedia, prepareFiles, readMediaMeta, uploadInstructionMedia } from './media-files';
 
 const mocks = vi.hoisted(() => ({ api: { tasks: { registerMedia: vi.fn(), get: vi.fn() }, taskMedia: { confirmUploaded: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api }));
 
 const MB = 1024 * 1024;
 const photoMeta = { width: 1600, height: 1200, durationMs: null };

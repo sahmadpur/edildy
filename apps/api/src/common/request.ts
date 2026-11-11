@@ -1,4 +1,4 @@
-import type { DataScope, PermissionKey, SystemRoleKey } from '@edildy/contracts';
+import type { DataScope, PermissionKey, Subscription, SystemRoleKey } from '@edildy/contracts';
 import type { Request } from 'express';
 
 export interface Principal {
@@ -12,6 +12,8 @@ export interface Principal {
   dataScope: DataScope;
   permissions: ReadonlySet<PermissionKey>;
   emailVerified: boolean;
+  /** The organisation's plan as of this request (features, limits, state). */
+  subscription: Subscription;
 }
 
 export interface AppRequest extends Request {

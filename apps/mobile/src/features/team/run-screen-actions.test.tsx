@@ -3,7 +3,7 @@ import type { PermissionKey } from '@edildy/contracts';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import i18n from '@/lib/i18n';
-import { checklist, OCC } from '@/offline/testing/fixtures';
+import { checklist, OCC, subscription } from '@/offline/testing/fixtures';
 import { createTestServices } from '@/offline/testing/test-services';
 import { TeamRunScreen } from './run-screen';
 import {
@@ -53,8 +53,8 @@ const BOTH: PermissionKey[] = ['reports.view', 'audits.perform', 'executions.cor
 const OFFLINE = 'Komandanı görmək üçün internetə qoşulun';
 const settle = () => act(() => new Promise<void>((resolve) => setTimeout(resolve, 30)));
 
-async function open(permissions?: PermissionKey[]) {
-  mockMe = teamMe(permissions ? { permissions } : {});
+async function open(permissions?: PermissionKey[], o: { audits?: boolean } = {}) {
+  mockMe = teamMe({ ...(permissions ? { permissions } : {}), ...(o.audits === false ? { subscription: subscription({ without: ['audits'] }) } : {}) });
   const t = await createTestServices({ online: true });
   await renderTeam(t.services, <TeamRunScreen occurrenceId={OCC} />);
   return t;
@@ -75,6 +75,15 @@ describe('Team run screen actions (spec §8.2)', () => {
     expect(bar.queryByRole('button', { name: tr('corrections.actions.withdraw') })).toBeNull();
     await settle();
     expect(mockHistory).not.toHaveBeenCalled(); // never corrected nor sent back (Spec decision 14)
+  });
+
+  it('offers nothing on a plan without audits, and does not ask for the correction history (BR-01)', async () => {
+    mockExecution.mockResolvedValue(executionDetail(c, { corrected: true, audit: auditBrief() }));
+    await open(BOTH, { audits: false });
+    expect(await screen.findByLabelText('İcraçı: Aynur Quliyeva')).toBeTruthy();
+    await settle();
+    expect(screen.queryByTestId('run-actions')).toBeNull();
+    expect(mockHistory).not.toHaveBeenCalled();
   });
 
   it('offers nothing to a viewer with neither key', async () => {

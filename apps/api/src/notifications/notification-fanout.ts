@@ -13,6 +13,7 @@ import { NotificationTargets } from './notification-targets';
 import { type RenderedNotification, renderNotification } from './notification-templates';
 import { type DeliverJob, deliveryJobs, type FanoutJob, failureText, NOTIFICATION_LIMITS, NOTIFICATION_QUEUES, NOTIFICATION_WORKER } from './queues';
 import { NotificationRules } from './rules.service';
+import { tenantHasFeature } from '../tenancy/subscription';
 
 export const NOTIFICATION_OUTCOMES = ['fanned_out', 'disabled', 'no_recipients', 'target_gone', 'target_closed'] as const;
 export type NotificationOutcome = (typeof NOTIFICATION_OUTCOMES)[number];
@@ -104,6 +105,8 @@ export class NotificationFanout implements OnModuleInit {
       return outcome;
     };
 
+    // BR-01.03: an organisation whose plan lacks notifications records events (they cost nothing) but sends none.
+    if (!(await tenantHasFeature(tx, ev.tenantId, 'notifications'))) return finish('disabled');
     let rule: NotificationRuleDto | null = null;
     if (type !== 'manual') {
       rule = await this.rules.effective(type);

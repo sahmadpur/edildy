@@ -15,7 +15,7 @@ import { CorrectionsTab } from '@/features/corrections/corrections-tab';
 import { ExecutionTab } from '@/features/executions/execution-tab';
 import { errorText } from '@/lib/errors';
 import { useFormatDateTime } from '@/lib/format';
-import { api, useCan } from '@/lib/session';
+import { api, useCan, useFeature } from '@/lib/session';
 import { cancelReasonText, occurrenceVariant } from './labels';
 import { useOccurrence } from './queries';
 
@@ -27,6 +27,8 @@ export function OccurrenceDialog({ id, onClose, initialTab }: { id: string; onCl
   const { t } = useTranslation();
   const qc = useQueryClient();
   const canManage = useCan('assignments.manage');
+  // Audit and corrections are the plan's audits feature (BR-01.03).
+  const hasAudits = useFeature('audits');
   const formatDateTime = useFormatDateTime();
   const occurrence = useOccurrence(id);
   const [reason, setReason] = useState('');
@@ -62,12 +64,12 @@ export function OccurrenceDialog({ id, onClose, initialTab }: { id: string; onCl
         </DialogHeader>
         {occurrence.isError && <p className="text-destructive text-sm">{errorText(t, occurrence.error)}</p>}
         {o && (
-          <Tabs defaultValue={initialTab ?? 'overview'}>
+          <Tabs defaultValue={hasAudits || (initialTab !== 'audit' && initialTab !== 'corrections') ? (initialTab ?? 'overview') : 'overview'}>
             <TabsList>
               <TabsTrigger value="overview">{t('executions.tabs.overview')}</TabsTrigger>
               <TabsTrigger value="execution">{t('executions.tabs.execution')}</TabsTrigger>
-              <TabsTrigger value="audit">{t('audits.audit')}</TabsTrigger>
-              <TabsTrigger value="corrections">{t('corrections.title')}</TabsTrigger>
+              {hasAudits && <TabsTrigger value="audit">{t('audits.audit')}</TabsTrigger>}
+              {hasAudits && <TabsTrigger value="corrections">{t('corrections.title')}</TabsTrigger>}
             </TabsList>
             <TabsContent value="overview">
               <div className="grid gap-4 text-sm">
@@ -117,12 +119,16 @@ export function OccurrenceDialog({ id, onClose, initialTab }: { id: string; onCl
               {/* Radix unmounts inactive tabs, so the execution is only fetched when this tab is opened. */}
               <ExecutionTab occurrence={o} />
             </TabsContent>
-            <TabsContent value="audit">
-              <RunAuditTab occurrence={o} />
-            </TabsContent>
-            <TabsContent value="corrections">
-              <CorrectionsTab occurrence={o} />
-            </TabsContent>
+            {hasAudits && (
+              <TabsContent value="audit">
+                <RunAuditTab occurrence={o} />
+              </TabsContent>
+            )}
+            {hasAudits && (
+              <TabsContent value="corrections">
+                <CorrectionsTab occurrence={o} />
+              </TabsContent>
+            )}
           </Tabs>
         )}
         <DialogFooter>

@@ -13,7 +13,9 @@ import { notificationKeys } from './queries';
 const mocks = vi.hoisted(() => ({
   api: { notifications: { list: vi.fn(), unreadCount: vi.fn(), markRead: vi.fn(), markAllRead: vi.fn() } },
 }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 /** Opens the popover once the count (3 by default) has arrived, so its "Hamısını oxunmuş et" is enabled. */
 const openBell = async () => {

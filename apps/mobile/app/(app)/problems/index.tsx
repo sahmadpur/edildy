@@ -1,3 +1,10 @@
+import { FeatureGate } from '@/components/feature-gate';
 import { ProblemsScreen } from '@/features/problems/problems-screen';
 
-export default ProblemsScreen;
+export default function ProblemsRoute() {
+  return (
+    <FeatureGate feature="problems">
+      <ProblemsScreen />
+    </FeatureGate>
+  );
+}

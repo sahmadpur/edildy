@@ -5,6 +5,7 @@ import {
   siteDtoSchema,
   siteTypeDtoSchema,
   tenantDtoSchema,
+  tenantSubscriptionDtoSchema,
   updateSiteInputSchema,
   updateSiteTypeInputSchema,
   updateTenantInputSchema,
@@ -20,3 +21,4 @@ export class CreateSiteDto extends createZodDto(createSiteInputSchema) {}
 export class UpdateSiteDto extends createZodDto(updateSiteInputSchema) {}
 export class MoveSiteDto extends createZodDto(moveSiteInputSchema) {}
 export class SiteResponse extends createZodDto(siteDtoSchema) {}
+export class TenantSubscriptionResponse extends createZodDto(tenantSubscriptionDtoSchema) {}

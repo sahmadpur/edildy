@@ -5,7 +5,7 @@ import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 export function errorText(t: TFunction, e: unknown): string {
   if (e instanceof ApiError) {
     const minutes = e.retryAfterSeconds ? Math.ceil(e.retryAfterSeconds / 60) : 1;
-    return t(e.messageKey, { minutes, requestId: e.requestId ?? '—' });
+    return t(e.messageKey, { minutes, requestId: e.requestId ?? '—', limit: e.limit ?? '—' });
   }
   return t('errors.INTERNAL', { requestId: '—' });
 }

@@ -45,6 +45,11 @@ export default {
       subtitle: 'Archive · {{date}}',
     },
     offline: 'Offline mode — data will refresh when the connection is back.',
+    subscription: {
+      expiredTitle: 'The subscription has ended',
+      expiredBody: "You can still view your data, but you can't start new checks or make changes. Please contact your organisation's manager.",
+      grace: 'The subscription ended on {{date}}. After {{graceEnd}} the app will be view-only.',
+    },
   },
   profile: {
     title: 'Profile',

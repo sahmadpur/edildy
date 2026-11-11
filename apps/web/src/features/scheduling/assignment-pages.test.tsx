@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useCan: () => true,
   useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }),

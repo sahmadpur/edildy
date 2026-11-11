@@ -6,14 +6,24 @@ import { renderWithProviders } from '@/test/render';
 
 const state: { current: { status: string; me?: unknown } } = { current: { status: 'authenticated' } };
 const listeners = new Set<() => void>();
-const me = (permissions: string[]) => ({
+const ALL = ['notifications', 'usage_log', 'problems', 'tasks', 'reports', 'data_export', 'audits'];
+const me = (permissions: string[], subscription: Record<string, unknown> = {}) => ({
   user: { id: 'u', fullName: 'Elvin Əhmədov', jobTitle: null, kind: 'staff', email: 'e@a.az', username: null, emailVerified: true, credentialKind: 'password', emailNotifications: true, locale: null },
   role: { id: 'r', name: 'Manager', systemKey: 'manager', dataScope: 'site_subtree' },
   permissions,
-  tenant: { id: 't', name: 'Acme', orgCode: 'acme', timezone: 'Asia/Baku', locale: 'az' },
+  tenant: {
+    id: 't',
+    name: 'Acme',
+    orgCode: 'acme',
+    timezone: 'Asia/Baku',
+    locale: 'az',
+    subscription: { plan: 'xl', state: 'active', endsOn: null, features: ALL, limits: { staff: null, workers: null, branches: 1 }, ...subscription },
+  },
 });
 
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   useSession: () => state.current,
   useMe: () => state.current.me,
   useCan: (...keys: string[]) => keys.every((k) => (state.current.me as { permissions: string[] }).permissions.includes(k)),
@@ -188,5 +198,36 @@ describe('AppShell', () => {
     });
     expect(await screen.findByText('login page')).toBeInTheDocument();
     expect(router.state.location.search).toMatchObject({ redirect: '/users' });
+  });
+
+  it('hides the pages, Mesajlar and the bell that the plan does not include', async () => {
+    const perms = ['users.view', 'reports.view', 'assignments.view', 'tasks.view', 'audits.perform', 'audit.view', 'notifications.send'];
+    state.current = { status: 'authenticated', me: me(perms, { plan: 'basic', features: [] }) };
+    renderShell();
+    const nav = await screen.findByRole('navigation', { name: 'Menyu' });
+    for (const name of ['Problemlər', 'Hesabatlar', 'Tapşırıqlar', 'Audit', 'İstifadə jurnalı']) expect(within(nav).queryByRole('link', { name })).not.toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Göstəricilər' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mesajlar' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Bildirişlər/ })).not.toBeInTheDocument();
+  });
+
+  it('shows an add-on feature on a smaller plan', async () => {
+    state.current = { status: 'authenticated', me: me(['users.view', 'tasks.view'], { plan: 'basic', features: ['tasks'] }) };
+    renderShell();
+    const nav = await screen.findByRole('navigation', { name: 'Menyu' });
+    expect(within(nav).getByRole('link', { name: 'Tapşırıqlar' })).toBeInTheDocument();
+  });
+
+  it('tells everyone when the subscription has ended (read-only)', async () => {
+    state.current = { status: 'authenticated', me: me(['users.view'], { state: 'expired', endsOn: '2026-10-01' }) };
+    renderShell();
+    expect(await screen.findByText(/Abunəlik bitib: məlumatlara baxmaq olar/)).toBeInTheDocument();
+  });
+
+  it('warns the people who manage the organisation 14 days before the end, not the others', async () => {
+    const soon = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+    state.current = { status: 'authenticated', me: me(['users.view', 'tenant.manage'], { endsOn: soon }) };
+    renderShell();
+    expect(await screen.findByText(/Qalan gün: (9|10)/)).toBeInTheDocument();
   });
 });

@@ -6,7 +6,9 @@ import { IDS, SITE_ROWS, TODAY } from './fixtures';
 import { SitesTab } from './sites-tab';
 
 const mocks = vi.hoisted(() => ({ api: { reports: { sites: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 const FILTERS = { from: TODAY, to: TODAY };
 /** The name button of every data row, in order. */

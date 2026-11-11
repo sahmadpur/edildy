@@ -1,6 +1,6 @@
 ---
 import type { Language } from '../lib/site';
-import { fill, localePath, platformUrl, strings } from '../lib/site';
+import { fill, localePath, strings } from '../lib/site';
 import Logo from './Logo.astro';
 interface Props {
   lang: Language;
@@ -20,7 +20,6 @@ const year = new Date().getFullYear();
       <a href={`mailto:${t.footer.email}`}>{t.footer.email}</a>
       <a href={localePath(lang, 'privacy/')}>{t.footer.privacy}</a>
       <a href={localePath(lang, 'terms/')}>{t.footer.terms}</a>
-      <a href={platformUrl('signup')}>{t.nav.signup}</a>
     </nav>
   </div>
   <div class="wrap copyright">{fill(t.footer.copyright, { year })}</div>

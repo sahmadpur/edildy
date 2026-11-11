@@ -14,6 +14,7 @@ import { useOffline } from '@/offline/context';
 import type { OccurrenceView } from '@/offline/execution-store';
 import { useLiveQuery, useNow } from '@/offline/hooks';
 import { ArchiveMore } from './archive';
+import { SubscriptionNotice } from './subscription-notice';
 import { useStartOccurrence } from './use-start-occurrence';
 
 /** A count takes its colour only when it is not zero, so a calm day reads calm. */
@@ -74,6 +75,7 @@ export function HomeScreen() {
           <Text style={styles.offlineText}>{t('mobile.home.offline')}</Text>
         </View>
       ) : null}
+      <SubscriptionNotice subscription={s.me.tenant.subscription} />
       <View style={styles.boxes}>
         {HOME_BOXES.map((key) => {
           const value = stats ? stats[key] : null;

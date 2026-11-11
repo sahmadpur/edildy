@@ -1,14 +1,12 @@
 import { expect, type APIRequestContext, test } from '@playwright/test';
+import { createOrg } from './org';
 
 /** Sets up a tenant through the API: a site, a worker at it and a published checklist from a Edildy template. */
 async function seedTenant(request: APIRequestContext, suffix: string) {
   const email = `sch-${suffix}@example.az`;
   const password = 'e2e owner password';
-  const signup = await request.post('/api/v1/auth/signup', {
-    data: { orgName: 'E2E Növbə MMC', orgCode: `e2e-sch-${suffix}`, fullName: 'Elvin Əhmədov', email, password, client: 'mobile' },
-  });
-  expect(signup.ok(), await signup.text()).toBeTruthy();
-  const headers = { Authorization: `Bearer ${(await signup.json()).accessToken}` };
+  const signup = await createOrg(request, { name: 'E2E Növbə MMC', orgCode: `e2e-sch-${suffix}`, email, password });
+  const headers = { Authorization: `Bearer ${signup.accessToken}` };
   const call = async (method: string, url: string, data?: unknown) => {
     const res = await request.fetch(`/api/v1${url}`, { method, headers, data });
     expect(res.ok(), `${method} ${url}: ${await res.text()}`).toBeTruthy();

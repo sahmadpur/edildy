@@ -6,7 +6,9 @@ import { renderWithRouter } from '@/test/router';
 import { OccurrenceDialog } from './occurrence-dialog';
 
 const mocks = vi.hoisted(() => ({ api: { occurrences: { get: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useCan: () => false, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useCan: () => false, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });

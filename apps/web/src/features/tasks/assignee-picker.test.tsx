@@ -8,7 +8,9 @@ import { assigneeOptions } from './fixtures';
 import type { AssigneeChoice } from './labels';
 
 const mocks = vi.hoisted(() => ({ api: { tasks: { assignees: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api }));
 
 function Harness(props: { initial?: AssigneeChoice | null; clearable?: boolean; onChange: (c: AssigneeChoice | null) => void }) {
   const [value, setValue] = useState<AssigneeChoice | null>(props.initial ?? null);

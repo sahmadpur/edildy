@@ -91,8 +91,6 @@ jobs:
       MAIL_FROM: Edildy <no-reply@edildy.ci>
       COOKIE_SECURE: 'false'
       LOG_LEVEL: warn
-      # Every spec signs up its own tenant: 9 of the default 10 per hour, so one retry would hit the limit.
-      RL_SIGNUP_IP_PER_HOUR: '100'
       # SeaweedFS and Mailpit run as containers (step below): the audit report is stored there and mailed (SP8).
       S3_ENDPOINT: http://localhost:8333
       S3_PUBLIC_ENDPOINT: http://localhost:8333
@@ -127,6 +125,8 @@ jobs:
           touch .env
           pnpm exec tsx src/db/scripts/setup.ts
           pnpm exec tsx src/db/scripts/seed.ts
+          # Organisations are created by Edildy staff only: the specs sign in as this platform admin (e2e/org.ts).
+          PLATFORM_ADMIN_EMAIL=e2e-admin@edildy.test PLATFORM_ADMIN_NAME='E2E Admin' PLATFORM_ADMIN_PASSWORD='e2e platform password' pnpm exec tsx src/scripts/create-platform-admin.ts
           pnpm exec tsx src/scripts/generate-keys.ts | sed 's/"//g' >> "$GITHUB_ENV"
       - run: pnpm --filter @edildy/web exec playwright install --with-deps chromium
       - run: pnpm --filter @edildy/web e2e

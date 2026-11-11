@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { type AuditBrief, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@edildy/contracts';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
-import { auditItemVerdicts, audits, checklists } from '../db/schema';
+import { auditItemVerdicts, audits } from '../db/schema';
+import { tenantHasFeatureSql } from '../tenancy/subscription';
 
 /**
  * What the executions module needs to know about audits (Architecture: "Module boundary"): plain reads and writes of
@@ -12,9 +13,13 @@ import { auditItemVerdicts, audits, checklists } from '../db/schema';
 export class AuditLookup {
   constructor(private readonly db: DbService) {}
 
+  /** The checklist's flag, unless the organisation's plan lacks audits: then runs never wait for one (BR-01.03). */
   async requiresAudit(checklistId: string): Promise<boolean> {
-    const [c] = await this.db.tx().select({ requiresAudit: checklists.requiresAudit }).from(checklists).where(eq(checklists.id, checklistId));
-    return c?.requiresAudit ?? false;
+    const r = await this.db.tx().execute<{ required: boolean }>(sql`
+      select c.requires_audit and ${tenantHasFeatureSql('audits')} as required
+      from checklists c join tenants t on t.id = c.tenant_id
+      where c.id = ${checklistId}`);
+    return r.rows[0]?.required ?? false;
   }
 
   /** The run's non-cancelled audit (at most one: audits_open_uq). */

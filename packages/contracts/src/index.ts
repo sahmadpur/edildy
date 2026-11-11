@@ -6,6 +6,7 @@ export * from './credentials.js';
 export * from './common.js';
 export * from './auth.js';
 export * from './tenant.js';
+export * from './plans.js';
 export * from './sites.js';
 export * from './teams.js';
 export * from './roles.js';

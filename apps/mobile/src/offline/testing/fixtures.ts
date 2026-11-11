@@ -17,6 +17,9 @@ import {
   type SyncTask,
   type YesNoItem,
   type ProblemReportDto,
+  FEATURES,
+  type FeatureKey,
+  type Subscription,
 } from '@edildy/contracts';
 import type { Clock } from '../clock';
 import { uuidv7 } from '../ids';
@@ -42,6 +45,15 @@ export const T = {
   due: '2026-11-02T06:00:00.000Z',
   closes: '2026-11-02T07:00:00.000Z',
 } as const;
+
+/** The default plan of test profiles: XL, every feature, no end date (BR-01). */
+export const XL_SUBSCRIPTION: Subscription = { plan: 'xl', state: 'active', endsOn: null, features: [...FEATURES], limits: { staff: null, workers: null, branches: 1 } };
+
+/** XL with some features switched off, or another state. */
+export const subscription = (o: { without?: readonly FeatureKey[] } & Partial<Subscription> = {}): Subscription => {
+  const { without = [], ...over } = o;
+  return { ...XL_SUBSCRIPTION, features: XL_SUBSCRIPTION.features.filter((f) => !without.includes(f)), ...over };
+};
 
 export const DEVICE: DeviceInfo = { platform: 'ios', osVersion: '26.0', appVersion: '0.1.0' };
 

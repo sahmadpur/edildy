@@ -1,5 +1,5 @@
 import { ApiClient, createEdildyApi, type TokenStore } from '@edildy/api-client';
-import { type LoginResult, type Me, meSchema } from '@edildy/contracts';
+import { FEATURES, type LoginResult, type Me, meSchema } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 import { secureStorage, STORAGE_KEYS } from './secure-storage';
 
@@ -30,14 +30,24 @@ const tokenStore: TokenStore = {
 const cacheMe = (me: Me) => secureStorage.set(STORAGE_KEYS.me, JSON.stringify(me));
 
 /**
- * A profile cached by an older app version lacks the preferences added since (emailNotifications before sub-project 6,
- * locale before the language preference); the server's defaults stand in until the next refresh.
+ * Before plans (BR-01) every organisation had every feature: a profile cached then stands in as such until the next
+ * refresh brings the real subscription, rather than signing the worker out offline.
+ */
+const LEGACY_SUBSCRIPTION: Me['tenant']['subscription'] = { plan: 'xl', state: 'active', endsOn: null, features: [...FEATURES], limits: { staff: null, workers: null, branches: 1 } };
+
+/**
+ * A profile cached by an older app version lacks the fields added since (emailNotifications before sub-project 6,
+ * locale before the language preference, the tenant's subscription before plans); defaults stand in until the next refresh.
  */
 function withPreferenceDefaults(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
-  const user = (raw as { user?: unknown }).user;
+  const { user, tenant } = raw as { user?: unknown; tenant?: unknown };
   if (typeof user !== 'object' || user === null) return raw;
-  return { ...raw, user: { emailNotifications: true, locale: null, ...user } };
+  return {
+    ...raw,
+    user: { emailNotifications: true, locale: null, ...user },
+    ...(typeof tenant === 'object' && tenant !== null ? { tenant: { subscription: LEGACY_SUBSCRIPTION, ...tenant } } : {}),
+  };
 }
 
 async function loadCachedMe(): Promise<Me | null> {

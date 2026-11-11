@@ -81,11 +81,14 @@ import {
   type PlatformTenantListQuery,
   type ResetCredentialInput,
   roleDtoSchema,
-  type SignupInput,
   siteDtoSchema,
   siteTypeDtoSchema,
   teamDtoSchema,
   tenantDtoSchema,
+  tenantSubscriptionDtoSchema,
+  platformTenantDetailSchema,
+  type CreateTenantInput,
+  type SubscriptionInput,
   type UpdateRoleInput,
   type UpdateSiteInput,
   type UpdateSiteTypeInput,
@@ -166,7 +169,6 @@ const q = (query: object) => query as QueryParams;
 export function createEdildyApi(c: ApiClient) {
   return {
     auth: {
-      signup: (body: SignupInput) => c.request('POST', '/auth/signup', { body, schema: loginResultSchema, auth: false }),
       loginStaff: (body: LoginStaffInput) => c.request('POST', '/auth/login/staff', { body, schema: loginResultSchema, auth: false }),
       loginWorker: (body: LoginWorkerInput) => c.request('POST', '/auth/login/worker', { body, schema: loginResultSchema, auth: false }),
       verifyEmail: (token: string) => c.request<void>('POST', '/auth/verify-email', { body: { token }, auth: false }),
@@ -182,6 +184,7 @@ export function createEdildyApi(c: ApiClient) {
     tenant: {
       get: () => c.request('GET', '/tenant', { schema: tenantDtoSchema }),
       update: (body: UpdateTenantInput) => c.request('PATCH', '/tenant', { body, schema: tenantDtoSchema }),
+      subscription: () => c.request('GET', '/tenant/subscription', { schema: tenantSubscriptionDtoSchema }),
     },
     siteTypes: {
       list: () => c.request('GET', '/site-types', { schema: z.array(siteTypeDtoSchema) }),
@@ -281,6 +284,10 @@ export function createPlatformApi(c: ApiClient) {
         c.request('GET', '/platform/tenants', { query: q(query), schema: pageOf(platformTenantDtoSchema) }),
       suspend: (id: string) => c.request('POST', `/platform/tenants/${id}/suspend`, { body: {}, schema: platformTenantDtoSchema }),
       reactivate: (id: string) => c.request('POST', `/platform/tenants/${id}/reactivate`, { body: {}, schema: platformTenantDtoSchema }),
+      create: (body: CreateTenantInput) => c.request('POST', '/platform/tenants', { body, schema: platformTenantDetailSchema }),
+      get: (id: string) => c.request('GET', `/platform/tenants/${id}`, { schema: platformTenantDetailSchema }),
+      setSubscription: (id: string, body: SubscriptionInput) =>
+        c.request('PUT', `/platform/tenants/${id}/subscription`, { body, schema: platformTenantDetailSchema }),
     },
     globalTemplates: {
       list: () => c.request('GET', '/platform/templates', { schema: z.array(globalTemplateSummarySchema) }),

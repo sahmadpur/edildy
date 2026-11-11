@@ -1,4 +1,4 @@
-import { NOTIFICATION_TYPES } from '@edildy/contracts';
+import { type FeatureKey, NOTIFICATION_TYPES } from '@edildy/contracts';
 import { ME, OCC, OCC2, OCC3, occurrence, OTHER, pushData, REPORT, reworkSync, REWORK_EXECUTION, syncResponse, syncTask, TASK, TASK2, versionOf } from '@/offline/testing/fixtures';
 import { createTestServices } from '@/offline/testing/test-services';
 import { createRouteContext, HOME, INBOX, type RouteContext, routeForPush, routeForTarget, startTapRouting, TEAM_RUN_TYPES } from './notification-router';
@@ -226,5 +226,39 @@ describe('sub-project 8 run notifications (Spec decision 15)', () => {
   it('names only notification types that exist', () => {
     expect([...TEAM_RUN_TYPES]).toHaveLength(4);
     for (const type of TEAM_RUN_TYPES) expect(NOTIFICATION_TYPES).toContain(type);
+  });
+});
+
+describe('the plan’s features (BR-01)', () => {
+  const without = (...off: FeatureKey[]) => (k: FeatureKey) => !off.includes(k);
+
+  it('opens Home instead of a screen whose feature the plan lacks', async () => {
+    const noTasks = stubCtx({ hasFeature: without('tasks') });
+    expect(await routeForTarget({ targetKind: 'task', targetId: TASK }, noTasks)).toEqual(HOME);
+    const reviewer = stubCtx({ hasFeature: without('tasks'), canManageTasks: () => true, taskOnPhone: jest.fn(async () => false) });
+    expect(await routeForTarget({ targetKind: 'task', targetId: TASK2 }, reviewer)).toEqual(HOME);
+    const noProblems = stubCtx({ hasFeature: without('problems') });
+    expect(await routeForTarget({ targetKind: 'problem_report', targetId: REPORT }, noProblems)).toEqual(HOME);
+    const noReports = stubCtx({ hasFeature: without('reports'), canSeeTeam: () => true, occurrenceOnPhone: jest.fn(async () => null) });
+    expect(await routeForTarget({ targetKind: 'occurrence', targetId: OCC3, type: 'audit.finished' }, noReports)).toEqual(HOME);
+  });
+
+  it('opens Home for what would open the inbox without notifications, and still opens a checklist', async () => {
+    const ctx = stubCtx({ hasFeature: without('notifications') });
+    expect(await routeForTarget({ targetKind: 'none', targetId: null }, ctx)).toEqual(HOME);
+    expect(await routeForPush(pushData({ userId: OTHER }), ctx)).toEqual(HOME);
+    expect(await routeForPush(pushData(), ctx)).toEqual({ pathname: '/execution/[id]', params: { id: OCC } });
+  });
+
+  it('leaves every route alone on a plan with every feature', async () => {
+    const ctx = stubCtx({ hasFeature: () => true });
+    expect(await routeForTarget({ targetKind: 'task', targetId: TASK }, ctx)).toEqual({ pathname: '/task/[id]', params: { id: TASK } });
+    expect(await routeForTarget({ targetKind: 'none', targetId: null }, ctx)).toEqual(INBOX);
+  });
+
+  it('passes the plan through createRouteContext', async () => {
+    const { t } = await world();
+    const ctx = createRouteContext(t.services, () => false, () => false, undefined, without('tasks'));
+    expect(await routeForPush(pushData({ type: 'task.assigned', targetKind: 'task', targetId: TASK, targetDate: null }), ctx)).toEqual(HOME);
   });
 });

@@ -6,6 +6,7 @@ import { AppError } from '../common/app-error';
 import { DbService } from '../db/db.service';
 import { roles, tenants, users } from '../db/schema';
 import { loadRolePermissions } from '../roles/permission-resolver';
+import { subscriptionOf } from '../tenancy/subscription';
 
 @Injectable()
 export class MeService {
@@ -44,6 +45,7 @@ export class MeService {
         orgCode: row.tenant.orgCode,
         timezone: row.tenant.timezone,
         locale: row.tenant.locale,
+        subscription: subscriptionOf(row.tenant),
       },
     };
   }

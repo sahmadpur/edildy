@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   api: { reports: { runs: vi.fn() }, occurrences: { get: vi.fn(), cancel: vi.fn() }, executions: { get: vi.fn() } },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useMe: () => mocks.me.current,
   useCan: (...keys: string[]) => keys.every((k) => (mocks.me.current as { permissions: string[] }).permissions.includes(k)),

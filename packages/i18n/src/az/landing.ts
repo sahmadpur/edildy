@@ -4,13 +4,13 @@ export default {
     title: 'Edildy — sahə komandaları üçün yoxlama vərəqələri',
     description: 'İşçilər yoxlamaları telefonda, oflayn da olsa icra edir; menecerlər planlaşdırır, hesabatlara baxır, audit edir və düzəliş tələb edir.',
   },
-  nav: { features: 'Funksiyalar', how: 'Necə işləyir', mobile: 'Mobil tətbiq', faq: 'Suallar', login: 'Daxil ol', signup: 'Təşkilatı qeydiyyatdan keçirin', menu: 'Menyu', language: 'Dil', skip: 'Məzmuna keç' },
+  nav: { features: 'Funksiyalar', how: 'Necə işləyir', mobile: 'Mobil tətbiq', faq: 'Suallar', login: 'Daxil ol', menu: 'Menyu', language: 'Dil', skip: 'Məzmuna keç' },
   hero: {
     title: 'Sahə komandaları üçün yoxlama vərəqələri, tapşırıqlar və auditlər',
     lead: 'İşçilər yoxlamaları telefonda icra edir, foto və video ilə təsdiqləyir — internet olmasa da. Menecerlər planlaşdırır, nəticələri anında görür, audit edir və düzəliş tələb edir.',
     audience: 'Təmizlik şirkətləri, anbarlar, pərakəndə şəbəkələr və obyekt xidməti komandaları üçün.',
     login: 'Daxil ol',
-    signup: 'Təşkilatı qeydiyyatdan keçirin',
+    contact: 'Qoşulmaq üçün bizə yazın',
   },
   phone: {
     checklist: 'Gündəlik təmizlik yoxlaması',

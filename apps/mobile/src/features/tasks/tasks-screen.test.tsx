@@ -1,6 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 import '@/lib/i18n';
-import { ME_REF, OTHER, syncResponse, syncTask, T, TASK, TASK2, TASK3, TASK4, TASK5, TEAM, versionOf } from '@/offline/testing/fixtures';
+import { ME_REF, OTHER, syncResponse, syncTask, T, TASK, TASK2, TASK3, TASK4, TASK5, TEAM, versionOf, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { TasksScreen } from './tasks-screen';
@@ -13,9 +13,10 @@ jest.mock('expo-router', () => ({
 }));
 
 let mockPermissions: string[] = [];
+const mockTenant = { subscription: XL_SUBSCRIPTION };
 const mockList = jest.fn();
 jest.mock('@/lib/session', () => ({
-  useSession: () => ({ status: 'authenticated', offline: false, me: { permissions: mockPermissions } }),
+  useSession: () => ({ status: 'authenticated', offline: false, me: { permissions: mockPermissions, tenant: mockTenant } }),
   api: { tasks: { list: (...a: unknown[]) => mockList(...a) } },
 }));
 

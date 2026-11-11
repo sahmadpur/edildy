@@ -6,7 +6,8 @@ import { colors, font, type } from '@/lib/theme';
 export function mobileErrorText(t: TFunction, e: unknown): string {
   if (e instanceof ApiError) {
     const minutes = e.retryAfterSeconds ? Math.ceil(e.retryAfterSeconds / 60) : 1;
-    return t(e.messageKey, { minutes, requestId: e.requestId ?? '—' });
+    // `limit`: the plan's cap in *_LIMIT_REACHED; with `rows`, the export cap in REPORT_TOO_LARGE.
+    return t(e.messageKey, { minutes, requestId: e.requestId ?? '—', limit: e.limit ?? '—', rows: e.rows ?? '—' });
   }
   return t('errors.INTERNAL', { requestId: '—' });
 }

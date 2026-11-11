@@ -176,6 +176,13 @@
       "when": 1794372003842,
       "tag": "0024_shift_drop_times",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794390946786,
+      "tag": "0025_subscriptions",
+      "breakpoints": true
     }
   ]
 }

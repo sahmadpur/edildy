@@ -1,4 +1,5 @@
 import { Body, Delete, Get, HttpCode, Inject, Param, Post, Put, Query, StreamableFile } from '@nestjs/common';
+import { RequireFeature } from '../common/decorators';
 import { ApiCreatedResponse, ApiNoContentResponse, ApiOkResponse, ApiProduces } from '@nestjs/swagger';
 import { AUDIT_REPORT_CONTENT_TYPE, type AuditDetail, type AuditDto, type AuditItemVerdict, type AuditQueueRow, type Page } from '@edildy/contracts';
 import { controllerDecorators, named, perm, permAny, type RouteMode } from '../checklists/route-mode';
@@ -14,6 +15,7 @@ export function auditsControllerFor(mode: RouteMode) {
   // Managers see audit outcomes through reports.view (spec §5).
   const performOrReports = permAny(mode, 'audits.perform', 'reports.view');
 
+  @RequireFeature('audits')
   @controllerDecorators(mode, 'audits', 'audits')
   class AuditsController {
     constructor(
@@ -95,6 +97,7 @@ export function auditsControllerFor(mode: RouteMode) {
 export function executionAuditsControllerFor(mode: RouteMode) {
   const perform = perm(mode, 'audits.perform');
 
+  @RequireFeature('audits')
   @controllerDecorators(mode, 'executions', 'audits')
   class ExecutionAuditsController {
     constructor(@Inject(AuditsService) private readonly audits: AuditsService) {}

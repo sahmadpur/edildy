@@ -6,7 +6,9 @@ import { mediaDto } from './fixtures';
 import { MediaLightbox, MediaThumb } from './media';
 
 const mocks = vi.hoisted(() => ({ api: { media: { url: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 const signed = (id: string, n: number) => ({ url: `http://files.test/${id}?sig=${n}`, expiresAt: '2026-11-02T04:25:00.000Z' });
 

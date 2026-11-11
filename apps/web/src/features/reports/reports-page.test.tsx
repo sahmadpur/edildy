@@ -44,6 +44,8 @@ const mocks = vi.hoisted(() => ({
   saveFile: vi.fn(),
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useMe: () => mocks.me.current,
   useCan: (...keys: string[]) =>

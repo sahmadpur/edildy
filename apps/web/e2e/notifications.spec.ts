@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
+import { createOrg } from './org';
 import type { NotificationItem, NotificationRuleDto } from '@edildy/contracts';
 import { az } from '@edildy/i18n';
 import { uuidv7 } from 'uuidv7';
@@ -19,11 +20,8 @@ test('an admin changes the task.assigned rule and messages a team; the member se
   const password = 'e2e owner password';
 
   // Tenant, a team and a worker in it.
-  const signup = await request.post('/api/v1/auth/signup', {
-    data: { orgName: 'E2E Bildiriş MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
-  });
-  expect(signup.ok(), await signup.text()).toBeTruthy();
-  const owner = apiAs(request, ((await signup.json()) as { accessToken: string }).accessToken);
+  const signup = await createOrg(request, { name: 'E2E Bildiriş MMC', orgCode, fullName: 'Leyla Quliyeva', email, password });
+  const owner = apiAs(request, signup.accessToken);
   const roles = await owner<Array<{ id: string; systemKey: string | null }>>('GET', '/roles');
   const team = await owner<{ id: string }>('POST', '/teams', { name: 'Texniki xidmət' });
   const worker = await owner<{ user: { id: string }; generatedSecret: string }>('POST', '/users/workers', {

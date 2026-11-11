@@ -6,7 +6,9 @@ import { EmployeesTab } from './employees-tab';
 import { EMPLOYEE_ROWS, IDS, TODAY } from './fixtures';
 
 const mocks = vi.hoisted(() => ({ api: { reports: { employees: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 const FILTERS = { from: TODAY, to: TODAY };
 const firstCells = () => screen.getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell')[0]!.textContent);

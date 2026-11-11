@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   api: { reports: { employees: vi.fn() }, sites: { list: vi.fn() }, checklists: { list: vi.fn() } },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useMe: () => mocks.me.current,
   useCan: (...keys: string[]) =>

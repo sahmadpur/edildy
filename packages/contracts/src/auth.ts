@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { idSchema, isoDateTimeSchema } from './common.js';
 import { credentialKindSchema, emailSchema, orgCodeSchema, passwordSchema } from './credentials.js';
 import { dataScopeSchema, permissionKeySchema, systemRoleKeySchema } from './permissions.js';
+import { subscriptionSchema } from './plans.js';
 import { localeSchema } from './tenant.js';
 
 export const clientSchema = z.enum(['web', 'mobile']);
@@ -73,7 +74,15 @@ export const meSchema = z.object({
   }),
   role: z.object({ id: idSchema, name: z.string(), systemKey: systemRoleKeySchema.nullable(), dataScope: dataScopeSchema }),
   permissions: z.array(permissionKeySchema),
-  tenant: z.object({ id: idSchema, name: z.string(), orgCode: z.string(), timezone: z.string(), locale: z.string() }),
+  tenant: z.object({
+    id: idSchema,
+    name: z.string(),
+    orgCode: z.string(),
+    timezone: z.string(),
+    locale: z.string(),
+    /** The plan: which feature areas are on, the limits and the end date (BR-01). */
+    subscription: subscriptionSchema,
+  }),
 });
 export type Me = z.infer<typeof meSchema>;
 

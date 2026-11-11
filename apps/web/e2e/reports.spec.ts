@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { createOrg } from './org';
 import { type APIRequestContext, expect, test } from '@playwright/test';
 import { addDays, type ChecklistContent, type ReportSummary, type SyncResponse } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
@@ -25,11 +26,8 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   const password = 'e2e owner password';
 
   // Tenant, site, worker and a published checklist from a Edildy template.
-  const signup = await request.post('/api/v1/auth/signup', {
-    data: { orgName: 'E2E Hesabat MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
-  });
-  expect(signup.ok(), await signup.text()).toBeTruthy();
-  const owner = apiAs(request, ((await signup.json()) as { accessToken: string }).accessToken);
+  const signup = await createOrg(request, { name: 'E2E Hesabat MMC', orgCode, fullName: 'Leyla Quliyeva', email, password });
+  const owner = apiAs(request, signup.accessToken);
   const types = await owner<Array<{ id: string; name: string }>>('GET', '/site-types');
   const site = await owner<{ id: string }>('POST', '/sites', { parentId: null, typeId: types.find((x) => x.name === 'Filial')!.id, name: 'Anbar №1' });
   const roles = await owner<Array<{ id: string; systemKey: string | null }>>('GET', '/roles');

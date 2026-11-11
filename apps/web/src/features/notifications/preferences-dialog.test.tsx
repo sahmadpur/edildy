@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   api: { preferences: { update: vi.fn() } },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useMe: () => mocks.me.current,
   session: { setMe: mocks.setMe, get: () => ({ status: 'authenticated', me: mocks.me.current }) },

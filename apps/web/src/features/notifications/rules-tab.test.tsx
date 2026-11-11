@@ -13,7 +13,9 @@ import { NotificationRulesTab } from './rules-tab';
 const mocks = vi.hoisted(() => ({
   api: { notificationRules: { list: vi.fn(), update: vi.fn(), reset: vi.fn() }, roles: { list: vi.fn() } },
 }));
-vi.mock('@/lib/session', () => ({ api: mocks.api }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api }));
 
 /** A rule row's control: "<type label> — <control>" (the type labels are Part 1's). */
 const ctl = (type: RuleType, control: string) => `${az.notifications.types[type]} — ${control}`;

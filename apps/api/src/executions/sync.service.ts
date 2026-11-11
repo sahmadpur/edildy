@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EXECUTION_LIMITS, type ExecutionProgress, type MyExecution, type SyncResponse } from '@edildy/contracts';
+import { EXECUTION_LIMITS, type ExecutionProgress, type FeatureKey, type MyExecution, type SyncResponse } from '@edildy/contracts';
 import { and, asc, eq, getTableColumns, gt, gte, inArray, lt, ne, or } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import type { Principal } from '../common/request';
@@ -34,6 +34,7 @@ export class SyncService {
   ) {}
 
   async pull(p: Principal, q: SyncQueryDto): Promise<SyncResponse> {
+    const has = (f: FeatureKey) => p.subscription.features.includes(f);
     const tx = this.db.tx();
     const now = this.clock.now();
     const from = new Date(+now - EXECUTION_LIMITS.syncPastDays * DAY);
@@ -128,9 +129,12 @@ export class SyncService {
         reworkRound: x.reworkRound,
         rework: rework.get(x.id) ?? null,
       })),
-      ...(await this.taskSync.forUser(p, q.knownTaskIds, now)),
-      ...(await this.reportSync.forUser(p, q.knownProblemReportIds, now)),
-      unreadNotifications: await this.inbox.unreadCount(p.userId),
+      // A feature the plan lacks syncs nothing, and the phone drops what it still holds of it (BR-01.03).
+      ...(has('tasks') ? await this.taskSync.forUser(p, q.knownTaskIds, now) : { tasks: [], removedTaskIds: q.knownTaskIds }),
+      ...(has('problems')
+        ? await this.reportSync.forUser(p, q.knownProblemReportIds, now)
+        : { problemReports: [], removedProblemReportIds: q.knownProblemReportIds, reportSites: [] }),
+      unreadNotifications: has('notifications') ? await this.inbox.unreadCount(p.userId) : 0,
     };
   }
 }

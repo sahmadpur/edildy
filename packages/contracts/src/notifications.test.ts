@@ -237,7 +237,7 @@ describe('changes to existing contracts', () => {
       user: { id: ID, fullName: 'A B', jobTitle: null, kind: 'staff', email: 'a@b.az', username: null, emailVerified: true, credentialKind: 'password', emailNotifications: false, locale: 'en' },
       role: { id: ID, name: 'Owner', systemKey: 'owner', dataScope: 'all' },
       permissions: [],
-      tenant: { id: ID, name: 'Acme', orgCode: 'acme', timezone: 'Asia/Baku', locale: 'az' },
+      tenant: { id: ID, name: 'Acme', orgCode: 'acme', timezone: 'Asia/Baku', locale: 'az', subscription: { plan: 'xl', state: 'active', endsOn: null, features: ['notifications', 'usage_log', 'problems', 'tasks', 'reports', 'data_export', 'audits'], limits: { staff: null, workers: null, branches: 1 } } },
     };
     expect(meSchema.parse(me).user).toMatchObject({ emailNotifications: false, locale: 'en' });
   });

@@ -1,4 +1,4 @@
-import { ALL_PERMISSIONS } from '@edildy/contracts';
+import { ALL_PERMISSIONS, FEATURES } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { CredentialService } from '../src/auth/credential.service';
@@ -160,6 +160,7 @@ describe('users', () => {
       dataScope: 'all',
       permissions: new Set(ALL_PERMISSIONS),
       emailVerified: true,
+      subscription: { plan: 'xl', state: 'active', endsOn: null, features: [...FEATURES], limits: { staff: null, workers: null, branches: 100 } },
     };
     await expect(
       t.app.get(DbService).withTenant(s.tenantId, synthetic.userId, () => t.app.get(UsersService).deactivate(synthetic, s.ownerId)),

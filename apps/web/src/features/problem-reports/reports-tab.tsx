@@ -15,7 +15,7 @@ import { useSites } from '@/features/sites/queries';
 import { TaskDialog } from '@/features/tasks/task-dialog';
 import { errorText } from '@/lib/errors';
 import { useFormatDateTime } from '@/lib/format';
-import { api, useCan } from '@/lib/session';
+import { api, useCan, useFeature } from '@/lib/session';
 import { CloseReportDialog } from './close-report-dialog';
 import { mapsLink, REPORT_STATE_FILTERS, reportStateVariant } from './labels';
 import { type ReportFilters, useProblemReports } from './queries';
@@ -33,7 +33,9 @@ const cut = (s: string) => (s.length > TEXT_MAX ? `${s.slice(0, TEXT_MAX)}…` :
 export function ReportsTab({ highlight }: { highlight?: string }) {
   const { t } = useTranslation();
   const formatDateTime = useFormatDateTime();
-  const canManageTasks = useCan('tasks.manage');
+  // A problem becomes a task only on plans with tasks (BR-01.03).
+  const hasTasks = useFeature('tasks');
+  const canManageTasks = useCan('tasks.manage') && hasTasks;
   const sites = useSites();
   const [state, setState] = useState<ProblemReportStateFilter>('active');
   const linked = useQuery({ queryKey: ['problem-reports', 'detail', highlight], queryFn: () => api.problemReports.get(highlight!), enabled: Boolean(highlight) });

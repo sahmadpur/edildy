@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { LoginResult } from '@edildy/contracts';
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';
 import { setRequestClient } from '../common/request-context';
 import type { Principal } from '../common/request';
@@ -12,13 +11,11 @@ import { DbService } from '../db/db.service';
 import { roles, sessions, tenants, users } from '../db/schema';
 import { MAILER, type Mailer, type MailMessage } from '../mail/mailer';
 import { userLanguage } from '../common/locale';
-import { pickLanguage } from '@edildy/i18n';
 import { verifyEmailMail } from '../mail/templates';
-import { seedTenantDefaults } from '../tenancy/bootstrap';
 import { hashOpaqueToken, parseOpaqueToken } from './crypto/opaque-token';
 import { PasswordHasher } from './crypto/password-hasher';
 import { TokenService } from './crypto/token.service';
-import type { LoginStaffDto, LoginWorkerDto, SignupDto } from './dto';
+import type { LoginStaffDto, LoginWorkerDto } from './dto';
 import { type LoginCandidate, LoginLookup } from './login-lookup';
 import { MeService } from './me.service';
 import { OneTimeTokenService } from './one-time-token.service';
@@ -62,42 +59,6 @@ export class AuthService {
     @Inject(MAILER) private readonly mailer: Mailer,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
-
-  async signup(input: SignupDto): Promise<IssuedLogin> {
-    setRequestClient(input.client);
-    await this.rateLimit.consume(`signup:ip:${currentRequestMeta().ip}`, this.config.RL_SIGNUP_IP_PER_HOUR, 3600);
-    const tenantId = uuidv7();
-    const userId = uuidv7();
-    const credentialHash = await this.hasher.hash(input.password);
-    let verifyToken = '';
-    const issued = await this.db.withTenant(tenantId, userId, async (tx) => {
-      const [tenant] = await tx.insert(tenants).values({ id: tenantId, name: input.orgName, orgCode: input.orgCode }).returning();
-      const roleIds = await seedTenantDefaults(tx, tenantId);
-      await tx.insert(users).values({
-        id: userId,
-        tenantId,
-        fullName: input.fullName,
-        roleId: roleIds.owner,
-        kind: 'staff',
-        email: input.email,
-        credentialHash,
-        credentialKind: 'password',
-        status: 'active',
-      });
-      verifyToken = await this.oneTime.create({ tenantId, userId, purpose: 'email_verify' });
-      await this.audit.record({ action: 'tenant.created', entityType: 'tenant', entityId: tenantId, after: tenant });
-      await this.audit.record({
-        action: 'user.created',
-        entityType: 'user',
-        entityId: userId,
-        after: { fullName: input.fullName, email: input.email, role: 'owner', kind: 'staff' },
-      });
-      return this.issueLogin({ id: userId, tenantId, roleId: roleIds.owner, kind: 'staff' }, input.client);
-    });
-    // A new tenant has the default locale and its owner no choice yet.
-    await this.sendMail(verifyEmailMail({ to: input.email, fullName: input.fullName, webUrl: this.config.WEB_URL, token: verifyToken, locale: pickLanguage() }));
-    return issued;
-  }
 
   async verifyEmail(token: string): Promise<void> {
     const parsed = parseOpaqueToken(token);

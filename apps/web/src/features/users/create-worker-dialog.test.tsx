@@ -12,6 +12,8 @@ const useRoles = vi.fn((enabled = true) => ({
 const useSites = vi.fn((_enabled = true) => ({ data: [] }));
 const useTeams = vi.fn((_enabled = true) => ({ data: [] }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: { users: { createWorker: (...a: unknown[]) => createWorker(...a) } },
   useCan: (...keys: string[]) => keys.every((k) => granted.has(k)),
 }));

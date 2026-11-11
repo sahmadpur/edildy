@@ -6,7 +6,9 @@ import { taskMediaDto } from './fixtures';
 import { ProblemMediaStrip, TaskMediaStrip } from './task-media';
 
 const mocks = vi.hoisted(() => ({ api: { media: { url: vi.fn() }, taskMedia: { url: vi.fn() }, tasks: { problemMediaUrl: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 const signed = (path: string) => ({ url: `http://files.test/edildy-media/${path}?sig=1`, expiresAt: '2026-11-02T04:25:00.000Z' });
 

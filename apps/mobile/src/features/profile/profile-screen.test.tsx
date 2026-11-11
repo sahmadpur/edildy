@@ -5,7 +5,7 @@ import '@/lib/i18n';
 import type { FakePush, FakeTokens } from '@/notifications/testing/fakes';
 import { PUSH_TOKEN } from '@/notifications/testing/fakes';
 import { OfflineServicesProvider } from '@/offline/context';
-import { ME, OCC } from '@/offline/testing/fixtures';
+import { ME, OCC, subscription, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { ProfileScreen } from './profile-screen';
@@ -17,6 +17,7 @@ const mockUpdate = jest.fn();
 const mockPatchUser = jest.fn();
 const mockEvents: string[] = [];
 let mockUser = { id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01', fullName: 'Aysel Əliyeva', jobTitle: null as string | null, username: 'aysel', email: null as string | null, emailNotifications: true, locale: null };
+let mockSubscription = XL_SUBSCRIPTION;
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/lib/session', () => ({
   api: {
@@ -27,7 +28,7 @@ jest.mock('@/lib/session', () => ({
   useSession: () => ({
     status: 'authenticated',
     offline: false,
-    me: { user: mockUser, role: { name: 'Worker', systemKey: 'worker' }, tenant: { name: 'Acme' }, permissions: [] },
+    me: { user: mockUser, role: { name: 'Worker', systemKey: 'worker' }, tenant: { name: 'Acme', subscription: mockSubscription }, permissions: [] },
   }),
 }));
 jest.mock('@/notifications/native', () => {
@@ -52,6 +53,7 @@ beforeEach(() => {
     mockUser = { ...mockUser, ...patch };
   });
   mockUser = { id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01', fullName: 'Aysel Əliyeva', jobTitle: null, username: 'aysel', email: null, emailNotifications: true, locale: null };
+  mockSubscription = XL_SUBSCRIPTION;
   native.pushTokenStore.value = null;
   native.nativePush.setBadge.mockReset();
   native.nativePush.setBadge.mockImplementation(async (n: number) => void mockEvents.push(`badge:${n}`));
@@ -256,6 +258,15 @@ describe('logout', () => {
 });
 
 describe('notification settings', () => {
+  it('are not offered on a plan without notifications, which sends none (BR-01)', async () => {
+    mockSubscription = subscription({ without: ['notifications'] });
+    const t = await createTestServices({ online: true });
+    await renderWithServices(t.services, <ProfileScreen />);
+    expect(screen.getByRole('button', { name: 'Çıxış' })).toBeTruthy();
+    expect(screen.queryByRole('switch', { name: 'E-poçt bildirişləri' })).toBeNull();
+    expect(screen.queryByTestId('push-permission')).toBeNull();
+  });
+
   it('keeps what the server answered, even when it differs from what was sent', async () => {
     mockUser = { ...mockUser, emailNotifications: false };
     mockUpdate.mockResolvedValue({ emailNotifications: false });

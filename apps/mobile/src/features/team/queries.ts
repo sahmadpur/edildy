@@ -136,12 +136,12 @@ export function useRunCommand(viewerId: string): RunCommand {
 }
 
 /**
- * Decision 9: a 403 means the role changed after the profile was cached. Refreshing it lets the tab and the routes follow
+ * Decision 9: a 403 means the role (or, BR-01, the plan) changed after the profile was cached. Refreshing it lets the tab and the routes follow
  * (decision 1). Once per mounted screen: the header's queries fail together. A failed refresh is only logged.
  */
 export function useRefreshMeOnForbidden(errors: readonly unknown[]): void {
   const asked = useRef(false);
-  const forbidden = errors.some((e) => e instanceof ApiError && e.code === 'FORBIDDEN');
+  const forbidden = errors.some((e) => e instanceof ApiError && (e.code === 'FORBIDDEN' || e.code === 'FEATURE_NOT_IN_PLAN'));
   useEffect(() => {
     if (!forbidden || asked.current) return;
     asked.current = true;

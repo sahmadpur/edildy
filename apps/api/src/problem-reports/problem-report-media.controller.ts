@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { MediaConfirmResult, MediaUrl } from '@edildy/contracts';
-import { CurrentPrincipal } from '../common/decorators';
+import { CurrentPrincipal, RequireFeature } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
 import { MediaConfirmResultResponse, MediaUrlResponse } from '../executions/dto';
@@ -9,6 +9,7 @@ import { ProblemReportMediaService } from './problem-report-media.service';
 
 @ApiTags('problem-reports')
 @ApiBearerAuth()
+@RequireFeature('problems')
 @Controller('problem-report-media')
 export class ProblemReportMediaController {
   constructor(@Inject(ProblemReportMediaService) private readonly media: ProblemReportMediaService) {}

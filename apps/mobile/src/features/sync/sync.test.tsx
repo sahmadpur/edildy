@@ -1,6 +1,7 @@
+import { ApiError } from '@edildy/api-client';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert, type AlertButton } from 'react-native';
-import '@/lib/i18n';
+import i18n from '@/lib/i18n';
 import { capturedPhoto } from '@/offline/testing/fake-transport';
 import { ME, OCC, syncResponse, syncTask, T, TASK, versionOf } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
@@ -10,6 +11,8 @@ import { SyncScreen } from './sync-screen';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a), back: jest.fn() } }));
+
+const tr = i18n.t.bind(i18n);
 
 beforeEach(() => mockPush.mockClear());
 
@@ -59,6 +62,21 @@ describe('sync indicator', () => {
 });
 
 describe('sync screen', () => {
+  it('keeps a run started after the subscription ended, refused with the reason (BR-01)', async () => {
+    const t = await createTestServices({ online: true });
+    await t.seed();
+    t.api.on('claim', async () => {
+      throw new ApiError(403, 'SUBSCRIPTION_EXPIRED', 'errors.SUBSCRIPTION_EXPIRED');
+    });
+    await t.services.store.start(OCC, ME);
+    await t.services.engine.idle();
+    await renderWithServices(t.services, <SyncScreen />);
+    expect(await screen.findByText('Başlama · Açılış yoxlaması')).toBeTruthy();
+    expect(screen.getByText(tr('errors.SUBSCRIPTION_EXPIRED'))).toBeTruthy();
+    expect(t.services.engine.status()).toMatchObject({ failed: 1 });
+    expect((await t.services.store.occurrences()).find((o) => o.id === OCC)?.execution).not.toBeNull();
+  });
+
   it('lists waiting and failed work with the reason, warns about the clock, and retries', async () => {
     const t = await createTestServices();
     await t.seed();

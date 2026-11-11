@@ -6,7 +6,9 @@ import { renderWithProviders } from '@/test/render';
 import { LoginForm } from './login-form';
 
 const loginStaff = vi.fn();
-vi.mock('@/lib/session', () => ({ api: { auth: { loginStaff: (...a: unknown[]) => loginStaff(...a) } } }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: { auth: { loginStaff: (...a: unknown[]) => loginStaff(...a) } } }));
 
 describe('LoginForm', () => {
   beforeEach(() => {
