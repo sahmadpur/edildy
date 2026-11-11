@@ -15,7 +15,7 @@ import {
   type RunAuditState,
   type VisibleItem,
   visibleItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import type { Variant } from '@/features/scheduling/labels';
 
@@ -109,7 +109,7 @@ export function stepItem(order: readonly string[], current: string | null, step:
   return order[Math.min(order.length - 1, Math.max(0, i + step))]!;
 }
 
-/** An auditor or a correction's actor: the person, or Taskop support for a platform admin. */
+/** An auditor or a correction's actor: the person, or Edildy support for a platform admin. */
 export const actorName = (t: TFunction, a: { kind: 'user' | 'platform'; name: string | null } | null): string =>
   a === null ? '—' : a.kind === 'platform' ? t('scheduling.schedule.actorPlatform') : (a.name ?? '—');
 

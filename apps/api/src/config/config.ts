@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import '@taskop/contracts';
+import '@edildy/contracts';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
 
@@ -29,7 +29,7 @@ const configSchema = z.object({
   S3_ENDPOINT: z.url(),
   /** The host phones and browsers reach; presigned URLs are signed against it (S3 signatures cover the host). */
   S3_PUBLIC_ENDPOINT: z.url(),
-  S3_BUCKET: z.string().min(3).default('taskop-media'),
+  S3_BUCKET: z.string().min(3).default('edildy-media'),
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
   S3_FORCE_PATH_STYLE: z.stringbool().default(true),

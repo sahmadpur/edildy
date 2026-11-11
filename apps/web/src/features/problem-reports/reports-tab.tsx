@@ -1,4 +1,4 @@
-import { type ProblemReportDto, type ProblemReportState, type ProblemReportStateFilter, toListParam } from '@taskop/contracts';
+import { type ProblemReportDto, type ProblemReportState, type ProblemReportStateFilter, toListParam } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

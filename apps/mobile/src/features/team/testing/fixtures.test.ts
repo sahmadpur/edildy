@@ -8,7 +8,7 @@ import {
   reportRunPageSchema,
   reportSummarySchema,
   syncResponseSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { checklist, reworkSync } from '@/offline/testing/fixtures';
 import {
   auditBrief,

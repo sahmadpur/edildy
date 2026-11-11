@@ -1,4 +1,4 @@
-import { SYSTEM_ROLE_DEFAULTS, SYSTEM_ROLE_KEYS, type SystemRoleKey } from '@taskop/contracts';
+import { SYSTEM_ROLE_DEFAULTS, SYSTEM_ROLE_KEYS, type SystemRoleKey } from '@edildy/contracts';
 import type { Executor } from '../db/db.service';
 import { rolePermissions, roles, siteTypes } from '../db/schema';
 

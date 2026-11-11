@@ -1,4 +1,4 @@
-import { formatLocalDate, formatMonthYear } from '@taskop/i18n';
+import { formatLocalDate, formatMonthYear } from '@edildy/i18n';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

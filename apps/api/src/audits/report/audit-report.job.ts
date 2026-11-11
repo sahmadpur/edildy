@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { AUDIT_REPORT_CONTENT_TYPE, auditReportFileName } from '@taskop/contracts';
+import { AUDIT_REPORT_CONTENT_TYPE, auditReportFileName } from '@edildy/contracts';
 import { and, eq, sql } from 'drizzle-orm';
 import { Clock } from '../../common/clock';
 import { sanitiseForLog } from '../../common/error.filter';

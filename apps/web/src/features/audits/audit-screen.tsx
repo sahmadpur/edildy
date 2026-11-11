@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { type AuditDetail, type AuditVerdict, missingVerdicts } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { type AuditDetail, type AuditVerdict, missingVerdicts } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { useEffect, useEffectEvent, useMemo, useState } from 'react';

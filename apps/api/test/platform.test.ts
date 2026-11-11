@@ -7,7 +7,7 @@ import { ownerQuery } from './owner-db';
 describe('platform admin', () => {
   let t: TestApp;
   let token: string;
-  const email = `${uniq('admin')}@taskop.az`;
+  const email = `${uniq('admin')}@edildy.az`;
 
   beforeAll(async () => {
     t = await createTestApp();

@@ -1,4 +1,4 @@
-import { ALL_PERMISSIONS, type PermissionKey, type SystemRoleKey } from '@taskop/contracts';
+import { ALL_PERMISSIONS, type PermissionKey, type SystemRoleKey } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import type { Executor } from '../db/db.service';
 import { rolePermissions } from '../db/schema';

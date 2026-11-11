@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, Inject, Post, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { LoginResult } from '@taskop/contracts';
+import type { LoginResult } from '@edildy/contracts';
 import type { Response } from 'express';
 import { CurrentPrincipal, Public } from '../common/decorators';
 import type { AppRequest, Principal } from '../common/request';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { TaskReader } from '../common/request';
 import { DbService } from '../db/db.service';

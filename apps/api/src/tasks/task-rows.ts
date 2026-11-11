@@ -1,4 +1,4 @@
-import type { TaskHistoryEntry, TaskMediaDto, TaskSubmissionDto, TaskSummary } from '@taskop/contracts';
+import type { TaskHistoryEntry, TaskMediaDto, TaskSubmissionDto, TaskSummary } from '@edildy/contracts';
 import { eq, getTableColumns } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Executor } from '../db/db.service';

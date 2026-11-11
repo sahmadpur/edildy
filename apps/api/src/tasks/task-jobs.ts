@@ -1,5 +1,5 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { FINAL_TASK_STATUSES } from '@taskop/contracts';
+import { FINAL_TASK_STATUSES } from '@edildy/contracts';
 import { and, asc, inArray, isNull, lte, notInArray, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { perTenant, tenantsWith } from '../common/per-tenant';

@@ -9,7 +9,7 @@ import {
   userDtoSchema,
   userListQuerySchema,
   userWithSecretSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class UserListQueryDto extends createZodDto(userListQuerySchema) {}

@@ -1,4 +1,4 @@
-import type { Answers, TaskAssignee, TaskDetail } from '@taskop/contracts';
+import type { Answers, TaskAssignee, TaskDetail } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { expect } from 'vitest';
 import type { TestApp } from './app';

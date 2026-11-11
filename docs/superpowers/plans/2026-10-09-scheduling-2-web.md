@@ -1,4 +1,4 @@
-# Taskop Scheduling & Assignment — Part 2: API Client & Web — Implementation Plan
+# Edildy Scheduling & Assignment — Part 2: API Client & Web — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -6,7 +6,7 @@
 
 **Architecture:**
 - **Code location:** a new feature folder `apps/web/src/features/scheduling/`, following the existing feature pattern: React Query hooks in `queries.ts`, pages that call `api.*` from `@/lib/session`, and shadcn/ui components.
-- **Shared logic:** recurrence expansion and the human-readable summary come from `@taskop/contracts` (Part 1), so the web shows exactly what the API will generate.
+- **Shared logic:** recurrence expansion and the human-readable summary come from `@edildy/contracts` (Part 1), so the web shows exactly what the API will generate.
 - **Testability:** pages take their route params as props. Thin route wrappers in `routes.tsx` read them from TanStack Router, so components can be tested without the app router.
 - **Tenant only:** platform admins can use the API, but get no scheduling screens in this sub-project.
 
@@ -18,7 +18,7 @@
 
 ## Global Constraints
 
-- The product name is **Taskop**. Azerbaijani (`az`) is the only locale, and every visible string is an i18n key under `scheduling.*`, `nav.*` or `common.*`.
+- The product name is **Edildy**. Azerbaijani (`az`) is the only locale, and every visible string is an i18n key under `scheduling.*`, `nav.*` or `common.*`.
 - Install nothing new. Use the existing components:
   - `@/components/*` and `@/components/ui/*` (`Button`, `Badge`, `Table`, `Dialog`, `Checkbox`, `Input`, `Label`, `Alert`)
   - `NativeSelect`, `CheckboxList`, `PageHeader`, `ConfirmButton`, `FormError`, `TextField`
@@ -48,7 +48,7 @@ These are the five input classes most likely to bite users that no spec test nam
 packages/api-client/src/
   errors.ts                   + ApiError.userIds
   client.ts                   passes userIds
-  endpoints.ts                + createSchedulingApi (shifts, roster, assignments, occurrences) merged into createTaskopApi
+  endpoints.ts                + createSchedulingApi (shifts, roster, assignments, occurrences) merged into createEdildyApi
   client.test.ts              + scheduling endpoint tests
 packages/i18n/src/az/
   scheduling.ts               + UI strings (shifts, roster, assignments, builder, schedule)
@@ -112,7 +112,7 @@ describe('scheduling endpoints', () => {
       urls.push(`${init.method} ${url}`);
       return json(200, { items: [], nextCursor: null });
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     await t.occurrences.list({ from: '2026-11-02', to: '2026-11-08', status: 'pending,overdue', siteId: id });
     await t.occurrences.mine({ from: '2026-11-02', to: '2026-11-08' });
     await t.assignments.list({ status: 'active' });
@@ -127,7 +127,7 @@ describe('scheduling endpoints', () => {
     const { api } = await authed(() =>
       json(422, { error: { code: 'ASSIGNEE_NOT_AT_SITE', messageKey: 'errors.ASSIGNEE_NOT_AT_SITE', fields: null, retryAfterSeconds: null, requestId: 'r1', userIds: [id] } }),
     );
-    const call = createTaskopApi(api).assignments.preview({
+    const call = createEdildyApi(api).assignments.preview({
       siteId: id,
       schedule: { kind: 'once', date: '2026-11-05' },
       timing: { mode: 'fixed', startTime: '08:00', dueAfterMinutes: 60, graceMinutes: 0 },
@@ -139,7 +139,7 @@ describe('scheduling endpoints', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api-client test`
+Run: `pnpm --filter @edildy/api-client test`
 Expected: FAIL: `t.occurrences` is undefined.
 
 - [ ] **Step 3: Implement**
@@ -159,7 +159,7 @@ In `packages/api-client/src/client.ts`, line 67, pass it:
 ```
 
 In `packages/api-client/src/endpoints.ts`:
-- Add these to the `@taskop/contracts` import: `assignmentDetailSchema`, `type AssignmentListQuery`, `assignmentDtoSchema`, `assignmentPreviewSchema`, `type CancelOccurrenceInput`, `type CopyRosterInput`, `type CreateAssignmentInput`, `type CreateShiftInput`, `type MyOccurrenceQuery`, `occurrenceDetailSchema`, `occurrenceDtoSchema`, `type OccurrenceListQuery`, `type PreviewAssignmentInput`, `type PutRosterInput`, `rosterCopyResultSchema`, `rosterDtoSchema`, `type RosterQuery`, `shiftDtoSchema`, `type ShiftListQuery`, `type UpdateAssignmentInput`, `type UpdateShiftInput`.
+- Add these to the `@edildy/contracts` import: `assignmentDetailSchema`, `type AssignmentListQuery`, `assignmentDtoSchema`, `assignmentPreviewSchema`, `type CancelOccurrenceInput`, `type CopyRosterInput`, `type CreateAssignmentInput`, `type CreateShiftInput`, `type MyOccurrenceQuery`, `occurrenceDetailSchema`, `occurrenceDtoSchema`, `type OccurrenceListQuery`, `type PreviewAssignmentInput`, `type PutRosterInput`, `rosterCopyResultSchema`, `rosterDtoSchema`, `type RosterQuery`, `shiftDtoSchema`, `type ShiftListQuery`, `type UpdateAssignmentInput`, `type UpdateShiftInput`.
 - Add:
 
 ```ts
@@ -196,7 +196,7 @@ export function createSchedulingApi(c: ApiClient) {
 export type SchedulingApi = ReturnType<typeof createSchedulingApi>;
 ```
 
-- In `createTaskopApi`, after `templates: createTemplatesApi(c),`, add:
+- In `createEdildyApi`, after `templates: createTemplatesApi(c),`, add:
 
 ```ts
     ...createSchedulingApi(c),
@@ -204,7 +204,7 @@ export type SchedulingApi = ReturnType<typeof createSchedulingApi>;
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client typecheck && pnpm --filter @taskop/api-client build`
+Run: `pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client typecheck && pnpm --filter @edildy/api-client build`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -239,7 +239,7 @@ Append to the `scheduling translations` block in `packages/i18n/src/i18n.test.ts
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.nav.assignments` is undefined.
 
 - [ ] **Step 3: Add the strings**
@@ -363,7 +363,7 @@ In `packages/i18n/src/az/scheduling.ts`, add these keys to the default export, a
     assignees: 'İcraçılar',
     history: 'Tarixçə',
     actorSystem: 'Sistem',
-    actorPlatform: 'Taskop dəstəyi',
+    actorPlatform: 'Edildy dəstəyi',
     cancel: 'İcranı ləğv et',
     cancelReason: 'Ləğv səbəbi',
     cancelled: 'İcra ləğv edildi',
@@ -372,7 +372,7 @@ In `packages/i18n/src/az/scheduling.ts`, add these keys to the default export, a
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -469,7 +469,7 @@ describe('useOccurrences', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- scheduling/labels scheduling/queries`
+Run: `pnpm --filter @edildy/web test -- scheduling/labels scheduling/queries`
 Expected: FAIL: the modules do not exist.
 
 - [ ] **Step 3: Implement**
@@ -485,8 +485,8 @@ import {
   type OccurrenceStatus,
   type Recurrence,
   type Timing,
-} from '@taskop/contracts';
-import { intlLocale } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { intlLocale } from '@edildy/i18n';
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { useMe } from '@/lib/session';
@@ -540,7 +540,7 @@ export function useDebounced<T>(value: T, ms = 400): T {
 `apps/web/src/features/scheduling/queries.ts`:
 
 ```ts
-import type { AssignmentListQuery, OccurrenceDto, OccurrenceListQuery } from '@taskop/contracts';
+import type { AssignmentListQuery, OccurrenceDto, OccurrenceListQuery } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 
@@ -610,7 +610,7 @@ export function renderWithRouter(ui: ReactElement, path = '/') {
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- scheduling/labels scheduling/queries`
+Run: `pnpm --filter @edildy/web test -- scheduling/labels scheduling/queries`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -637,7 +637,7 @@ git commit -m "feat(web): add scheduling labels, queries and a router test helpe
 `apps/web/src/features/scheduling/shifts-page.test.tsx`:
 
 ```tsx
-import type { ShiftDto } from '@taskop/contracts';
+import type { ShiftDto } from '@edildy/contracts';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -709,7 +709,7 @@ describe('ShiftsPage', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- shifts-page`
+Run: `pnpm --filter @edildy/web test -- shifts-page`
 Expected: FAIL: the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -718,7 +718,7 @@ Expected: FAIL: the module does not exist.
 
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { localTimeSchema, type ShiftDto, type SiteDto } from '@taskop/contracts';
+import { localTimeSchema, type ShiftDto, type SiteDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -816,7 +816,7 @@ export function ShiftDialog({ shift, sites, onClose, onSubmit }: Props) {
 `apps/web/src/features/scheduling/shifts-page.tsx`:
 
 ```tsx
-import type { ShiftDto } from '@taskop/contracts';
+import type { ShiftDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -935,7 +935,7 @@ The links for `/assignments`, `/schedule` and `/roster` resolve once Tasks 5, 8 
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- shifts-page app-shell && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- shifts-page app-shell && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1045,7 +1045,7 @@ describe('RosterPage', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- roster-page`
+Run: `pnpm --filter @edildy/web test -- roster-page`
 Expected: FAIL: the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -1053,7 +1053,7 @@ Expected: FAIL: the module does not exist.
 `apps/web/src/features/scheduling/roster-grid.ts`:
 
 ```ts
-import { addDays, isoWeekday, type RosterRow } from '@taskop/contracts';
+import { addDays, isoWeekday, type RosterRow } from '@edildy/contracts';
 
 export const weekStartOf = (date: string): string => addDays(date, 1 - isoWeekday(date));
 export const weekDates = (start: string): string[] => Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -1075,7 +1075,7 @@ export function toggleKey(set: ReadonlySet<string>, key: string, on: boolean): S
 `apps/web/src/features/scheduling/roster-page.tsx`:
 
 ```tsx
-import { addDays, SCHEDULING_LIMITS } from '@taskop/contracts';
+import { addDays, SCHEDULING_LIMITS } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -1263,7 +1263,7 @@ In `router.tsx`:
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- roster-page && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- roster-page && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1295,7 +1295,7 @@ git commit -m "feat(web): add the weekly roster grid with save and week copy"
 `apps/web/src/features/scheduling/schedule-builder.test.tsx`:
 
 ```tsx
-import type { Recurrence, ShiftDto, Timing } from '@taskop/contracts';
+import type { Recurrence, ShiftDto, Timing } from '@edildy/contracts';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -1386,7 +1386,7 @@ describe('TimingEditor', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- schedule-builder`
+Run: `pnpm --filter @edildy/web test -- schedule-builder`
 Expected: FAIL: the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -1394,7 +1394,7 @@ Expected: FAIL: the module does not exist.
 `apps/web/src/features/scheduling/schedule-builder.tsx`:
 
 ```tsx
-import { isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, type Timing } from '@taskop/contracts';
+import { isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, type Timing } from '@edildy/contracts';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -1683,7 +1683,7 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- schedule-builder && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- schedule-builder && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1716,8 +1716,8 @@ git commit -m "feat(web): add recurrence and timing editors"
 `apps/web/src/features/scheduling/assignment-editor.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import type { AssignmentDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { AssignmentDetail } from '@edildy/contracts';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1852,7 +1852,7 @@ describe('AssignmentEditor', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- assignment-editor`
+Run: `pnpm --filter @edildy/web test -- assignment-editor`
 Expected: FAIL: the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -1860,8 +1860,8 @@ Expected: FAIL: the module does not exist.
 `apps/web/src/features/scheduling/assignment-editor.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import type { AssignmentDetail, PreviewAssignmentInput, Recurrence, Timing } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { AssignmentDetail, PreviewAssignmentInput, Recurrence, Timing } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';
@@ -2036,7 +2036,7 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- assignment-editor && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- assignment-editor && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -2072,7 +2072,7 @@ git commit -m "feat(web): add the assignment editor with live slot preview"
 `apps/web/src/features/scheduling/assignment-pages.test.tsx`:
 
 ```tsx
-import type { AssignmentDetail } from '@taskop/contracts';
+import type { AssignmentDetail } from '@edildy/contracts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -2163,7 +2163,7 @@ describe('NewAssignmentPage', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- assignment-pages`
+Run: `pnpm --filter @edildy/web test -- assignment-pages`
 Expected: FAIL: the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -2171,7 +2171,7 @@ Expected: FAIL: the module does not exist.
 `apps/web/src/features/scheduling/assignment-pages.tsx`:
 
 ```tsx
-import { ASSIGNMENT_STATUSES, type AssignmentStatus } from '@taskop/contracts';
+import { ASSIGNMENT_STATUSES, type AssignmentStatus } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useDeferredValue, useState } from 'react';
@@ -2424,7 +2424,7 @@ const assignmentDetailRoute = createRoute({ getParentRoute: () => appLayout, pat
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- assignment-pages && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- assignment-pages && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -2457,7 +2457,7 @@ git commit -m "feat(web): add assignment list, creation and detail pages"
 `apps/web/src/features/scheduling/schedule-page.test.tsx`:
 
 ```tsx
-import type { OccurrenceDto } from '@taskop/contracts';
+import type { OccurrenceDto } from '@edildy/contracts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -2531,7 +2531,7 @@ describe('SchedulePage', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- schedule-page`
+Run: `pnpm --filter @edildy/web test -- schedule-page`
 Expected: FAIL: the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -2539,7 +2539,7 @@ Expected: FAIL: the module does not exist.
 `apps/web/src/features/scheduling/occurrence-dialog.tsx`:
 
 ```tsx
-import type { OccurrenceHistoryEntry } from '@taskop/contracts';
+import type { OccurrenceHistoryEntry } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2650,7 +2650,7 @@ export function OccurrenceDialog({ id, onClose }: { id: string; onClose: () => v
 `apps/web/src/features/scheduling/schedule-page.tsx`:
 
 ```tsx
-import { addDays, OCCURRENCE_STATUSES, type OccurrenceDto } from '@taskop/contracts';
+import { addDays, OCCURRENCE_STATUSES, type OccurrenceDto } from '@edildy/contracts';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -2760,7 +2760,7 @@ In `router.tsx`:
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- schedule-page && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- schedule-page && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -2834,7 +2834,7 @@ describe('ChecklistAssignments', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- checklist-assignments`
+Run: `pnpm --filter @edildy/web test -- checklist-assignments`
 Expected: FAIL: the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -2908,7 +2908,7 @@ The existing detail-page tests use `fakeWorkspace()` (scope `'test'`), so they a
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- checklist-assignments checklist-detail-page && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- checklist-assignments checklist-detail-page && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -2935,7 +2935,7 @@ git commit -m "feat(web): show a checklist's assignments with an Assign link"
 ```ts
 import { expect, type APIRequestContext, test } from '@playwright/test';
 
-/** Sets up a tenant through the API: a site, a worker at it and a published checklist from a Taskop template. */
+/** Sets up a tenant through the API: a site, a worker at it and a published checklist from a Edildy template. */
 async function seedTenant(request: APIRequestContext, suffix: string) {
   const email = `sch-${suffix}@example.az`;
   const password = 'e2e owner password';
@@ -3016,8 +3016,8 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
 Run (with the local DB up via `docker compose -p foundation start`, and `pnpm db:setup && pnpm db:seed` already done):
 
 ```bash
-pnpm --filter @taskop/api build
-pnpm --filter @taskop/web e2e -- scheduling
+pnpm --filter @edildy/api build
+pnpm --filter @edildy/web e2e -- scheduling
 ```
 
 Expected: PASS. The Playwright config starts the API and the web dev server when they are not already running.
@@ -3026,7 +3026,7 @@ Expected: PASS. The Playwright config starts the API and the web dev server when
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test
-pnpm --filter @taskop/web e2e
+pnpm --filter @edildy/web e2e
 ```
 
 Expected: all green. The `checklists` and `foundation` end-to-end tests still pass.

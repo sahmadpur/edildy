@@ -22,7 +22,7 @@ platformSession.subscribe(() => {
 void session.bootstrap().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <ThemeProvider attribute="class" storageKey="taskop.theme" disableTransitionOnChange>
+      <ThemeProvider attribute="class" storageKey="edildy.theme" disableTransitionOnChange>
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />
           <Toaster richColors position="top-right" />

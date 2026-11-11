@@ -1,4 +1,4 @@
-import { PROBLEM_REPORT_LIMITS, type ProblemReportDto } from '@taskop/contracts';
+import { PROBLEM_REPORT_LIMITS, type ProblemReportDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';

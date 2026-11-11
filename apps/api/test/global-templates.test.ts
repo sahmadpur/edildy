@@ -1,5 +1,5 @@
 import { hash } from '@node-rs/argon2';
-import { blankContent } from '@taskop/contracts';
+import { blankContent } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';
@@ -12,7 +12,7 @@ describe('platform checklist authoring', () => {
   let adminId: string;
   beforeAll(async () => {
     t = await createTestApp();
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     const r = await ownerQuery<{ id: string }>(
       "insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support') returning id",
       [email, await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 })],
@@ -54,7 +54,7 @@ describe('platform checklist authoring', () => {
     const other = await signupTenant(t);
     const p = as(t, token);
     const base = `/api/v1/platform/tenants/${s.tenantId}/checklists`;
-    const c = await p.post(base, { name: 'Taskop tərəfindən' });
+    const c = await p.post(base, { name: 'Edildy tərəfindən' });
     expect(c.status, JSON.stringify(c.body)).toBe(201);
     await p.put(`${base}/${c.body.id}/draft`, { content: sampleContent(), revision: 1 });
     const v1 = (await p.post(`${base}/${c.body.id}/publish`, { revision: 2 })).body;

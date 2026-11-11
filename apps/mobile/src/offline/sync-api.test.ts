@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { classifyError } from './sync-api';
 
 describe('classifyError', () => {

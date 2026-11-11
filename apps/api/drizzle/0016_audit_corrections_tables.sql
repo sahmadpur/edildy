@@ -145,17 +145,17 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Corrections are append-only (spec §4.2).
-GRANT SELECT, INSERT ON execution_corrections TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON execution_corrections TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- A send-back is closed by a resubmit or a withdrawal; nothing else of it ever changes.
-GRANT SELECT, INSERT ON execution_rework_requests TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON execution_rework_requests TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT UPDATE (resubmitted_at, withdrawn_at, withdrawn_by_user_id) ON execution_rework_requests TO taskop_app, taskop_platform;
+GRANT UPDATE (resubmitted_at, withdrawn_at, withdrawn_by_user_id) ON execution_rework_requests TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- Audits are never deleted; verdicts are cleared by the auditor and reset by a resubmit.
-GRANT SELECT, INSERT, UPDATE ON audits TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON audits TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON audit_item_verdicts TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON audit_item_verdicts TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- The backfill below must see every tenant's rows (see 0004 for why row_security is switched off).
 SET LOCAL row_security = off;

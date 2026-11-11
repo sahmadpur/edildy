@@ -1,4 +1,4 @@
-import type { NotificationItem } from '@taskop/contracts';
+import type { NotificationItem } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { useFormatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';

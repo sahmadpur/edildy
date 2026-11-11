@@ -15,7 +15,7 @@ docker compose -p foundation start         # the existing demo Postgres (5432), 
 ipconfig getifaddr en0                     # e.g. 192.168.1.20 (needed for a real phone; the simulator can use localhost)
 cp -n apps/api/.env.example apps/api/.env
 cp -n apps/mobile/.env.example apps/mobile/.env
-pnpm --filter @taskop/api keys:generate    # only if apps/api/.env has empty JWT_PRIVATE_KEY / JWT_PUBLIC_KEY: paste its output into apps/api/.env
+pnpm --filter @edildy/api keys:generate    # only if apps/api/.env has empty JWT_PRIVATE_KEY / JWT_PUBLIC_KEY: paste its output into apps/api/.env
 ```
 
 Edit the two gitignored files:
@@ -25,11 +25,11 @@ Edit the two gitignored files:
 
 ```bash
 pnpm db:setup && pnpm db:seed              # applies 0015_audit_corrections and 0016_audit_corrections_tables
-pnpm --filter @taskop/api dev              # API on http://localhost:3000
-pnpm --filter @taskop/web dev              # optional web admin on http://localhost:5173
-pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios
-# real phone: DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
+pnpm --filter @edildy/api dev              # API on http://localhost:3000
+pnpm --filter @edildy/web dev              # optional web admin on http://localhost:5173
+pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios
+# real phone: DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
 ```
 
 `0016` gives the Manager role `executions.correct` and the Auditor role `audits.perform`. A profile cached before the migration lacks them until the app refreshes it, so kill and reopen the app once after `db:setup`.
@@ -40,8 +40,8 @@ Push (item 2) needs the SP6 push setup (EAS project, APNs key, a development bui
 
 | Who | Sign in | Credentials |
 |---|---|---|
-| Leyla, Manager (`executions.correct`), scope `site_subtree` | Rəhbər tab, email | `manager@demo.taskop.az` / `DemoPassword123` |
-| Owner (every key, scope `all`): the auditor below | Rəhbər tab, email | `owner@demo.taskop.az` / `DemoPassword123` |
+| Leyla, Manager (`executions.correct`), scope `site_subtree` | Rəhbər tab, email | `manager@demo.edildy.az` / `DemoPassword123` |
+| Owner (every key, scope `all`): the auditor below | Rəhbər tab, email | `owner@demo.edildy.az` / `DemoPassword123` |
 | Worker elvin | Worker tab, org code `demo` | PIN `482915` |
 
 Use two devices: elvin on the real phone, Leyla or the owner on the simulator.
@@ -60,7 +60,7 @@ Use: the seeded daily run, or "SP8 1" outside 09:00-12:00, for item 1 (items 2 t
 
 ```bash
 curl -s -X POST http://localhost:3000/api/v1/auth/login/staff -H 'Content-Type: application/json' \
-  -d '{"email":"owner@demo.taskop.az","password":"DemoPassword123","client":"web"}'          # read accessToken
+  -d '{"email":"owner@demo.edildy.az","password":"DemoPassword123","client":"web"}'          # read accessToken
 curl -s -H "Authorization: Bearer <token>" "http://localhost:3000/api/v1/checklists" | grep -o '"id":"[^"]*","name":"Gündəlik təmizlik yoxlaması"'     # read <checklist id>
 ```
 
@@ -107,14 +107,14 @@ Do not make the checklist require audit yet: items 2 to 9 expect runs without an
 
       ```bash
       curl -s -X PATCH -H "Authorization: Bearer <token>" -H 'Content-Type: application/json' \
-        "http://localhost:3000/api/v1/checklists/<checklist id>" -d '{"requiresAudit":true,"auditReportEmails":["qa@demo.taskop.az"]}'
+        "http://localhost:3000/api/v1/checklists/<checklist id>" -d '{"requiresAudit":true,"auditReportEmails":["qa@demo.edildy.az"]}'
       ```
 
     - Let elvin complete "SP8 2", "SP8 3", "SP8 4" and "SP8 5" now (items 10 to 12 use them). As the owner: Komanda → the run. Expected: the status "Audit gözləyir" and the button "Auditə başla".
     - Start it. Expected: the items with their answers and photos, the progress "0 / N bənd yoxlanılıb", and Finish disabled.
     - Approve all but one item. Reject the last: without a comment the sheet refuses; with a comment it saves. Expected: the progress "N / N" and Finish enabled.
-    - Finish with "failed", a comment and `boss@demo.taskop.az` as an extra address. Expected: "Audit bitdi.", the result read-only with the score, and the report status turning ready on a reload.
-    - Mailpit (`http://localhost:8025`) has one message for `qa@demo.taskop.az` and one for `boss@demo.taskop.az`, each with the PDF ("SP8 3" below adds one more for `qa@demo.taskop.az`). On the web the PDF downloads (no PDF on the phone).
+    - Finish with "failed", a comment and `boss@demo.edildy.az` as an extra address. Expected: "Audit bitdi.", the result read-only with the score, and the report status turning ready on a reload.
+    - Mailpit (`http://localhost:8025`) has one message for `qa@demo.edildy.az` and one for `boss@demo.edildy.az`, each with the PDF ("SP8 3" below adds one more for `qa@demo.edildy.az`). On the web the PDF downloads (no PDF on the phone).
     - The run is now locked: the run screen offers only opening the audit.
     - Notifications ("Audit tamamlandı"): elvin, the executor, is always notified. Leyla, a manager, is notified only because the audit failed (the rule's default result filter is "Yalnız uğursuz auditlər"). Both notifications (and "Düzəliş təqdim edildi" in item 3) are inbox-only by default: their push is off, so look in the bell, not on the lock screen. Tapping it in Leyla's inbox opens the run on the Komanda tab, not Home, although she does not hold the run.
     - Repeat with "SP8 3": approve every item and finish it as "passed". Expected: elvin is notified, Leyla is not.

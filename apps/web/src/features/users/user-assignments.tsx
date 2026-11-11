@@ -1,4 +1,4 @@
-import type { SiteDto, TeamDto, UserDto } from '@taskop/contracts';
+import type { SiteDto, TeamDto, UserDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';

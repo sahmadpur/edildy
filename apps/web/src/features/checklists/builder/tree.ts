@@ -1,4 +1,4 @@
-import { type ChecklistContent, CONTENT_LIMITS, hasRules, type Item } from '@taskop/contracts';
+import { type ChecklistContent, CONTENT_LIMITS, hasRules, type Item } from '@edildy/contracts';
 
 export type ContainerRef = { kind: 'section'; sectionId: string } | { kind: 'rule'; itemId: string; ruleId: string };
 export type NodeRef = { kind: 'settings' } | { kind: 'section'; id: string } | { kind: 'item'; id: string };

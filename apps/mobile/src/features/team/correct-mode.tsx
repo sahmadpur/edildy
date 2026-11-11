@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import {
   type Answer,
   type Answers,
@@ -10,7 +10,7 @@ import {
   type Missing,
   requirements,
   visibleItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, View } from 'react-native';

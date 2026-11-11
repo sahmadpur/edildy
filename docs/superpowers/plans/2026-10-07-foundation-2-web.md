@@ -1,8 +1,8 @@
-# Taskop Foundation — Part 2: API Client & Web App — Implementation Plan
+# Edildy Foundation — Part 2: API Client & Web App — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build `@taskop/api-client` (typed client with single-flight token refresh, shared by web and mobile) and the Taskop web app: sign-up/login flows, the permission-driven shell, org settings, sites, teams, roles, users, audit log, and the platform-admin pages.
+**Goal:** Build `@edildy/api-client` (typed client with single-flight token refresh, shared by web and mobile) and the Edildy web app: sign-up/login flows, the permission-driven shell, org settings, sites, teams, roles, users, audit log, and the platform-admin pages.
 
 **Architecture:** React SPA (Vite) talking to the Part 1 API through a Vite dev proxy (`/api` → `localhost:3000`), so the refresh cookie stays same-origin. Session state lives in a tiny external store (`useSyncExternalStore`); server data in TanStack Query; forms use react-hook-form with the same Zod schemas the API validates with. Pages are thin wrappers around router-free components so the components can be unit-tested.
 
@@ -12,8 +12,8 @@
 
 ## Global Constraints
 
-- All Part 1 Global Constraints apply (Taskop naming, latest versions via `pnpm add <pkg>@latest`, i18n keys only, Azerbaijani only, error body format).
-- Every user-visible string comes from `@taskop/i18n` (`packages/i18n/src/az/<namespace>.ts`). New namespaces are registered in `packages/i18n/src/az/index.ts`.
+- All Part 1 Global Constraints apply (Edildy naming, latest versions via `pnpm add <pkg>@latest`, i18n keys only, Azerbaijani only, error body format).
+- Every user-visible string comes from `@edildy/i18n` (`packages/i18n/src/az/<namespace>.ts`). New namespaces are registered in `packages/i18n/src/az/index.ts`.
 - The client refreshes tokens **only** on error code `UNAUTHENTICATED` (never on `INVALID_CREDENTIALS`).
 - The web app never stores tokens in `localStorage`/`sessionStorage`: access token in memory; refresh token is the API's `HttpOnly` cookie.
 - Menu items and actions are shown only when the user holds the needed permission (FR-25.04 / NFR-02.03).
@@ -61,7 +61,7 @@ apps/web/
 
 ---
 
-### Task W1: `@taskop/api-client`
+### Task W1: `@edildy/api-client`
 
 **Files:**
 - Create: `packages/api-client/package.json`, `tsconfig.json`, `eslint.config.js`, `vitest.config.ts`
@@ -69,19 +69,19 @@ apps/web/
 - Test: `packages/api-client/src/client.test.ts`
 
 **Interfaces:**
-- Consumes: `@taskop/contracts` schemas and input types.
+- Consumes: `@edildy/contracts` schemas and input types.
 - Produces:
   - `class ApiError extends Error { status: number; code: ErrorCode | 'NETWORK'; messageKey: string; fields: Record<string,string> | null; retryAfterSeconds: number | null; requestId: string | null; static network(): ApiError }`
   - `interface TokenStore { getAccessToken(): string | null; save(t: { accessToken: string; refreshToken: string | null }): Promise<void>; getRefreshToken(): Promise<string | null>; clear(): Promise<void> }`, `memoryTokenStore(): TokenStore`
   - `class ApiClient { constructor(opts: ApiClientOptions); request<T>(method, path, opts?: RequestOptions<T>): Promise<T>; refresh(): Promise<LoginResult | null> }` with `ApiClientOptions { baseUrl; client: 'web'|'mobile'; tokenStore; refresh?: boolean; onSessionExpired?(): void; onRefreshed?(r: LoginResult): void; fetch?: typeof fetch; refreshRetryDelayMs?: number }`, `RequestOptions<T> { body?; query?; schema?: ZodType<T>; auth?: boolean }`
-  - `createTaskopApi(client)` → `TaskopApi` with groups `auth, me, tenant, siteTypes, sites, teams, roles, users, audit`; `createPlatformApi(client)` → `PlatformApi` with `login`, `tenants.{list,suspend,reactivate}`.
+  - `createEdildyApi(client)` → `EdildyApi` with groups `auth, me, tenant, siteTypes, sites, teams, roles, users, audit`; `createPlatformApi(client)` → `PlatformApi` with `login`, `tenants.{list,suspend,reactivate}`.
 
 - [ ] **Step 1: Package setup**
 
 `packages/api-client/package.json`:
 ```json
 {
-  "name": "@taskop/api-client",
+  "name": "@edildy/api-client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -98,13 +98,13 @@ apps/web/
 ```
 `tsconfig.json`:
 ```json
-{ "extends": "@taskop/config/tsconfig.lib.json", "compilerOptions": { "lib": ["ES2023", "DOM"] } }
+{ "extends": "@edildy/config/tsconfig.lib.json", "compilerOptions": { "lib": ["ES2023", "DOM"] } }
 ```
 `eslint.config.js` and `vitest.config.ts`: same as `packages/contracts`.
 
 ```bash
-pnpm --filter @taskop/api-client add zod@latest "@taskop/contracts@workspace:*"
-pnpm --filter @taskop/api-client add -D vitest@latest typescript@latest eslint@latest "@taskop/config@workspace:*"
+pnpm --filter @edildy/api-client add zod@latest "@edildy/contracts@workspace:*"
+pnpm --filter @edildy/api-client add -D vitest@latest typescript@latest eslint@latest "@edildy/config@workspace:*"
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -112,7 +112,7 @@ pnpm --filter @taskop/api-client add -D vitest@latest typescript@latest eslint@l
 `packages/api-client/src/client.test.ts`:
 ```ts
 import { describe, expect, it, vi } from 'vitest';
-import { ApiClient, ApiError, createTaskopApi, memoryTokenStore, type TokenStore } from './index.js';
+import { ApiClient, ApiError, createEdildyApi, memoryTokenStore, type TokenStore } from './index.js';
 
 const id = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f';
 const me = {
@@ -144,7 +144,7 @@ describe('ApiClient', () => {
     const store = memoryTokenStore();
     await store.save({ accessToken: 'a1', refreshToken: null });
     const { api, fetchMock } = setup(() => json(200, me), 'web', store);
-    const result = await createTaskopApi(api).me();
+    const result = await createEdildyApi(api).me();
     expect(result.tenant.orgCode).toBe('acme');
     expect((fetchMock.mock.calls[0]![1].headers as Record<string, string>).Authorization).toBe('Bearer a1');
   });
@@ -159,14 +159,14 @@ describe('ApiClient', () => {
       const auth = (init.headers as Record<string, string>).Authorization;
       return auth === 'Bearer fresh' ? json(200, me) : err(401, 'UNAUTHENTICATED');
     });
-    const typed = createTaskopApi(api);
+    const typed = createEdildyApi(api);
     await Promise.all([typed.me(), typed.me(), typed.me()]);
     expect(refreshes).toBe(1);
   });
 
   it('does not refresh on INVALID_CREDENTIALS', async () => {
     const { api, fetchMock, onSessionExpired } = setup(() => err(401, 'INVALID_CREDENTIALS'));
-    await expect(createTaskopApi(api).auth.changeCredential({ currentSecret: 'x', newSecret: 'y' })).rejects.toMatchObject({
+    await expect(createEdildyApi(api).auth.changeCredential({ currentSecret: 'x', newSecret: 'y' })).rejects.toMatchObject({
       code: 'INVALID_CREDENTIALS',
       status: 401,
     });
@@ -178,7 +178,7 @@ describe('ApiClient', () => {
     const store = memoryTokenStore();
     await store.save({ accessToken: 'old', refreshToken: null });
     const { api, onSessionExpired } = setup(() => err(401, 'UNAUTHENTICATED'), 'web', store);
-    await expect(createTaskopApi(api).me()).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+    await expect(createEdildyApi(api).me()).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
     expect(store.getAccessToken()).toBeNull();
   });
@@ -212,34 +212,34 @@ describe('ApiClient', () => {
     const { api } = setup(() => {
       throw new TypeError('Failed to fetch');
     }, 'mobile', store);
-    await expect(createTaskopApi(api).me()).rejects.toBeInstanceOf(ApiError);
-    await expect(createTaskopApi(api).me()).rejects.toMatchObject({ code: 'NETWORK', messageKey: 'errors.NETWORK' });
+    await expect(createEdildyApi(api).me()).rejects.toBeInstanceOf(ApiError);
+    await expect(createEdildyApi(api).me()).rejects.toMatchObject({ code: 'NETWORK', messageKey: 'errors.NETWORK' });
     expect(store.getAccessToken()).toBe('a');
   });
 
   it('serialises query parameters and skips empty ones', async () => {
     const { api, fetchMock } = setup(() => json(200, { items: [], nextCursor: null }));
-    await createTaskopApi(api).users.list({ q: 'elvin', status: undefined, limit: 20 });
+    await createEdildyApi(api).users.list({ q: 'elvin', status: undefined, limit: 20 });
     expect(fetchMock.mock.calls[0]![0]).toBe('/api/v1/users?q=elvin&limit=20');
   });
 
   it('returns undefined for 204 responses', async () => {
     const { api } = setup(() => new Response(null, { status: 204 }));
-    await expect(createTaskopApi(api).auth.logout()).resolves.toBeUndefined();
+    await expect(createEdildyApi(api).auth.logout()).resolves.toBeUndefined();
   });
 });
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api-client test`
+Run: `pnpm --filter @edildy/api-client test`
 Expected: FAIL — `./index.js` missing.
 
 - [ ] **Step 4: Implement**
 
 `packages/api-client/src/errors.ts`:
 ```ts
-import type { ErrorCode } from '@taskop/contracts';
+import type { ErrorCode } from '@edildy/contracts';
 
 export type ClientErrorCode = ErrorCode | 'NETWORK';
 
@@ -264,7 +264,7 @@ export class ApiError extends Error {
 
 `packages/api-client/src/client.ts`:
 ```ts
-import { errorBodySchema, type LoginResult, loginResultSchema } from '@taskop/contracts';
+import { errorBodySchema, type LoginResult, loginResultSchema } from '@edildy/contracts';
 import type { ZodType } from 'zod';
 import { ApiError } from './errors.js';
 
@@ -453,13 +453,13 @@ import {
   type UserListQuery,
   userWithSecretSchema,
   type PermissionKey,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { z } from 'zod';
 import type { ApiClient, QueryParams } from './client.js';
 
 const q = (query: object) => query as QueryParams;
 
-export function createTaskopApi(c: ApiClient) {
+export function createEdildyApi(c: ApiClient) {
   return {
     auth: {
       signup: (body: SignupInput) => c.request('POST', '/auth/signup', { body, schema: loginResultSchema, auth: false }),
@@ -522,7 +522,7 @@ export function createTaskopApi(c: ApiClient) {
     },
   };
 }
-export type TaskopApi = ReturnType<typeof createTaskopApi>;
+export type EdildyApi = ReturnType<typeof createEdildyApi>;
 
 export function createPlatformApi(c: ApiClient) {
   return {
@@ -547,14 +547,14 @@ export * from './endpoints.js';
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client build`
+Run: `pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client build`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add packages/api-client pnpm-lock.yaml
-git commit -m "feat(api-client): add typed Taskop API client with single-flight refresh"
+git commit -m "feat(api-client): add typed Edildy API client with single-flight refresh"
 ```
 
 ---
@@ -573,9 +573,9 @@ git commit -m "feat(api-client): add typed Taskop API client with single-flight 
 - Test: `apps/web/src/lib/errors.test.ts`, `apps/web/src/features/auth/login-form.test.tsx`
 
 **Interfaces:**
-- Consumes: `@taskop/api-client`, `@taskop/contracts`, `@taskop/i18n`.
+- Consumes: `@edildy/api-client`, `@edildy/contracts`, `@edildy/i18n`.
 - Produces:
-  - `session` store `{ get(); subscribe(l); bootstrap(); signedIn(r: LoginResult); setMe(me); signOut() }`, hooks `useSession()`, `useMe()`, `useCan(...keys)`; `api: TaskopApi`, `apiClient`, `tokenStore` (from `@/lib/session`).
+  - `session` store `{ get(); subscribe(l); bootstrap(); signedIn(r: LoginResult); setMe(me); signOut() }`, hooks `useSession()`, `useMe()`, `useCan(...keys)`; `api: EdildyApi`, `apiClient`, `tokenStore` (from `@/lib/session`).
   - `queryClient` (from `@/lib/query`).
   - `errorText(t, e): string`, `applyFieldErrors(form, e): boolean` (from `@/lib/errors`).
   - Components: `TextField({ form, name, label, type?, autoComplete?, description? })`, `NativeSelect` (props of `<select>`), `FormError({ message })`, `Logo`.
@@ -587,7 +587,7 @@ git commit -m "feat(api-client): add typed Taskop API client with single-flight 
 `apps/web/package.json`:
 ```json
 {
-  "name": "@taskop/web",
+  "name": "@edildy/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -604,8 +604,8 @@ git commit -m "feat(api-client): add typed Taskop API client with single-flight 
 ```
 
 ```bash
-pnpm --filter @taskop/web add react@latest react-dom@latest @tanstack/react-router@latest @tanstack/react-query@latest react-hook-form@latest @hookform/resolvers@latest i18next@latest react-i18next@latest zod@latest lucide-react@latest sonner@latest "@taskop/contracts@workspace:*" "@taskop/i18n@workspace:*" "@taskop/api-client@workspace:*"
-pnpm --filter @taskop/web add -D vite@latest @vitejs/plugin-react@latest tailwindcss@latest @tailwindcss/vite@latest typescript@latest @types/react@latest @types/react-dom@latest @types/node@latest vitest@latest jsdom@latest @testing-library/react@latest @testing-library/user-event@latest @testing-library/jest-dom@latest eslint@latest eslint-plugin-react-hooks@latest "@taskop/config@workspace:*"
+pnpm --filter @edildy/web add react@latest react-dom@latest @tanstack/react-router@latest @tanstack/react-query@latest react-hook-form@latest @hookform/resolvers@latest i18next@latest react-i18next@latest zod@latest lucide-react@latest sonner@latest "@edildy/contracts@workspace:*" "@edildy/i18n@workspace:*" "@edildy/api-client@workspace:*"
+pnpm --filter @edildy/web add -D vite@latest @vitejs/plugin-react@latest tailwindcss@latest @tailwindcss/vite@latest typescript@latest @types/react@latest @types/react-dom@latest @types/node@latest vitest@latest jsdom@latest @testing-library/react@latest @testing-library/user-event@latest @testing-library/jest-dom@latest eslint@latest eslint-plugin-react-hooks@latest "@edildy/config@workspace:*"
 ```
 
 `apps/web/index.html`:
@@ -615,7 +615,7 @@ pnpm --filter @taskop/web add -D vite@latest @vitejs/plugin-react@latest tailwin
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Taskop</title>
+    <title>Edildy</title>
   </head>
   <body>
     <div id="root"></div>
@@ -648,7 +648,7 @@ export default defineConfig({
 `apps/web/tsconfig.json`:
 ```json
 {
-  "extends": "@taskop/config/tsconfig.base.json",
+  "extends": "@edildy/config/tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
@@ -664,7 +664,7 @@ export default defineConfig({
 
 `apps/web/eslint.config.js`:
 ```js
-import base from '@taskop/config/eslint';
+import base from '@edildy/config/eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import { defineConfig } from 'eslint/config';
 
@@ -691,7 +691,7 @@ Expected: files under `apps/web/src/components/ui/`. If `init` asks for the CSS 
 ```ts
 export default {
   login: {
-    title: 'Taskop-a daxil olun',
+    title: 'Edildy-yə daxil olun',
     email: 'E-poçt',
     password: 'Şifrə',
     submit: 'Daxil ol',
@@ -759,7 +759,7 @@ import errors from './errors.js';
 export const az = { common, errors, auth } as const;
 export type Translations = typeof az;
 ```
-Run `pnpm --filter @taskop/i18n build`.
+Run `pnpm --filter @edildy/i18n build`.
 
 - [ ] **Step 3: Write the failing tests**
 
@@ -787,7 +787,7 @@ export function renderWithProviders(ui: ReactElement) {
 
 `apps/web/src/lib/errors.test.ts`:
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { describe, expect, it } from 'vitest';
 import i18n from './i18n';
 import { errorText } from './errors';
@@ -806,7 +806,7 @@ describe('errorText', () => {
 
 `apps/web/src/features/auth/login-form.test.tsx`:
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -850,14 +850,14 @@ describe('LoginForm', () => {
 
 - [ ] **Step 4: Run tests to verify they fail**
 
-Run: `pnpm --filter @taskop/web test`
+Run: `pnpm --filter @edildy/web test`
 Expected: FAIL — `./i18n`, `./errors`, `./login-form` missing.
 
 - [ ] **Step 5: Implement the libraries**
 
 `apps/web/src/lib/i18n.ts`:
 ```ts
-import { DEFAULT_LOCALE, resources } from '@taskop/i18n';
+import { DEFAULT_LOCALE, resources } from '@edildy/i18n';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -882,8 +882,8 @@ export const queryClient = new QueryClient({
 
 `apps/web/src/lib/session.ts`:
 ```ts
-import { ApiClient, ApiError, createTaskopApi, memoryTokenStore } from '@taskop/api-client';
-import type { LoginResult, Me, PermissionKey } from '@taskop/contracts';
+import { ApiClient, ApiError, createEdildyApi, memoryTokenStore } from '@edildy/api-client';
+import type { LoginResult, Me, PermissionKey } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 import { queryClient } from './query';
 
@@ -904,7 +904,7 @@ export const apiClient = new ApiClient({
   onSessionExpired: () => set({ status: 'anonymous' }),
   onRefreshed: (r) => set({ status: 'authenticated', me: r.me }),
 });
-export const api = createTaskopApi(apiClient);
+export const api = createEdildyApi(apiClient);
 
 export const session = {
   get: (): SessionState => state,
@@ -958,7 +958,7 @@ export function useCan(...keys: PermissionKey[]): boolean {
 
 `apps/web/src/lib/errors.ts`:
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import type { TFunction } from 'i18next';
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 
@@ -1053,7 +1053,7 @@ export function Logo({ className = '' }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 text-lg font-semibold ${className}`}>
       <CheckSquare className="size-6 text-blue-600" aria-hidden />
-      Taskop
+      Edildy
     </span>
   );
 }
@@ -1081,7 +1081,7 @@ export function AuthLayout() {
 `apps/web/src/features/auth/login-form.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type LoginResult, loginStaffInputSchema } from '@taskop/contracts';
+import { type LoginResult, loginStaffInputSchema } from '@edildy/contracts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -1164,7 +1164,7 @@ export function LoginPage() {
 `apps/web/src/features/auth/signup-page.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signupInputSchema } from '@taskop/contracts';
+import { signupInputSchema } from '@edildy/contracts';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -1270,7 +1270,7 @@ export function VerifyEmailPage() {
 `apps/web/src/features/auth/forgot-password-page.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { forgotPasswordInputSchema } from '@taskop/contracts';
+import { forgotPasswordInputSchema } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -1324,7 +1324,7 @@ export function ForgotPasswordPage() {
 `apps/web/src/features/auth/reset-password-page.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { passwordSchema } from '@taskop/contracts';
+import { passwordSchema } from '@edildy/contracts';
 import { Link, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -1381,7 +1381,7 @@ export function ResetPasswordPage() {
 `apps/web/src/features/auth/accept-invite-page.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { passwordSchema } from '@taskop/contracts';
+import { passwordSchema } from '@edildy/contracts';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -1475,7 +1475,7 @@ const resetRoute = createRoute({ getParentRoute: () => authLayout, path: '/reset
 const acceptInviteRoute = createRoute({ getParentRoute: () => authLayout, path: '/accept-invite', component: AcceptInvitePage, validateSearch: tokenSearch });
 const verifyEmailRoute = createRoute({ getParentRoute: () => rootRoute, path: '/verify-email', component: VerifyEmailPage, validateSearch: tokenSearch });
 
-const homeRoute = createRoute({ getParentRoute: () => appLayout, path: '/', component: () => <p className="p-8">Taskop</p> });
+const homeRoute = createRoute({ getParentRoute: () => appLayout, path: '/', component: () => <p className="p-8">Edildy</p> });
 
 const routeTree = rootRoute.addChildren([
   authLayout.addChildren([loginRoute, signupRoute, forgotRoute, resetRoute, acceptInviteRoute]),
@@ -1523,12 +1523,12 @@ void session.bootstrap().then(() => {
 
 - [ ] **Step 9: Run tests and type-check**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS. (If a shadcn component file fails `noUncheckedIndexedAccess`, keep it excluded from lint and add `// @ts-nocheck` only to that generated file.)
 
 - [ ] **Step 10: Manual check**
 
-With the API running (`pnpm --filter @taskop/api dev`), run `pnpm --filter @taskop/web dev`, open http://localhost:5173/signup, create an organisation, and confirm you land on `/` (placeholder). Open Mailpit (http://localhost:8025), follow the verification link, and confirm the success message.
+With the API running (`pnpm --filter @edildy/api dev`), run `pnpm --filter @edildy/web dev`, open http://localhost:5173/signup, create an organisation, and confirm you land on `/` (placeholder). Open Mailpit (http://localhost:8025), follow the verification link, and confirm the success message.
 
 - [ ] **Step 11: Commit**
 
@@ -1572,7 +1572,7 @@ export default {
   logout: 'Çıxış',
   welcome: 'Xoş gəlmisiniz, {{name}}!',
   intro:
-    'Taskop-un ilk mərhələsində təşkilatınızı, obyektləri, komandaları və əməkdaşları qura bilərsiniz. Yoxlama vərəqələri və tapşırıqlar növbəti mərhələlərdə əlavə olunacaq.',
+    'Edildy-nin ilk mərhələsində təşkilatınızı, obyektləri, komandaları və əməkdaşları qura bilərsiniz. Yoxlama vərəqələri və tapşırıqlar növbəti mərhələlərdə əlavə olunacaq.',
 } as const;
 ```
 
@@ -1598,7 +1598,7 @@ export default {
   },
 } as const;
 ```
-Register both in `packages/i18n/src/az/index.ts` (`import nav from './nav.js'; import settings from './settings.js';` and add `nav, settings` to the `az` object). Rebuild: `pnpm --filter @taskop/i18n build`.
+Register both in `packages/i18n/src/az/index.ts` (`import nav from './nav.js'; import settings from './settings.js';` and add `nav, settings` to the `az` object). Rebuild: `pnpm --filter @edildy/i18n build`.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -1665,14 +1665,14 @@ describe('AppShell', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test app-shell`
+Run: `pnpm --filter @edildy/web test app-shell`
 Expected: FAIL — `./app-shell` missing.
 
 - [ ] **Step 4: Implement**
 
 `apps/web/src/lib/format.ts`:
 ```ts
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { useCallback } from 'react';
 import { useMe } from './session';
 
@@ -1738,7 +1738,7 @@ export function VerifyEmailBanner() {
 
 `apps/web/src/layouts/app-shell.tsx`:
 ```tsx
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Building2, ClipboardList, Home, LogOut, type LucideIcon, Settings, Shield, Users, UsersRound } from 'lucide-react';
 import { useEffect } from 'react';
@@ -1844,7 +1844,7 @@ export function HomePage() {
 `apps/web/src/features/settings/org-settings-form.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type TenantDto, updateTenantInputSchema } from '@taskop/contracts';
+import { type TenantDto, updateTenantInputSchema } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -1925,7 +1925,7 @@ export function OrgSettingsForm({ tenant, canEdit }: { tenant: TenantDto; canEdi
 `apps/web/src/features/settings/change-password-form.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { changeCredentialInputSchema } from '@taskop/contracts';
+import { changeCredentialInputSchema } from '@edildy/contracts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -2011,7 +2011,7 @@ Modify `apps/web/src/router.tsx`:
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -2073,13 +2073,13 @@ export default {
   },
 } as const;
 ```
-Register `sites` in `az/index.ts`; rebuild `@taskop/i18n`.
+Register `sites` in `az/index.ts`; rebuild `@edildy/i18n`.
 
 - [ ] **Step 2: Write the failing tests**
 
 `apps/web/src/features/sites/tree.test.ts`:
 ```ts
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { buildTree, moveTargets } from './tree';
 
@@ -2119,7 +2119,7 @@ describe('moveTargets', () => {
 
 `apps/web/src/features/sites/move-site-dialog.test.tsx`:
 ```tsx
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -2147,14 +2147,14 @@ describe('MoveSiteDialog', () => {
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-Run: `pnpm --filter @taskop/web test sites`
+Run: `pnpm --filter @edildy/web test sites`
 Expected: FAIL — modules missing.
 
 - [ ] **Step 4: Implement tree helpers and queries**
 
 `apps/web/src/features/sites/tree.ts`:
 ```ts
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 
 export interface SiteNode extends SiteDto {
   children: SiteNode[];
@@ -2198,7 +2198,7 @@ export const useSiteTypes = () => useQuery({ queryKey: ['site-types'], queryFn: 
 
 `apps/web/src/features/sites/move-site-dialog.tsx`:
 ```tsx
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -2251,7 +2251,7 @@ export function MoveSiteDialog({ site, sites, open, onOpenChange, onMove }: Prop
 `apps/web/src/features/sites/site-form-dialog.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { SiteDto, SiteTypeDto } from '@taskop/contracts';
+import type { SiteDto, SiteTypeDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -2335,7 +2335,7 @@ export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubm
 
 `apps/web/src/features/sites/site-types-panel.tsx`:
 ```tsx
-import type { SiteTypeDto } from '@taskop/contracts';
+import type { SiteTypeDto } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2480,7 +2480,7 @@ function SiteTreeItem({ node, ...props }: Props & { node: SiteNode }) {
 
 `apps/web/src/features/sites/sites-page.tsx`:
 ```tsx
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2596,7 +2596,7 @@ Modify `apps/web/src/router.tsx`: import `SitesPage`; add `const sitesRoute = cr
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -2639,7 +2639,7 @@ export default {
   searchMembers: 'Üzv axtar',
 } as const;
 ```
-Register `teams`; rebuild `@taskop/i18n`.
+Register `teams`; rebuild `@edildy/i18n`.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -2677,7 +2677,7 @@ describe('CheckboxList', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test checkbox-list`
+Run: `pnpm --filter @edildy/web test checkbox-list`
 Expected: FAIL — module missing.
 
 - [ ] **Step 4: Implement**
@@ -2742,7 +2742,7 @@ export const useActiveUsers = (enabled: boolean) =>
 `apps/web/src/features/teams/team-dialog.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { TeamDto, UserDto } from '@taskop/contracts';
+import type { TeamDto, UserDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -2818,7 +2818,7 @@ export function TeamDialog({ open, onOpenChange, team, users, canEditMembers, on
 
 `apps/web/src/features/teams/teams-page.tsx`:
 ```tsx
-import type { TeamDto } from '@taskop/contracts';
+import type { TeamDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2927,7 +2927,7 @@ Modify `apps/web/src/router.tsx`: add `/teams` → `TeamsPage`.
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -3005,13 +3005,13 @@ export default {
   },
 } as const;
 ```
-Register `roles`; rebuild `@taskop/i18n`.
+Register `roles`; rebuild `@edildy/i18n`.
 
 - [ ] **Step 2: Write the failing test**
 
 `apps/web/src/features/roles/permission-grid.test.tsx`:
 ```tsx
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -3046,14 +3046,14 @@ describe('PermissionGrid', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test permission-grid`
+Run: `pnpm --filter @edildy/web test permission-grid`
 Expected: FAIL — module missing.
 
 - [ ] **Step 4: Implement**
 
 `apps/web/src/features/roles/queries.ts`:
 ```ts
-import type { PermissionKey, SystemRoleKey } from '@taskop/contracts';
+import type { PermissionKey, SystemRoleKey } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { api } from '@/lib/session';
@@ -3069,7 +3069,7 @@ export const roleDisplayName = (t: TFunction, role: { name: string; systemKey: S
 
 `apps/web/src/features/roles/permission-grid.tsx`:
 ```tsx
-import type { PermissionCatalog, PermissionKey } from '@taskop/contracts';
+import type { PermissionCatalog, PermissionKey } from '@edildy/contracts';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -3118,7 +3118,7 @@ export function PermissionGrid({ catalog, value, onChange, held, disabled }: Pro
 
 `apps/web/src/features/roles/role-editor.tsx`:
 ```tsx
-import { DATA_SCOPES, type DataScope, type PermissionCatalog, type PermissionKey, type RoleDto } from '@taskop/contracts';
+import { DATA_SCOPES, type DataScope, type PermissionCatalog, type PermissionKey, type RoleDto } from '@edildy/contracts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FormError } from '@/components/form-error';
@@ -3225,7 +3225,7 @@ export function RoleEditor({ role, catalog, held, canManage, onSave, onToggleAct
 
 `apps/web/src/features/roles/roles-page.tsx`:
 ```tsx
-import type { RoleDto } from '@taskop/contracts';
+import type { RoleDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -3323,7 +3323,7 @@ Modify `apps/web/src/router.tsx`: add `/roles` → `RolesPage`.
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -3411,7 +3411,7 @@ export default {
   },
 } as const;
 ```
-Register `users`; rebuild `@taskop/i18n`.
+Register `users`; rebuild `@edildy/i18n`.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -3458,7 +3458,7 @@ describe('CreateWorkerDialog', () => {
   });
 
   it('maps API field errors onto inputs', async () => {
-    const { ApiError } = await import('@taskop/api-client');
+    const { ApiError } = await import('@edildy/api-client');
     createWorker.mockRejectedValue(new ApiError(409, 'USERNAME_TAKEN', 'errors.USERNAME_TAKEN', { username: 'errors.USERNAME_TAKEN' }));
     renderWithProviders(<CreateWorkerDialog open onOpenChange={vi.fn()} orgCode="acme" onCreated={vi.fn()} />);
     await userEvent.type(screen.getByLabelText('Ad və soyad'), 'Elvin Məmmədov');
@@ -3471,14 +3471,14 @@ describe('CreateWorkerDialog', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test create-worker`
+Run: `pnpm --filter @edildy/web test create-worker`
 Expected: FAIL — module missing.
 
 - [ ] **Step 4: Implement queries, labels, secret block**
 
 `apps/web/src/features/users/queries.ts`:
 ```ts
-import type { UserListQuery } from '@taskop/contracts';
+import type { UserListQuery } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 
@@ -3497,7 +3497,7 @@ export const useUser = (id: string) => useQuery({ queryKey: ['users', id], query
 
 `apps/web/src/features/users/user-labels.ts`:
 ```ts
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 
 export const statusVariant = (status: UserDto['status']) =>
   status === 'active' ? ('default' as const) : status === 'invited' ? ('outline' as const) : ('secondary' as const);
@@ -3550,7 +3550,7 @@ export function SecretBlock({ orgCode, username, secret }: { orgCode: string; us
 `apps/web/src/features/users/create-worker-dialog.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createWorkerInputSchema, type UserWithSecret } from '@taskop/contracts';
+import { createWorkerInputSchema, type UserWithSecret } from '@edildy/contracts';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -3749,7 +3749,7 @@ export function CreateWorkerDialog({ open, onOpenChange, orgCode, onCreated }: P
 `apps/web/src/features/users/invite-staff-dialog.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { inviteStaffInputSchema } from '@taskop/contracts';
+import { inviteStaffInputSchema } from '@edildy/contracts';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -3989,8 +3989,8 @@ Add both routes to `appLayout.addChildren([...])`.
 
 - [ ] **Step 7: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test`
-Expected: PASS. Also run `pnpm --filter @taskop/web typecheck` — clean.
+Run: `pnpm --filter @edildy/web test`
+Expected: PASS. Also run `pnpm --filter @edildy/web typecheck` — clean.
 
 - [ ] **Step 8: Commit**
 
@@ -4019,7 +4019,7 @@ git commit -m "feat(web): add users list with filters, worker creation with one-
 
 `apps/web/src/features/users/user-access-card.test.tsx`:
 ```tsx
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -4074,7 +4074,7 @@ describe('UserAccessCard', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test user-access-card`
+Run: `pnpm --filter @edildy/web test user-access-card`
 Expected: FAIL — module missing.
 
 - [ ] **Step 3: Implement**
@@ -4139,7 +4139,7 @@ export function ConfirmButton({ label, title, description, onConfirm, variant = 
 
 `apps/web/src/features/users/user-access-card.tsx`:
 ```tsx
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -4234,7 +4234,7 @@ export function UserAccessCard({ user, orgCode, isSelf, canManage, onChanged }: 
 `apps/web/src/features/users/user-profile-form.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type RoleDto, updateUserInputSchema, type UserDto } from '@taskop/contracts';
+import { type RoleDto, updateUserInputSchema, type UserDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -4337,7 +4337,7 @@ export function UserProfileForm({ user, roles, managers, isSelf, canManage, onSa
 
 `apps/web/src/features/users/user-assignments.tsx`:
 ```tsx
-import type { SiteDto, TeamDto, UserDto } from '@taskop/contracts';
+import type { SiteDto, TeamDto, UserDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -4410,7 +4410,7 @@ export function UserAssignments({ user, sites, teams, canManage, onSaved }: Prop
 
 `apps/web/src/features/users/user-detail-page.tsx`:
 ```tsx
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
@@ -4495,7 +4495,7 @@ Modify `apps/web/src/router.tsx`: import `UserDetailPage` and change `userDetail
 
 - [ ] **Step 4: Run tests and type-check**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -4526,7 +4526,7 @@ export default {
   title: 'Audit jurnalı',
   filters: { action: 'Əməliyyat (məs. user.created)', entityType: 'Element növü', from: 'Başlanğıc tarixi', to: 'Son tarix' },
   columns: { time: 'Vaxt', actor: 'İcraçı', action: 'Əməliyyat', entity: 'Element' },
-  actorPlatform: 'Taskop dəstəyi',
+  actorPlatform: 'Edildy dəstəyi',
   actorSystem: 'Sistem',
   before: 'Əvvəl',
   after: 'Sonra',
@@ -4543,7 +4543,7 @@ export default {
   },
 } as const;
 ```
-Register `audit`; rebuild `@taskop/i18n`.
+Register `audit`; rebuild `@edildy/i18n`.
 
 - [ ] **Step 2: Write the failing test**
 
@@ -4578,7 +4578,7 @@ describe('AuditDiff', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test audit-diff`
+Run: `pnpm --filter @edildy/web test audit-diff`
 Expected: FAIL — module missing.
 
 - [ ] **Step 4: Implement**
@@ -4627,7 +4627,7 @@ export function AuditDiff({ before, after }: { before: unknown; after: unknown }
 
 `apps/web/src/features/audit/audit-page.tsx`:
 ```tsx
-import type { AuditEntryDto } from '@taskop/contracts';
+import type { AuditEntryDto } from '@edildy/contracts';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Fragment, useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -4757,7 +4757,7 @@ Modify `apps/web/src/router.tsx`: add `/audit` → `AuditPage`.
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -4788,7 +4788,7 @@ git commit -m "feat(web): add audit log viewer with filters and before/after dif
 `packages/i18n/src/az/platform.ts`:
 ```ts
 export default {
-  title: 'Taskop platforması',
+  title: 'Edildy platforması',
   login: { title: 'Platforma administratoru', email: 'E-poçt', password: 'Şifrə', submit: 'Daxil ol' },
   tenants: {
     title: 'Təşkilatlar',
@@ -4807,13 +4807,13 @@ export default {
   logout: 'Çıxış',
 } as const;
 ```
-Register `platform`; rebuild `@taskop/i18n`.
+Register `platform`; rebuild `@edildy/i18n`.
 
 - [ ] **Step 2: Write the failing test**
 
 `apps/web/src/features/platform/platform-tenants-page.test.tsx`:
 ```tsx
-import type { PlatformTenantDto } from '@taskop/contracts';
+import type { PlatformTenantDto } from '@edildy/contracts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -4846,15 +4846,15 @@ describe('PlatformTenantsTable', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test platform-tenants`
+Run: `pnpm --filter @edildy/web test platform-tenants`
 Expected: FAIL — module missing.
 
 - [ ] **Step 4: Implement**
 
 `apps/web/src/features/platform/platform-session.ts`:
 ```ts
-import { ApiClient, createPlatformApi, memoryTokenStore } from '@taskop/api-client';
-import type { PlatformLoginResult } from '@taskop/contracts';
+import { ApiClient, createPlatformApi, memoryTokenStore } from '@edildy/api-client';
+import type { PlatformLoginResult } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 
 type Admin = PlatformLoginResult['admin'];
@@ -4898,7 +4898,7 @@ Because `refresh: false`, a 401 from an expired platform token is surfaced as an
 `apps/web/src/features/platform/platform-login-page.tsx`:
 ```tsx
 import { zodResolver } from '@hookform/resolvers/zod';
-import { platformLoginInputSchema } from '@taskop/contracts';
+import { platformLoginInputSchema } from '@edildy/contracts';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -4947,9 +4947,9 @@ export function PlatformLoginPage() {
 
 `apps/web/src/features/platform/platform-tenants-page.tsx`:
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import type { PlatformTenantDto } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import type { PlatformTenantDto } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDeferredValue, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5088,7 +5088,7 @@ platformSession.subscribe(() => {
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -5108,13 +5108,13 @@ git commit -m "feat(web): add platform admin login and tenant management pages"
 
 **Interfaces:**
 - Consumes: running API (port 3000) with a migrated database, web dev server (port 5173), Mailpit not required.
-- Produces: `pnpm --filter @taskop/web e2e`.
+- Produces: `pnpm --filter @edildy/web e2e`.
 
 - [ ] **Step 1: Install Playwright**
 
 ```bash
-pnpm --filter @taskop/web add -D @playwright/test@latest
-pnpm --filter @taskop/web exec playwright install --with-deps chromium
+pnpm --filter @edildy/web add -D @playwright/test@latest
+pnpm --filter @edildy/web exec playwright install --with-deps chromium
 ```
 
 - [ ] **Step 2: Write the config and the test**
@@ -5131,14 +5131,14 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'pnpm --filter @taskop/api start',
+      command: 'pnpm --filter @edildy/api start',
       url: 'http://localhost:3000/api/v1/health',
       reuseExistingServer: !process.env.CI,
       cwd: '../..',
       timeout: 120_000,
     },
     {
-      command: 'pnpm --filter @taskop/web dev',
+      command: 'pnpm --filter @edildy/web dev',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
       cwd: '../..',
@@ -5147,7 +5147,7 @@ export default defineConfig({
   ],
 });
 ```
-(The API must be built (`pnpm --filter @taskop/api build`) and its environment loaded; locally, run `pnpm --filter @taskop/api dev` yourself first and Playwright reuses it.)
+(The API must be built (`pnpm --filter @edildy/api build`) and its environment loaded; locally, run `pnpm --filter @edildy/api dev` yourself first and Playwright reuses it.)
 
 `apps/web/e2e/foundation.spec.ts`:
 ```ts
@@ -5185,7 +5185,7 @@ test('owner signs up, creates a site and a worker, and finds the worker after lo
   await page.getByRole('button', { name: 'Hazırdır' }).click();
 
   await page.getByRole('button', { name: 'Çıxış' }).click();
-  await expect(page.getByRole('heading', { name: 'Taskop-a daxil olun' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Edildy-yə daxil olun' })).toBeVisible();
   await page.getByLabel('E-poçt', { exact: true }).fill(email);
   await page.getByLabel('Şifrə', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Daxil ol' }).click();
@@ -5196,8 +5196,8 @@ test('owner signs up, creates a site and a worker, and finds the worker after lo
 
 - [ ] **Step 3: Run it locally**
 
-With `docker compose up -d`, `pnpm db:setup`, and `pnpm --filter @taskop/api dev` running:
-Run: `pnpm --filter @taskop/web e2e`
+With `docker compose up -d`, `pnpm db:setup`, and `pnpm --filter @edildy/api dev` running:
+Run: `pnpm --filter @edildy/web e2e`
 Expected: 1 passed.
 
 - [ ] **Step 4: Add the CI job**
@@ -5211,21 +5211,21 @@ Append to `.github/workflows/ci.yml` under `jobs:`:
       postgres:
         image: postgres:18-alpine
         env:
-          POSTGRES_DB: taskop
-          POSTGRES_USER: taskop_owner
+          POSTGRES_DB: edildy
+          POSTGRES_USER: edildy_owner
           POSTGRES_PASSWORD: owner_ci_password
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U taskop_owner -d taskop" --health-interval 5s --health-timeout 3s --health-retries 10
+          --health-cmd "pg_isready -U edildy_owner -d edildy" --health-interval 5s --health-timeout 3s --health-retries 10
     env:
-      DATABASE_OWNER_URL: postgres://taskop_owner:owner_ci_password@localhost:5432/taskop
-      DATABASE_APP_URL: postgres://taskop_app:app_ci_password@localhost:5432/taskop
-      DATABASE_PLATFORM_URL: postgres://taskop_platform:platform_ci_password@localhost:5432/taskop
+      DATABASE_OWNER_URL: postgres://edildy_owner:owner_ci_password@localhost:5432/edildy
+      DATABASE_APP_URL: postgres://edildy_app:app_ci_password@localhost:5432/edildy
+      DATABASE_PLATFORM_URL: postgres://edildy_platform:platform_ci_password@localhost:5432/edildy
       APP_DB_PASSWORD: app_ci_password
       PLATFORM_DB_PASSWORD: platform_ci_password
       WEB_URL: http://localhost:5173
       SMTP_URL: smtp://localhost:1025
-      MAIL_FROM: Taskop <no-reply@taskop.ci>
+      MAIL_FROM: Edildy <no-reply@edildy.ci>
       COOKIE_SECURE: 'false'
       LOG_LEVEL: warn
     steps:
@@ -5243,8 +5243,8 @@ Append to `.github/workflows/ci.yml` under `jobs:`:
           touch .env
           pnpm exec tsx src/db/scripts/setup.ts
           pnpm exec tsx src/scripts/generate-keys.ts | sed 's/"//g' >> "$GITHUB_ENV"
-      - run: pnpm --filter @taskop/web exec playwright install --with-deps chromium
-      - run: pnpm --filter @taskop/web e2e
+      - run: pnpm --filter @edildy/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @edildy/web e2e
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

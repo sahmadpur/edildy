@@ -1,7 +1,7 @@
-/** The public site at taskop.app (apps/landing). */
+/** The public site at edildy.com (apps/landing). */
 export default {
   meta: {
-    title: 'Taskop — sahə komandaları üçün yoxlama vərəqələri',
+    title: 'Edildy — sahə komandaları üçün yoxlama vərəqələri',
     description: 'İşçilər yoxlamaları telefonda, oflayn da olsa icra edir; menecerlər planlaşdırır, hesabatlara baxır, audit edir və düzəliş tələb edir.',
   },
   nav: { features: 'Funksiyalar', how: 'Necə işləyir', mobile: 'Mobil tətbiq', faq: 'Suallar', login: 'Daxil ol', signup: 'Təşkilatı qeydiyyatdan keçirin', menu: 'Menyu', language: 'Dil', skip: 'Məzmuna keç' },
@@ -36,7 +36,7 @@ export default {
   },
   features: {
     title: 'Hər gün təkrarlanan işi görünən edin',
-    lead: 'Taskop işin iki tərəfini birləşdirir: sahədəki telefonu və ofisdəki ekranı.',
+    lead: 'Edildy işin iki tərəfini birləşdirir: sahədəki telefonu və ofisdəki ekranı.',
     checklists: { title: 'Yoxlama vərəqələri və cədvəl', body: 'Bölmələr, suallar, şərti suallar və qaydalar. Obyektə, növbəyə və ya şəxsə təyin edin; hər gün, həftə və ya ay təkrarlansın.' },
     offline: { title: 'Oflayn mobil icra', body: 'Telefon internetsiz də işləyir: cavablar, foto və video yaddaşda saxlanılır, əlaqə yaranan kimi göndərilir. Sübutlar birbaşa kameradan çəkilir.' },
     problems: { title: 'Problemlər və tapşırıqlar', body: 'Qaydaya uyğun gəlməyən cavab avtomatik problem olur; problem tapşırığa çevrilir, icraçıya gedir, yoxlanılır və bağlanır.' },
@@ -70,10 +70,10 @@ export default {
   },
   footer: {
     contact: 'Əlaqə',
-    email: 'hello@taskop.app',
+    email: 'hello@edildy.com',
     privacy: 'Məxfilik siyasəti',
     terms: 'İstifadə şərtləri',
-    copyright: '© {{year}} Taskop',
+    copyright: '© {{year}} Edildy',
   },
   legal: {
     privacyTitle: 'Məxfilik siyasəti',

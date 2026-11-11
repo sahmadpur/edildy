@@ -1,4 +1,4 @@
-import { validateForPublish } from '@taskop/contracts';
+import { validateForPublish } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { indexIssues } from './issues';
 import { treeFixture } from './fixtures';

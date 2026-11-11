@@ -157,13 +157,13 @@ import {
   type ProblemReportMediaRegisterInput,
   problemReportDtoSchema,
   reportSiteSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { z } from 'zod';
 import type { ApiClient, QueryParams } from './client.js';
 
 const q = (query: object) => query as QueryParams;
 
-export function createTaskopApi(c: ApiClient) {
+export function createEdildyApi(c: ApiClient) {
   return {
     auth: {
       signup: (body: SignupInput) => c.request('POST', '/auth/signup', { body, schema: loginResultSchema, auth: false }),
@@ -271,7 +271,7 @@ export function createTemplatesApi(c: ApiClient, base = '') {
 }
 export type TemplatesApi = ReturnType<typeof createTemplatesApi>;
 
-export type TaskopApi = ReturnType<typeof createTaskopApi>;
+export type EdildyApi = ReturnType<typeof createEdildyApi>;
 
 export function createPlatformApi(c: ApiClient) {
   return {
@@ -458,7 +458,7 @@ export function createReportsApi(c: ApiClient) {
       runs: (query: ReportRunsQuery) => c.request('GET', '/reports/runs', { query: q(query), schema: reportRunPageSchema }),
       problems: (query: ReportProblemsQuery) => c.request('GET', '/reports/problems', { query: q(query), schema: reportProblemsSchema }),
       tasks: (query: ReportTasksQuery) => c.request('GET', '/reports/tasks', { query: q(query), schema: reportTasksSchema }),
-      /** The file and its name: Content-Disposition, else `taskop-<kind>-<from>_<to>.<ext>`. */
+      /** The file and its name: Content-Disposition, else `edildy-<kind>-<from>_<to>.<ext>`. */
       export: async (kind: ReportExportKind, query: ReportExportQuery): Promise<ReportFile> => {
         const file = await c.download(`/reports/${kind}/export`, { query: q(query) });
         return { blob: file.blob, filename: file.filename ?? reportFileName(kind, query.from, query.to, query.format) };

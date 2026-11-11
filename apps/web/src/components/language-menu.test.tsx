@@ -1,4 +1,4 @@
-import { LANGUAGE_STORAGE_KEY } from '@taskop/i18n';
+import { LANGUAGE_STORAGE_KEY } from '@edildy/i18n';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

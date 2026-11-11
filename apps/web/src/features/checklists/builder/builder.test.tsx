@@ -1,4 +1,4 @@
-import { blankContent, type ChecklistContent, newItem, newSection } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, newItem, newSection } from '@edildy/contracts';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -58,7 +58,7 @@ describe('Builder', () => {
 
   it('shows the conflict banner and reload action', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const { ApiError } = await import('@taskop/api-client');
+    const { ApiError } = await import('@edildy/api-client');
     const save = vi.fn().mockRejectedValue(new ApiError(409, 'CHECKLIST_DRAFT_CONFLICT', 'x'));
     const onReload = vi.fn();
     vi.stubGlobal('confirm', () => true);
@@ -72,7 +72,7 @@ describe('Builder', () => {
 
   it('ignores keyboard undo while blocked by a conflict', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const { ApiError } = await import('@taskop/api-client');
+    const { ApiError } = await import('@edildy/api-client');
     const save = vi.fn().mockRejectedValue(new ApiError(409, 'CHECKLIST_DRAFT_CONFLICT', 'x'));
     renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={1} readOnly={false} save={save} onBack={vi.fn()} />);
     fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Z' } });

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Page, SyncTask, TaskDetail, TaskEvidence, TaskHistoryEntry, TaskSummary } from '@taskop/contracts';
+import type { Page, SyncTask, TaskDetail, TaskEvidence, TaskHistoryEntry, TaskSummary } from '@edildy/contracts';
 import { and, asc, desc, eq, getTableColumns, gte, inArray, isNotNull, isNull, lte, or, type SQL, sql } from 'drizzle-orm';
 import { inSiteSubtrees } from '../common/sql';
 import { alias } from 'drizzle-orm/pg-core';

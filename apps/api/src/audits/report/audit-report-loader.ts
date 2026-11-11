@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { type Answers, answersEqual, type AuditResult, type AuditScore, type ScoreResult, visibleItems } from '@taskop/contracts';
-import { type Language, pickLanguage } from '@taskop/i18n';
+import { type Answers, answersEqual, type AuditResult, type AuditScore, type ScoreResult, visibleItems } from '@edildy/contracts';
+import { type Language, pickLanguage } from '@edildy/i18n';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import PDFDocument from 'pdfkit';
 import { sanitiseForLog } from '../../common/error.filter';
@@ -88,7 +88,7 @@ export class AuditReportLoader {
       if (!r?.result) return null;
       // The auditor's language, the tenant's for a platform admin or a deleted auditor; the PDF uses the same (load()).
       const locale = pickLanguage(r.auditorLocale, await tenantLanguage(tx));
-      return { checklistName: r.checklistName, siteName: r.siteName, localDate: r.localDate, result: r.result, auditorName: r.auditorName ?? 'Taskop', locale };
+      return { checklistName: r.checklistName, siteName: r.siteName, localDate: r.localDate, result: r.result, auditorName: r.auditorName ?? 'Edildy', locale };
     });
   }
 
@@ -176,7 +176,7 @@ export class AuditReportLoader {
             depth,
             answer: answerLine(item, current, locale),
             original: changed ? answerLine(item, original![item.id], locale) : null,
-            correctedBy: correction ? { name: correction.actorName ?? 'Taskop', reason: correction.reason } : null,
+            correctedBy: correction ? { name: correction.actorName ?? 'Edildy', reason: correction.reason } : null,
             verdict: verdict?.verdict ?? null,
             verdictComment: verdict?.comment ?? null,
             problem: problem ? { severity: problem.severity, note: problem.note } : null,
@@ -199,7 +199,7 @@ export class AuditReportLoader {
       startedAt: x.e.startedAt,
       completedAt: x.e.completedAt,
       syncedAt: x.e.completedReceivedAt,
-      auditorName: a.auditorName ?? 'Taskop',
+      auditorName: a.auditorName ?? 'Edildy',
       finishedAt: a.audit.finishedAt!,
       result: a.audit.result!,
       auditScore: a.audit.auditScore as AuditScore,

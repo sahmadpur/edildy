@@ -4,7 +4,7 @@ import {
   PROBLEM_SOURCES,
   type ProblemDto,
   toListParam,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

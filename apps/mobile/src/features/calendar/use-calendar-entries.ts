@@ -1,4 +1,4 @@
-import { addDays, type OccurrenceDto } from '@taskop/contracts';
+import { addDays, type OccurrenceDto } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { groupOccurrences } from '@/features/checklists/group-occurrences';

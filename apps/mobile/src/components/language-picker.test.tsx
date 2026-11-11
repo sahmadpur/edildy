@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LANGUAGE_STORAGE_KEY } from '@taskop/i18n';
+import { LANGUAGE_STORAGE_KEY } from '@edildy/i18n';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import i18n from '@/lib/i18n';
 import { LanguagePicker } from './language-picker';

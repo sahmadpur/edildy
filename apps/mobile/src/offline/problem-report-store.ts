@@ -1,4 +1,4 @@
-import { PROBLEM_REPORT_LIMITS, type ProblemReportDto, type ProblemReportLocation, type ProblemReportMediaRegisterInput, type ProblemSeverity, type ReportSite } from '@taskop/contracts';
+import { PROBLEM_REPORT_LIMITS, type ProblemReportDto, type ProblemReportLocation, type ProblemReportMediaRegisterInput, type ProblemSeverity, type ReportSite } from '@edildy/contracts';
 import { type CapturedMedia, MediaLimitError, type StoreDeps } from './execution-store';
 import { iso, type LocalMedia, type LocalProblemReport, type MediaRow, type ProblemReportRow, toMedia, toProblemReport } from './local-model';
 import { appendCommand } from './outbox';

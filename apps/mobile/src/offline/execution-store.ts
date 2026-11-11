@@ -15,7 +15,7 @@ import {
   requirements,
   reworkViolations,
   visibleItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { ChangeFeed } from './change-feed';
 import { type Clock, isClockTooFarAhead, readOffset } from './clock';
 import { type ContentLoad, findItem, loadContent } from './content';

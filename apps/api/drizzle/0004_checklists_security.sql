@@ -14,17 +14,17 @@ BEGIN
   END LOOP;
 END $$;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE ON checklists, tenant_templates TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON checklists, tenant_templates TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON checklist_versions TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON checklist_versions TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE ON global_templates TO taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON global_templates TO edildy_platform;
 --> statement-breakpoint
 CREATE VIEW global_templates_published AS
   SELECT id, name, description, category, content, revision, item_count, sort_order, created_at, updated_at
   FROM global_templates WHERE published;
 --> statement-breakpoint
-GRANT SELECT ON global_templates_published TO taskop_app, taskop_platform;
+GRANT SELECT ON global_templates_published TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- Published versions are immutable (NFR-06, FR-06.11); only drafts may be updated or deleted.
 CREATE FUNCTION checklist_versions_guard() RETURNS trigger LANGUAGE plpgsql AS $$

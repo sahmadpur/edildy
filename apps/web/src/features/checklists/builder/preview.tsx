@@ -1,4 +1,4 @@
-import { type Answer, type Answers, type ChecklistContent, computeScore, hasRules, type Item, requirements, ruleMatches, visibleItems } from '@taskop/contracts';
+import { type Answer, type Answers, type ChecklistContent, computeScore, hasRules, type Item, requirements, ruleMatches, visibleItems } from '@edildy/contracts';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

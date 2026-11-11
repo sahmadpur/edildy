@@ -1,4 +1,4 @@
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, type AuditEntryDto, toListParam } from '@taskop/contracts';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, type AuditEntryDto, toListParam } from '@edildy/contracts';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-import type { UserListQuery } from '@taskop/contracts';
+import type { UserListQuery } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 

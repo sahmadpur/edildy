@@ -1,4 +1,4 @@
-import { type DeviceInfo, type ExecutionMediaDto, type ExecutionProblem, type ExecutionProgress, type ExecutionSummary, type ScoreResult, type TaskStatus, problemResolutionOf } from '@taskop/contracts';
+import { type DeviceInfo, type ExecutionMediaDto, type ExecutionProblem, type ExecutionProgress, type ExecutionSummary, type ScoreResult, type TaskStatus, problemResolutionOf } from '@edildy/contracts';
 import { getTableColumns, sql } from 'drizzle-orm';
 import { executionMedia, executionProblems, executions, users } from '../db/schema';
 

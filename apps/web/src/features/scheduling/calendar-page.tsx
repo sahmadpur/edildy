@@ -1,5 +1,5 @@
-import { CALENDAR_STATUSES, type CalendarItem, type CalendarStatus, isWholeDayWindow, toListParam } from '@taskop/contracts';
-import { formatLocalDate, formatMonthYear } from '@taskop/i18n';
+import { CALENDAR_STATUSES, type CalendarItem, type CalendarStatus, isWholeDayWindow, toListParam } from '@edildy/contracts';
+import { formatLocalDate, formatMonthYear } from '@edildy/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight } from 'lucide-react';

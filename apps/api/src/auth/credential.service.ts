@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { secretSchemaFor } from '@taskop/contracts';
+import { secretSchemaFor } from '@edildy/contracts';
 import { and, eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -8,7 +8,7 @@ import { APP_CONFIG, type AppConfig } from '../config/config';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
 import { tenants, users } from '../db/schema';
-import { pickLanguage } from '@taskop/i18n';
+import { pickLanguage } from '@edildy/i18n';
 import { userLanguage } from '../common/locale';
 import { inviteMail, passwordResetMail } from '../mail/templates';
 import { type IssuedLogin, AuthService } from './auth.service';

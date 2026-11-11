@@ -6,7 +6,7 @@
 
 **Architecture:** Pure presentation changes inside the existing screens. `SyncIndicator` grows a `compact` prop, `LanguagePicker` grows a `variant` prop, `OccurrenceCard` is re-laid out, `HomeScreen` drops the tasks box and the subtitle. Three dead i18n keys are removed from all three languages. No API, no data changes.
 
-**Tech Stack:** Expo SDK 57 / React Native 0.86, react-i18next, `@taskop/i18n` formatters, Jest + `@testing-library/react-native`.
+**Tech Stack:** Expo SDK 57 / React Native 0.86, react-i18next, `@edildy/i18n` formatters, Jest + `@testing-library/react-native`.
 
 **Spec:** `docs/superpowers/specs/2026-11-06-mobile-home-and-problem-reports-design.md`, §7.1 and §7.2 (and the "Home page" / "Profile" rows of §1). This is Part 1 of 2; Part 2 (problem reports) is `2026-11-06-problem-reports.md`.
 
@@ -15,7 +15,7 @@
 - Every i18n key exists in `az`, `en` and `ru`; `packages/i18n` typechecks (`Shape<Translations>`) and `i18n.test.ts` passes.
 - Nothing is added above the checklist list on Home (spec anti-goal: "The home page grows taller").
 - Tap targets stay ≥ 44 pt; every icon-only control keeps a text `accessibilityLabel`.
-- Run from the worktree root: `pnpm --filter @taskop/i18n test`, `pnpm --filter @taskop/mobile test`, `pnpm --filter @taskop/mobile typecheck`, `pnpm --filter @taskop/mobile lint` before the final commit.
+- Run from the worktree root: `pnpm --filter @edildy/i18n test`, `pnpm --filter @edildy/mobile test`, `pnpm --filter @edildy/mobile typecheck`, `pnpm --filter @edildy/mobile lint` before the final commit.
 
 ## Review Focus
 
@@ -51,14 +51,14 @@ Delete the two assertions at lines 288 and 312 that read `az.mobile.tasks.home[.
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: FAIL, `LANGUAGE_FLAGS` is not exported.
 
 - [ ] **Step 3: Implement**: add `LANGUAGE_FLAGS` to `index.ts`; remove `home.subtitle`, the whole `tasks.home` object and `checklists.opensAt` from the three `mobile.ts` files.
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n typecheck`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n typecheck`
 Expected: PASS. (The mobile typecheck will fail until Tasks 3–4 remove the usages; that is expected.)
 
 - [ ] **Step 5: Commit**
@@ -94,14 +94,14 @@ it('compact: shows only the dot but keeps the label and opens the queue', async 
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- sync.test`
+Run: `pnpm --filter @edildy/mobile test -- sync.test`
 Expected: FAIL, the text "Sinxronlaşdırılıb" is still rendered.
 
 - [ ] **Step 3: Implement** the `compact` prop: a `styles.compact` pressable `{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }` and `styles.bigDot` `{ width: 12, height: 12, borderRadius: 6 }`; the non-compact branch is unchanged.
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `pnpm --filter @taskop/mobile test -- sync.test`
+Run: `pnpm --filter @edildy/mobile test -- sync.test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -120,7 +120,7 @@ git commit -m "feat(mobile): compact dot variant of the sync indicator"
 - Test: `apps/mobile/src/features/home/home-screen.test.tsx` (the card is only rendered through Home)
 
 **Interfaces:**
-- Consumes: `formatDateTime(iso, { locale, timeZone })` from `@taskop/i18n` → "6 noy 2026, 08:00" in az.
+- Consumes: `formatDateTime(iso, { locale, timeZone })` from `@edildy/i18n` → "6 noy 2026, 08:00" in az.
 - Produces: no new exports; the card renders
   - row 1: `o.checklistName` (`styles.title`, `flexShrink: 1`, `numberOfLines={1}`) | `o.siteName` (`styles.muted`, `flexShrink: 0`), with `o.shiftName` under the site in `type.sm` when present;
   - row 2: the window `t('mobile.checklists.window', …)` | `formatDateTime(o.startsAt, { locale, timeZone })`;
@@ -153,14 +153,14 @@ it('keeps the site name whole and lets a long checklist name shrink', async () =
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- home-screen`
+Run: `pnpm --filter @edildy/mobile test -- home-screen`
 Expected: FAIL on the new assertions.
 
 - [ ] **Step 3: Implement** the layout: two `View`s with `styles.row = { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.sm }`; the opening moment is always rendered (the `group === 'upcoming'` block is deleted).
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `pnpm --filter @taskop/mobile test -- home-screen`
+Run: `pnpm --filter @edildy/mobile test -- home-screen`
 Expected: PASS for the card tests (the "Home task card" block still fails until Task 4).
 
 - [ ] **Step 5: Commit**
@@ -202,7 +202,7 @@ it('greets by full name under a date-only eyebrow, with the sync dot and the bel
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- home-screen`
+Run: `pnpm --filter @edildy/mobile test -- home-screen`
 Expected: FAIL (subtitle present, tasks box present, pill text present).
 
 - [ ] **Step 3: Implement** in `home-screen.tsx`:
@@ -211,7 +211,7 @@ Expected: FAIL (subtitle present, tasks box present, pill text present).
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `pnpm --filter @taskop/mobile test -- home-screen && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- home-screen && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS; typecheck clean (no remaining reference to `mobile.tasks.home`, `mobile.home.subtitle`, `mobile.checklists.opensAt`).
 
 - [ ] **Step 5: Commit**
@@ -250,14 +250,14 @@ it('flags variant shows only the flag but still names the language for assistive
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- language-picker`
+Run: `pnpm --filter @edildy/mobile test -- language-picker`
 Expected: FAIL, "English" text found / no flag text.
 
 - [ ] **Step 3: Implement** the `variant` prop and switch the profile to `variant="flags"`. The login screen is untouched (default `names`).
 
 - [ ] **Step 4: Run to verify it passes**
 
-Run: `pnpm --filter @taskop/mobile test -- language-picker`
+Run: `pnpm --filter @edildy/mobile test -- language-picker`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -273,9 +273,9 @@ git commit -m "feat(mobile): flags-only language picker on the profile"
 
 - [ ] **Step 1: Run everything**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: all PASS, lint clean.
 
-- [ ] **Step 2: Visual check** on the iOS simulator (`pnpm --filter @taskop/mobile ios` or the existing dev build): Home shows "6 noy 2026", "Salam, Name Surname!", the dot and the bell on one row, no tasks box, cards with `name | site` over `window | opening time`; Profile shows three flags. Fix spacing if the header still looks tall.
+- [ ] **Step 2: Visual check** on the iOS simulator (`pnpm --filter @edildy/mobile ios` or the existing dev build): Home shows "6 noy 2026", "Salam, Name Surname!", the dot and the bell on one row, no tasks box, cards with `name | site` over `window | opening time`; Profile shows three flags. Fix spacing if the header still looks tall.
 
 - [ ] **Step 3: Commit any fixes** with `fix(mobile): …` and stop. Part 2 starts from this branch.

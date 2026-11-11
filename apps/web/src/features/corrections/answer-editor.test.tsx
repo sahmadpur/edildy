@@ -1,4 +1,4 @@
-import { type Answer, type DateTimeItem, type Item, type MultiChoiceItem, newItem } from '@taskop/contracts';
+import { type Answer, type DateTimeItem, type Item, type MultiChoiceItem, newItem } from '@edildy/contracts';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';

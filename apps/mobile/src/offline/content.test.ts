@@ -1,4 +1,4 @@
-import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 import { findItem, loadContent } from './content';
 
 describe('checklist content gate', () => {

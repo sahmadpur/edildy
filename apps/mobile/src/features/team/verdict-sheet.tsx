@@ -1,4 +1,4 @@
-import { AUDIT_LIMITS, auditVerdictInputSchema } from '@taskop/contracts';
+import { AUDIT_LIMITS, auditVerdictInputSchema } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, Platform, Text, TextInput, View } from 'react-native';

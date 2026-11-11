@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES, type TemplateSource, type TemplateSummary, toListParam } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateSource, type TemplateSummary, toListParam } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +44,7 @@ export function TemplatesPage() {
         {/* Pills: a filter inside the Şablonlar tab, not another row of page tabs. */}
         <Tabs value={source} onValueChange={(v) => setSource(v as TemplateSource)}>
           <TabsList variant="pill">
-            <TabsTrigger value="global">{t('checklists.templates.taskop')}</TabsTrigger>
+            <TabsTrigger value="global">{t('checklists.templates.edildy')}</TabsTrigger>
             <TabsTrigger value="tenant">{t('checklists.templates.ours')}</TabsTrigger>
           </TabsList>
         </Tabs>

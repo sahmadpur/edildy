@@ -1,6 +1,6 @@
 export default {
   login: {
-    title: 'Вход в Taskop',
+    title: 'Вход в Edildy',
     email: 'Эл. почта',
     password: 'Пароль',
     submit: 'Войти',

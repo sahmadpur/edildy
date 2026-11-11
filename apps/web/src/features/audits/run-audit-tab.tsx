@@ -1,4 +1,4 @@
-import { canStartAudit, type OccurrenceDetail } from '@taskop/contracts';
+import { canStartAudit, type OccurrenceDetail } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';

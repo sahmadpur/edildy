@@ -1,6 +1,6 @@
-import { ApiError } from '@taskop/api-client';
-import { TASK_LIMITS, type TaskDetail } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { TASK_LIMITS, type TaskDetail } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

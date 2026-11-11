@@ -7,7 +7,7 @@ export default {
   schedule: 'Təyinatlardan yaranan icralar həftə üzrə. İcranın üzərinə klikləyib cavablarına baxın.',
   calendar: 'Ay üzrə planlaşdırılmış və keçirilmiş yoxlamalar. Üzərinə gəlib təfərrüatlara baxın.',
   checklists: 'Yoxlama zamanı cavablandırılan sual siyahıları. Vərəqəni boş yaradın və ya şablondan götürün.',
-  templates: 'Yeni yoxlama vərəqəsi üçün hazır nümunələr: Taskop şablonları və öz şablonlarınız.',
+  templates: 'Yeni yoxlama vərəqəsi üçün hazır nümunələr: Edildy şablonları və öz şablonlarınız.',
   tasks: '«Hamısı» sizə görünən bütün tapşırıqlardır; «Mənim yaratdıqlarım» yalnız sizin yaratdıqlarınızdır.',
   audits: 'Bitmiş yoxlamaların ikinci baxışı. Auditə başlayın və nəticəni qiymətləndirin.',
   users: 'Cari bölmədə əməkdaşlar yoxlama işlərinə dəvət edilir, komandalar yaradılır.',
@@ -20,5 +20,5 @@ export default {
   messages: 'Əməkdaşlara, komandalara və ya obyektlərə mesaj göndərin.',
   notifications: 'Sizə gələn bütün bildirişlər. Bildirişin üzərinə klikləyib əlaqəli səhifəyə keçin.',
   newAssignment: 'Yoxlama vərəqəsini, obyekti, icraçıları və vaxtı seçin.',
-  globalTemplates: 'Bütün təşkilatlara görünən Taskop şablonları.',
+  globalTemplates: 'Bütün təşkilatlara görünən Edildy şablonları.',
 } as const;

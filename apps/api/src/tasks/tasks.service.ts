@@ -1,6 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 import { Injectable } from '@nestjs/common';
-import { isFinalTaskStatus, type TaskDetail, taskTransition } from '@taskop/contracts';
+import { isFinalTaskStatus, type TaskDetail, taskTransition } from '@edildy/contracts';
 import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

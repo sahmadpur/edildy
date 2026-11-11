@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';

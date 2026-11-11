@@ -14,7 +14,7 @@ import {
   type ScoreResult,
   type SendBackParams,
   walkItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { AppError } from '../common/app-error';

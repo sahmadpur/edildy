@@ -1,14 +1,14 @@
 # Production stack for the server (§5 of docs/superpowers/specs/2026-10-09-deployment-design.md).
-# Lives at /opt/taskop/docker-compose.prod.yml next to Caddyfile and .env (copy of .env.example, mode 600).
+# Lives at /opt/edildy/docker-compose.prod.yml next to Caddyfile and .env (copy of .env.example, mode 600).
 #
-#   taskop.app        → landing   (public page)
-#   admin.taskop.app  → web       (/*), api (/api/*)
-#   files.taskop.app  → seaweedfs (S3 API: presigned photo/video uploads and downloads)
+#   edildy.com        → landing   (public page)
+#   admin.edildy.com  → web       (/*), api (/api/*)
+#   files.edildy.com  → seaweedfs (S3 API: presigned photo/video uploads and downloads)
 #
 # Postgres and SeaweedFS are on the internal network only; Caddy is the only service with published ports.
 # Migrations: `docker compose run --rm migrate` before `up -d` (deploy/deploy.sh does both).
 # Local run from the repository: see deploy/README.md.
-name: taskop
+name: edildy
 
 x-logging: &logging
   driver: json-file
@@ -39,19 +39,19 @@ services:
   # CI builds and pushes the image; `docker compose pull` fetches it on the server. The `build` section lets the
   # same file build it from a checkout (CI, local runs).
   landing:
-    image: ${LANDING_IMAGE:-ghcr.io/sahmadpur/taskop-landing:latest}
+    image: ${LANDING_IMAGE:-ghcr.io/sahmadpur/edildy-landing:latest}
     build:
       context: ..
       dockerfile: apps/landing/Dockerfile
       args:
         # Where the page's Login and Sign up links go. Baked in at build time.
-        PLATFORM_URL: ${PLATFORM_URL:-https://admin.taskop.app}
+        PLATFORM_URL: ${PLATFORM_URL:-https://admin.edildy.com}
     restart: unless-stopped
     logging: *logging
 
   # The web app: Vite's static build served by Caddy (apps/web/Dockerfile).
   web:
-    image: ${WEB_IMAGE:-ghcr.io/sahmadpur/taskop-web:latest}
+    image: ${WEB_IMAGE:-ghcr.io/sahmadpur/edildy-web:latest}
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
@@ -59,7 +59,7 @@ services:
     logging: *logging
 
   api:
-    image: ${API_IMAGE:-ghcr.io/sahmadpur/taskop-api:latest}
+    image: ${API_IMAGE:-ghcr.io/sahmadpur/edildy-api:latest}
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
@@ -68,23 +68,23 @@ services:
     environment: &api-env
       NODE_ENV: production
       PORT: '3000'
-      DATABASE_OWNER_URL: postgres://taskop_owner:${OWNER_DB_PASSWORD:?}@postgres:5432/taskop
-      DATABASE_APP_URL: postgres://taskop_app:${APP_DB_PASSWORD:?}@postgres:5432/taskop
-      DATABASE_PLATFORM_URL: postgres://taskop_platform:${PLATFORM_DB_PASSWORD:?}@postgres:5432/taskop
+      DATABASE_OWNER_URL: postgres://edildy_owner:${OWNER_DB_PASSWORD:?}@postgres:5432/edildy
+      DATABASE_APP_URL: postgres://edildy_app:${APP_DB_PASSWORD:?}@postgres:5432/edildy
+      DATABASE_PLATFORM_URL: postgres://edildy_platform:${PLATFORM_DB_PASSWORD:?}@postgres:5432/edildy
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?}
       PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?}
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?}
-      WEB_URL: ${WEB_URL:-https://admin.taskop.app}
+      WEB_URL: ${WEB_URL:-https://admin.edildy.com}
       SMTP_URL: ${SMTP_URL:?}
-      MAIL_FROM: ${MAIL_FROM:-Taskop <no-reply@taskop.app>}
+      MAIL_FROM: ${MAIL_FROM:-Edildy <no-reply@edildy.com>}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       TRUST_PROXY: 'true'
       LOG_LEVEL: ${LOG_LEVEL:-info}
       S3_ENDPOINT: http://seaweedfs:8333
-      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-https://files.taskop.app}
-      S3_BUCKET: taskop-media
-      S3_ACCESS_KEY: taskop
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-https://files.edildy.com}
+      S3_BUCKET: edildy-media
+      S3_ACCESS_KEY: edildy
       S3_SECRET_KEY: ${S3_SECRET_KEY:?}
       S3_FORCE_PATH_STYLE: 'true'
       # EXPO_ACCESS_TOKEN (Expo's enhanced push security) is not passed: an empty value fails the config check.
@@ -92,10 +92,10 @@ services:
       postgres: { condition: service_healthy }
       seaweedfs: { condition: service_started }
 
-  # One-off: creates the taskop_app / taskop_platform roles and applies the Drizzle migrations.
+  # One-off: creates the edildy_app / edildy_platform roles and applies the Drizzle migrations.
   # Not started by `up`; run with `docker compose run --rm migrate`.
   migrate:
-    image: ${API_IMAGE:-ghcr.io/sahmadpur/taskop-api:latest}
+    image: ${API_IMAGE:-ghcr.io/sahmadpur/edildy-api:latest}
     profiles: [tools]
     environment: *api-env
     command: ['node', 'dist/db/scripts/setup.js']
@@ -107,14 +107,14 @@ services:
     restart: unless-stopped
     logging: *logging
     environment:
-      POSTGRES_DB: taskop
-      POSTGRES_USER: taskop_owner
+      POSTGRES_DB: edildy
+      POSTGRES_USER: edildy_owner
       POSTGRES_PASSWORD: ${OWNER_DB_PASSWORD:?}
     volumes:
       - pgdata:/var/lib/postgresql
     shm_size: 256m
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U taskop_owner -d taskop']
+      test: ['CMD-SHELL', 'pg_isready -U edildy_owner -d edildy']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -131,7 +131,7 @@ services:
       - sh
       - -c
       - >-
-        printf '{"identities":[{"name":"taskop","credentials":[{"accessKey":"taskop","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
+        printf '{"identities":[{"name":"edildy","credentials":[{"accessKey":"edildy","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}'
         "$$S3_SECRET_KEY" > /tmp/s3.json
         && exec /entrypoint.sh server -s3 -s3.config=/tmp/s3.json -dir=/data -volume.max=0
     volumes:
@@ -144,17 +144,17 @@ services:
     restart: on-failure
     logging: *logging
     environment:
-      AWS_ACCESS_KEY_ID: taskop
+      AWS_ACCESS_KEY_ID: edildy
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?}
       AWS_DEFAULT_REGION: us-east-1
-      WEB_URL: ${WEB_URL:-https://admin.taskop.app}
+      WEB_URL: ${WEB_URL:-https://admin.edildy.com}
     entrypoint:
       - sh
       - -c
       - >-
-        (aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket taskop-media
-        || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket taskop-media)
-        && aws --endpoint-url http://seaweedfs:8333 s3api put-bucket-cors --bucket taskop-media --cors-configuration
+        (aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket edildy-media
+        || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket edildy-media)
+        && aws --endpoint-url http://seaweedfs:8333 s3api put-bucket-cors --bucket edildy-media --cors-configuration
         "{\"CORSRules\":[{\"AllowedOrigins\":[\"$$WEB_URL\"],\"AllowedMethods\":[\"GET\",\"PUT\",\"HEAD\"],\"AllowedHeaders\":[\"Content-Type\",\"Content-Length\"],\"ExposeHeaders\":[\"ETag\"],\"MaxAgeSeconds\":3000}]}"
 
 volumes:

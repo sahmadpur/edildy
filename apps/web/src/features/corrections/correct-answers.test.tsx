@@ -1,5 +1,5 @@
-import type { ExecutionDetail, OccurrenceStatus } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { ExecutionDetail, OccurrenceStatus } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

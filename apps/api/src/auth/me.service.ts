@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { Me } from '@taskop/contracts';
-import { isLanguage } from '@taskop/i18n';
+import type { Me } from '@edildy/contracts';
+import { isLanguage } from '@edildy/i18n';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { DbService } from '../db/db.service';

@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -144,7 +144,7 @@ export function TemplateEditorPage({ source, templateId }: { source: 'global' | 
     <Builder
       key={`${tpl.data.id}:${reloadKey}`}
       title={tpl.data.name}
-      badge={<Badge variant="outline">{source === 'global' ? t('checklists.templates.taskop') : t('checklists.templates.template')}</Badge>}
+      badge={<Badge variant="outline">{source === 'global' ? t('checklists.templates.edildy') : t('checklists.templates.template')}</Badge>}
       initialContent={tpl.data.content}
       initialRevision={tpl.data.revision}
       readOnly={!editable}

@@ -1,4 +1,4 @@
-import type { NotificationType } from '@taskop/contracts';
+import type { NotificationType } from '@edildy/contracts';
 
 /** notification_events.payload holds ids only (spec §5), except for manual messages. */
 export interface OccurrencePayload {

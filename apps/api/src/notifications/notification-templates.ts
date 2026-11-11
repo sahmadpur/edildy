@@ -1,5 +1,5 @@
-import { isProblemReportType, isProblemType, type NotificationTargetKind, type NotificationType } from '@taskop/contracts';
-import { interpolate, type Language, translationsFor } from '@taskop/i18n';
+import { isProblemReportType, isProblemType, type NotificationTargetKind, type NotificationType } from '@edildy/contracts';
+import { interpolate, type Language, translationsFor } from '@edildy/i18n';
 import type { MailMessage } from '../mail/mailer';
 import type { NotificationTarget, OccurrenceTarget, ProblemReportTarget, ProblemTarget, RunTarget, TaskTarget } from './notification-targets';
 
@@ -74,7 +74,7 @@ const taskText = (T: Templates, type: NotificationType, t: TaskTarget): { title:
   return { title: tpl.title, body: withDue };
 };
 
-/** SP8 spec §7.1: the texts live in @taskop/i18n (notifications.templates). */
+/** SP8 spec §7.1: the texts live in @edildy/i18n (notifications.templates). */
 function runText(L: ReturnType<typeof translationsFor>, type: NotificationType, r: RunTarget): { title: string; body: string } | null {
   const T = L.notifications.templates;
   const place = { checklist: r.occurrence.checklistName, site: r.occurrence.siteName };

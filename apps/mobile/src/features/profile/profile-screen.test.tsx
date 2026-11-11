@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert, type AlertButton, AppState } from 'react-native';
 import '@/lib/i18n';
@@ -300,7 +300,7 @@ describe('notification settings', () => {
   });
 
   it('puts the switch back and shows the error when saving fails', async () => {
-    mockUser = { ...mockUser, email: 'aysel@demo.taskop.az' };
+    mockUser = { ...mockUser, email: 'aysel@demo.edildy.az' };
     mockUpdate.mockRejectedValue(new ApiError(500, 'INTERNAL', 'errors.INTERNAL'));
     const t = await createTestServices({ online: true });
     await renderWithServices(t.services, <ProfileScreen />);

@@ -1,4 +1,4 @@
-import { blankContent, type ChecklistContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 
 /** S1: [A (rule → A1 (rule → A11)), B], S2: [C]. Shared by the builder tests. */
 export function treeFixture() {

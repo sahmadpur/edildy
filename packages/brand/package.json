@@ -1,9 +1,9 @@
 {
-  "name": "@taskop/brand",
+  "name": "@edildy/brand",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Taskop's design tokens, logo and generated icons, shared by the web app, the landing page and the mobile app.",
+  "description": "Edildy's design tokens, logo and generated icons, shared by the web app, the landing page and the mobile app.",
   "files": [
     "dist",
     "fonts",
@@ -30,7 +30,7 @@
     "generate": "pnpm build && node scripts/generate.mjs"
   },
   "devDependencies": {
-    "@taskop/config": "workspace:*",
+    "@edildy/config": "workspace:*",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
     "sharp": "^0.35.5",

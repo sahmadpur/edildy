@@ -1,4 +1,4 @@
-import type { TaskDetail } from '@taskop/contracts';
+import type { TaskDetail } from '@edildy/contracts';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import '@/lib/i18n';
@@ -51,7 +51,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockPermissions = ['tasks.manage'];
   jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-  mockUrl.mockResolvedValue({ url: `http://files.test/taskop-media/${PHOTO}.jpg?X-Amz-Signature=x`, expiresAt: T.due });
+  mockUrl.mockResolvedValue({ url: `http://files.test/edildy-media/${PHOTO}.jpg?X-Amz-Signature=x`, expiresAt: T.due });
 });
 
 async function opened() {
@@ -149,7 +149,7 @@ describe('ReviewScreen', () => {
   });
 
   it('shows the top-level error when the server rejects a field the form does not draw', async () => {
-    const { ApiError } = jest.requireActual<typeof import('@taskop/api-client')>('@taskop/api-client');
+    const { ApiError } = jest.requireActual<typeof import('@edildy/api-client')>('@edildy/api-client');
     mockGet.mockResolvedValue(awaiting());
     mockReview.mockRejectedValueOnce(new ApiError(422, 'VALIDATION_FAILED', 'errors.VALIDATION_FAILED', { decision: 'errors.VALIDATION_FAILED' }));
     await opened();

@@ -1,5 +1,5 @@
 import { hash } from '@node-rs/argon2';
-import { addDays, type Answers, type ChecklistContent, computeScore, countItems, deriveProblems, localDateOf, progress, regenerateIds, zonedTimeToUtc } from '@taskop/contracts';
+import { addDays, type Answers, type ChecklistContent, computeScore, countItems, deriveProblems, localDateOf, progress, regenerateIds, zonedTimeToUtc } from '@edildy/contracts';
 import { and, eq, inArray, or } from 'drizzle-orm';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { uuidv7 } from 'uuidv7';
@@ -202,7 +202,7 @@ async function seedDemoTasks(tx: Tx, tenantId: string): Promise<void> {
   const [leyla] = await tx
     .select({ id: schema.users.id })
     .from(schema.users)
-    .where(and(eq(schema.users.tenantId, tenantId), eq(schema.users.email, 'manager@demo.taskop.az')));
+    .where(and(eq(schema.users.tenantId, tenantId), eq(schema.users.email, 'manager@demo.edildy.az')));
   const workers = await tx
     .select({ id: schema.users.id, username: schema.users.username })
     .from(schema.users)
@@ -272,7 +272,7 @@ async function seedDemoNotifications(tx: Tx, tenantId: string, ownerId: string):
   const people = await tx
     .select({ id: schema.users.id })
     .from(schema.users)
-    .where(and(eq(schema.users.tenantId, tenantId), or(eq(schema.users.username, 'elvin'), eq(schema.users.email, 'manager@demo.taskop.az'))));
+    .where(and(eq(schema.users.tenantId, tenantId), or(eq(schema.users.username, 'elvin'), eq(schema.users.email, 'manager@demo.edildy.az'))));
   if (!people.length) return;
   const title = 'Xoş gəlmisiniz';
   const body = 'Yeni işlər, gecikmələr və problemlər haqqında bildirişləri burada görəcəksiniz.';
@@ -299,7 +299,7 @@ export async function seed(url: string): Promise<void> {
   await seedGlobalTemplates(db);
   const [existing] = await db.select().from(schema.tenants).where(eq(schema.tenants.orgCode, 'demo'));
   if (existing) {
-    const [owner] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, 'owner@demo.taskop.az'));
+    const [owner] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, 'owner@demo.edildy.az'));
     if (owner) {
       await db.transaction(async (tx) => {
         await seedDemoChecklists(tx, existing.id, owner.id);
@@ -332,13 +332,13 @@ export async function seed(url: string): Promise<void> {
     const ownerId = uuidv7();
     await tx.insert(schema.users).values({
       id: ownerId, tenantId, fullName: 'Demo Sahib', roleId: roleIds.owner, kind: 'staff',
-      email: 'owner@demo.taskop.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
+      email: 'owner@demo.edildy.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
       status: 'active', emailVerifiedAt: new Date(),
     });
     const managerId = uuidv7();
     await tx.insert(schema.users).values({
       id: managerId, tenantId, fullName: 'Leyla Quliyeva', roleId: roleIds.manager, kind: 'staff',
-      email: 'manager@demo.taskop.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
+      email: 'manager@demo.edildy.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
       status: 'active', emailVerifiedAt: new Date(), managerId: ownerId,
     });
     await tx.insert(schema.userSites).values({ tenantId, userId: managerId, siteId: warehouse.id });
@@ -361,8 +361,8 @@ export async function seed(url: string): Promise<void> {
   });
   await db.$client.end();
   console.log('Demo tenant "demo" created.');
-  console.log('  Owner:   owner@demo.taskop.az / DemoPassword123');
-  console.log('  Manager: manager@demo.taskop.az / DemoPassword123');
+  console.log('  Owner:   owner@demo.edildy.az / DemoPassword123');
+  console.log('  Manager: manager@demo.edildy.az / DemoPassword123');
   console.log('  Workers: org code "demo", usernames elvin / nigar, PIN 482915');
   console.log('  Scheduling: shift "Səhər", daily "Səhər təmizliyi" at Anbar №1 (occurrences appear once the API has started)');
   console.log('  Execution: yesterday\'s "Səhər təmizliyi" by elvin, partial, with two problems (web schedule drawer and /problems)');

@@ -1,4 +1,4 @@
-import { type Answer, type Answers, type ChecklistContent, type CorrectAnswersParams, walkItems } from '@taskop/contracts';
+import { type Answer, type Answers, type ChecklistContent, type CorrectAnswersParams, walkItems } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 
 /**

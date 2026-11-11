@@ -1,5 +1,5 @@
 {
-  "name": "taskop",
+  "name": "edildy",
   "private": true,
   "packageManager": "pnpm@12.9.1",
   "engines": {
@@ -11,8 +11,8 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "db:setup": "pnpm --filter @taskop/api db:setup",
-    "db:seed": "pnpm --filter @taskop/api db:seed",
+    "db:setup": "pnpm --filter @edildy/api db:setup",
+    "db:seed": "pnpm --filter @edildy/api db:seed",
     "format": "prettier --write ."
   },
   "devDependencies": {

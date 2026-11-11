@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TaskAuditAction, TaskStatus } from '@taskop/contracts';
+import type { TaskAuditAction, TaskStatus } from '@edildy/contracts';
 import { DomainEvents, type TaskEventName } from '../common/domain-events';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';

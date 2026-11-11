@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { LocalDate, ReportFiltersQuery, RunBucket } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { LocalDate, ReportFiltersQuery, RunBucket } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, session } from '@/lib/session';

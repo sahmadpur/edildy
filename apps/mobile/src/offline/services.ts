@@ -1,4 +1,4 @@
-import type { DeviceInfo } from '@taskop/contracts';
+import type { DeviceInfo } from '@edildy/contracts';
 import { type ChangeFeed, createChangeFeed } from './change-feed';
 import type { Clock } from './clock';
 import { type Db, migrate, setMeta } from './db';

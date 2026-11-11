@@ -1,4 +1,4 @@
-# Taskop Mobile Execution — Part 3: Web — Implementation Plan
+# Edildy Mobile Execution — Part 3: Web — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -6,7 +6,7 @@
 
 **Architecture:**
 - **New feature folder `apps/web/src/features/executions/`**, next to `features/scheduling/`. It follows the existing pattern: React Query hooks in `queries.ts`, pure helpers in `labels.ts`, components that call `api.*` from `@/lib/session`, and shadcn/ui components.
-- **The pinned layout comes from `@taskop/contracts`.** `visibleItems(content, answers)` decides which items show, in which order and at which depth. The web never re-implements follow-up logic, so it shows exactly what the phone showed.
+- **The pinned layout comes from `@edildy/contracts`.** `visibleItems(content, answers)` decides which items show, in which order and at which depth. The web never re-implements follow-up logic, so it shows exactly what the phone showed.
 - **Problems come from the server.** The drawer highlights the frozen `ExecutionDetail.problems` (spec §5.2), not a client-side derivation.
 - **Media are private.** Each uploaded photo or video is shown through `GET /media/:id/url`, a presigned GET valid 5 minutes. A URL is cached for 4 minutes and fetched again once when the browser fails to load it. Pending media never ask for a URL.
 - **Deep link.** `/schedule` accepts `?date=&occurrence=&tab=`. A problems row links there, and the schedule page opens that occurrence's drawer on that tab.
@@ -17,14 +17,14 @@
 **Spec:** `docs/superpowers/specs/2026-10-09-mobile-execution-design.md`. This plan implements §8 and the web and Playwright parts of §10.
 
 **This plan is Part 3 of 3.**
-- **Before starting:** Part 1 (`docs/superpowers/plans/2026-10-09-mobile-execution-1-api.md`) **Tasks 1–5** must be merged into the feature branch. They provide every contract type and schema, the `az.executions` strings, the 9 error codes and the `@taskop/api-client` methods used here. Part 1 Task 3 already adds `executionBrief: null` and `execution: null, rejectedExecutions: []` to the fixtures of `schedule-page.test.tsx` and `assignment-pages.test.tsx`; this plan builds on those fixtures.
+- **Before starting:** Part 1 (`docs/superpowers/plans/2026-10-09-mobile-execution-1-api.md`) **Tasks 1–5** must be merged into the feature branch. They provide every contract type and schema, the `az.executions` strings, the 9 error codes and the `@edildy/api-client` methods used here. Part 1 Task 3 already adds `executionBrief: null` and `execution: null, rejectedExecutions: []` to the fixtures of `schedule-page.test.tsx` and `assignment-pages.test.tsx`; this plan builds on those fixtures.
 - **Tasks 1–7** need nothing else. They test against mocked `@/lib/session`.
 - **Task 8 (Playwright)** needs Part 1 **Tasks 6–18** merged: the API endpoints, the SeaweedFS settings the API boots with, and the seed.
 - Part 2 (`apps/mobile`) is independent of this part.
 
 ## Global Constraints
 
-- The product name is **Taskop**. Azerbaijani (`az`) is the only locale.
+- The product name is **Edildy**. Azerbaijani (`az`) is the only locale.
 - Every visible string is an i18n key. New web strings go into `az.executions` (Part 1 Task 4's file, **new keys only**; never rename Part 1's keys) and `az.nav.problems`. Reuse `executions.states`, `claimRejections`, `severities`, `problemSources`, `flags`, `mediaKinds` and `mediaSources` from Part 1.
 - Install nothing. Use the existing components: `Badge`, `Button`, `Dialog`, `Tabs`, `Table`, `Input`, `Label`, `NativeSelect`, `PageHeader`.
 - Times shown to users are in the **tenant timezone** (`useFormatDateTime`, `useTimeFormat`). Local dates (`YYYY-MM-DD`) use `formatLocalDate`, which formats in UTC so they never shift.
@@ -137,7 +137,7 @@ describe('execution web translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.nav.problems` is `undefined` (and `az.executions.tabs` does not exist).
 
 - [ ] **Step 3: Implement**
@@ -218,7 +218,7 @@ In `packages/i18n/src/az/nav.ts`, add after `roster: 'Növbə cədvəli',`:
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS. The build makes the new keys visible to `apps/web`.
 
 - [ ] **Step 5: Commit**
@@ -260,7 +260,7 @@ git commit -m "feat(i18n): add web strings for the execution tab and the problem
 `apps/web/src/features/executions/labels.test.ts`:
 
 ```ts
-import { type DateTimeItem, type MultiChoiceItem, newItem, type NumberItem, type YesNoItem } from '@taskop/contracts';
+import { type DateTimeItem, type MultiChoiceItem, newItem, type NumberItem, type YesNoItem } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import {
@@ -332,7 +332,7 @@ describe('execution labels', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/labels`
+Run: `pnpm --filter @edildy/web test -- features/executions/labels`
 Expected: FAIL: `Failed to resolve import "./labels"`.
 
 - [ ] **Step 3: Implement the helpers**
@@ -340,8 +340,8 @@ Expected: FAIL: `Failed to resolve import "./labels"`.
 `apps/web/src/features/executions/labels.ts`:
 
 ```ts
-import { addDays, type Answer, dayNumber, EXECUTION_LIMITS, type ExecutionState, type Item, type ProblemSeverity } from '@taskop/contracts';
-import { intlLocale } from '@taskop/i18n';
+import { addDays, type Answer, dayNumber, EXECUTION_LIMITS, type ExecutionState, type Item, type ProblemSeverity } from '@edildy/contracts';
+import { intlLocale } from '@edildy/i18n';
 import type { TFunction } from 'i18next';
 import { optionLabel } from '@/features/checklists/labels';
 import { formatLocalDate } from '@/features/scheduling/labels';
@@ -408,7 +408,7 @@ export const defaultProblemRange = (today: string): { from: string; to: string }
 `apps/web/src/features/executions/queries.ts`:
 
 ```ts
-import { MEDIA_LIMITS, type ProblemListQuery } from '@taskop/contracts';
+import { MEDIA_LIMITS, type ProblemListQuery } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 
@@ -466,7 +466,7 @@ import {
   type OccurrenceDetail,
   type OccurrenceDto,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** Test data shared by the execution tests. Not imported by application code. */
 export const U1 = { id: 'u1', fullName: 'Aysel Məmmədova' };
@@ -583,7 +583,7 @@ export function executionFixture() {
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/labels && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- features/executions/labels && pnpm --filter @edildy/web typecheck`
 Expected: PASS (4 tests). The typecheck covers `queries.ts` and `fixtures.ts`.
 
 - [ ] **Step 7: Commit**
@@ -690,7 +690,7 @@ describe('media', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/media`
+Run: `pnpm --filter @edildy/web test -- features/executions/media`
 Expected: FAIL: `Failed to resolve import "./media"`.
 
 - [ ] **Step 3: Implement**
@@ -698,7 +698,7 @@ Expected: FAIL: `Failed to resolve import "./media"`.
 `apps/web/src/features/executions/media.tsx`:
 
 ```tsx
-import type { ExecutionMediaDto } from '@taskop/contracts';
+import type { ExecutionMediaDto } from '@edildy/contracts';
 import { Play } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -834,7 +834,7 @@ export function MediaLightbox({ media, onClose }: { media: ExecutionMediaDto; on
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/media && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/executions/media && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (4 tests).
 
 - [ ] **Step 5: Commit**
@@ -853,7 +853,7 @@ git commit -m "feat(web): show execution photos and videos through short-lived U
 - Test: `apps/web/src/features/executions/answers-view.test.tsx`
 
 **Interfaces:**
-- Consumes: `visibleItems` (`@taskop/contracts`); `answerValue`, `severityVariant` (Task 2); `MediaStrip`, `MediaLightbox` (Task 3); `useFormatDateTime`.
+- Consumes: `visibleItems` (`@edildy/contracts`); `answerValue`, `severityVariant` (Task 2); `MediaStrip`, `MediaLightbox` (Task 3); `useFormatDateTime`.
 - Produces: `AnswersView({ content, answers, media, problems })`
   - One `<section aria-label={section.title}>` per section that has visible items, with an `<ol>`.
   - One `<li aria-label={item.label} data-depth={depth} data-problem="critical|normal">` per visible item. Follow-ups are indented by `depth × 16px`.
@@ -948,7 +948,7 @@ describe('AnswersView', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/answers-view`
+Run: `pnpm --filter @edildy/web test -- features/executions/answers-view`
 Expected: FAIL: `Failed to resolve import "./answers-view"`.
 
 - [ ] **Step 3: Implement**
@@ -956,7 +956,7 @@ Expected: FAIL: `Failed to resolve import "./answers-view"`.
 `apps/web/src/features/executions/answers-view.tsx`:
 
 ```tsx
-import { type Answer, type Answers, type ChecklistContent, type ExecutionMediaDto, type ExecutionProblem, type Item, visibleItems } from '@taskop/contracts';
+import { type Answer, type Answers, type ChecklistContent, type ExecutionMediaDto, type ExecutionProblem, type Item, visibleItems } from '@edildy/contracts';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -1056,7 +1056,7 @@ function AnswerRow(props: {
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/executions && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/executions && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (4 new tests; Tasks 2–3 still pass).
 
 - [ ] **Step 5: Commit**
@@ -1093,7 +1093,7 @@ git commit -m "feat(web): render execution answers in the pinned checklist layou
 `apps/web/src/features/executions/execution-tab.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1174,7 +1174,7 @@ describe('ExecutionTab', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/execution-tab`
+Run: `pnpm --filter @edildy/web test -- features/executions/execution-tab`
 Expected: FAIL: `Failed to resolve import "./execution-tab"`.
 
 - [ ] **Step 3: Implement the tab**
@@ -1182,7 +1182,7 @@ Expected: FAIL: `Failed to resolve import "./execution-tab"`.
 `apps/web/src/features/executions/execution-tab.tsx`:
 
 ```tsx
-import type { ExecutionDetail, ExecutionSummary, OccurrenceDetail } from '@taskop/contracts';
+import type { ExecutionDetail, ExecutionSummary, OccurrenceDetail } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -1330,7 +1330,7 @@ function RejectedExecution({ summary }: { summary: ExecutionSummary }) {
 
 - [ ] **Step 4: Run the tab test and check it passes**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/execution-tab`
+Run: `pnpm --filter @edildy/web test -- features/executions/execution-tab`
 Expected: PASS (4 tests).
 
 - [ ] **Step 5: Add the tabs to the occurrence drawer**
@@ -1338,7 +1338,7 @@ Expected: PASS (4 tests).
 Replace `apps/web/src/features/scheduling/occurrence-dialog.tsx` with:
 
 ```tsx
-import type { OccurrenceHistoryEntry } from '@taskop/contracts';
+import type { OccurrenceHistoryEntry } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -1467,7 +1467,7 @@ The "Ümumi" tab content is the SP3 dialog body, unchanged.
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/executions features/scheduling && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/executions features/scheduling && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS. The SP3 schedule tests (`opens an occurrence with its history and cancels it with a reason`, `shows an error instead of loading forever…`) still pass: the drawer opens on "Ümumi".
 
 - [ ] **Step 7: Commit**
@@ -1550,7 +1550,7 @@ In `apps/web/src/features/scheduling/schedule-page.test.tsx`:
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/scheduling/schedule-page features/scheduling/labels`
+Run: `pnpm --filter @edildy/web test -- features/scheduling/schedule-page features/scheduling/labels`
 Expected: FAIL:
 - `scheduleSearch` is not exported from `./routes`.
 - `occurrenceVariant('partial')` is `'default'`.
@@ -1576,7 +1576,7 @@ export const occurrenceVariant = (s: OccurrenceStatus): Variant =>
 Replace `apps/web/src/features/scheduling/schedule-page.tsx` with:
 
 ```tsx
-import { addDays, type ExecutionBrief, OCCURRENCE_STATUSES, type OccurrenceDto } from '@taskop/contracts';
+import { addDays, type ExecutionBrief, OCCURRENCE_STATUSES, type OccurrenceDto } from '@edildy/contracts';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -1759,7 +1759,7 @@ const scheduleRoute = createRoute({ getParentRoute: () => appLayout, path: '/sch
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/scheduling router && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/scheduling router && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (3 new schedule tests, the extended labels test, all SP3 scheduling tests, `router.test.tsx`).
 
 - [ ] **Step 7: Commit**
@@ -1795,7 +1795,7 @@ git commit -m "feat(web): show executions on schedule rows and open the drawer f
 `apps/web/src/features/executions/problems-page.test.tsx`:
 
 ```tsx
-import type { ProblemDto } from '@taskop/contracts';
+import type { ProblemDto } from '@edildy/contracts';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1902,7 +1902,7 @@ In `apps/web/src/layouts/app-shell.test.tsx`:
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- problems-page app-shell`
+Run: `pnpm --filter @edildy/web test -- problems-page app-shell`
 Expected: FAIL:
 - `Failed to resolve import "./problems-page"`.
 - In the shell test, no link named "Problemlər".
@@ -1912,7 +1912,7 @@ Expected: FAIL:
 `apps/web/src/features/executions/problems-page.tsx`:
 
 ```tsx
-import { PROBLEM_SEVERITIES, PROBLEM_SOURCES, type ProblemSeverity, type ProblemSource } from '@taskop/contracts';
+import { PROBLEM_SEVERITIES, PROBLEM_SOURCES, type ProblemSeverity, type ProblemSource } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2081,7 +2081,7 @@ In `apps/web/src/layouts/app-shell.tsx`:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS: the whole web suite, including 4 problems page tests, 2 app-shell tests and `router.test.tsx`.
 
 - [ ] **Step 6: Commit**
@@ -2113,7 +2113,7 @@ git commit -m "feat(web): add the read-only problems page with filters and drawe
 ```ts
 import { randomBytes } from 'node:crypto';
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import type { ChecklistContent, SyncResponse } from '@taskop/contracts';
+import type { ChecklistContent, SyncResponse } from '@edildy/contracts';
 
 /** UUIDv7 (RFC 9562): 48-bit Unix ms, version 7, variant 10, random rest. The phone generates IDs like this. */
 function uuidv7(): string {
@@ -2145,7 +2145,7 @@ test('a worker executes an occurrence through the API, then the owner reads it i
   const email = `exe-${suffix}@example.az`;
   const password = 'e2e owner password';
 
-  // Tenant, site, worker and a published checklist from a Taskop template.
+  // Tenant, site, worker and a published checklist from a Edildy template.
   const signup = await request.post('/api/v1/auth/signup', {
     data: { orgName: 'E2E İcra MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
   });
@@ -2280,16 +2280,16 @@ test('a worker executes an occurrence through the API, then the owner reads it i
 Prerequisites: Part 1 Tasks 6–18 merged; `docker compose up -d` (Postgres and SeaweedFS); `apps/api/.env` filled in, including the `S3_*` keys from `apps/api/.env.example`; `pnpm db:setup && pnpm db:seed` done.
 
 ```bash
-pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api-client build
-pnpm --filter @taskop/api build
-pnpm --filter @taskop/web e2e -- executions
+pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api-client build
+pnpm --filter @edildy/api build
+pnpm --filter @edildy/web e2e -- executions
 ```
 
 Expected: PASS. The Playwright config starts the API and the web dev server when they are not already running.
 
 - [ ] **Step 3: Check the seeded demo by hand**
 
-With the dev servers running (`pnpm --filter @taskop/api start`, `pnpm --filter @taskop/web dev`), sign in at `http://localhost:5173` as the demo owner that `pnpm db:seed` prints. Then:
+With the dev servers running (`pnpm --filter @edildy/api start`, `pnpm --filter @edildy/web dev`), sign in at `http://localhost:5173` as the demo owner that `pnpm db:seed` prints. Then:
 - Open "Problemlər". Yesterday's "Səhər təmizliyi" occurrence at "Anbar №1" (Part 1 Task 18) shows two problems: "Pis qoxu var?" (Qayda üzrə) and "Zibil qutuları boşaldılıb?" (Əl ilə qeyd).
 - Click one. The drawer opens on "İcra": elvin, "Yarımçıq", "Tamamlanmayıb", the follow-up "Kanalizasiya borusundan" indented under "Pis qoxu var?".
 
@@ -2299,7 +2299,7 @@ Expected: as described. Nothing to commit for this step.
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test
-pnpm --filter @taskop/web e2e
+pnpm --filter @edildy/web e2e
 ```
 
 Expected: all green. The `foundation`, `checklists` and `scheduling` end-to-end tests still pass. In `scheduling.spec.ts` the assignment's occurrences have no execution, so the schedule rows render as before.

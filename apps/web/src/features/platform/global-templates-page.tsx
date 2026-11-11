@@ -1,4 +1,4 @@
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -37,7 +37,7 @@ export function GlobalTemplatesPage() {
   return (
     <div>
       <PageHeader
-        title={t('checklists.templates.taskop')} description={t('pages.globalTemplates')}
+        title={t('checklists.templates.edildy')} description={t('pages.globalTemplates')}
         actions={<Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>}
       />
       <Table>

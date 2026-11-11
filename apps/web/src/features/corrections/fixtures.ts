@@ -1,4 +1,4 @@
-import type { Correction, ExecutionCorrections, ReworkRequest } from '@taskop/contracts';
+import type { Correction, ExecutionCorrections, ReworkRequest } from '@edildy/contracts';
 
 /** Test data shared by the correction tests. Not imported by application code. */
 export const MANAGER = { id: 'mgr', fullName: 'Leyla Quliyeva' };

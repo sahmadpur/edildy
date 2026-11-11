@@ -1,5 +1,5 @@
-import { visibleItems } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { visibleItems } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

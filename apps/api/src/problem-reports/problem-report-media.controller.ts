@@ -1,6 +1,6 @@
 import { Controller, Get, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { MediaConfirmResult, MediaUrl } from '@taskop/contracts';
+import type { MediaConfirmResult, MediaUrl } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';

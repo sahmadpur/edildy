@@ -13,7 +13,7 @@ import {
   type NumberItem,
   type PhotoItem,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { expect } from 'vitest';
 import { as, createUserDirect, loginWorker, type SignedUpTenant, signupTenant, siteTypeIdOf } from './fixtures';

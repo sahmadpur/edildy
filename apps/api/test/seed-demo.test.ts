@@ -56,8 +56,8 @@ describe('demo seed', () => {
         order by 1`,
     );
     expect(r.rows).toEqual([
-      { who: 'elvin', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.taskop.az' },
-      { who: 'manager@demo.taskop.az', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.taskop.az' },
+      { who: 'elvin', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.edildy.az' },
+      { who: 'manager@demo.edildy.az', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.edildy.az' },
     ]);
   }, 60_000);
 });

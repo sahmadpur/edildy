@@ -4,7 +4,7 @@ import {
   roleDtoSchema,
   setRolePermissionsInputSchema,
   updateRoleInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class CreateRoleDto extends createZodDto(createRoleInputSchema) {}

@@ -14,7 +14,7 @@ import { ownerQuery } from './owner-db';
 import { noisePng } from './png';
 import { MONDAY_0800 } from './scheduling-fixtures';
 
-const FILE = 'taskop-audit-icra-yoxlamasi-2026-11-02.pdf';
+const FILE = 'edildy-audit-icra-yoxlamasi-2026-11-02.pdf';
 
 interface AuditDbRow {
   report_status: string;

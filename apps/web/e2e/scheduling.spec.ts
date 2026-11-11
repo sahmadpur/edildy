@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext, test } from '@playwright/test';
 
-/** Sets up a tenant through the API: a site, a worker at it and a published checklist from a Taskop template. */
+/** Sets up a tenant through the API: a site, a worker at it and a published checklist from a Edildy template. */
 async function seedTenant(request: APIRequestContext, suffix: string) {
   const email = `sch-${suffix}@example.az`;
   const password = 'e2e owner password';

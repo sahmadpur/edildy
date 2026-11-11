@@ -1,4 +1,4 @@
-import { createTeamInputSchema, setTeamMembersInputSchema, teamDtoSchema, updateTeamInputSchema } from '@taskop/contracts';
+import { createTeamInputSchema, setTeamMembersInputSchema, teamDtoSchema, updateTeamInputSchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class CreateTeamDto extends createZodDto(createTeamInputSchema) {}

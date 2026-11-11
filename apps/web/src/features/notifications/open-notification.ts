@@ -1,4 +1,4 @@
-import type { NotificationItem } from '@taskop/contracts';
+import type { NotificationItem } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';

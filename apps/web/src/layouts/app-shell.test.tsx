@@ -29,7 +29,7 @@ const { AppShell } = await import('./app-shell');
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
-  localStorage.removeItem('taskop.nav.collapsed');
+  localStorage.removeItem('edildy.nav.collapsed');
 });
 
 function renderShell(path = '/users') {
@@ -86,11 +86,11 @@ describe('AppShell', () => {
     expect(heading).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('link', { name: 'Yoxlamalar' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Problemlər' })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual(['operations']);
+    expect(JSON.parse(localStorage.getItem('edildy.nav.collapsed') ?? '[]')).toEqual(['operations']);
   });
 
   it('keeps the group of the current page open even when it was collapsed', async () => {
-    localStorage.setItem('taskop.nav.collapsed', JSON.stringify(['admin']));
+    localStorage.setItem('edildy.nav.collapsed', JSON.stringify(['admin']));
     state.current = { status: 'authenticated', me: me(['users.view']) };
     renderShell('/users');
     expect(await screen.findByRole('link', { name: 'Əməkdaşlar' })).toHaveAttribute('aria-current', 'page');
@@ -103,11 +103,11 @@ describe('AppShell', () => {
     await userEvent.click(heading);
     expect(heading).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('link', { name: 'Əməkdaşlar' })).not.toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual(['admin']);
+    expect(JSON.parse(localStorage.getItem('edildy.nav.collapsed') ?? '[]')).toEqual(['admin']);
     await userEvent.click(heading);
     expect(heading).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Əməkdaşlar' })).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual([]);
+    expect(JSON.parse(localStorage.getItem('edildy.nav.collapsed') ?? '[]')).toEqual([]);
   });
 
   it('marks Yoxlamalar current on the calendar page', async () => {

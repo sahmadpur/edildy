@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Inject, Injectable, Param, type PipeTransform, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { type NotificationRuleDto, type RuleType, ruleTypeSchema } from '@taskop/contracts';
+import { type NotificationRuleDto, type RuleType, ruleTypeSchema } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { RequirePermission } from '../common/decorators';
 import { NotificationRuleResponse, UpdateNotificationRuleDto } from './dto';

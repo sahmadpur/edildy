@@ -3,11 +3,11 @@ import path from 'node:path';
 import { type CORSConfiguration, CreateBucketCommand, PutBucketCorsCommand, S3Client } from '@aws-sdk/client-s3';
 import { GenericContainer, Wait } from 'testcontainers';
 
-const ACCESS_KEY = 'taskop-test';
-const SECRET_KEY = 'taskop-test-secret';
-const BUCKET = 'taskop-media';
+const ACCESS_KEY = 'edildy-test';
+const SECRET_KEY = 'edildy-test-secret';
+const BUCKET = 'edildy-media';
 const S3_JSON = JSON.stringify({
-  identities: [{ name: 'taskop', credentials: [{ accessKey: ACCESS_KEY, secretKey: SECRET_KEY }], actions: ['Admin', 'Read', 'Write', 'List', 'Tagging'] }],
+  identities: [{ name: 'edildy', credentials: [{ accessKey: ACCESS_KEY, secretKey: SECRET_KEY }], actions: ['Admin', 'Read', 'Write', 'List', 'Tagging'] }],
 });
 
 /** The bucket CORS rule of local dev (docker-compose's seaweedfs-init applies the same file). */

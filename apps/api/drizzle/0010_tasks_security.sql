@@ -12,10 +12,10 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Tasks, submissions and media are never deleted (FR-04.11); task-media.cleanup purges objects and keeps rows.
-GRANT SELECT, INSERT, UPDATE ON tasks, task_submissions, task_media TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON tasks, task_submissions, task_media TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- FR-14.09: status history is append-only.
-GRANT SELECT, INSERT ON task_status_history TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON task_status_history TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- The backfill below must see every tenant's rows (see 0004 for why row_security is switched off).
 SET LOCAL row_security = off;

@@ -1,4 +1,4 @@
-import { RULE_TYPES } from '@taskop/contracts';
+import { RULE_TYPES } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';

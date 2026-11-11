@@ -34,7 +34,7 @@ const ogLocale = { az: 'az_AZ', en: 'en_GB', ru: 'ru_RU' }[lang];
     <meta name="theme-color" content="#021B2B" media="(prefers-color-scheme: dark)" />
     <meta name="color-scheme" content="light dark" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Taskop" />
+    <meta property="og:site_name" content="Edildy" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={canonical} />
@@ -52,10 +52,10 @@ const ogLocale = { az: 'az_AZ', en: 'en_GB', ru: 'ru_RU' }[lang];
       // never when a language was chosen by URL (a /en/ or /ru/ link). Everything else works without JavaScript.
       (function () {
         try {
-          if (location.pathname !== '/' || sessionStorage.getItem('taskop.landing.redirected')) return;
-          var l = localStorage.getItem('taskop.language');
+          if (location.pathname !== '/' || sessionStorage.getItem('edildy.landing.redirected')) return;
+          var l = localStorage.getItem('edildy.language');
           if (l === 'en' || l === 'ru') {
-            sessionStorage.setItem('taskop.landing.redirected', '1');
+            sessionStorage.setItem('edildy.landing.redirected', '1');
             location.replace('/' + l + '/' + location.search + location.hash);
           }
         } catch (e) {}

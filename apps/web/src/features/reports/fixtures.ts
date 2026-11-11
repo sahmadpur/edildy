@@ -11,7 +11,7 @@ import {
   type RunCounts,
   type SiteDto,
   type SiteReportRow,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { problemDto } from '@/features/tasks/fixtures';
 
 /** Test data shared by the report tests. Not imported by application code. */

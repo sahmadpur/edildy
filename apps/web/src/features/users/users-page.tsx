@@ -1,4 +1,4 @@
-import { toListParam } from '@taskop/contracts';
+import { toListParam } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { type ReactNode, useDeferredValue, useState } from 'react';

@@ -1,4 +1,4 @@
-import { blankContent, type ChecklistContent, newItem, newSection, type NumberItem, type SingleChoiceItem, type YesNoItem } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, newItem, newSection, type NumberItem, type SingleChoiceItem, type YesNoItem } from '@edildy/contracts';
 import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'react';

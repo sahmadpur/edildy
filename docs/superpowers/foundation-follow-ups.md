@@ -70,7 +70,7 @@ Non-blocking findings from the Foundation (sub-project 1) task reviews and final
 
 ## Tooling, CI and Docker
 
-- `@taskop/config` pins TypeScript 6 for typescript-eslint (it can't load TS 7). Remove the pin once typescript-eslint supports TS 7, and drop the duplicate root ESLint devDependencies.
+- `@edildy/config` pins TypeScript 6 for typescript-eslint (it can't load TS 7). Remove the pin once typescript-eslint supports TS 7, and drop the duplicate root ESLint devDependencies.
 - Mailpit and MinIO use `:latest` images.
 - **Dockerfile.** It uses `pnpm@latest` instead of the pinned version, has no `HEALTHCHECK`, isn't built in CI, and `.dockerignore` only excludes `**/.env` (not `.env.*`).
 - **CI.** No `permissions` or `concurrency` settings. The e2e job runs `touch .env` without a comment, rebuilds, and its artifact name doesn't match the uploaded path. `retries: 1` may hide flakiness. Consider adding `expo-doctor`.

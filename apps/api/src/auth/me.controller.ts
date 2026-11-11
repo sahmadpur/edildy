@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Me } from '@taskop/contracts';
+import type { Me } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { MeDto } from './dto';

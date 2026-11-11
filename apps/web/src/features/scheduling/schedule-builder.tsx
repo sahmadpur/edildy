@@ -1,4 +1,4 @@
-import { formatShiftRanges, isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@taskop/contracts';
+import { formatShiftRanges, isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@edildy/contracts';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';

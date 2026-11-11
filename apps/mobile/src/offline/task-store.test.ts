@@ -1,4 +1,4 @@
-import { type SyncTask, TASK_LIMITS } from '@taskop/contracts';
+import { type SyncTask, TASK_LIMITS } from '@edildy/contracts';
 import { LiveOnlyError, MediaLimitError } from './execution-store';
 import { canEditDraft, isTeamOffer, TaskStateError } from './task-store';
 import { capturedPhoto, capturedVideo } from './testing/fake-transport';

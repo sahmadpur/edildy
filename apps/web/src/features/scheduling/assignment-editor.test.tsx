@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { AssignmentDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { AssignmentDetail } from '@edildy/contracts';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

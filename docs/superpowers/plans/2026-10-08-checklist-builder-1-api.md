@@ -1,8 +1,8 @@
-# Taskop Checklist Builder — Part 1: Contracts & API — Implementation Plan
+# Edildy Checklist Builder — Part 1: Contracts & API — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the checklist content model (Zod schemas, validation, evaluation logic) to `@taskop/contracts`, and the checklists, tenant templates and global templates modules to the API, with DB-enforced immutability of published versions and platform-admin authoring.
+**Goal:** Add the checklist content model (Zod schemas, validation, evaluation logic) to `@edildy/contracts`, and the checklists, tenant templates and global templates modules to the API, with DB-enforced immutability of published versions and platform-admin authoring.
 
 **Architecture:** Each checklist version stores its content as one `jsonb` document validated by a Zod schema shared with web/mobile. `checklists` holds identity and status. `checklist_versions` holds one editable draft plus immutable published versions; a trigger rejects any change to a published row. Tenant routes and platform-in-tenant routes share the same services. Controllers come from a factory, and a `PlatformTenantInterceptor` opens the normal RLS tenant transaction for platform admins. Global templates live in a non-RLS table that tenants read only through a `published` view.
 
@@ -16,7 +16,7 @@
 
 ## Global Constraints
 
-- The product name is **Taskop** everywhere. Packages are `@taskop/*`.
+- The product name is **Edildy** everywhere. Packages are `@edildy/*`.
 - Install new packages with `pnpm add <pkg>@latest`. This part needs no new packages.
 - IDs are UUIDv7 for table rows. Content node IDs are `crypto.randomUUID()` (v4) and are stable across versions.
 - Every tenant-owned table has `tenant_id uuid not null`, RLS `FORCE`d with the policy on `nullif(current_setting('app.tenant_id', true), '')::uuid`, and composite `(tenant_id, x_id)` foreign keys.
@@ -220,7 +220,7 @@ describe('checklist content schema', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- checklist-content`
+Run: `pnpm --filter @edildy/contracts test -- checklist-content`
 Expected: FAIL. The imports `blankContent`, `parseDraftContent` and the others don't exist yet.
 
 - [ ] **Step 3: Implement `checklist-content.ts`**
@@ -568,14 +568,14 @@ export * from './checklist-content.js';
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `pnpm --filter @taskop/contracts test -- checklist-content`
+Run: `pnpm --filter @edildy/contracts test -- checklist-content`
 Expected: PASS (9 tests).
 
 If Zod's `discriminatedUnion` rejects the `z.tuple` option values as discriminators at runtime, that's the wrong diagnosis: the discriminator is `type`, which is a literal in every member. Check that every member has `type: z.literal(...)`.
 
 - [ ] **Step 5: Typecheck and commit**
 
-Run: `pnpm --filter @taskop/contracts typecheck`
+Run: `pnpm --filter @edildy/contracts typecheck`
 Expected: no errors.
 
 ```bash
@@ -707,7 +707,7 @@ describe('validateForPublish', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- checklist-validate`
+Run: `pnpm --filter @edildy/contracts test -- checklist-validate`
 Expected: FAIL. `validateForPublish` is not exported.
 
 - [ ] **Step 3: Implement**
@@ -808,7 +808,7 @@ export * from './checklist-validate.js';
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `pnpm --filter @taskop/contracts test -- checklist-validate`
+Run: `pnpm --filter @edildy/contracts test -- checklist-validate`
 Expected: PASS (8 tests).
 
 - [ ] **Step 5: Commit**
@@ -1006,7 +1006,7 @@ The fixture marks `problem` and `temp` as required (factory default) and `photo`
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- checklist-logic`
+Run: `pnpm --filter @edildy/contracts test -- checklist-logic`
 Expected: FAIL. `computeScore` and `regenerateIds` are not exported.
 
 - [ ] **Step 3: Implement `checklist-ids.ts`**
@@ -1197,7 +1197,7 @@ export * from './checklist-logic.js';
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/contracts test`
+Run: `pnpm --filter @edildy/contracts test`
 Expected: PASS for all contracts tests.
 
 - [ ] **Step 6: Commit**
@@ -1286,7 +1286,7 @@ If `resources.test.ts` already imports from `./index.js`, merge these names into
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- resources`
+Run: `pnpm --filter @edildy/contracts test -- resources`
 Expected: FAIL. `createChecklistInputSchema` is undefined.
 
 - [ ] **Step 3: Update permissions**
@@ -1545,7 +1545,7 @@ In `apps/api/test/roles.test.ts`, change the Manager expectation:
 
 - [ ] **Step 7: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS, no type errors. `dist/` builds, which the API and web need.
 
 - [ ] **Step 8: Commit**
@@ -1571,7 +1571,7 @@ git commit -m "feat(contracts): add checklist/template DTOs, permissions and err
 
 Append to `packages/i18n/src/i18n.test.ts`:
 ```ts
-import { ALL_PERMISSIONS, ISSUE_CODES, ITEM_TYPES, PERMISSION_GROUPS, TEMPLATE_CATEGORIES } from '@taskop/contracts';
+import { ALL_PERMISSIONS, ISSUE_CODES, ITEM_TYPES, PERMISSION_GROUPS, TEMPLATE_CATEGORIES } from '@edildy/contracts';
 
 describe('checklist translations', () => {
   it('translates every content issue code', () => {
@@ -1592,7 +1592,7 @@ The existing test `has a message for every API error code` already covers the 8 
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL, because `az.checklists` is undefined and `errors.CHECKLIST_NO_DRAFT` is missing.
 
 - [ ] **Step 3: Add the strings**
@@ -1679,7 +1679,7 @@ and to `keys`:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1833,14 +1833,14 @@ The last test passes for new tenants through `SYSTEM_ROLE_DEFAULTS.admin` (all k
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test -- checklists-db`
+Run: `pnpm --filter @edildy/api test -- checklists-db`
 Expected: FAIL with `relation "checklists" does not exist`.
 
 - [ ] **Step 3: Extend the Drizzle schema**
 
 In `apps/api/src/db/schema.ts`:
 
-Add `pgView` to the `drizzle-orm/pg-core` import. Don't import runtime values from `@taskop/contracts` here, because drizzle-kit loads this file on its own. The category list below is a literal that must match `TEMPLATE_CATEGORIES`. Inserts typed with `TemplateCategory` (Tasks 7–8) fail to compile if contracts ever gains a category this enum lacks.
+Add `pgView` to the `drizzle-orm/pg-core` import. Don't import runtime values from `@edildy/contracts` here, because drizzle-kit loads this file on its own. The category list below is a literal that must match `TEMPLATE_CATEGORIES`. Inserts typed with `TemplateCategory` (Tasks 7–8) fail to compile if contracts ever gains a category this enum lacks.
 
 Change `audit_log.tenant_id` to nullable, and add a scope check:
 ```ts
@@ -1863,7 +1863,7 @@ Append the new enums and tables at the end of the file:
 ```ts
 export const checklistStatus = pgEnum('checklist_status', ['active', 'deactivated']);
 export const checklistVersionState = pgEnum('checklist_version_state', ['draft', 'published']);
-// Must match TEMPLATE_CATEGORIES in @taskop/contracts.
+// Must match TEMPLATE_CATEGORIES in @edildy/contracts.
 export const templateCategory = pgEnum('template_category', ['cleaning', 'restaurant', 'retail', 'safety', 'production', 'warehouse', 'quality', 'maintenance', 'other']);
 export const templateSourceKind = pgEnum('template_source_kind', ['global', 'tenant']);
 
@@ -1963,7 +1963,7 @@ export const tenantTemplates = pgTable(
   ],
 );
 
-/** Taskop's library. No tenant_id and no RLS: tenants read it only through `global_templates_published`. */
+/** Edildy's library. No tenant_id and no RLS: tenants read it only through `global_templates_published`. */
 export const globalTemplates = pgTable('global_templates', {
   id: id(),
   name: text('name').notNull(),
@@ -2001,9 +2001,9 @@ Also add `uniqueIndex` and `type AnyPgColumn` to the `drizzle-orm/pg-core` impor
 
 Run (from the repo root):
 ```bash
-pnpm --filter @taskop/contracts build
-pnpm --filter @taskop/api exec drizzle-kit generate --name checklists
-pnpm --filter @taskop/api exec drizzle-kit generate --custom --name checklists_security
+pnpm --filter @edildy/contracts build
+pnpm --filter @edildy/api exec drizzle-kit generate --name checklists
+pnpm --filter @edildy/api exec drizzle-kit generate --custom --name checklists_security
 ```
 Expected: `apps/api/drizzle/0003_checklists.sql` contains the 4 `CREATE TYPE`s, the 4 `CREATE TABLE`s, the FKs, checks and indexes, and `ALTER TABLE "audit_log" ALTER COLUMN "tenant_id" DROP NOT NULL`. It must not contain `CREATE VIEW`. If drizzle-kit emitted one, delete that statement. `0004_checklists_security.sql` is created empty.
 
@@ -2025,17 +2025,17 @@ BEGIN
   END LOOP;
 END $$;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE ON checklists, tenant_templates TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON checklists, tenant_templates TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON checklist_versions TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON checklist_versions TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE ON global_templates TO taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON global_templates TO edildy_platform;
 --> statement-breakpoint
 CREATE VIEW global_templates_published AS
   SELECT id, name, description, category, content, revision, item_count, sort_order, created_at, updated_at
   FROM global_templates WHERE published;
 --> statement-breakpoint
-GRANT SELECT ON global_templates_published TO taskop_app, taskop_platform;
+GRANT SELECT ON global_templates_published TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- Published versions are immutable (NFR-06, FR-06.11); only drafts may be updated or deleted.
 CREATE FUNCTION checklist_versions_guard() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -2063,7 +2063,7 @@ INSERT INTO role_permissions (tenant_id, role_id, permission_key)
 UPDATE roles SET version = version + 1 WHERE system_key = 'admin';
 ```
 
-`taskop_owner` is a superuser in Docker and in Testcontainers, so the backfill is not filtered by RLS.
+`edildy_owner` is a superuser in Docker and in Testcontainers, so the backfill is not filtered by RLS.
 
 - [ ] **Step 5: Carry the platform admin in the tenant context**
 
@@ -2147,7 +2147,7 @@ Add `type Executor` to the `./db.service` import.
 
 `apps/api/src/common/app-error.ts`:
 ```ts
-import { type ContentIssue, ERROR_HTTP_STATUS, type ErrorCode } from '@taskop/contracts';
+import { type ContentIssue, ERROR_HTTP_STATUS, type ErrorCode } from '@edildy/contracts';
 
 export interface AppErrorDetails {
   issues?: ContentIssue[];
@@ -2197,14 +2197,14 @@ export class AppError extends Error {
 
 - [ ] **Step 8: Run the tests**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- checklists-db db-context error.filter roles audit`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- checklists-db db-context error.filter roles audit`
 Expected: PASS.
 
 Then apply the migration to the local demo DB and check the backfill:
 ```bash
 docker compose -p foundation start
 pnpm db:setup
-docker compose -p foundation exec postgres psql -U taskop_owner -d taskop -c "select count(*) from role_permissions where permission_key = 'checklists.publish'"
+docker compose -p foundation exec postgres psql -U edildy_owner -d edildy -c "select count(*) from role_permissions where permission_key = 'checklists.publish'"
 ```
 Expected: count ≥ 1, one per tenant. If the compose service has a different name, run `docker compose -p foundation ps` to find it.
 
@@ -2242,7 +2242,7 @@ git commit -m "feat(api): add checklist tables, immutability trigger, RLS and pl
 
 `apps/api/test/checklist-fixtures.ts`:
 ```ts
-import { blankContent, type ChecklistContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 
 /** One yes/no item; "yes" is a critical problem that requires a photo and asks a follow-up comment. */
 export function sampleContent(): ChecklistContent {
@@ -2262,7 +2262,7 @@ export function sampleContent(): ChecklistContent {
 
 `apps/api/test/checklists.test.ts`:
 ```ts
-import { blankContent, newItem, newSection } from '@taskop/contracts';
+import { blankContent, newItem, newSection } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';
@@ -2438,14 +2438,14 @@ The test uses `api.delete`. Add it to the `as()` helper in `apps/api/test/fixtur
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test -- test/checklists.test.ts`
+Run: `pnpm --filter @edildy/api test -- test/checklists.test.ts`
 Expected: FAIL, because `POST /api/v1/checklists` returns 404.
 
 - [ ] **Step 3: Content and actor helpers**
 
 `apps/api/src/checklists/content.ts`:
 ```ts
-import { type ChecklistContent, CONTENT_LIMITS, parseDraftContent } from '@taskop/contracts';
+import { type ChecklistContent, CONTENT_LIMITS, parseDraftContent } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 
 /** Draft-schema parse used by every content write: size limit first, then structure. */
@@ -2479,7 +2479,7 @@ export function actorColumns(db: DbService): { userId: string | null; platformAd
 
 `apps/api/src/checklists/mappers.ts`:
 ```ts
-import type { ChecklistSummary, ChecklistVersionSummary } from '@taskop/contracts';
+import type { ChecklistSummary, ChecklistVersionSummary } from '@edildy/contracts';
 
 export interface ChecklistRow {
   id: string;
@@ -2546,7 +2546,7 @@ import {
   type Page,
   regenerateIds,
   validateForPublish,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, desc, eq, getTableColumns, ilike, lt, sql, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { escapeLike } from '../common/sql';
@@ -2899,7 +2899,7 @@ import {
   updateChecklistInputSchema,
   updateGlobalTemplateInputSchema,
   updateTemplateInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ChecklistListQueryDto extends createZodDto(checklistListQuerySchema) {}
@@ -2931,7 +2931,7 @@ If `createZodDto` fails on `checklistContentSchema` because of the `z.lazy` recu
 ```ts
 import { applyDecorators, Controller, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { Public, RequirePermission } from '../common/decorators';
 import { PlatformGuard } from '../platform/platform.guard';
 import { PlatformTenantInterceptor } from './platform-tenant.interceptor';
@@ -3000,7 +3000,7 @@ export class PlatformTenantInterceptor implements NestInterceptor {
 ```ts
 import { Body, Delete, Get, HttpCode, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { ChecklistDetail, ChecklistSummary, ChecklistVersion, ChecklistVersionSummary, ContentSaveResult, Page } from '@taskop/contracts';
+import type { ChecklistDetail, ChecklistSummary, ChecklistVersion, ChecklistVersionSummary, ContentSaveResult, Page } from '@edildy/contracts';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { ChecklistsService } from './checklists.service';
 import {
@@ -3143,7 +3143,7 @@ export class ChecklistsModule {}
 
 - [ ] **Step 7: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- test/checklists.test.ts`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- test/checklists.test.ts`
 Expected: PASS (9 tests).
 
 `hasDraft=false` returns 0 items because every new checklist has a draft. `limit=2` returns newest first.
@@ -3180,7 +3180,7 @@ git commit -m "feat(api): add checklists with draft/publish lifecycle and immuta
 
 `apps/api/test/templates.test.ts`:
 ```ts
-import { blankContent } from '@taskop/contracts';
+import { blankContent } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';
@@ -3198,8 +3198,8 @@ describe('templates', () => {
     t = await createTestApp();
     const ins = await ownerQuery<{ id: string }>(
       `insert into global_templates (id, name, category, content, item_count, published, sort_order) values
-       (gen_random_uuid(), 'Taskop: Mətbəx', 'restaurant', $1::jsonb, 2, true, 1),
-       (gen_random_uuid(), 'Taskop: Gizli', 'restaurant', $1::jsonb, 2, false, 2) returning id`,
+       (gen_random_uuid(), 'Edildy: Mətbəx', 'restaurant', $1::jsonb, 2, true, 1),
+       (gen_random_uuid(), 'Edildy: Gizli', 'restaurant', $1::jsonb, 2, false, 2) returning id`,
       [JSON.stringify(sampleContent())],
     );
     [globalId, hiddenId] = ins.rows.map((r) => r.id) as [string, string];
@@ -3272,7 +3272,7 @@ describe('templates', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test -- test/templates.test.ts`
+Run: `pnpm --filter @edildy/api test -- test/templates.test.ts`
 Expected: FAIL with 404 on `/api/v1/templates`.
 
 - [ ] **Step 3: The service**
@@ -3289,7 +3289,7 @@ import {
   type TemplateDto,
   type TemplateSummary,
   validateForPublish,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, asc, eq, ilike, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { escapeLike } from '../common/sql';
@@ -3519,7 +3519,7 @@ export class TemplatesService extends ChecklistContentSource {
 ```ts
 import { Body, Get, HttpCode, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { ContentSaveResult, TemplateDto, TemplateSummary } from '@taskop/contracts';
+import type { ContentSaveResult, TemplateDto, TemplateSummary } from '@edildy/contracts';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { AppError } from '../common/app-error';
 import { ContentSaveResultResponse, CreateTemplateDto, SaveContentDto, TemplateListQueryDto, TemplateResponse, TemplateSummaryResponse, UpdateTemplateDto } from './dto';
@@ -3631,7 +3631,7 @@ export class ChecklistsModule {}
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- templates checklists`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- templates checklists`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -3664,7 +3664,7 @@ git commit -m "feat(api): add tenant templates, create-from-template and save-as
 `apps/api/test/global-templates.test.ts`:
 ```ts
 import { hash } from '@node-rs/argon2';
-import { blankContent } from '@taskop/contracts';
+import { blankContent } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';
@@ -3677,7 +3677,7 @@ describe('platform checklist authoring', () => {
   let adminId: string;
   beforeAll(async () => {
     t = await createTestApp();
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     const r = await ownerQuery<{ id: string }>(
       "insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support') returning id",
       [email, await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 })],
@@ -3719,7 +3719,7 @@ describe('platform checklist authoring', () => {
     const other = await signupTenant(t);
     const p = as(t, token);
     const base = `/api/v1/platform/tenants/${s.tenantId}/checklists`;
-    const c = await p.post(base, { name: 'Taskop tərəfindən' });
+    const c = await p.post(base, { name: 'Edildy tərəfindən' });
     expect(c.status, JSON.stringify(c.body)).toBe(201);
     await p.put(`${base}/${c.body.id}/draft`, { content: sampleContent(), revision: 1 });
     const v1 = (await p.post(`${base}/${c.body.id}/publish`, { revision: 2 })).body;
@@ -3750,7 +3750,7 @@ describe('platform checklist authoring', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test -- global-templates`
+Run: `pnpm --filter @edildy/api test -- global-templates`
 Expected: FAIL with 404 on `/api/v1/platform/templates`.
 
 - [ ] **Step 3: The global templates service**
@@ -3766,7 +3766,7 @@ import {
   type GlobalTemplateDto,
   type GlobalTemplateSummary,
   validateForPublish,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { asc, eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { AuditService } from '../db/audit.service';
@@ -3790,7 +3790,7 @@ const summary = (r: Row): GlobalTemplateSummary => ({
 const dto = (r: Row): GlobalTemplateDto => ({ ...summary(r), revision: r.revision, content: storedContent(r.content) });
 const meta = (r: Row) => ({ name: r.name, description: r.description, category: r.category, sortOrder: r.sortOrder });
 
-/** Taskop's global library, on the platform connection (no tenant, no RLS). Audited as platform scope. */
+/** Edildy's global library, on the platform connection (no tenant, no RLS). Audited as platform scope. */
 @Injectable()
 export class GlobalTemplatesService {
   constructor(
@@ -3885,7 +3885,7 @@ export class GlobalTemplatesService {
 ```ts
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { ContentSaveResult, GlobalTemplateDto, GlobalTemplateSummary } from '@taskop/contracts';
+import type { ContentSaveResult, GlobalTemplateDto, GlobalTemplateSummary } from '@edildy/contracts';
 import { Public } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { AppRequest } from '../common/request';
@@ -3983,7 +3983,7 @@ Route ordering: `GlobalTemplatesController` (`platform/templates`) and `Platform
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- global-templates platform openapi`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- global-templates platform openapi`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -4010,7 +4010,7 @@ git commit -m "feat(api): add platform global templates and checklist authoring 
 
 `apps/api/test/seed-templates.test.ts`:
 ```ts
-import { countItems, hasRules, validateForPublish, walkItems } from '@taskop/contracts';
+import { countItems, hasRules, validateForPublish, walkItems } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { GLOBAL_TEMPLATE_FIXTURES } from '../src/db/scripts/seed-templates';
 
@@ -4042,7 +4042,7 @@ describe('global template fixtures', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test -- seed-templates`
+Run: `pnpm --filter @edildy/api test -- seed-templates`
 Expected: FAIL, because the module doesn't exist.
 
 - [ ] **Step 3: Write the fixtures**
@@ -4061,7 +4061,7 @@ import {
   type SingleChoiceItem,
   type TemplateCategory,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 // ---- tiny DSL so fixtures stay readable ----
 
@@ -4370,7 +4370,7 @@ export const GLOBAL_TEMPLATE_FIXTURES: GlobalTemplateFixture[] = [
 Restructure `apps/api/src/db/scripts/seed.ts` `main()` so seeding is idempotent per part:
 
 ```ts
-import { countItems, regenerateIds } from '@taskop/contracts';
+import { countItems, regenerateIds } from '@edildy/contracts';
 import { GLOBAL_TEMPLATE_FIXTURES } from './seed-templates';
 // ...existing imports...
 
@@ -4422,24 +4422,24 @@ async function seedDemoChecklists(tx: Tx, tenantId: string, ownerId: string): Pr
 In `main()`:
 1. After `const db = drizzle(url, { schema });`, call `await seedGlobalTemplates(db);`.
 2. Replace the early-return block. If the demo tenant exists, run `await db.transaction((tx) => seedDemoChecklists(tx, existing.id, <owner id>))` and return. Find the owner id with
-   `const [owner] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, 'owner@demo.taskop.az'));`
+   `const [owner] = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, 'owner@demo.edildy.az'));`
 3. Inside the existing creation transaction, after the owner insert, call `await seedDemoChecklists(tx, tenantId, ownerId);`.
 
 Add the types: `import type { NodePgDatabase } from 'drizzle-orm/node-postgres';` and `type Tx = Parameters<Parameters<NodePgDatabase<typeof schema>['transaction']>[0]>[0];`.
 
-The seed connects as `taskop_owner` (a superuser), so RLS doesn't filter its writes, and the trigger allows inserting published rows: it only fires on UPDATE/DELETE.
+The seed connects as `edildy_owner` (a superuser), so RLS doesn't filter its writes, and the trigger allows inserting published rows: it only fires on UPDATE/DELETE.
 
 - [ ] **Step 5: Run the tests and the seed**
 
 Run:
 ```bash
-pnpm --filter @taskop/api test -- seed-templates
-pnpm --filter @taskop/api typecheck
+pnpm --filter @edildy/api test -- seed-templates
+pnpm --filter @edildy/api typecheck
 docker compose -p foundation start && pnpm db:setup && pnpm db:seed && pnpm db:seed
 ```
 Expected: tests PASS. Both seed runs succeed; the second is a no-op for templates and demo checklists. Check with:
 ```bash
-docker compose -p foundation exec postgres psql -U taskop_owner -d taskop -c "select count(*) from global_templates; select name, latest_version_number from checklists;"
+docker compose -p foundation exec postgres psql -U edildy_owner -d edildy -c "select count(*) from global_templates; select name, latest_version_number from checklists;"
 ```
 Expected: 8 global templates; "Gündəlik təmizlik yoxlaması | 2" and "Anbar qəbulu | 0".
 
@@ -4524,7 +4524,7 @@ In `apps/api/test/openapi.test.ts`, add to the `arrayContaining` list: `'/api/v1
 
 Run:
 ```bash
-pnpm --filter @taskop/api test -- isolation openapi
+pnpm --filter @edildy/api test -- isolation openapi
 pnpm lint && pnpm typecheck && pnpm test
 ```
 Expected: everything passes. The `prettier` formatting check is part of lint, so if lint fails on formatting only, run `pnpm format` and re-run.

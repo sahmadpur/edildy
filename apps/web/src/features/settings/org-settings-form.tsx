@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type TenantDto, updateTenantInputSchema } from '@taskop/contracts';
+import { type TenantDto, updateTenantInputSchema } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';

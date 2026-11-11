@@ -1,4 +1,4 @@
-# Taskop — Mobile home page refresh and problem reports — Design Spec
+# Edildy — Mobile home page refresh and problem reports — Design Spec
 
 - **Date:** 2026-11-06
 - **Status:** Implemented (branch claude/mobile-main-page-redesign-bc8a0a, 2026-11-07)
@@ -121,7 +121,7 @@ Indexes: `(tenant_id, site_id, created_at)`, `(tenant_id, reporter_user_id, crea
 
 **`tasks`** gains `problem_report_id uuid null` with composite FK to `problem_reports` (`on delete restrict`), a CHECK that `problem_id` and `problem_report_id` are not both set, and a partial unique index `tasks_problem_report_active_uq on (problem_report_id) where status <> 'cancelled'`.
 
-**RLS and grants:** the same `tenant_isolation` policy block as `0010_tasks_security.sql`, for both new tables; `GRANT SELECT, INSERT, UPDATE` to `taskop_app`, `taskop_platform`. No new `role_permissions` rows.
+**RLS and grants:** the same `tenant_isolation` policy block as `0010_tasks_security.sql`, for both new tables; `GRANT SELECT, INSERT, UPDATE` to `edildy_app`, `edildy_platform`. No new `role_permissions` rows.
 
 **Notifications:** the `notification_target_kind` enum gains `problem_report`.
 
@@ -194,7 +194,7 @@ Report media is **not** copied into the task; the task shows the report card wit
 
 ### 7.2 Profile
 
-`LanguagePicker` gets a `variant: 'names' | 'flags'`; the profile uses `flags`, the sign-in screen keeps `names` (*my call*: a first-time user on the login screen benefits from the words). Flags are the emoji 🇦🇿 🇬🇧 🇷🇺 at `type.xl`, in the same 44 px chips; `accessibilityLabel` stays `LANGUAGE_NAMES[lng]`. `LANGUAGE_FLAGS: Record<Language, string>` lives next to `LANGUAGE_NAMES` in `@taskop/i18n`.
+`LanguagePicker` gets a `variant: 'names' | 'flags'`; the profile uses `flags`, the sign-in screen keeps `names` (*my call*: a first-time user on the login screen benefits from the words). Flags are the emoji 🇦🇿 🇬🇧 🇷🇺 at `type.xl`, in the same 44 px chips; `accessibilityLabel` stays `LANGUAGE_NAMES[lng]`. `LANGUAGE_FLAGS: Record<Language, string>` lives next to `LANGUAGE_NAMES` in `@edildy/i18n`.
 
 ### 7.3 Tab bar (`app/(app)/_layout.tsx`)
 

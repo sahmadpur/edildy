@@ -30,7 +30,7 @@ describe('media registration (POST /executions/:id/media)', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toMatchObject({ mediaId: body.id, status: 'pending', headers: { 'Content-Type': 'image/jpeg', 'Content-Length': '1000' } });
     const key = `t/${w.s.tenantId}/e/${executionId}/${body.id}.jpg`;
-    expect(res.body.uploadUrl.startsWith(`http://files.taskop.test/taskop-media/${key}?`)).toBe(true);
+    expect(res.body.uploadUrl.startsWith(`http://files.edildy.test/edildy-media/${key}?`)).toBe(true);
     const row = await ownerQuery('select status, captured_by_user_id, item_id, storage_key, source from execution_media where id = $1', [body.id]);
     expect(row.rows[0]).toEqual({ status: 'pending', captured_by_user_id: w.workers[0].id, item_id: w.c.photo.id, storage_key: key, source: 'camera' });
     const again = await register(api, executionId, body);

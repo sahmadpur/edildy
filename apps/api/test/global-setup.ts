@@ -17,16 +17,16 @@ function withCredentials(url: string, user: string, password: string): string {
 
 export default async function setup(project: TestProject) {
   const container = await new PostgreSqlContainer('postgres:18-alpine')
-    .withDatabase('taskop')
-    .withUsername('taskop_owner')
+    .withDatabase('edildy')
+    .withUsername('edildy_owner')
     .withPassword('owner')
     .start();
   const ownerUrl = container.getConnectionUri();
   await setupDatabase({ ownerUrl, appPassword: 'app', platformPassword: 'platform' });
   project.provide('db', {
     ownerUrl,
-    appUrl: withCredentials(ownerUrl, 'taskop_app', 'app'),
-    platformUrl: withCredentials(ownerUrl, 'taskop_platform', 'platform'),
+    appUrl: withCredentials(ownerUrl, 'edildy_app', 'app'),
+    platformUrl: withCredentials(ownerUrl, 'edildy_platform', 'platform'),
   });
   return async () => {
     await container.stop();

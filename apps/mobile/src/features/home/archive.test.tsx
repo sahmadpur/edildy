@@ -1,5 +1,5 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
-import type { OccurrenceDto } from '@taskop/contracts';
+import type { OccurrenceDto } from '@edildy/contracts';
 import { renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { ArchiveMore } from './archive';

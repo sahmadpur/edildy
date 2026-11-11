@@ -81,7 +81,7 @@ export default {
   /** The report e-mail (plain text, the PDF attached). */
   email: {
     subject: 'Отчёт аудита: {{checklist}} — {{site}}, {{date}}',
-    body: 'Здравствуйте!\n\nАудит выполнения {{checklist}} — {{site}} ({{date}}) завершён.\nРезультат: {{result}}.\nАудитор: {{auditor}}.\n\nPDF-отчёт приложен к письму.\n\nTaskop',
+    body: 'Здравствуйте!\n\nАудит выполнения {{checklist}} — {{site}} ({{date}}) завершён.\nРезультат: {{result}}.\nАудитор: {{auditor}}.\n\nPDF-отчёт приложен к письму.\n\nEdildy',
   },
   web,
 } as const;

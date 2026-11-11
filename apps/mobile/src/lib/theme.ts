@@ -1,7 +1,7 @@
-import { fontFamily, light, radius as brandRadius, space, type as typeScale } from '@taskop/brand';
+import { fontFamily, light, radius as brandRadius, space, type as typeScale } from '@edildy/brand';
 
 /**
- * The mobile theme, read from @taskop/brand so the phone and the web app share one colour system. Light only in this
+ * The mobile theme, read from @edildy/brand so the phone and the web app share one colour system. Light only in this
  * round: workers use the app outdoors, where a light surface reads best; the dark tokens exist in the brand package
  * for a later pass. The first block keeps the names the screens already use.
  */

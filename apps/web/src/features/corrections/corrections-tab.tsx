@@ -1,4 +1,4 @@
-import { type Item, type OccurrenceDetail, walkItems } from '@taskop/contracts';
+import { type Item, type OccurrenceDetail, walkItems } from '@edildy/contracts';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

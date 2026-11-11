@@ -143,7 +143,7 @@ export const AUDIT_REPORT_CONTENT_TYPE = 'application/pdf';
 
 const TRANSLIT: Record<string, string> = { ə: 'e', ı: 'i', ş: 's', ç: 'c', ğ: 'g', ö: 'o', ü: 'u' };
 
-/** `taskop-audit-<ascii slug>-<YYYY-MM-DD>.pdf`. Both İ and I become i before lower-casing, so no runtime locale is needed. */
+/** `edildy-audit-<ascii slug>-<YYYY-MM-DD>.pdf`. Both İ and I become i before lower-casing, so no runtime locale is needed. */
 export function auditReportFileName(checklistName: string, localDate: LocalDate): string {
   const slug = checklistName
     .replace(/[İI]/g, 'i')
@@ -151,5 +151,5 @@ export function auditReportFileName(checklistName: string, localDate: LocalDate)
     .replace(/[əışçğöü]/g, (c) => TRANSLIT[c]!)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `taskop-audit-${slug || 'checklist'}-${localDate}.pdf`;
+  return `edildy-audit-${slug || 'checklist'}-${localDate}.pdf`;
 }

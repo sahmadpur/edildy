@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { type AssignmentDetail, expandSchedule, type PreviewAssignmentInput, type Recurrence, type Slot, type Timing } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { type AssignmentDetail, expandSchedule, type PreviewAssignmentInput, type Recurrence, type Slot, type Timing } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';

@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { TaskDetail, TaskListQuery } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { TaskDetail, TaskListQuery } from '@edildy/contracts';
 import { keepPreviousData, type QueryClient, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 

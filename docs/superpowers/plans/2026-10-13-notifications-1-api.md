@@ -1,8 +1,8 @@
-# Taskop Notifications — Part 1: Contracts & API — Implementation Plan
+# Edildy Notifications — Part 1: Contracts & API — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the domain events of sub-projects 3–5 into push, in-app and email notifications that never block business work, let `notifications.manage` holders tune the tenant's rules and `notifications.send` holders message users, teams and sites, by adding the notification contracts, i18n strings, `@taskop/api-client` methods, the five notification tables, the `notifications` NestJS module, the job queues and the inbox, preferences and push-device endpoints of the sub-project 6 spec §3–§6.
+**Goal:** Turn the domain events of sub-projects 3–5 into push, in-app and email notifications that never block business work, let `notifications.manage` holders tune the tenant's rules and `notifications.send` holders message users, teams and sites, by adding the notification contracts, i18n strings, `@edildy/api-client` methods, the five notification tables, the `notifications` NestJS module, the job queues and the inbox, preferences and push-device endpoints of the sub-project 6 spec §3–§6.
 
 **Architecture:**
 - **Outbox in the business transaction.** `NotificationEvents.record` inserts one `notification_events` row inside a savepoint (`ON CONFLICT DO NOTHING` on the dedupe key) and schedules `notifications.fanout` with `db.afterCommit`. A failing insert is rolled back to the savepoint, logged, and swallowed, so the checklist or task change still commits (NFR-11.01).
@@ -13,7 +13,7 @@
 - **Crons** (`NotificationJobs`): `notifications.scan`, `.receipts`, `.sweep`, `.cleanup`, registered with the existing `JobsService.define` (stately, per tenant). `JobsService` gains `defineWorker` and `send` for the two standard worker queues and the `notifications.dead` dead-letter queue.
 - **Endpoints:** the caller's inbox, unread count, push devices and email preference under `/me`; rules under `/notification-rules` (`notifications.manage`); manual messages under `/notifications/messages` (`notifications.send`). `GET /me/sync` gains `unreadNotifications`, `GET /me` gains `user.emailNotifications`.
 
-**Tech Stack:** Node 24, TypeScript 7, NestJS 12, nestjs-zod 5, Zod 4, Drizzle ORM 0.45 + drizzle-kit, PostgreSQL 18, pg-boss 12, nodemailer 10, Vitest 5, Testcontainers (Postgres), supertest. **One new package:** `expo-server-sdk@^7.2.0` (latest on npm on 2026-10-13; ESM-only, Node ≥ 22.12, loaded through Node 24's `require(esm)` exactly as `@taskop/contracts` already is).
+**Tech Stack:** Node 24, TypeScript 7, NestJS 12, nestjs-zod 5, Zod 4, Drizzle ORM 0.45 + drizzle-kit, PostgreSQL 18, pg-boss 12, nodemailer 10, Vitest 5, Testcontainers (Postgres), supertest. **One new package:** `expo-server-sdk@^7.2.0` (latest on npm on 2026-10-13; ESM-only, Node ≥ 22.12, loaded through Node 24's `require(esm)` exactly as `@edildy/contracts` already is).
 
 **Spec:** `docs/superpowers/specs/2026-10-13-notifications-design.md`
 
@@ -27,14 +27,14 @@
 
 ## Global Constraints
 
-- The product name is **Taskop**. Packages are `@taskop/*`. Azerbaijani (`az`) is the only locale. Server-rendered push and email texts live in `apps/api/src/notifications/notification-templates.ts`, not in `@taskop/i18n`.
+- The product name is **Edildy**. Packages are `@edildy/*`. Azerbaijani (`az`) is the only locale. Server-rendered push and email texts live in `apps/api/src/notifications/notification-templates.ts`, not in `@edildy/i18n`.
 - One new npm package: `expo-server-sdk` `^7.2.0` in `apps/api`. Nothing else.
 - Event types (spec §3.1), exactly: `checklist.assigned`, `checklist.available`, `checklist.due_soon`, `checklist.overdue`, `checklist.missed`, `problem.recorded`, `problem.critical`, `task.assigned`, `task.submitted`, `task.rejected`, `task.completed`, `task.overdue`, `task.cancelled`, `manual`. `task.accepted` is not notified. `manual` has no rule.
 - Default rules (spec §3.1, interfaces table): all enabled; push on for every type except `checklist.missed`; email only for `problem.critical`; direct audiences and system roles as in `DEFAULT_RULES`; `checklist.due_soon` lead time **30** minutes; allowed lead times **15, 30, 60, 120**.
 - Dedupe keys: `checklist.available:<occurrenceId>`, `checklist.due_soon:<occurrenceId>`, `checklist.overdue:<occurrenceId>`, `checklist.missed:<occurrenceId>`, `problem:<problemId>`. `checklist.assigned`, `task.*` and `manual` have none.
 - Scan guards (spec §3.4): `checklist.available` only when `starts_at` lies within the last **15 minutes** (`starts_at ≥ now − 15 min`, `starts_at ≤ now`) and the occurrence is `pending`; `checklist.due_soon` when `due_at − lead ≤ now < due_at`, the occurrence is `pending`, and **skipped** when `due_at − lead ≤ starts_at`. Only for enabled rules.
 - Tables (spec §5): `notification_events`, `notifications`, `notification_deliveries`, `push_devices`, `notification_rules`, plus `users.email_notifications boolean not null default true`. Migrations `0011_notifications.sql` (generated) and `0012_notifications_security.sql` (custom). Every table has `tenant_id`, RLS `FORCE`d with the usual `tenant_isolation` policy, composite `(tenant_id, x)` foreign keys. `push_devices.expo_token` is unique **across all tenants**.
-- Grants: `SELECT, INSERT, UPDATE, DELETE` on all five tables to `taskop_app` and `taskop_platform` (cleanup deletes, devices and rule overrides are deleted).
+- Grants: `SELECT, INSERT, UPDATE, DELETE` on all five tables to `edildy_app` and `edildy_platform` (cleanup deletes, devices and rule overrides are deleted).
 - Outcomes: `fanned_out`, `disabled`, `no_recipients`, `target_gone`. Delivery statuses: `queued`, `sent`, `delivered`, `failed`, `skipped`. Channels: `push`, `email`. Target kinds: `occurrence`, `task`, `none`. Platforms: `ios`, `android`.
 - Queues (spec §6.3), exactly:
   - `notifications.fanout` — worker, standard queue, `retryLimit: 5`, backoff, dead letter `notifications.dead`
@@ -168,9 +168,9 @@ apps/api/
 ---
 ## Interfaces for Parts 2 and 3
 
-Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@taskop/api-client` once **Tasks 1–4** of Part 1 are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; dates are `YYYY-MM-DD`.
+Everything below is exported from `@edildy/contracts`, `@edildy/i18n` or `@edildy/api-client` once **Tasks 1–4** of Part 1 are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; dates are `YYYY-MM-DD`.
 
-### `@taskop/contracts`
+### `@edildy/contracts`
 
 **Catalogue and rules** (`notifications.ts`, Part 1 Task 1):
 - `NOTIFICATION_TYPES = ['checklist.assigned', 'checklist.available', 'checklist.due_soon', 'checklist.overdue', 'checklist.missed', 'problem.recorded', 'problem.critical', 'task.assigned', 'task.submitted', 'task.rejected', 'task.completed', 'task.overdue', 'task.cancelled', 'manual'] as const`, `notificationTypeSchema`, `type NotificationType`
@@ -243,7 +243,7 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
 - `audit.ts`: `NOTIFICATION_AUDIT_ACTIONS = ['notification_rule.updated', 'notification_rule.reset', 'notification.message_sent'] as const`, `type NotificationAuditAction`. Entity types: `notification_rule` (entityId null; `after` carries `{ type, ... }`) and `notification_message` (entityId = event id).
 - No new error codes. Refusals use `VALIDATION_FAILED` (400, with `fields`), `FORBIDDEN` (403), `NOT_FOUND` (404), `REFERENCE_NOT_FOUND` (422).
 
-### `@taskop/i18n` (Part 1 Task 3)
+### `@edildy/i18n` (Part 1 Task 3)
 
 - `az.notifications` (new namespace, registered in `az/index.ts`):
   - `types.<NotificationType>` — the rule-row label, e.g. `checklist.due_soon`: "Checklistin vaxtı yaxınlaşır", `manual`: "Admin mesajı"
@@ -259,11 +259,11 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
 - `az.nav.notifications` ("Bildirişlər"), `az.nav.messages` ("Mesajlar")
 - Part 2 adds phone UI strings to `az.mobile`. Part 3 adds web UI strings to `az.notifications` (new keys only; it never renames these).
 
-Server-rendered push/email texts are **not** in `@taskop/i18n`; they live in `apps/api/src/notifications/notification-templates.ts`.
+Server-rendered push/email texts are **not** in `@edildy/i18n`; they live in `apps/api/src/notifications/notification-templates.ts`.
 
-### `@taskop/api-client` (Part 1 Task 4)
+### `@edildy/api-client` (Part 1 Task 4)
 
-`createTaskopApi(c)` spreads `createNotificationsApi(c)`, also exported with `type NotificationsApi`:
+`createEdildyApi(c)` spreads `createNotificationsApi(c)`, also exported with `type NotificationsApi`:
 
 | Method | HTTP | Returns |
 |---|---|---|
@@ -524,7 +524,7 @@ describe('message schemas', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- notifications`
+Run: `pnpm --filter @edildy/contracts test -- notifications`
 Expected: FAIL: `NOTIFICATION_TYPES` (and every other import) is not exported from `./index.js`.
 
 - [ ] **Step 3: Write the contracts**
@@ -863,7 +863,7 @@ export * from './notifications.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS. If `z.literal([15, 30, 60, 120])` does not type-check, the installed Zod is older than 4.0; the repo pins `zod ^4.6.5`, which supports literal arrays.
 
 - [ ] **Step 5: Commit**
@@ -884,7 +884,7 @@ git commit -m "feat(contracts): add the notification catalogue, rules, inbox, pu
   - `packages/api-client/src/client.test.ts` (fixtures only)
   - `apps/api/src/auth/me.service.ts`, `apps/api/src/executions/sync.service.ts`, `apps/api/src/common/error.filter.ts`, `apps/api/src/common/error.filter.test.ts`, `apps/api/test/roles.test.ts`
 
-**Fixtures in the apps (decision, agreed with Parts 2 and 3):** this task does **not** touch `apps/mobile` or `apps/web`. Making `unreadNotifications` and `emailNotifications` required breaks a few typed fixtures there (`apps/mobile/src/offline/testing/fixtures.ts` `syncResponse`, the `me` fixture of `apps/mobile/src/lib/session.test.ts` that the session restore parses with `meSchema`, and `apps/web/src/layouts/app-shell.test.tsx`). Part 2's Task 1 repairs the mobile ones and Part 3's Task 1 the web ones, so the three plans never edit the same lines. Until those tasks land, `pnpm --filter @taskop/mobile test` / `typecheck` and the web's may report those fixtures; this task's verification therefore runs contracts, api-client and api only.
+**Fixtures in the apps (decision, agreed with Parts 2 and 3):** this task does **not** touch `apps/mobile` or `apps/web`. Making `unreadNotifications` and `emailNotifications` required breaks a few typed fixtures there (`apps/mobile/src/offline/testing/fixtures.ts` `syncResponse`, the `me` fixture of `apps/mobile/src/lib/session.test.ts` that the session restore parses with `meSchema`, and `apps/web/src/layouts/app-shell.test.tsx`). Part 2's Task 1 repairs the mobile ones and Part 3's Task 1 the web ones, so the three plans never edit the same lines. Until those tasks land, `pnpm --filter @edildy/mobile test` / `typecheck` and the web's may report those fixtures; this task's verification therefore runs contracts, api-client and api only.
 
 **Interfaces:**
 - Consumes: Task 1.
@@ -944,7 +944,7 @@ Append to `apps/api/src/common/error.filter.test.ts`, inside `describe('toAppErr
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/contracts test -- notifications && pnpm --filter @taskop/api test -- error.filter`
+Run: `pnpm --filter @edildy/contracts test -- notifications && pnpm --filter @edildy/api test -- error.filter`
 Expected: FAIL: `NOTIFICATION_AUDIT_ACTIONS` is undefined, the sync response accepts a missing `unreadNotifications`, the last permission group is `tasks`; the error filter maps the issue to `errors.validation.invalid`.
 
 - [ ] **Step 3: Change the contracts**
@@ -1055,7 +1055,7 @@ In `apps/api/test/roles.test.ts`, the expected manager permissions become:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- error.filter roles executions-sync auth-signup && pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client typecheck`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- error.filter roles executions-sync auth-signup && pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client typecheck`
 Expected: PASS. `auth-signup` still sees every permission for the owner (it compares with `ALL_PERMISSIONS`). Do not run the i18n tests yet: `labels every permission group and key` fails until Task 3 adds the labels. Do not run the mobile and web checks here (see **Fixtures in the apps** above).
 
 - [ ] **Step 7: Commit**
@@ -1075,11 +1075,11 @@ git commit -m "feat(contracts): add unread count to sync, email preference to me
 
 **Interfaces:**
 - Consumes: `NOTIFICATION_TYPES`, `NOTIFICATION_GROUPS`, `DIRECT_AUDIENCES`, `DELIVERY_STATUSES`, `NOTIFICATION_ISSUE_CODES` (Task 1); the `notifications` permission group (Task 2).
-- Produces: `az.notifications` and the keys listed under `@taskop/i18n` in *Interfaces for Parts 2 and 3*. The audit page has no `actions` map (only `entityTypes`), so no action labels are added.
+- Produces: `az.notifications` and the keys listed under `@edildy/i18n` in *Interfaces for Parts 2 and 3*. The audit page has no `actions` map (only `entityTypes`), so no action labels are added.
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `packages/i18n/src/i18n.test.ts`. Extend the `@taskop/contracts` import with `DELIVERY_STATUSES`, `DIRECT_AUDIENCES`, `NOTIFICATION_GROUPS`, `NOTIFICATION_ISSUE_CODES` and `NOTIFICATION_TYPES`:
+Append to `packages/i18n/src/i18n.test.ts`. Extend the `@edildy/contracts` import with `DELIVERY_STATUSES`, `DIRECT_AUDIENCES`, `NOTIFICATION_GROUPS`, `NOTIFICATION_ISSUE_CODES` and `NOTIFICATION_TYPES`:
 
 ```ts
 describe('notification translations', () => {
@@ -1119,7 +1119,7 @@ describe('notification translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.notifications` is undefined, and the permission-label test fails for the `notifications` group and keys.
 
 - [ ] **Step 3: Implement**
@@ -1193,7 +1193,7 @@ export const az = { common, errors, executions, audit, auth, checklists, mobile,
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n typecheck && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n typecheck && pnpm --filter @edildy/i18n build`
 Expected: PASS. (The apps' checks wait for Parts 2 and 3's first tasks; see Task 2, **Fixtures in the apps**.)
 
 - [ ] **Step 5: Commit**
@@ -1212,7 +1212,7 @@ git commit -m "feat(i18n): add Azerbaijani strings for notification types, rules
 
 **Interfaces:**
 - Consumes: the schemas and types of Tasks 1–2.
-- Produces: `createNotificationsApi(c: ApiClient)`, `type NotificationsApi`, spread into `createTaskopApi`. Method table under **`@taskop/api-client`** in *Interfaces for Parts 2 and 3*.
+- Produces: `createNotificationsApi(c: ApiClient)`, `type NotificationsApi`, spread into `createEdildyApi`. Method table under **`@edildy/api-client`** in *Interfaces for Parts 2 and 3*.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1252,7 +1252,7 @@ describe('notification endpoints', () => {
       if (url.includes('/notifications/messages?')) return json(200, { items: [summary], nextCursor: null });
       return json(200, { ...summary, targets: { users: [], teams: [], sites: [] }, recipients: [] });
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     expect((await t.notifications.list({ limit: 10, unread: 'true' })).items[0]!.type).toBe('manual');
     expect(await t.notifications.unreadCount()).toEqual({ count: 2 });
     await t.notifications.markRead(id);
@@ -1291,7 +1291,7 @@ describe('notification endpoints', () => {
     const { api } = await authed(() =>
       json(400, { error: { code: 'VALIDATION_FAILED', messageKey: 'errors.VALIDATION_FAILED', fields: { userIds: 'notifications.issues.tooManyRecipients' }, retryAfterSeconds: null, requestId: 'r1' } }),
     );
-    await expect(createTaskopApi(api).messages.send({ title: 'a', body: 'b', siteIds: [id] })).rejects.toMatchObject({
+    await expect(createEdildyApi(api).messages.send({ title: 'a', body: 'b', siteIds: [id] })).rejects.toMatchObject({
       status: 400,
       code: 'VALIDATION_FAILED',
       fields: { userIds: 'notifications.issues.tooManyRecipients' },
@@ -1302,12 +1302,12 @@ describe('notification endpoints', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api-client test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api-client test`
 Expected: FAIL: `t.notifications` is undefined.
 
 - [ ] **Step 3: Implement**
 
-In `packages/api-client/src/endpoints.ts`, add these to the `@taskop/contracts` import:
+In `packages/api-client/src/endpoints.ts`, add these to the `@edildy/contracts` import:
 
 ```ts
   type MessageListQuery,
@@ -1328,7 +1328,7 @@ In `packages/api-client/src/endpoints.ts`, add these to the `@taskop/contracts` 
   type UpdatePreferencesInput,
 ```
 
-Add `...createNotificationsApi(c),` as the last line of the object returned by `createTaskopApi` (after `...createTasksApi(c),`), and append:
+Add `...createNotificationsApi(c),` as the last line of the object returned by `createEdildyApi` (after `...createTasksApi(c),`), and append:
 
 ```ts
 /** Sub-project 6: the inbox, push devices and the email preference (everyone), rules (notifications.manage), messages (notifications.send). */
@@ -1366,7 +1366,7 @@ export type NotificationsApi = ReturnType<typeof createNotificationsApi>;
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client typecheck && pnpm --filter @taskop/api-client build`
+Run: `pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client typecheck && pnpm --filter @edildy/api-client build`
 Expected: PASS. The query string keeps the object's key order and drops undefined values (`toQueryString`); a 204 resolves to `undefined`.
 
 - [ ] **Step 5: Commit**
@@ -1395,7 +1395,7 @@ git commit -m "feat(api-client): add inbox, push device, preference, notificatio
 - Test helpers in `apps/api/test/notification-fixtures.ts`:
   - `addDevice(tenantId: string, userId: string, token?: string): Promise<{ id: string; token: string }>` — an Android device row (owner connection)
   - `type EventRow`, `eventRows(tenantId: string, type?: string): Promise<EventRow[]>` — events of a tenant, oldest first
-  - `asApp<T>(tenantId: string, fn: (c: pg.PoolClient) => Promise<T>): Promise<T>` — a rolled-back `taskop_app` transaction with RLS set to `tenantId`
+  - `asApp<T>(tenantId: string, fn: (c: pg.PoolClient) => Promise<T>): Promise<T>` — a rolled-back `edildy_app` transaction with RLS set to `tenantId`
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1440,7 +1440,7 @@ export async function eventRows(tenantId: string, type?: string): Promise<EventR
   return r.rows;
 }
 
-/** A taskop_app transaction with RLS set to `tenantId`; always rolled back. */
+/** A edildy_app transaction with RLS set to `tenantId`; always rolled back. */
 export async function asApp<T>(tenantId: string, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const pool = new pg.Pool({ connectionString: inject('db').appUrl, max: 1 });
   const c = await pool.connect();
@@ -1585,7 +1585,7 @@ describe('notification tables', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notifications-db`
+Run: `pnpm --filter @edildy/api test -- notifications-db`
 Expected: FAIL: relation `notification_events` does not exist.
 
 - [ ] **Step 3: Add the tables to the Drizzle schema**
@@ -1602,7 +1602,7 @@ In `apps/api/src/db/schema.ts`:
 2. Append at the end of the file:
 
 ```ts
-// Must match NOTIFICATION_TARGET_KINDS, DELIVERY_CHANNELS, DELIVERY_STATUSES and PUSH_PLATFORMS in @taskop/contracts.
+// Must match NOTIFICATION_TARGET_KINDS, DELIVERY_CHANNELS, DELIVERY_STATUSES and PUSH_PLATFORMS in @edildy/contracts.
 export const notificationTargetKind = pgEnum('notification_target_kind', ['occurrence', 'task', 'none']);
 export const notificationChannel = pgEnum('notification_channel', ['push', 'email']);
 export const notificationDeliveryStatus = pgEnum('notification_delivery_status', ['queued', 'sent', 'delivered', 'failed', 'skipped']);
@@ -1755,8 +1755,8 @@ export const notificationRules = pgTable(
 - [ ] **Step 4: Generate the migrations**
 
 ```bash
-pnpm --filter @taskop/api exec drizzle-kit generate --name notifications
-pnpm --filter @taskop/api exec drizzle-kit generate --custom --name notifications_security
+pnpm --filter @edildy/api exec drizzle-kit generate --name notifications
+pnpm --filter @edildy/api exec drizzle-kit generate --custom --name notifications_security
 ```
 
 Check the output:
@@ -1781,7 +1781,7 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Cleanup deletes old notifications and events, devices are removed at logout, rule overrides are reset (SP6 spec §5, §6.3).
-GRANT SELECT, INSERT, UPDATE, DELETE ON notification_events, notifications, notification_deliveries, push_devices, notification_rules TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON notification_events, notifications, notification_deliveries, push_devices, notification_rules TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- The backfill below must see every tenant's rows (see 0004 for why row_security is switched off).
 SET LOCAL row_security = off;
@@ -1805,7 +1805,7 @@ SET LOCAL row_security = on;
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notifications-db tasks-db users roles`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notifications-db tasks-db users roles`
 Expected: PASS. The global test setup applies the new migrations to a fresh container.
 
 - [ ] **Step 6: Commit**
@@ -1890,7 +1890,7 @@ and append inside `describe('pg-boss wiring', …)`:
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- jobs-wiring`
+Run: `pnpm --filter @edildy/api test -- jobs-wiring`
 Expected: FAIL: `jobs.defineWorker is not a function`.
 
 - [ ] **Step 3: Implement**
@@ -1948,7 +1948,7 @@ interface WorkerDefinition {
       connectionString: this.config.DATABASE_APP_URL,
       schema: 'pgboss',
       createSchema: false,
-      application_name: 'taskop-jobs',
+      application_name: 'edildy-jobs',
       schedule: this.config.JOBS_CRON,
     });
     boss.on('error', (err) => this.logger.error(`pg-boss: ${String(err)}`));
@@ -2008,7 +2008,7 @@ The second test's `defineWorker` after a disabled bootstrap does not throw becau
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- jobs-wiring`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- jobs-wiring`
 Expected: PASS. The existing wiring tests still pass: the scheduling queues are unchanged.
 
 - [ ] **Step 5: Commit**
@@ -2027,7 +2027,7 @@ git commit -m "feat(api): add worker queues with dead-letter logging and send to
 - Test: `apps/api/test/notification-domain-events.test.ts`
 
 **Interfaces:**
-- Consumes: `DomainEvents`, `actorColumns(db)`; `type ProblemSeverity` from `@taskop/contracts`.
+- Consumes: `DomainEvents`, `actorColumns(db)`; `type ProblemSeverity` from `@edildy/contracts`.
 - Produces (in `DomainEventMap`):
   - `'assignment.assignees_changed': { tenantId: string; assignmentId: string; addedUserIds: string[]; actorUserId: string | null }` — emitted by `AssignmentsService.create` (all assignees) and `AssignmentsService.update` (only the added ones, when there are any), after the change, in its transaction.
   - `'problem.recorded': { tenantId: string; problemId: string; occurrenceId: string; severity: ProblemSeverity; actorUserId: string | null }` — emitted by `ProblemWriter.rewrite` for each row its upsert **inserted** (Spec decision 7), never for re-saves.
@@ -2104,13 +2104,13 @@ describe('notification domain events', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-domain-events`
+Run: `pnpm --filter @edildy/api test -- notification-domain-events`
 Expected: FAIL: nothing emits the two events yet, so the handlers are never called and the first assertion of each test sees `[]`. (Vitest's SWC transform does not type-check, so the unknown event names do not stop the run.)
 
 - [ ] **Step 3: Add the events**
 
 In `apps/api/src/common/domain-events.ts`:
-- change the contracts import to `import type { OccurrenceStatus, ProblemSeverity } from '@taskop/contracts';`
+- change the contracts import to `import type { OccurrenceStatus, ProblemSeverity } from '@edildy/contracts';`
 - add two entries to `DomainEventMap`, after `'occurrence.status_changed'`:
 
 ```ts
@@ -2148,7 +2148,7 @@ In `apps/api/src/scheduling/assignments.service.ts`:
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Answers, type ChecklistContent, deriveProblems } from '@taskop/contracts';
+import { type Answers, type ChecklistContent, deriveProblems } from '@edildy/contracts';
 import { and, eq, notInArray, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { DomainEvents } from '../common/domain-events';
@@ -2224,7 +2224,7 @@ export class ProblemWriter {
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-domain-events assignments assignment-changes executions-answers executions-complete problems-resolution`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-domain-events assignments assignment-changes executions-answers executions-complete problems-resolution`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -2398,7 +2398,7 @@ describe('notification outbox', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-events`
+Run: `pnpm --filter @edildy/api test -- notification-events`
 Expected: FAIL: `Cannot find module '../src/notifications/notification-events'`.
 
 - [ ] **Step 3: Queue names, limits and payloads**
@@ -2464,7 +2464,7 @@ export function failureText(e: unknown): string {
 `apps/api/src/notifications/payloads.ts`:
 
 ```ts
-import type { NotificationType } from '@taskop/contracts';
+import type { NotificationType } from '@edildy/contracts';
 
 /** notification_events.payload holds ids only (spec §5), except for manual messages. */
 export interface OccurrencePayload {
@@ -2519,7 +2519,7 @@ export interface PayloadOf extends Record<NotificationType, object> {
 
 ```ts
 import { Injectable, Logger } from '@nestjs/common';
-import type { NotificationType } from '@taskop/contracts';
+import type { NotificationType } from '@edildy/contracts';
 import { Clock } from '../common/clock';
 import { sanitiseForLog } from '../common/error.filter';
 import { DbService, type Executor } from '../db/db.service';
@@ -2579,7 +2579,7 @@ export class NotificationEvents {
 
 ```ts
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import type { NotificationType, OccurrenceStatus } from '@taskop/contracts';
+import type { NotificationType, OccurrenceStatus } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { DomainEvents, type TaskEvent, type TaskEventName } from '../common/domain-events';
 import { DbService } from '../db/db.service';
@@ -2647,7 +2647,7 @@ In `apps/api/src/app.module.ts`, import `NotificationsModule` from `./notificati
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-events notification-domain-events tasks-work tasks-manage occurrence-jobs`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-events notification-domain-events tasks-work tasks-manage occurrence-jobs`
 Expected: PASS. The forced failure logs one `Recording a task.assigned notification failed` error (silenced by `LOG_LEVEL=silent`).
 
 - [ ] **Step 7: Commit**
@@ -2680,7 +2680,7 @@ git commit -m "feat(api): record notification events in the business transaction
 `apps/api/src/notifications/notification-rules.test.ts`:
 
 ```ts
-import { DEFAULT_RULES, RULE_TYPES } from '@taskop/contracts';
+import { DEFAULT_RULES, RULE_TYPES } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { effectiveRule, type RoleCatalog, ruleIssues } from './notification-rules';
 
@@ -2737,7 +2737,7 @@ describe('ruleIssues', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- src/notifications/notification-rules`
+Run: `pnpm --filter @edildy/api test -- src/notifications/notification-rules`
 Expected: FAIL: `Cannot find module './notification-rules'`.
 
 - [ ] **Step 3: The pure merge and checks**
@@ -2754,7 +2754,7 @@ import {
   type RuleType,
   type SystemRoleKey,
   type UpdateNotificationRuleOutput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** A notification_rules row, as stored. */
 export interface RuleRow {
@@ -2817,12 +2817,12 @@ export function ruleIssues(type: RuleType, input: UpdateNotificationRuleOutput):
 
 - [ ] **Step 4: Run the unit test and check it passes**
 
-Run: `pnpm --filter @taskop/api test -- src/notifications/notification-rules`
+Run: `pnpm --filter @edildy/api test -- src/notifications/notification-rules`
 Expected: PASS.
 
 - [ ] **Step 5: Write the failing endpoint test**
 
-Append to `apps/api/test/notification-fixtures.ts` (add `import type { SystemRoleKey } from '@taskop/contracts';`, `import type { TestApp } from './app';`, `import { as, createUserDirect, loginStaff } from './fixtures';` and `import type { Api } from './scheduling-fixtures';`):
+Append to `apps/api/test/notification-fixtures.ts` (add `import type { SystemRoleKey } from '@edildy/contracts';`, `import type { TestApp } from './app';`, `import { as, createUserDirect, loginStaff } from './fixtures';` and `import type { Api } from './scheduling-fixtures';`):
 
 ```ts
 /** A staff user with a built-in role, linked to `siteIds`, logged in on the web. */
@@ -2840,7 +2840,7 @@ export async function staffAt(t: TestApp, tenantId: string, owner: Api, roleKey:
 `apps/api/test/notification-rules-api.test.ts`:
 
 ```ts
-import { RULE_TYPES } from '@taskop/contracts';
+import { RULE_TYPES } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
@@ -2935,7 +2935,7 @@ describe('notification rules API', () => {
 
 - [ ] **Step 6: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-rules-api`
+Run: `pnpm --filter @edildy/api test -- notification-rules-api`
 Expected: FAIL: `GET /api/v1/notification-rules` answers 404.
 
 - [ ] **Step 7: Service, controller and DTOs**
@@ -2943,7 +2943,7 @@ Expected: FAIL: `GET /api/v1/notification-rules` answers 404.
 `apps/api/src/notifications/dto.ts`:
 
 ```ts
-import { notificationRuleDtoSchema, updateNotificationRuleSchema } from '@taskop/contracts';
+import { notificationRuleDtoSchema, updateNotificationRuleSchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class UpdateNotificationRuleDto extends createZodDto(updateNotificationRuleSchema) {}
@@ -2954,7 +2954,7 @@ export class NotificationRuleResponse extends createZodDto(notificationRuleDtoSc
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type NotificationRuleDto, RULE_TYPES, type RuleType, type SystemRoleKey, type UpdateNotificationRuleOutput } from '@taskop/contracts';
+import { type NotificationRuleDto, RULE_TYPES, type RuleType, type SystemRoleKey, type UpdateNotificationRuleOutput } from '@edildy/contracts';
 import { eq, inArray } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -3045,7 +3045,7 @@ export class NotificationRules {
 ```ts
 import { Body, Controller, Delete, Get, Inject, Injectable, Param, type PipeTransform, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { type NotificationRuleDto, type RuleType, ruleTypeSchema } from '@taskop/contracts';
+import { type NotificationRuleDto, type RuleType, ruleTypeSchema } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { RequirePermission } from '../common/decorators';
 import { NotificationRuleResponse, UpdateNotificationRuleDto } from './dto';
@@ -3105,7 +3105,7 @@ export class NotificationsModule {}
 
 - [ ] **Step 8: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-rules`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-rules`
 Expected: PASS (both the unit file and `notification-rules-api`). `GET /notification-rules/nope` is `404` because no `GET :type` route exists.
 
 - [ ] **Step 9: Commit**
@@ -3137,7 +3137,7 @@ git commit -m "feat(api): add tenant notification rules over the code defaults, 
 `apps/api/test/notification-recipients.test.ts`:
 
 ```ts
-import type { NotificationRuleDto, RuleType } from '@taskop/contracts';
+import type { NotificationRuleDto, RuleType } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DbService } from '../src/db/db.service';
 import { NotificationRecipients } from '../src/notifications/notification-recipients';
@@ -3317,7 +3317,7 @@ describe('notification recipients', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-recipients`
+Run: `pnpm --filter @edildy/api test -- notification-recipients`
 Expected: FAIL: `Cannot find module '../src/notifications/notification-recipients'`.
 
 - [ ] **Step 3: Widen the scope parameter types**
@@ -3364,7 +3364,7 @@ In `apps/api/src/tasks/tasks.module.ts`, export `TaskScope`:
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { TaskReader } from '../common/request';
 import { DbService } from '../db/db.service';
@@ -3418,7 +3418,7 @@ export class ScopeSubjects {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { NotificationType, ProblemSeverity } from '@taskop/contracts';
+import type { NotificationType, ProblemSeverity } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { assignments, checklists, executionProblems, occurrences, sites, tasks, tenants } from '../db/schema';
@@ -3565,7 +3565,7 @@ export class NotificationTargets {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { NotificationRuleDto } from '@taskop/contracts';
+import type { NotificationRuleDto } from '@edildy/contracts';
 import { and, asc, eq, inArray, ne, or, type SQL, sql } from 'drizzle-orm';
 import { ScopeService } from '../common/scope.service';
 import { DbService } from '../db/db.service';
@@ -3741,7 +3741,7 @@ export class NotificationsModule {}
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-recipients scheduling-scope tasks-scope`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-recipients scheduling-scope tasks-scope`
 Expected: PASS. The scope tests prove the widened signatures changed nothing.
 
 - [ ] **Step 8: Commit**
@@ -3760,7 +3760,7 @@ git commit -m "feat(api): load notification targets and resolve recipients by au
 - Test: `apps/api/src/notifications/notification-templates.test.ts`
 
 **Interfaces:**
-- Consumes: the target types (Task 10); `type MailMessage` from `../mail/mailer`; `isProblemType`, `type NotificationType`, `type NotificationTargetKind` from `@taskop/contracts`.
+- Consumes: the target types (Task 10); `type MailMessage` from `../mail/mailer`; `isProblemType`, `type NotificationType`, `type NotificationTargetKind` from `@edildy/contracts`.
 - Produces:
   - `interface RenderedNotification { title: string; body: string; targetKind: NotificationTargetKind; targetId: string | null; targetDate: string | null }`
   - `renderNotification(type: NotificationType, target: NotificationTarget): RenderedNotification` — pure; times in `target.timezone` (24-hour `HH:mm`), dates `DD.MM.YYYY`; problem notes cut at 200 characters with `…`.
@@ -3856,7 +3856,7 @@ describe('links and email', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-templates`
+Run: `pnpm --filter @edildy/api test -- notification-templates`
 Expected: FAIL: `Cannot find module './notification-templates'`.
 
 - [ ] **Step 3: Implement**
@@ -3864,7 +3864,7 @@ Expected: FAIL: `Cannot find module './notification-templates'`.
 `apps/api/src/notifications/notification-templates.ts`:
 
 ```ts
-import { isProblemType, type NotificationTargetKind, type NotificationType } from '@taskop/contracts';
+import { isProblemType, type NotificationTargetKind, type NotificationType } from '@edildy/contracts';
 import type { MailMessage } from '../mail/mailer';
 import type { NotificationTarget, OccurrenceTarget, ProblemTarget, TaskTarget } from './notification-targets';
 
@@ -3971,7 +3971,7 @@ export function notificationMail(p: { to: string; webUrl: string; notification: 
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api test -- notification-templates && pnpm --filter @taskop/api typecheck`
+Run: `pnpm --filter @edildy/api test -- notification-templates && pnpm --filter @edildy/api typecheck`
 Expected: PASS. Node 24 ships full ICU, so `Intl.DateTimeFormat` knows every IANA zone; `en-CA` formats dates as `YYYY-MM-DD`.
 
 - [ ] **Step 5: Commit**
@@ -4030,12 +4030,12 @@ describe('failureText', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- src/notifications/queues`
+Run: `pnpm --filter @edildy/api test -- src/notifications/queues`
 Expected: FAIL: `deliveryJobs` is not exported.
 
 - [ ] **Step 3: Implement `deliveryJobs`**
 
-Append to `apps/api/src/notifications/queues.ts` (and add `import type { DeliveryChannel } from '@taskop/contracts';` at the top):
+Append to `apps/api/src/notifications/queues.ts` (and add `import type { DeliveryChannel } from '@edildy/contracts';` at the top):
 
 ```ts
 /** Spec §6.1 step 4: push deliveries in batches of ≤ 100 (one Expo request each), email deliveries one per job. */
@@ -4048,7 +4048,7 @@ export function deliveryJobs(tenantId: string, rows: ReadonlyArray<{ id: string;
 }
 ```
 
-Run: `pnpm --filter @taskop/api test -- src/notifications/queues`
+Run: `pnpm --filter @edildy/api test -- src/notifications/queues`
 Expected: PASS.
 
 - [ ] **Step 4: Write the failing fan-out test**
@@ -4257,7 +4257,7 @@ The checklist in `executionWorld` (used by `closedRunWithProblems`) is named "İ
 
 - [ ] **Step 5: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-fanout`
+Run: `pnpm --filter @edildy/api test -- notification-fanout`
 Expected: FAIL: `Cannot find module '../src/notifications/notification-fanout'`.
 
 - [ ] **Step 6: Implement the worker**
@@ -4266,7 +4266,7 @@ Expected: FAIL: `Cannot find module '../src/notifications/notification-fanout'`.
 
 ```ts
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { NotificationRuleDto, NotificationType } from '@taskop/contracts';
+import type { NotificationRuleDto, NotificationType } from '@edildy/contracts';
 import { and, asc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { sanitiseForLog } from '../common/error.filter';
@@ -4416,7 +4416,7 @@ In `apps/api/src/notifications/notifications.module.ts`, add `NotificationFanout
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-fanout src/notifications/queues`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-fanout src/notifications/queues`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -4447,10 +4447,10 @@ git commit -m "feat(api): fan notification events out to inbox and delivery rows
 - [ ] **Step 1: Add the dependency and the config**
 
 ```bash
-pnpm --filter @taskop/api add expo-server-sdk@^7.2.0
+pnpm --filter @edildy/api add expo-server-sdk@^7.2.0
 ```
 
-Check: `apps/api/package.json` lists `"expo-server-sdk": "^7.2.0"`, and `node -e "require('expo-server-sdk')"` run from `apps/api` prints nothing and exits 0 (Node 24 loads the ESM-only package through `require(esm)`, as it does `@taskop/contracts`).
+Check: `apps/api/package.json` lists `"expo-server-sdk": "^7.2.0"`, and `node -e "require('expo-server-sdk')"` run from `apps/api` prints nothing and exits 0 (Node 24 loads the ESM-only package through `require(esm)`, as it does `@edildy/contracts`).
 
 Append to `apps/api/src/config/config.test.ts`, inside `describe('loadConfig', …)`:
 
@@ -4466,7 +4466,7 @@ Append to `apps/api/src/config/config.test.ts`, inside `describe('loadConfig', �
   });
 ```
 
-Run: `pnpm --filter @taskop/api test -- config`
+Run: `pnpm --filter @edildy/api test -- config`
 Expected: FAIL: `NOTIFICATIONS_PUSH_ENABLED` is undefined.
 
 In `apps/api/src/config/config.ts`, add to `configSchema` after `LOG_LEVEL`:
@@ -4506,7 +4506,7 @@ NOTIFICATIONS_PUSH_ENABLED=true
 # EXPO_ACCESS_TOKEN=
 ```
 
-Run: `pnpm --filter @taskop/api test -- config`
+Run: `pnpm --filter @edildy/api test -- config`
 Expected: PASS.
 
 - [ ] **Step 2: Write the failing push-sender test**
@@ -4585,7 +4585,7 @@ describe('FakePushSender', () => {
 });
 ```
 
-Run: `pnpm --filter @taskop/api test -- push-sender`
+Run: `pnpm --filter @edildy/api test -- push-sender`
 Expected: FAIL: `Cannot find module './push-sender'`.
 
 - [ ] **Step 3: Implement the push sender**
@@ -4594,7 +4594,7 @@ Expected: FAIL: `Cannot find module './push-sender'`.
 
 ```ts
 import { randomUUID } from 'node:crypto';
-import type { PushData } from '@taskop/contracts';
+import type { PushData } from '@edildy/contracts';
 import { Expo, type ExpoPushMessage, type ExpoPushReceipt, type ExpoPushTicket } from 'expo-server-sdk';
 import type { AppConfig } from '../config/config';
 
@@ -4698,7 +4698,7 @@ export function pushSenderFor(config: AppConfig): PushSender {
 
 If `tsc` reports that `PushMessage.data` is not assignable to `ExpoPushMessage['data']` (`Record<string, unknown>`), spread it: `messages.map((m) => ({ ...m, data: { ...m.data } }))`.
 
-Run: `pnpm --filter @taskop/api test -- push-sender && pnpm --filter @taskop/api typecheck`
+Run: `pnpm --filter @edildy/api test -- push-sender && pnpm --filter @edildy/api typecheck`
 Expected: PASS.
 
 - [ ] **Step 4: Write the failing delivery test**
@@ -4887,7 +4887,7 @@ describe('notification delivery', () => {
 
 Notes for this test: `taskWorld`'s manager is linked to Filial 1; the second manager made by `mailed()` is created by the owner, who has the `all` scope, so the owner can assign them a task. `T('05:00')` with `assigned(1, { dueAt })` makes the sweep flag the task at 05:00; the badge is 2 because the first notification is still unread.
 
-Run: `pnpm --filter @taskop/api test -- notification-delivery`
+Run: `pnpm --filter @edildy/api test -- notification-delivery`
 Expected: FAIL: `Cannot find module '../src/notifications/notification-delivery'`.
 
 - [ ] **Step 5: Implement the delivery worker**
@@ -4896,7 +4896,7 @@ Expected: FAIL: `Cannot find module '../src/notifications/notification-delivery'
 
 ```ts
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { NotificationTargetKind, NotificationType, PushData } from '@taskop/contracts';
+import type { NotificationTargetKind, NotificationType, PushData } from '@edildy/contracts';
 import { and, count, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { APP_CONFIG, type AppConfig } from '../config/config';
@@ -5135,7 +5135,7 @@ In `apps/api/src/notifications/notifications.module.ts`, add `NotificationDelive
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-delivery push-sender config notification-fanout`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-delivery push-sender config notification-fanout`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -5304,7 +5304,7 @@ The `2026-11-02T04:00:00Z` clock makes "90 days ago" `2026-08-04T04:00:00Z` and 
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-jobs`
+Run: `pnpm --filter @edildy/api test -- notification-jobs`
 Expected: FAIL: `Cannot find module '../src/notifications/notification-jobs'`.
 
 - [ ] **Step 3: Implement**
@@ -5469,7 +5469,7 @@ In `apps/api/src/notifications/notifications.module.ts`, add `NotificationJobs` 
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-jobs`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-jobs`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -5589,7 +5589,7 @@ describe('notifications.scan', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-scan`
+Run: `pnpm --filter @edildy/api test -- notification-scan`
 Expected: FAIL: `jobs.scanAll is not a function`.
 
 - [ ] **Step 3: Implement**
@@ -5676,7 +5676,7 @@ import { NotificationRules } from './rules.service';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-scan notification-jobs`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-scan notification-jobs`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -5861,7 +5861,7 @@ describe('inbox, preferences and push devices', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-inbox`
+Run: `pnpm --filter @edildy/api test -- notification-inbox`
 Expected: FAIL: `GET /api/v1/me/notifications` answers 404.
 
 - [ ] **Step 3: DTOs and the service**
@@ -5881,7 +5881,7 @@ export class PreferencesResponse extends createZodDto(preferencesSchema) {}
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { NotificationItem, NotificationType, Page, Preferences } from '@taskop/contracts';
+import type { NotificationItem, NotificationType, Page, Preferences } from '@edildy/contracts';
 import { and, count, desc, eq, isNull, ne, or, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -6001,7 +6001,7 @@ export class InboxService {
 ```ts
 import { Body, Controller, Delete, Get, HttpCode, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { NotificationItem, Page, Preferences, UnreadCount } from '@taskop/contracts';
+import type { NotificationItem, Page, Preferences, UnreadCount } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
@@ -6134,7 +6134,7 @@ In `apps/api/src/auth/me.service.ts`, the interim line becomes:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-inbox executions-sync tasks-sync users auth-login`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-inbox executions-sync tasks-sync users auth-login`
 Expected: PASS. The 401 comes from the global auth guard before any route.
 
 - [ ] **Step 6: Commit**
@@ -6332,7 +6332,7 @@ describe('manual messages', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- notification-messages`
+Run: `pnpm --filter @edildy/api test -- notification-messages`
 Expected: FAIL: `GET /api/v1/notifications/messages/options` answers 404.
 
 - [ ] **Step 3: DTOs**
@@ -6365,7 +6365,7 @@ import {
   type MessageRecipient,
   type MessageSummary,
   type Page,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, asc, count, desc, eq, inArray, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -6534,7 +6534,7 @@ export class MessageQueries {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { MESSAGE_LIMITS, type MessagePreview, type MessageSummary, type MessageTargetOptions } from '@taskop/contracts';
+import { MESSAGE_LIMITS, type MessagePreview, type MessageSummary, type MessageTargetOptions } from '@edildy/contracts';
 import { and, asc, eq, ilike, inArray, ne, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -6656,7 +6656,7 @@ export class MessagesService {
 ```ts
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { MessageDetail, MessagePreview, MessageSummary, MessageTargetOptions, Page } from '@taskop/contracts';
+import type { MessageDetail, MessagePreview, MessageSummary, MessageTargetOptions, Page } from '@edildy/contracts';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
@@ -6746,7 +6746,7 @@ export class NotificationsModule {}
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- notification-messages`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- notification-messages`
 Expected: PASS. In the detail test the manager has an email address (staff) and is opted in, so only they get an email; İşçi 1's only device answers `DeviceNotRegistered`.
 
 - [ ] **Step 8: Commit**
@@ -6852,15 +6852,15 @@ In `apps/api/test/seed-demo.test.ts`, append inside `describe('demo seed', …)`
         order by 1`,
     );
     expect(r.rows).toEqual([
-      { who: 'elvin', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.taskop.az' },
-      { who: 'manager@demo.taskop.az', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.taskop.az' },
+      { who: 'elvin', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.edildy.az' },
+      { who: 'manager@demo.edildy.az', title: 'Xoş gəlmisiniz', target_kind: 'none', read: false, outcome: 'fanned_out', actor: 'owner@demo.edildy.az' },
     ]);
   }, 60_000);
 ```
 
 - [ ] **Step 2: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- jobs-wiring openapi seed-demo`
+Run: `pnpm --filter @edildy/api test -- jobs-wiring openapi seed-demo`
 Expected: the real-queue and OpenAPI tests PASS already (Tasks 6–17 built them); the cron test PASSES too; `seed-demo` FAILS: the welcome message query returns `[]`. (If the real-queue test fails, a worker is not wired: check `NotificationFanout.onModuleInit` and `NotificationDelivery.onModuleInit` call `defineWorker`.)
 
 - [ ] **Step 3: Seed the welcome message**
@@ -6879,7 +6879,7 @@ async function seedDemoNotifications(tx: Tx, tenantId: string, ownerId: string):
   const people = await tx
     .select({ id: schema.users.id })
     .from(schema.users)
-    .where(and(eq(schema.users.tenantId, tenantId), or(eq(schema.users.username, 'elvin'), eq(schema.users.email, 'manager@demo.taskop.az'))));
+    .where(and(eq(schema.users.tenantId, tenantId), or(eq(schema.users.username, 'elvin'), eq(schema.users.email, 'manager@demo.edildy.az'))));
   if (!people.length) return;
   const title = 'Xoş gəlmisiniz';
   const body = 'Yeni işlər, gecikmələr və problemlər haqqında bildirişləri burada görəcəksiniz.';
@@ -6922,16 +6922,16 @@ and add a line to the summary printed at the end:
 
 - [ ] **Step 4: Run the full suite**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client build && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint && pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client build && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint && pnpm --filter @edildy/api test`
 Expected: PASS, every API test file including the eleven new ones. The mobile and web checks are run by Parts 2 and 3 after their Task 1 (see Task 2, **Fixtures in the apps**).
 
 - [ ] **Step 5: Try it locally**
 
 ```bash
 docker compose up -d
-pnpm --filter @taskop/api db:setup
-pnpm --filter @taskop/api db:seed
-pnpm --filter @taskop/api dev
+pnpm --filter @edildy/api db:setup
+pnpm --filter @edildy/api db:seed
+pnpm --filter @edildy/api dev
 ```
 
 Then, in another terminal, sign in as the worker and read the inbox:

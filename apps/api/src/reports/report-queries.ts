@@ -24,8 +24,8 @@ import {
   type RunCounts,
   type SiteReportRow,
   type UserRef,
-} from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { and, desc, eq, inArray, isNull, type SQL, sql } from 'drizzle-orm';
 import { inSiteSubtrees, sqlList } from '../common/sql';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
@@ -178,7 +178,7 @@ export function auditStateCondition(s: RunAuditState): SQL {
  * The run's non-cancelled audit, for the column and the filter (at most one: audits_open_uq). Lateral, so each run is one
  * index probe: as a plain join the row-level-security filter on audits made Postgres expect a handful of audits and pick
  * a nested loop over a materialised scan of all of them. Check any new join against a large RLS table with EXPLAIN
- * ANALYZE as `taskop_app` (with `app.tenant_id` set), not as the owner, which skips the filter.
+ * ANALYZE as `edildy_app` (with `app.tenant_id` set), not as the owner, which skips the filter.
  */
 const auditJoin = sql`left join lateral (
   select a.id, a.status, a.result from audits a where a.execution_id = r.execution_id and a.status <> 'cancelled' limit 1

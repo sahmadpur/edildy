@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, type ExecutionDetail, type SendBackInput, visibleItems } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, type ExecutionDetail, type SendBackInput, visibleItems } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,4 +1,4 @@
-import { MEDIA_LIMITS, type MediaUrl, type ProblemListQuery } from '@taskop/contracts';
+import { MEDIA_LIMITS, type MediaUrl, type ProblemListQuery } from '@edildy/contracts';
 import { type QueryClient, type QueryKey, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 

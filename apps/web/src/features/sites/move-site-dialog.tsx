@@ -1,4 +1,4 @@
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';

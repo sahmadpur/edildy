@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { SiteTypeDto } from '@taskop/contracts';
+import type { SiteTypeDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { CreateSiteTypeDto, SiteTypeResponse, UpdateSiteTypeDto } from './dto';

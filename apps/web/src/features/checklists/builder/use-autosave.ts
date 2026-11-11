@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { ChecklistContent, ContentSaveResult } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { ChecklistContent, ContentSaveResult } from '@edildy/contracts';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error' | 'conflict';

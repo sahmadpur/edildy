@@ -10,7 +10,7 @@ import {
   type Score,
   tzOffsetMinutes,
   zonedTimeToUtc,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { answerValue, formatPercent } from '@/features/executions/labels';
 

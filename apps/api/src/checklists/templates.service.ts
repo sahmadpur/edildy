@@ -8,7 +8,7 @@ import {
   type TemplateDto,
   type TemplateSummary,
   validateForPublish,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, asc, eq, ilike, inArray, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { escapeLike } from '../common/sql';

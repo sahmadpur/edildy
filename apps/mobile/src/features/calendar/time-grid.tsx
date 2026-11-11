@@ -1,4 +1,4 @@
-import { zonedTimeToUtc } from '@taskop/contracts';
+import { zonedTimeToUtc } from '@edildy/contracts';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';

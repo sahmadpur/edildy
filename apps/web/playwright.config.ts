@@ -9,14 +9,14 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: 'pnpm --filter @taskop/api start',
+      command: 'pnpm --filter @edildy/api start',
       url: 'http://localhost:3000/api/v1/health',
       reuseExistingServer: !process.env.CI,
       cwd: '../..',
       timeout: 120_000,
     },
     {
-      command: 'pnpm --filter @taskop/web dev',
+      command: 'pnpm --filter @edildy/web dev',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
       cwd: '../..',

@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { ClaimResult, CompleteResult, ExecutionCorrections, ExecutionDetail, MediaUploadTicket, ResubmitResult, SaveAnswersResult } from '@taskop/contracts';
+import type { ClaimResult, CompleteResult, ExecutionCorrections, ExecutionDetail, MediaUploadTicket, ResubmitResult, SaveAnswersResult } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';

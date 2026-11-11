@@ -1,4 +1,4 @@
-import { type DataScope, PERIOD_PRESETS, type PermissionKey, RUN_BUCKETS } from '@taskop/contracts';
+import { type DataScope, PERIOD_PRESETS, type PermissionKey, RUN_BUCKETS } from '@edildy/contracts';
 import { OCC, OCC2, OCC3 } from '@/offline/testing/fixtures';
 import { canSeeTeam, CHIP_BUCKETS, employeeChoices, notCompleted, TEAM_CHIPS, TEAM_PERIODS, teamPeriod, uniqueRuns } from './team-rules';
 import { employeeRow, KAMRAN, reportRun, unassignedRow, WORKER_A, WORKER_B } from './testing/fixtures';

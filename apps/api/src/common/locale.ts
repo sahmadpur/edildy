@@ -1,4 +1,4 @@
-import { type Language, pickLanguage } from '@taskop/i18n';
+import { type Language, pickLanguage } from '@edildy/i18n';
 import { inArray } from 'drizzle-orm';
 import type { Tx } from '../db/db.service';
 import { tenants, users } from '../db/schema';

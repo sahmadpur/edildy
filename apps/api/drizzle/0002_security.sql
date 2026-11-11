@@ -21,10 +21,10 @@ BEGIN
   END LOOP;
 END $$;
 --> statement-breakpoint
-GRANT USAGE ON SCHEMA public TO taskop_app, taskop_platform;
+GRANT USAGE ON SCHEMA public TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON tenants, site_types, sites, teams, roles, role_permissions, users, user_teams, user_sites, sessions, auth_tokens TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenants, site_types, sites, teams, roles, role_permissions, users, user_teams, user_sites, sessions, auth_tokens TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT ON audit_log TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON audit_log TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON platform_admins, rate_limits TO taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON platform_admins, rate_limits TO edildy_platform;

@@ -45,7 +45,7 @@ beforeEach(() => {
 
 describe('GlobalTemplatesPage', () => {
   it('publishes and shows validation errors from the API', async () => {
-    const { ApiError } = await import('@taskop/api-client');
+    const { ApiError } = await import('@edildy/api-client');
     mocks.globalTemplates.list.mockResolvedValue([row(false)]);
     mocks.globalTemplates.publish.mockRejectedValue(
       new ApiError(422, 'CHECKLIST_INVALID_CONTENT', 'errors.CHECKLIST_INVALID_CONTENT'),

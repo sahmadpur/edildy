@@ -327,7 +327,7 @@ export default {
   },
   notifications: {
     bell: 'Уведомления, непрочитанных: {{count}}',
-    channel: 'Уведомления Taskop',
+    channel: 'Уведомления Edildy',
     unread: 'Непрочитанные',
     online: 'Для просмотра уведомлений требуется подключение к интернету.',
     profile: {

@@ -1,4 +1,4 @@
-import type { OccurrenceHistoryEntry } from '@taskop/contracts';
+import type { OccurrenceHistoryEntry } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
-import { LANGUAGE_STORAGE_KEY } from '@taskop/i18n';
+import { LANGUAGE_STORAGE_KEY } from '@edildy/i18n';
 
 // The default 1s for findBy*/waitFor is too tight for heavy pages on loaded CI runners.
 configure({ asyncUtilTimeout: 3000 });

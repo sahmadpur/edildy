@@ -1,6 +1,6 @@
 import { Body, Get, Inject, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { RosterCopyResult, RosterDto } from '@taskop/contracts';
+import type { RosterCopyResult, RosterDto } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { type Actor, CurrentActor } from './actor';
 import { CopyRosterDto, PutRosterDto, RosterCopyResultResponse, RosterQueryDto, RosterResponse } from './dto';

@@ -1,4 +1,4 @@
-import { PROBLEM_REPORT_LIMITS, type ProblemReportDto } from '@taskop/contracts';
+import { PROBLEM_REPORT_LIMITS, type ProblemReportDto } from '@edildy/contracts';
 import type { Db } from './db';
 import { iso } from './local-model';
 

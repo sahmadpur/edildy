@@ -1,4 +1,4 @@
-import type { LoginResult, Me } from '@taskop/contracts';
+import type { LoginResult, Me } from '@edildy/contracts';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The ApiClient binds globalThis.fetch when the module loads, so stub it before importing session.

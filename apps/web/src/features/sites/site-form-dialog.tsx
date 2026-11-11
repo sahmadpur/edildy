@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { SiteDto, SiteTypeDto } from '@taskop/contracts';
+import type { SiteDto, SiteTypeDto } from '@edildy/contracts';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';

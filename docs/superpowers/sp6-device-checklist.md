@@ -8,7 +8,7 @@ Never commit device notes, credentials, `google-services.json`, `.p8` or service
 ## A. Prerequisites (once)
 
 1. **EAS project.** In `apps/mobile`: `npx eas-cli@latest login`, then `npx eas-cli@latest init`. Because `app.config.ts` exists, `eas init` prints the project id instead of writing it. Paste it into `apps/mobile/app.json` under `expo`: `"owner": "<your Expo account>"` and `"extra": { "eas": { "projectId": "<id>" } }`.
-   - Check: `pnpm --filter @taskop/mobile exec expo config --type public | grep projectId` prints the id.
+   - Check: `pnpm --filter @edildy/mobile exec expo config --type public | grep projectId` prints the id.
    - Commit: `git add apps/mobile/app.json && git commit -m "chore(mobile): EAS project id"`.
 2. **APNs key (iOS).** Apple Developer, Certificates, IDs & Profiles, Keys: create a key with Apple Push Notifications service. Download the `.p8` (gitignored). Run `npx eas-cli@latest credentials -p ios`, bundle id `az.taskop.app`, "Push Notifications: Manage your Apple Push Notifications Key", upload it. The development build must be signed by the paid team: a personal team cannot sign the push entitlement.
 3. **FCM V1 key (Android).** Firebase console: create a project, add an Android app with package `az.taskop.app`.
@@ -24,7 +24,7 @@ docker compose up -d
 ipconfig getifaddr en0                     # e.g. 192.168.1.20 (use your value below)
 cp -n apps/api/.env.example apps/api/.env          # -n: never overwrite an existing file
 cp -n apps/mobile/.env.example apps/mobile/.env
-pnpm --filter @taskop/api keys:generate            # prints JWT_PRIVATE_KEY and JWT_PUBLIC_KEY
+pnpm --filter @edildy/api keys:generate            # prints JWT_PRIVATE_KEY and JWT_PUBLIC_KEY
 ```
 
 Then edit the two files (both are gitignored):
@@ -34,20 +34,20 @@ Then edit the two files (both are gitignored):
 
 ```bash
 pnpm db:setup && pnpm db:seed
-pnpm --filter @taskop/api dev
-pnpm --filter @taskop/mobile exec expo prebuild --clean
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
-pnpm --filter @taskop/mobile android -- --device
+pnpm --filter @edildy/api dev
+pnpm --filter @edildy/mobile exec expo prebuild --clean
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
+pnpm --filter @edildy/mobile android -- --device
 ```
 
 Expected: both phones install the development build. `expo prebuild --clean` regenerates `ios/` and `android/` with the notifications plugin, the `aps-environment` entitlement and the Firebase file.
 
-Seed accounts: manager `manager@demo.taskop.az` / `DemoPassword123`; workers `elvin` and `nigar`, org code `demo`, PIN `482915`. Mailpit: `http://localhost:8025`. The web app (Part 3) sends messages and changes rules; without it use the API endpoints directly.
+Seed accounts: manager `manager@demo.edildy.az` / `DemoPassword123`; workers `elvin` and `nigar`, org code `demo`, PIN `482915`. Mailpit: `http://localhost:8025`. The web app (Part 3) sends messages and changes rules; without it use the API endpoints directly.
 
-Database check used in items 1 and 9 (run from the repo root; the compose `postgres` service, owner role `taskop_owner`, database `taskop`; if the stack was started under another compose project name, add `-p <name>` after `docker compose`, for example `-p foundation`):
+Database check used in items 1 and 9 (run from the repo root; the compose `postgres` service, owner role `edildy_owner`, database `edildy`; if the stack was started under another compose project name, add `-p <name>` after `docker compose`, for example `-p foundation`):
 
 ```bash
-docker compose exec postgres psql -U taskop_owner taskop -c "select platform, disabled_at, last_seen_at from push_devices order by last_seen_at desc"
+docker compose exec postgres psql -U edildy_owner edildy -c "select platform, disabled_at, last_seen_at from push_devices order by last_seen_at desc"
 ```
 
 ## C. Checklist (spec section 9)
@@ -64,7 +64,7 @@ docker compose exec postgres psql -U taskop_owner taskop -c "select platform, di
 10. **Switching users on one phone.** With `elvin` signed in, turn on airplane mode and log out: the removal fails and logout still finishes within about 3 s. Airplane mode off, sign in as `nigar`. (web) Send one message to `elvin` and one to `nigar` from Mesajlar: only `nigar`'s arrives. A push from `elvin`'s session still on the lock screen opens only the inbox while `nigar` is signed in.
 11. **Denied permission shows in Profile.** Reinstall and deny the prompt: Profile shows "Bağlıdır", the hint and "Ayarları aç". The button opens the app's page in the OS settings. Allow notifications there and return: "Açıqdır" without a restart, and a message sent now (web, Mesajlar) arrives as a push.
 12. **Email switch and critical problem email.** As the manager, turn "E-poçt bildirişləri" off in Profile and record a critical problem: a push, but no new email in Mailpit. (web) The web user menu's "Bildiriş ayarları" shows the switch off. Turn it back on and record another critical problem: the email reaches Mailpit. In airplane mode the switch is disabled with "Dəyişmək üçün internet bağlantısı tələb olunur.".
-13. **Simulator.** `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios` on a simulator: no prompt, no error, Profile shows "Bu cihazda dəstəklənmir".
+13. **Simulator.** `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios` on a simulator: no prompt, no error, Profile shows "Bu cihazda dəstəklənmir".
 14. **Both platforms.** Run items 1 to 12 on a real iPhone (iOS development build) and a real Android phone (Android development build), and note model and OS version for each.
 
 Copyable list for the pull request description (add phone model and OS per platform):

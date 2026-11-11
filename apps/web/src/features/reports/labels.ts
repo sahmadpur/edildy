@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import type {
   ChecklistSummary,
   EmployeeReportRow,
@@ -12,7 +12,7 @@ import type {
   RunBucket,
   RunCountKey,
   SiteDto,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { formatPercent } from '@/features/executions/labels';
 import { buildTree, type SiteNode } from '@/features/sites/tree';

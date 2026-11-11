@@ -36,6 +36,6 @@ describe('S3Service against SeaweedFS', () => {
   });
 
   it('keeps the bucket private', async () => {
-    expect((await fetch(`${sw.env.S3_ENDPOINT}/taskop-media/anything.jpg`)).status).toBe(403);
+    expect((await fetch(`${sw.env.S3_ENDPOINT}/edildy-media/anything.jpg`)).status).toBe(403);
   });
 });

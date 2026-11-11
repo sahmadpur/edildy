@@ -54,7 +54,7 @@ describe('shifts', () => {
 
   it('lets a platform admin manage shifts inside a tenant', async () => {
     const w = await schedulingWorld(t, 0);
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     const admin = await ownerQuery<{ id: string }>(
       "insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support') returning id",
       [email, await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 })],

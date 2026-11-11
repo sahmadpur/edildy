@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { MEDIA_LIMITS, type MediaKind } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { MEDIA_LIMITS, type MediaKind } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { api } from '@/lib/session';
 

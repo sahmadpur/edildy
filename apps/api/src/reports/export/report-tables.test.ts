@@ -1,4 +1,4 @@
-import { emptyRunCounts, type ReportProblem, type ReportRun, type ReportSummary, type ReportTask, type SiteReportRow } from '@taskop/contracts';
+import { emptyRunCounts, type ReportProblem, type ReportRun, type ReportSummary, type ReportTask, type SiteReportRow } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import * as T from './report-tables';
 

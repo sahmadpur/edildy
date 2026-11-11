@@ -1,4 +1,4 @@
-import { blankContent, type ChecklistContent, MEDIA_LIMITS, type MultiChoiceItem, newItem, newSection, type NumberItem, type SingleChoiceItem } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, MEDIA_LIMITS, type MultiChoiceItem, newItem, newSection, type NumberItem, type SingleChoiceItem } from '@edildy/contracts';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import '@/lib/i18n';
 import { capturedPhoto, type FakeTransport } from '@/offline/testing/fake-transport';

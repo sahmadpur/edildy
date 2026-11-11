@@ -170,9 +170,9 @@ describe('audit outputs', () => {
   });
 
   it('names the report file in ASCII with the run date', () => {
-    expect(auditReportFileName('Açılış yoxlaması', '2026-11-02')).toBe('taskop-audit-acilis-yoxlamasi-2026-11-02.pdf');
-    expect(auditReportFileName('Gündəlik İŞ / Ğ-Ö-Ü', '2026-11-02')).toBe('taskop-audit-gundelik-is-g-o-u-2026-11-02.pdf');
-    expect(auditReportFileName('???', '2026-11-02')).toBe('taskop-audit-checklist-2026-11-02.pdf');
+    expect(auditReportFileName('Açılış yoxlaması', '2026-11-02')).toBe('edildy-audit-acilis-yoxlamasi-2026-11-02.pdf');
+    expect(auditReportFileName('Gündəlik İŞ / Ğ-Ö-Ü', '2026-11-02')).toBe('edildy-audit-gundelik-is-g-o-u-2026-11-02.pdf');
+    expect(auditReportFileName('???', '2026-11-02')).toBe('edildy-audit-checklist-2026-11-02.pdf');
     expect(AUDIT_REPORT_CONTENT_TYPE).toBe('application/pdf');
   });
 

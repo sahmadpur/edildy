@@ -20,7 +20,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import type { ShiftRange } from '@taskop/contracts';
+import type { ShiftRange } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { citext, ltree } from './column-types';
 
@@ -284,7 +284,7 @@ export const rateLimits = pgTable('rate_limits', {
 
 export const checklistStatus = pgEnum('checklist_status', ['active', 'deactivated']);
 export const checklistVersionState = pgEnum('checklist_version_state', ['draft', 'published']);
-// Must match TEMPLATE_CATEGORIES in @taskop/contracts.
+// Must match TEMPLATE_CATEGORIES in @edildy/contracts.
 export const templateCategory = pgEnum('template_category', ['cleaning', 'restaurant', 'retail', 'safety', 'production', 'warehouse', 'quality', 'maintenance', 'other']);
 export const templateSourceKind = pgEnum('template_source_kind', ['global', 'tenant']);
 
@@ -387,7 +387,7 @@ export const tenantTemplates = pgTable(
   ],
 );
 
-/** Taskop's library. No tenant_id and no RLS: tenants read it only through `global_templates_published`. */
+/** Edildy's library. No tenant_id and no RLS: tenants read it only through `global_templates_published`. */
 export const globalTemplates = pgTable('global_templates', {
   id: id(),
   name: text('name').notNull(),
@@ -419,7 +419,7 @@ export const globalTemplatesPublished = pgView('global_templates_published', {
 }).existing();
 
 export const assignmentStatus = pgEnum('assignment_status', ['active', 'paused', 'ended']);
-// Must match OCCURRENCE_STATUSES in @taskop/contracts (FR-11.01).
+// Must match OCCURRENCE_STATUSES in @edildy/contracts (FR-11.01).
 export const occurrenceStatus = pgEnum('occurrence_status', [
   'pending',
   'started',
@@ -601,7 +601,7 @@ export const occurrenceStatusHistory = pgTable(
   ],
 );
 
-// Must match EXECUTION_STATES, CLAIM_REJECTION_REASONS, MEDIA_*, PROBLEM_SOURCES and PROBLEM_SEVERITIES in @taskop/contracts.
+// Must match EXECUTION_STATES, CLAIM_REJECTION_REASONS, MEDIA_*, PROBLEM_SOURCES and PROBLEM_SEVERITIES in @edildy/contracts.
 export const executionState = pgEnum('execution_state', ['active', 'completed', 'partial', 'rejected', 'rework']);
 export const claimRejectionReason = pgEnum('claim_rejection_reason', ['ALREADY_CLAIMED', 'NOT_ASSIGNED', 'NOT_STARTABLE', 'NOT_YET_OPEN', 'CLOSED', 'NOT_ON_SHIFT']);
 export const mediaKind = pgEnum('media_kind', ['photo', 'video']);
@@ -609,7 +609,7 @@ export const mediaSource = pgEnum('media_source', ['camera', 'gallery']);
 export const mediaStatus = pgEnum('media_status', ['pending', 'uploaded']);
 export const problemSource = pgEnum('problem_source', ['rule', 'manual']);
 export const problemSeverity = pgEnum('problem_severity', ['normal', 'critical']);
-// Must match CORRECTION_KINDS in @taskop/contracts.
+// Must match CORRECTION_KINDS in @edildy/contracts.
 export const correctionKind = pgEnum('correction_kind', ['manual', 'rework']);
 
 /** One attempt to execute an occurrence (SP4 spec §5.2). The id is generated on the phone, so every command is idempotent. */
@@ -871,7 +871,7 @@ export const problemReportMedia = pgTable(
   ],
 );
 
-// Must match TASK_STATUSES, TASK_PRIORITIES, TASK_MEDIA_ROLES and TASK_REVIEW_DECISIONS in @taskop/contracts.
+// Must match TASK_STATUSES, TASK_PRIORITIES, TASK_MEDIA_ROLES and TASK_REVIEW_DECISIONS in @edildy/contracts.
 export const taskStatus = pgEnum('task_status', ['new', 'accepted', 'in_progress', 'awaiting_review', 'completed', 'cancelled']);
 export const taskPriority = pgEnum('task_priority', ['normal', 'high']);
 export const taskMediaRole = pgEnum('task_media_role', ['instruction', 'response']);
@@ -1019,7 +1019,7 @@ export const taskStatusHistory = pgTable(
   ],
 );
 
-// Must match NOTIFICATION_TARGET_KINDS, DELIVERY_CHANNELS, DELIVERY_STATUSES and PUSH_PLATFORMS in @taskop/contracts.
+// Must match NOTIFICATION_TARGET_KINDS, DELIVERY_CHANNELS, DELIVERY_STATUSES and PUSH_PLATFORMS in @edildy/contracts.
 export const notificationTargetKind = pgEnum('notification_target_kind', ['occurrence', 'task', 'problem_report', 'none']);
 export const notificationChannel = pgEnum('notification_channel', ['push', 'email']);
 export const notificationDeliveryStatus = pgEnum('notification_delivery_status', ['queued', 'sent', 'delivered', 'failed', 'skipped']);
@@ -1173,7 +1173,7 @@ export const notificationRules = pgTable(
   ],
 );
 
-// Must match AUDIT_STATUSES, AUDIT_RESULTS, AUDIT_VERDICTS and AUDIT_REPORT_STATUSES in @taskop/contracts.
+// Must match AUDIT_STATUSES, AUDIT_RESULTS, AUDIT_VERDICTS and AUDIT_REPORT_STATUSES in @edildy/contracts.
 export const auditStatus = pgEnum('audit_status', ['in_progress', 'finished', 'cancelled']);
 export const auditResult = pgEnum('audit_result', ['passed', 'failed']);
 export const auditVerdict = pgEnum('audit_verdict', ['approved', 'rejected']);

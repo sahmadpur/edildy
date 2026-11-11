@@ -1,4 +1,4 @@
-import type { ProblemDto, TaskAssigneeOptions, TaskDetail, TaskMediaDto, TaskSubmissionDto, TaskSummary } from '@taskop/contracts';
+import type { ProblemDto, TaskAssigneeOptions, TaskDetail, TaskMediaDto, TaskSubmissionDto, TaskSummary } from '@edildy/contracts';
 
 /** Test data shared by the task tests. Not imported by application code. */
 export const AT = '2026-11-02T04:00:00.000Z';

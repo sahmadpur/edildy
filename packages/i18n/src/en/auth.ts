@@ -1,6 +1,6 @@
 export default {
   login: {
-    title: 'Sign in to Taskop',
+    title: 'Sign in to Edildy',
     email: 'Email',
     password: 'Password',
     submit: 'Sign in',

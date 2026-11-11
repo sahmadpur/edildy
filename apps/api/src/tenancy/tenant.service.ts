@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TenantDto } from '@taskop/contracts';
+import type { TenantDto } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';

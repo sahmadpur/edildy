@@ -1,5 +1,5 @@
 /**
- * The Taskop mark: a ring with a check whose long stroke breaks out through the ring at the top right. The check also
+ * The Edildy mark: a ring with a check whose long stroke breaks out through the ring at the top right. The check also
  * reads as the two hands of a clock (scheduled checks); the break says the run is done and reported. One colour, so it
  * works at 16 px and as a monochrome icon. The ring is open from -76° to -30° (SVG angles, y down), where the stroke exits.
  */
@@ -56,12 +56,12 @@ export function tileSvg({ background, color, radius = 0, scale = 0.62, size }: T
   );
 }
 
-/** The wordmark: mark plus "Taskop" in the brand face, for headers and the landing page. */
+/** The wordmark: mark plus "Edildy" in the brand face, for headers and the landing page. */
 export function wordmarkSvg({ color = 'currentColor', markColor = color, height = 28 }: { color?: string; markColor?: string; height?: number } = {}): string {
   const w = Math.round(height * 4.1);
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 164 40" width="${w}" height="${height}" role="img" aria-label="Taskop">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 164 40" width="${w}" height="${height}" role="img" aria-label="Edildy">` +
     `<svg x="0" y="0" width="40" height="40" viewBox="${MARK_VIEWBOX}">${markPaths(markColor)}</svg>` +
-    `<text x="50" y="29" font-family="'IBM Plex Sans', system-ui, sans-serif" font-size="27" font-weight="600" letter-spacing="-0.5" fill="${color}">Taskop</text></svg>`
+    `<text x="50" y="29" font-family="'IBM Plex Sans', system-ui, sans-serif" font-size="27" font-weight="600" letter-spacing="-0.5" fill="${color}">Edildy</text></svg>`
   );
 }

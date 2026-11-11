@@ -1,4 +1,4 @@
-import { auditDetailSchema, auditDtoSchema, auditItemVerdictSchema, auditQueuePageSchema, auditQueueQuerySchema, auditVerdictInputSchema, cancelAuditInputSchema, finishAuditInputSchema, sendAuditReportInputSchema } from '@taskop/contracts';
+import { auditDetailSchema, auditDtoSchema, auditItemVerdictSchema, auditQueuePageSchema, auditQueueQuerySchema, auditVerdictInputSchema, cancelAuditInputSchema, finishAuditInputSchema, sendAuditReportInputSchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class AuditDtoResponse extends createZodDto(auditDtoSchema) {}

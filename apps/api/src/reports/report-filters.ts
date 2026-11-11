@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type ReportFilters, reportRangeTooLong } from '@taskop/contracts';
+import { type ReportFilters, reportRangeTooLong } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
 import { DbService } from '../db/db.service';

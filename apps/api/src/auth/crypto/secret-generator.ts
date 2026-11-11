@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { isWeakPin } from '@taskop/contracts';
+import { isWeakPin } from '@edildy/contracts';
 
 export function generatePin(): string {
   for (;;) {

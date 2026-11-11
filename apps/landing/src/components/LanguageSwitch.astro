@@ -20,7 +20,7 @@ const t = strings(lang);
 <script>
   // Remember the chosen language on this browser (the same key the platform uses), so the next visit to the root
   // opens in it. Links work without this script; it only adds the memory.
-  import { LANGUAGE_STORAGE_KEY } from '@taskop/i18n';
+  import { LANGUAGE_STORAGE_KEY } from '@edildy/i18n';
   for (const a of document.querySelectorAll<HTMLAnchorElement>('.lang a[data-lang]')) {
     a.addEventListener('click', () => {
       try {

@@ -6,7 +6,7 @@ import {
   problemReportListQuerySchema,
   problemReportMediaRegisterSchema,
   reportSiteSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 

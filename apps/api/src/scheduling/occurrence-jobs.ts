@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { OccurrenceStatus } from '@taskop/contracts';
+import type { OccurrenceStatus } from '@edildy/contracts';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { perTenant, tenantsWith } from '../common/per-tenant';

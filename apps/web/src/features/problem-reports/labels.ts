@@ -1,4 +1,4 @@
-import { PROBLEM_REPORT_STATE_FILTERS, type ProblemReportState, type ProblemReportStateFilter } from '@taskop/contracts';
+import { PROBLEM_REPORT_STATE_FILTERS, type ProblemReportState, type ProblemReportStateFilter } from '@edildy/contracts';
 import type { Variant } from '@/features/scheduling/labels';
 
 /** Google Maps at the reported point (2026-11-06 design §8). */

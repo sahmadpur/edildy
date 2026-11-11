@@ -10,7 +10,7 @@ import {
   reportTasksQuerySchema,
   reportTasksSchema,
   siteReportRowSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ReportFiltersDto extends createZodDto(reportFiltersSchema) {}

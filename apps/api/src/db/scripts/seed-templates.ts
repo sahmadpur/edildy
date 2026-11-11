@@ -10,7 +10,7 @@ import {
   type SingleChoiceItem,
   type TemplateCategory,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 // ---- tiny DSL so fixtures stay readable ----
 

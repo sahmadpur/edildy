@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { formatDateTime } from '@edildy/i18n';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { Alert, StyleSheet } from 'react-native';
 import i18n from '@/lib/i18n';

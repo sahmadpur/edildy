@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://taskop.app/sitemap-index.xml
+Sitemap: https://edildy.com/sitemap-index.xml

@@ -1,4 +1,4 @@
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';

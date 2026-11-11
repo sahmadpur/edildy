@@ -1,4 +1,4 @@
-import type { DataScope, PermissionKey, SystemRoleKey } from '@taskop/contracts';
+import type { DataScope, PermissionKey, SystemRoleKey } from '@edildy/contracts';
 import type { Request } from 'express';
 
 export interface Principal {

@@ -1,5 +1,5 @@
 import type { Logger } from '@nestjs/common';
-import { MEDIA_LIMITS } from '@taskop/contracts';
+import { MEDIA_LIMITS } from '@edildy/contracts';
 import { and, asc, eq, getTableName, inArray, isNull, lte, sql } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import type { Clock } from '../common/clock';

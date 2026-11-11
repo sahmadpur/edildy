@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
-import { auditReportFileName, type ChecklistContent, type Item, type MediaUploadTicket, type SyncResponse } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { auditReportFileName, type ChecklistContent, type Item, type MediaUploadTicket, type SyncResponse } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { uuidv7 } from 'uuidv7';
 
 const MAILPIT = process.env.MAILPIT_URL ?? 'http://localhost:8025';
@@ -35,7 +35,7 @@ interface Tenant {
   yesterday: string;
 }
 
-/** A tenant with a site, a worker and a published checklist from a Taskop template, assigned once for yesterday. */
+/** A tenant with a site, a worker and a published checklist from a Edildy template, assigned once for yesterday. */
 async function setupTenant(request: APIRequestContext, checklistName: string): Promise<Tenant> {
   const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const orgCode = `e2e-aud-${suffix}`;

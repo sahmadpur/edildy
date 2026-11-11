@@ -8,7 +8,7 @@ import {
   type MessageRecipient,
   type MessageSummary,
   type Page,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, asc, count, desc, eq, inArray, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';

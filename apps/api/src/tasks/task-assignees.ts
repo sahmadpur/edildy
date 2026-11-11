@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TaskAssignee, TaskAssigneeOptions } from '@taskop/contracts';
+import type { TaskAssignee, TaskAssigneeOptions } from '@edildy/contracts';
 import { and, asc, eq, ilike, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';

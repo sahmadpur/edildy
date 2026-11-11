@@ -10,7 +10,7 @@ import {
   type OccurrenceStatus,
   recurrenceSchema,
   timingSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, asc, between, eq, inArray, ne, or, type SQL, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { inSiteSubtrees, sqlList } from '../common/sql';

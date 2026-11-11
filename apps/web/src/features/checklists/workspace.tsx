@@ -1,4 +1,4 @@
-import type { ChecklistsApi, TemplatesApi } from '@taskop/api-client';
+import type { ChecklistsApi, TemplatesApi } from '@edildy/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type MouseEvent, type ReactNode, useContext, useMemo } from 'react';
 import { isPlainClick } from '@/components/page-tabs';

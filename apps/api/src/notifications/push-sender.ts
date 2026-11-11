@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { PushData } from '@taskop/contracts';
+import type { PushData } from '@edildy/contracts';
 import { Expo, type ExpoPushMessage, type ExpoPushReceipt, type ExpoPushTicket } from 'expo-server-sdk';
 import type { AppConfig } from '../config/config';
 

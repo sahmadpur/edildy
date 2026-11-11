@@ -1,4 +1,4 @@
-import { type ChecklistContent, CONTENT_LIMITS, parseDraftContent } from '@taskop/contracts';
+import { type ChecklistContent, CONTENT_LIMITS, parseDraftContent } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 
 /** Draft-schema parse used by every content write: size limit first, then structure. */

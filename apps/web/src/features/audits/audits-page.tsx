@@ -1,4 +1,4 @@
-import { AUDIT_QUEUES, AUDIT_RESULTS, type AuditQueue, type AuditQueueRow } from '@taskop/contracts';
+import { AUDIT_QUEUES, AUDIT_RESULTS, type AuditQueue, type AuditQueueRow } from '@edildy/contracts';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';

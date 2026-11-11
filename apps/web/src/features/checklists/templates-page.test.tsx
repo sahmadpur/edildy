@@ -24,7 +24,7 @@ describe('TemplatesPage', () => {
     expect(ws.go).toHaveBeenCalledWith('/checklists');
   });
 
-  it('uses a Taskop template to create a checklist', async () => {
+  it('uses a Edildy template to create a checklist', async () => {
     const ws = fakeWorkspace();
     ws.templates.list.mockImplementation(async (q: { source?: string }) => (q.source === 'global' ? [tpl('g1', 'global', 'Restoran mətbəxi')] : []));
     ws.checklists.create.mockResolvedValue({ id: 'c1' });

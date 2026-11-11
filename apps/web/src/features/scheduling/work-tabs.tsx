@@ -1,4 +1,4 @@
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { useNavigate } from '@tanstack/react-router';
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';

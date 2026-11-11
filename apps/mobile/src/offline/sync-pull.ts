@@ -1,4 +1,4 @@
-import type { MyExecution, SyncResponse } from '@taskop/contracts';
+import type { MyExecution, SyncResponse } from '@edildy/contracts';
 import { type Db, setMeta } from './db';
 import { type ExecutionRow, iso, normIso } from './local-model';
 import { mergeReport, removeReports } from './problem-report-records';

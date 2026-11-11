@@ -1,4 +1,4 @@
-import { OCCURRENCE_STATUSES } from '@taskop/contracts';
+import { OCCURRENCE_STATUSES } from '@edildy/contracts';
 import i18n from '@/lib/i18n';
 import { cancelReasonText, formatLocalDay, percentText, receiptDiffers, runPerson, statusTone } from './team-format';
 import { AYNUR, KAMRAN } from './testing/fixtures';

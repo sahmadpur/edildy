@@ -1,5 +1,5 @@
 export default {
-  title: 'Taskop platform',
+  title: 'Edildy platform',
   login: { title: 'Platform administrator', email: 'Email', password: 'Password', submit: 'Sign in' },
   tenants: {
     title: 'Organisations',
@@ -17,7 +17,7 @@ export default {
     confirmSuspend: 'Suspend "{{name}}"? All user sessions will be closed.',
   },
   nav: { tenants: 'Organisations', templates: 'Templates' },
-  workspaceBanner: 'You are working in the organisation "{{name}}" as a Taskop administrator.',
+  workspaceBanner: 'You are working in the organisation "{{name}}" as a Edildy administrator.',
   backToTenants: 'Back to organisations',
   logout: 'Sign out',
 } as const;

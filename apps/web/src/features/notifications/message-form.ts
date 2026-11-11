@@ -1,4 +1,4 @@
-import { MESSAGE_LIMITS, type MessageTargetOptions, type SendMessageInput } from '@taskop/contracts';
+import { MESSAGE_LIMITS, type MessageTargetOptions, type SendMessageInput } from '@edildy/contracts';
 
 /** A picked target; the name is only for the chips. */
 export interface TargetRef {

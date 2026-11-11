@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FINAL_TASK_STATUSES, type SyncTask, TASK_LIMITS } from '@taskop/contracts';
+import { FINAL_TASK_STATUSES, type SyncTask, TASK_LIMITS } from '@edildy/contracts';
 import { and, asc, eq, gte, inArray, isNull, notInArray, or } from 'drizzle-orm';
 import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';

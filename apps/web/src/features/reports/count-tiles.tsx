@@ -1,5 +1,5 @@
-import type { ReportSummary } from '@taskop/contracts';
-import { intlLocale } from '@taskop/i18n';
+import type { ReportSummary } from '@edildy/contracts';
+import { intlLocale } from '@edildy/i18n';
 import { Link } from '@tanstack/react-router';
 import { Info } from 'lucide-react';
 import { useId } from 'react';

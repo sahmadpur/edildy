@@ -7,8 +7,8 @@ import {
   type OccurrenceStatus,
   type Recurrence,
   type Timing,
-} from '@taskop/contracts';
-import { formatLocalDate as formatLocalDateIn, formatTime } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { formatLocalDate as formatLocalDateIn, formatTime } from '@edildy/i18n';
 import type { TFunction } from 'i18next';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

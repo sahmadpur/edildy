@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Taskop",
+    "name": "Edildy",
     "slug": "taskop",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -30,7 +30,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "taskop",
+    "scheme": "edildy",
     "plugins": [
       "expo-router",
       "expo-secure-store",
@@ -56,21 +56,21 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Taskop yoxlamalar zamanı foto və video çəkmək üçün kameradan istifadə edir.",
-          "microphonePermission": "Taskop video sübutlarda səsi yazmaq üçün mikrofondan istifadə edir.",
+          "cameraPermission": "Edildy yoxlamalar zamanı foto və video çəkmək üçün kameradan istifadə edir.",
+          "microphonePermission": "Edildy video sübutlarda səsi yazmaq üçün mikrofondan istifadə edir.",
           "recordAudioAndroid": true
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Taskop sübut kimi qalereyadan foto və video seçmək üçün icazə istəyir."
+          "photosPermission": "Edildy sübut kimi qalereyadan foto və video seçmək üçün icazə istəyir."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Taskop bildirdiyiniz problemin yerini qeyd etmək üçün yerinizi istifadə edir."
+          "locationWhenInUsePermission": "Edildy bildirdiyiniz problemin yerini qeyd etmək üçün yerinizi istifadə edir."
         }
       ],
       "expo-video",

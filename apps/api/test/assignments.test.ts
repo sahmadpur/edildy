@@ -1,4 +1,4 @@
-import { addDays } from '@taskop/contracts';
+import { addDays } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DbService } from '../src/db/db.service';
 import { OccurrenceWriter } from '../src/scheduling/occurrence-writer';

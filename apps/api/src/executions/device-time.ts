@@ -1,4 +1,4 @@
-import { EXECUTION_LIMITS } from '@taskop/contracts';
+import { EXECUTION_LIMITS } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 
 /**

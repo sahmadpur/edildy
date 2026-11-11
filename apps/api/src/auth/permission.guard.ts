@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { type PermissionRequirement, REQUIRED_PERMISSIONS_KEY } from '../common/decorators';
 import type { AppRequest } from '../common/request';

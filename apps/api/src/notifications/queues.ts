@@ -1,4 +1,4 @@
-import type { DeliveryChannel } from '@taskop/contracts';
+import type { DeliveryChannel } from '@edildy/contracts';
 import pg from 'pg';
 
 /** SP6 spec §6.3. */

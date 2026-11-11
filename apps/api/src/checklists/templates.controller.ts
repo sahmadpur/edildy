@@ -1,6 +1,6 @@
 import { Body, Get, HttpCode, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { ContentSaveResult, TemplateDto, TemplateSummary } from '@taskop/contracts';
+import type { ContentSaveResult, TemplateDto, TemplateSummary } from '@edildy/contracts';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { AppError } from '../common/app-error';
 import { ContentSaveResultResponse, CreateTemplateDto, SaveContentDto, TemplateListQueryDto, TemplateResponse, TemplateSummaryResponse, UpdateTemplateDto } from './dto';

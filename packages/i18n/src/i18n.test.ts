@@ -55,7 +55,7 @@ import {
   TASK_SOURCES,
   TASK_STATUSES,
   TEMPLATE_CATEGORIES,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import {
   az,
   en,

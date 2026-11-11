@@ -11,7 +11,7 @@ import {
   validateSchedule,
   validateTiming,
   windowMinutes,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

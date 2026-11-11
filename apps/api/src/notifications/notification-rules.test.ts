@@ -1,4 +1,4 @@
-import { DEFAULT_RULES, RULE_TYPES } from '@taskop/contracts';
+import { DEFAULT_RULES, RULE_TYPES } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { effectiveRule, type RoleCatalog, ruleIssues } from './notification-rules';
 

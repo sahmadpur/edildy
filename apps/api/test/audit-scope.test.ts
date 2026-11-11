@@ -18,7 +18,7 @@ describe('audit and correction scope, permissions and platform admins (spec §5,
   let platform: Api;
   beforeAll(async () => {
     t = await createTestApp({}, { clock });
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     await ownerQuery("insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')", [
       email,
       await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 }),
@@ -153,7 +153,7 @@ describe('audit and correction scope, permissions and platform admins (spec §5,
   it('lets platform admins correct, send back and audit inside the tenant, attributed to them', async () => {
     const a = await world();
     const base = `/api/v1/platform/tenants/${a.w.s.tenantId}`;
-    const fix = await platform.post(`${base}/executions/${a.executionId}/corrections`, { answersRev: 1, changes: [{ itemId: a.w.c.note.id, answer: { text: 'Taskop dəstəyi' } }], reason: 'Müştərinin xahişi' });
+    const fix = await platform.post(`${base}/executions/${a.executionId}/corrections`, { answersRev: 1, changes: [{ itemId: a.w.c.note.id, answer: { text: 'Edildy dəstəyi' } }], reason: 'Müştərinin xahişi' });
     expect(fix.status, JSON.stringify(fix.body)).toBe(200);
     expect(await correctionRows(a.executionId)).toEqual([expect.objectContaining({ actor_user_id: null, actor_platform_admin_id: expect.any(String) })]);
     expect((await auditLogOf(a.executionId)).at(-1)).toMatchObject({ action: 'execution.corrected', actor_user_id: null, actor_platform_admin_id: expect.any(String) });

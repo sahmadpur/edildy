@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { SystemRoleKey } from '@taskop/contracts';
+import type { SystemRoleKey } from '@edildy/contracts';
 import pg from 'pg';
 import { uuidv7 } from 'uuidv7';
 import { inject } from 'vitest';
@@ -43,7 +43,7 @@ export async function eventRows(tenantId: string, type?: string): Promise<EventR
   return r.rows;
 }
 
-/** A taskop_app transaction with RLS set to `tenantId`; always rolled back. */
+/** A edildy_app transaction with RLS set to `tenantId`; always rolled back. */
 export async function asApp<T>(tenantId: string, fn: (c: pg.PoolClient) => Promise<T>): Promise<T> {
   const pool = new pg.Pool({ connectionString: inject('db').appUrl, max: 1 });
   const c = await pool.connect();

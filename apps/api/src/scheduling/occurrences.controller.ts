@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { CalendarResponse, OccurrenceDetail, OccurrenceDto, Page } from '@taskop/contracts';
+import type { CalendarResponse, OccurrenceDetail, OccurrenceDto, Page } from '@edildy/contracts';
 import { controllerDecorators, named, perm, permAny, type RouteMode } from '../checklists/route-mode';
 import { CurrentPrincipal } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';

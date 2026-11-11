@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { SyncTask } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { SyncTask } from '@edildy/contracts';
 import { listCommands } from './outbox';
 import { canEditDraft } from './task-store';
 import { capturedPhoto } from './testing/fake-transport';

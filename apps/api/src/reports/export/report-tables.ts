@@ -8,8 +8,8 @@ import {
   type RunBucket,
   type RunCounts,
   type SiteReportRow,
-} from '@taskop/contracts';
-import { type Language, translationsFor } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { type Language, translationsFor } from '@edildy/i18n';
 import type { CellValue, ReportColumn, ReportTable } from './report-table';
 
 /** The report strings of a language, with the column groups every table shares. */

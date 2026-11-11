@@ -1,4 +1,4 @@
-import type { MediaKind, MediaStatus, MediaUrl } from '@taskop/contracts';
+import type { MediaKind, MediaStatus, MediaUrl } from '@edildy/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';

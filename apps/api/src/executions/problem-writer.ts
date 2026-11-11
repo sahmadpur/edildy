@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type Answers, type ChecklistContent, type DerivedProblem, deriveProblems } from '@taskop/contracts';
+import { type Answers, type ChecklistContent, type DerivedProblem, deriveProblems } from '@edildy/contracts';
 import { and, eq, isNull, notInArray, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { DomainEvents } from '../common/domain-events';

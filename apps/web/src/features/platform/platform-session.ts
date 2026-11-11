@@ -1,5 +1,5 @@
-import { ApiClient, createPlatformApi, memoryTokenStore } from '@taskop/api-client';
-import type { PlatformLoginResult } from '@taskop/contracts';
+import { ApiClient, createPlatformApi, memoryTokenStore } from '@edildy/api-client';
+import type { PlatformLoginResult } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 
 type Admin = PlatformLoginResult['admin'];

@@ -1,5 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import { localDateOf } from '@taskop/contracts';
+import { localDateOf } from '@edildy/contracts';
 import { and, asc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { DomainEvents } from '../common/domain-events';

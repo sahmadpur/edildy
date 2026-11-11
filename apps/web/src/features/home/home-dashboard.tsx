@@ -5,8 +5,8 @@ import {
   resolvePeriod,
   type RunBucket,
   type RunCountKey,
-} from '@taskop/contracts';
-import { formatCompactDate, intlLocale } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { formatCompactDate, intlLocale } from '@edildy/i18n';
 import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';

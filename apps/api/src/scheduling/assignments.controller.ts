@@ -1,6 +1,6 @@
 import { Body, Get, HttpCode, Inject, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { AssignmentDetail, AssignmentDto, AssignmentPreview, Page } from '@taskop/contracts';
+import type { AssignmentDetail, AssignmentDto, AssignmentPreview, Page } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { type Actor, CurrentActor } from './actor';

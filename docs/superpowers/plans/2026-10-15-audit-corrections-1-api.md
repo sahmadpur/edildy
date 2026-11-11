@@ -1,4 +1,4 @@
-# Taskop Audit and Corrections — Part 1: Contracts & API — Implementation Plan
+# Edildy Audit and Corrections — Part 1: Contracts & API — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -7,7 +7,7 @@
 - managers correct a completed run's answers with the original kept;
 - managers send a run back to the worker, who fixes the flagged items and resubmits.
 
-This part adds the contracts, i18n strings and `@taskop/api-client` methods those features need, migrations 0015/0016, the corrections flow in the `executions` module, the new `audits` module, the report job, three notification types, and the reports and problems changes.
+This part adds the contracts, i18n strings and `@edildy/api-client` methods those features need, migrations 0015/0016, the corrections flow in the `executions` module, the new `audits` module, the report job, three notification types, and the reports and problems changes.
 
 **Architecture:**
 - **Current answers, plus a snapshot, plus a log.**
@@ -44,7 +44,7 @@ This part adds the contracts, i18n strings and `@taskop/api-client` methods thos
 
 ## Global Constraints
 
-- **Naming and locale.** The product name is **Taskop**. Packages are `@taskop/*`. Azerbaijani (`az`) is the only locale; every label, notification, email and PDF string comes from `@taskop/i18n`. The `correction_required` label is exactly **"Düzəliş tələb olunur"** (FR-19.15).
+- **Naming and locale.** The product name is **Edildy**. Packages are `@edildy/*`. Azerbaijani (`az`) is the only locale; every label, notification, email and PDF string comes from `@edildy/i18n`. The `correction_required` label is exactly **"Düzəliş tələb olunur"** (FR-19.15).
 - **Which runs.** Audits, corrections and send-back apply only to runs whose occurrence status is `completed` or `audit_pending` (`CORRECTABLE_STATUSES`) and whose execution state is `completed`. `partial`, `missed`, `cancelled` and `audited` runs are refused. `audited` is refused with **`409 EXECUTION_LOCKED`**; the others with **`409 EXECUTION_NOT_CORRECTABLE`**.
 - **Statuses.**
   - `occurrence_status` gains `correction_required`; `execution_state` gains `rework`.
@@ -53,7 +53,7 @@ This part adds the contracts, i18n strings and `@taskop/api-client` methods thos
 - **Snapshot.**
   - `executions.original_answers`, `original_score` and `original_captured_at` are written once, in the transaction of the first correction or send-back.
   - A `BEFORE UPDATE` trigger raises if a non-null `original_*` value changes.
-  - `execution_corrections` is `INSERT, SELECT` only for `taskop_app`.
+  - `execution_corrections` is `INSERT, SELECT` only for `edildy_app`.
 - **Limits** (`AUDIT_LIMITS`):
   - checklist report emails ≤ **10**, recipients per send ≤ **20**;
   - verdict comment ≤ **1000** characters, final comment ≤ **4000**;
@@ -238,7 +238,7 @@ apps/api/
   src/notifications/
     payloads.ts, notification-events.ts     T16 RunPayload
     notification-targets.ts                 T16 RunTarget
-    notification-templates.ts               T16 texts of the three types from @taskop/i18n
+    notification-templates.ts               T16 texts of the three types from @edildy/i18n
     notification-recipients.ts              T16 run audiences
     notification-rules.ts, rules.service.ts T2, T16  resultFilter
     notification-fanout.ts                  T16 result filter, 'filtered' outcome
@@ -271,9 +271,9 @@ apps/api/
 
 ## Interfaces for Parts 2 and 3
 
-Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@taskop/api-client` once **Tasks 1–4** of Part 1 are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; dates are `YYYY-MM-DD` in the tenant's timezone.
+Everything below is exported from `@edildy/contracts`, `@edildy/i18n` or `@edildy/api-client` once **Tasks 1–4** of Part 1 are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; dates are `YYYY-MM-DD` in the tenant's timezone.
 
-### `@taskop/contracts`
+### `@edildy/contracts`
 
 **Pure rules** (`audit-logic.ts`, Task 1):
 - Constants, each with a `z.enum` schema named `<singular>Schema` and a type:
@@ -308,7 +308,7 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
   - `null` for a cancelled or absent audit, unless the status is `audit_pending` (then `waiting`);
   - `in_progress` for an in-progress audit;
   - `passed`/`failed` for a finished one.
-- `auditScoreSchema`, `auditBriefSchema` and `auditReportEmailsSchema` (described under `audits.ts` below) are defined in `audit-logic.ts`, so `execution-views.ts`, `checklists.ts` and `audits.ts` can all import them without an import cycle. They are exported from `@taskop/contracts` like everything else.
+- `auditScoreSchema`, `auditBriefSchema` and `auditReportEmailsSchema` (described under `audits.ts` below) are defined in `audit-logic.ts`, so `execution-views.ts`, `checklists.ts` and `audits.ts` can all import them without an import cycle. They are exported from `@edildy/contracts` like everything else.
 - `reportRecipients(checklistEmails: readonly string[], extra: readonly string[]): string[]`: lower-cased, de-duplicated, checklist addresses first, at most `AUDIT_LIMITS.recipients`.
 - Types exported alongside (Task 1 and Task 2): `AuditScore`, `AuditItemVerdict`, `AuditVerdictInput`, `FinishAuditInput`, `CancelAuditInput`, `SendAuditReportInput` (input types, `z.input`), and `Score = z.infer<typeof scoreSchema>` (new in `execution-logic.ts`; the schemas below use it for run scores).
 
@@ -318,7 +318,7 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
 - `correctionResultSchema = { executionId; answersRev: int; changedItemIds: uuid[]; score: Score | null }`, with `type CorrectionResult`
 - `reworkItemSchema = { itemId: uuid; comment: string trim 1–1000 }`
 - `sendBackInputSchema = { items: reworkItem[] (1–200, unique item ids); dueAt?: iso | null }`, with `type SendBackInput`. A `dueAt` earlier than now is checked by the API (`fields.dueAt = 'corrections.issues.dueInPast'`).
-- `reworkRequestSchema = { id; round: int; items: reworkItem[]; dueAt: iso | null; requestedBy: UserRef | null /* null = a platform admin (Taskop support) */; requestedAt: iso; resubmittedAt: iso | null; withdrawnAt: iso | null; withdrawnBy: UserRef | null; answersBefore: Answers /* the answers when the run was sent back: the base of reworkViolations */ }`, with `type ReworkRequest`. Returned the same way by send-back and withdraw, `/me/sync` (`MyExecution.rework`), `ExecutionDetail.rework` and `ExecutionCorrections.reworkRequests`.
+- `reworkRequestSchema = { id; round: int; items: reworkItem[]; dueAt: iso | null; requestedBy: UserRef | null /* null = a platform admin (Edildy support) */; requestedAt: iso; resubmittedAt: iso | null; withdrawnAt: iso | null; withdrawnBy: UserRef | null; answersBefore: Answers /* the answers when the run was sent back: the base of reworkViolations */ }`, with `type ReworkRequest`. Returned the same way by send-back and withdraw, `/me/sync` (`MyExecution.rework`), `ExecutionDetail.rework` and `ExecutionCorrections.reworkRequests`.
 - `correctionActorSchema = { kind: 'user' | 'platform'; name: string | null }`
 - `correctionSchema = { id; itemId; kind: CorrectionKind; round: int; before: Answer | null; after: Answer | null; reason: string; actor: CorrectionActor; at: iso }`, with `type Correction`
 - `answerDiffSchema = { itemId; original: Answer | null; current: Answer | null }`
@@ -351,7 +351,7 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
 - `auditReportEmailsSchema = z.array(z.email()).max(10)`, lower-cased and de-duplicated.
 - `AUDIT_ISSUE_CODES = ['audits.issues.commentRequired', 'audits.issues.rangeTooLong', 'audits.issues.tooManyEmails', 'audits.issues.notAuditable']`. `notAuditable` is the API's `fields.itemId` when a verdict names an item that the current answers hide.
 - `AUDIT_REPORT_CONTENT_TYPE = 'application/pdf'`
-- `auditReportFileName(checklistName: string, localDate: LocalDate): string` returns `taskop-audit-<slug>-<localDate>.pdf`. The slug is lower-case ASCII; Azerbaijani letters are transliterated (ə→e, ı→i, ş→s, ç→c, ğ→g, ö→o, ü→u), and anything else becomes `-`.
+- `auditReportFileName(checklistName: string, localDate: LocalDate): string` returns `edildy-audit-<slug>-<localDate>.pdf`. The slug is lower-case ASCII; Azerbaijani letters are transliterated (ə→e, ı→i, ş→s, ç→c, ğ→g, ö→o, ü→u), and anything else becomes `-`.
 
 **Changes to existing contracts** (Task 2):
 - `occurrences.ts`: `OCCURRENCE_STATUSES` gains `'correction_required'` (last).
@@ -394,7 +394,7 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
   - `isAuditType(t)` is `t === 'run.correction_required' || t === 'run.resubmitted' || t === 'audit.finished'`.
   - The stored event payload (server-only) is `{ occurrenceId, executionId, round?, auditId? }`. What the apps see is the inbox item and the push data: for these three types `targetKind` is `'occurrence'`, `targetId` is the run's occurrence id and `targetDate` its local date, so the apps deep-link to the run exactly as for `checklist.*` types.
 
-### `@taskop/i18n` (Task 3)
+### `@edildy/i18n` (Task 3)
 
 File layout: `az.audits` is the default export of `packages/i18n/src/az/audits.ts` and `az.corrections` the default export of `packages/i18n/src/az/corrections.ts`, each `export default { … } as const` like every other file in `packages/i18n/src/az/`, and both are registered in `az/index.ts` (`export const az = { …, audits, …, corrections, … } as const`). Part 3 adds its web keys under a `web` key of each namespace.
 
@@ -419,9 +419,9 @@ Part 1 owns these keys. Parts 2 and 3 add their own UI-only keys under `az.mobil
 - `az.nav.audits` ("Auditlər").
 - `az.notifications.types.<3 types>`, `az.notifications.groups.audit` ("Audit və düzəlişlər"), `az.notifications.resultFilters.{ any, failed }`, `az.notifications.issues.resultFilterNotApplicable`, and the push/inbox texts `az.notifications.templates.<type>.{ title, body }` for the three new types (`run.correction_required` also has `due`). The existing types keep their texts in the API's `notification-templates.ts`; the new ones are rendered from these keys.
 
-### `@taskop/api-client` (Task 4)
+### `@edildy/api-client` (Task 4)
 
-`createTaskopApi(c)` spreads `createAuditsApi(c)`, also exported with `type AuditsApi`; it returns the two namespaces `audits` and `corrections`. `createExecutionsApi` gains `executions.resubmit`.
+`createEdildyApi(c)` spreads `createAuditsApi(c)`, also exported with `type AuditsApi`; it returns the two namespaces `audits` and `corrections`. `createExecutionsApi` gains `executions.resubmit`.
 
 | Method | HTTP | Returns |
 |---|---|---|
@@ -732,7 +732,7 @@ describe('report e-mail addresses', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- audit-logic`
+Run: `pnpm --filter @edildy/contracts test -- audit-logic`
 Expected: FAIL: `answersEqual` (and every other new name) is not exported from `./index.js`.
 
 - [ ] **Step 3: Write the rules**
@@ -951,7 +951,7 @@ export * from './audit-logic.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS. (`audit-logic.ts` imports nothing that imports it back: `report-logic.ts`, `occurrences.ts` and `credentials.ts` don't import it.)
 
 - [ ] **Step 5: Commit**
@@ -1168,9 +1168,9 @@ describe('audit outputs', () => {
   });
 
   it('names the report file in ASCII with the run date', () => {
-    expect(auditReportFileName('Açılış yoxlaması', '2026-11-02')).toBe('taskop-audit-acilis-yoxlamasi-2026-11-02.pdf');
-    expect(auditReportFileName('Gündəlik İŞ / Ğ-Ö-Ü', '2026-11-02')).toBe('taskop-audit-gundelik-is-g-o-u-2026-11-02.pdf');
-    expect(auditReportFileName('???', '2026-11-02')).toBe('taskop-audit-checklist-2026-11-02.pdf');
+    expect(auditReportFileName('Açılış yoxlaması', '2026-11-02')).toBe('edildy-audit-acilis-yoxlamasi-2026-11-02.pdf');
+    expect(auditReportFileName('Gündəlik İŞ / Ğ-Ö-Ü', '2026-11-02')).toBe('edildy-audit-gundelik-is-g-o-u-2026-11-02.pdf');
+    expect(auditReportFileName('???', '2026-11-02')).toBe('edildy-audit-checklist-2026-11-02.pdf');
     expect(AUDIT_REPORT_CONTENT_TYPE).toBe('application/pdf');
   });
 
@@ -1264,7 +1264,7 @@ describe('permissions, errors, audit actions and notifications', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- audits`
+Run: `pnpm --filter @edildy/contracts test -- audits`
 Expected: FAIL: `correctAnswersInputSchema` and the other new names are not exported.
 
 - [ ] **Step 3: Add the new statuses**
@@ -1372,7 +1372,7 @@ export const reworkRequestSchema = z.object({
   items: z.array(reworkItemSchema),
   /** Informational: nothing happens when it passes (spec §3.2). */
   dueAt: isoDateTimeSchema.nullable(),
-  /** null = a platform admin (Taskop support) sent it back. */
+  /** null = a platform admin (Edildy support) sent it back. */
   requestedBy: userRefSchema.nullable(),
   requestedAt: isoDateTimeSchema,
   resubmittedAt: isoDateTimeSchema.nullable(),
@@ -1590,7 +1590,7 @@ export const AUDIT_REPORT_CONTENT_TYPE = 'application/pdf';
 
 const TRANSLIT: Record<string, string> = { ə: 'e', ı: 'i', ş: 's', ç: 'c', ğ: 'g', ö: 'o', ü: 'u' };
 
-/** `taskop-audit-<ascii slug>-<YYYY-MM-DD>.pdf`. Both İ and I become i before lower-casing, so no runtime locale is needed. */
+/** `edildy-audit-<ascii slug>-<YYYY-MM-DD>.pdf`. Both İ and I become i before lower-casing, so no runtime locale is needed. */
 export function auditReportFileName(checklistName: string, localDate: LocalDate): string {
   const slug = checklistName
     .replace(/[İI]/g, 'i')
@@ -1598,7 +1598,7 @@ export function auditReportFileName(checklistName: string, localDate: LocalDate)
     .replace(/[əışçğöü]/g, (c) => TRANSLIT[c]!)
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `taskop-audit-${slug || 'checklist'}-${localDate}.pdf`;
+  return `edildy-audit-${slug || 'checklist'}-${localDate}.pdf`;
 }
 ```
 
@@ -1955,7 +1955,7 @@ In `packages/contracts/src/notifications.test.ts`:
 
 - [ ] **Step 8: Run the contract tests**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS.
 
 - [ ] **Step 9: Add the two status labels the API's export indexes at once**
@@ -1964,8 +1964,8 @@ Expected: PASS.
 
 `packages/i18n/src/az/executions.ts`, in `states`, after `rejected: 'Rədd edilib',` add `rework: 'Düzəlişdə',`.
 
-Run: `pnpm --filter @taskop/i18n typecheck && pnpm --filter @taskop/i18n build`
-Expected: PASS. (`pnpm --filter @taskop/i18n test` stays red until Task 3 labels the new notification types and group; run Task 3 next.)
+Run: `pnpm --filter @edildy/i18n typecheck && pnpm --filter @edildy/i18n build`
+Expected: PASS. (`pnpm --filter @edildy/i18n test` stays red until Task 3 labels the new notification types and group; run Task 3 next.)
 
 - [ ] **Step 10: Fill the new fields in the API's mappers with their defaults**
 
@@ -2068,7 +2068,7 @@ Mobile:
 
 - [ ] **Step 13: Typecheck everything that consumes the contracts**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/api test -- roles notification-rules reports-runs executions-sync report-tables`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/api test -- roles notification-rules reports-runs executions-sync report-tables`
 Expected: PASS. If a typecheck names another test literal typed as one of `ExecutionDetail`, `ExecutionProblem`, `ProblemDto`, `ReportRun`, `MyExecution`, `ChecklistDetail` or `NotificationRuleDto`, add the same default fields there (`reworkRound: 0, rework: null, corrected: false, audit: null` / `clearedAt: null` / `auditState: null, corrected: false` / `requiresAudit: false, auditReportEmails: []` / `resultFilter: null`).
 
 - [ ] **Step 14: Commit**
@@ -2094,12 +2094,12 @@ git commit -m "feat(contracts): add the correction, send-back and audit contract
 
 **Interfaces:**
 - Consumes: Task 1 and Task 2 constants (`AUDIT_*`, `RUN_AUDIT_STATES`, `CORRECTION_KINDS`, `CORRECTION_ISSUE_CODES`, `AUDIT_ISSUE_CODES`, `AUDIT_FLOW_AUDIT_ACTIONS`, `AUDIT_RESULT_FILTERS`, `NOTIFICATION_TYPES`, `NOTIFICATION_GROUPS`, `NOTIFICATION_ISSUE_CODES`, `ErrorCode`, `PERMISSION_GROUPS`).
-- Produces: every key under *`@taskop/i18n` (Task 3)* in *Interfaces for Parts 2 and 3*, plus `interpolate(template: string, vars: Record<string, string | number>): string` exported from `@taskop/i18n` (the API renders PDF, mail and notification texts with it). Extra keys the API needs: `az.audits.report.{ checklist, site, version, photos, noAnswer, none }`, `az.notifications.templates['run.correction_required'].due`.
+- Produces: every key under *`@edildy/i18n` (Task 3)* in *Interfaces for Parts 2 and 3*, plus `interpolate(template: string, vars: Record<string, string | number>): string` exported from `@edildy/i18n` (the API renders PDF, mail and notification texts with it). Extra keys the API needs: `az.audits.report.{ checklist, site, version, photos, noAnswer, none }`, `az.notifications.templates['run.correction_required'].due`.
 
 - [ ] **Step 1: Write the failing tests**
 
 In `packages/i18n/src/i18n.test.ts`:
-- add to the `@taskop/contracts` import: `AUDIT_FLOW_AUDIT_ACTIONS, AUDIT_ISSUE_CODES, AUDIT_QUEUES, AUDIT_REPORT_STATUSES, AUDIT_RESULT_FILTERS, AUDIT_RESULTS, AUDIT_STATUSES, AUDIT_VERDICTS, CORRECTION_ISSUE_CODES, CORRECTION_KINDS, isAuditType, RUN_AUDIT_STATES`;
+- add to the `@edildy/contracts` import: `AUDIT_FLOW_AUDIT_ACTIONS, AUDIT_ISSUE_CODES, AUDIT_QUEUES, AUDIT_REPORT_STATUSES, AUDIT_RESULT_FILTERS, AUDIT_RESULTS, AUDIT_STATUSES, AUDIT_VERDICTS, CORRECTION_ISSUE_CODES, CORRECTION_KINDS, isAuditType, RUN_AUDIT_STATES`;
 - change the import from `./index.js` to `import { az, formatDate, formatDateTime, interpolate } from './index.js';`;
 - in `notification translations › uses the agreed wording…` the groups line becomes
 
@@ -2194,7 +2194,7 @@ describe('audit and correction translations', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL: `interpolate` is not exported, `az.audits` is undefined, the notification labels for the three new types and the `audit` group are missing.
 
 - [ ] **Step 3: Write the two new namespaces**
@@ -2283,7 +2283,7 @@ export default {
   /** The report e-mail (plain text, the PDF attached). */
   email: {
     subject: 'Audit hesabatı: {{checklist}} — {{site}}, {{date}}',
-    body: 'Salam!\n\n{{checklist}} — {{site}} ({{date}}) icrasının auditi tamamlandı.\nNəticə: {{result}}.\nAuditor: {{auditor}}.\n\nPDF hesabat məktuba əlavə olunub.\n\nTaskop',
+    body: 'Salam!\n\n{{checklist}} — {{site}} ({{date}}) icrasının auditi tamamlandı.\nNəticə: {{result}}.\nAuditor: {{auditor}}.\n\nPDF hesabat məktuba əlavə olunub.\n\nEdildy',
   },
 } as const;
 ```
@@ -2411,7 +2411,7 @@ export function interpolate(template: string, vars: Record<string, string | numb
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n typecheck && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api typecheck`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n typecheck && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api typecheck`
 Expected: PASS, including the existing `has a message for every API error code`, `labels every permission group and key` and `has no labels for types or statuses that do not exist`.
 
 - [ ] **Step 6: Commit**
@@ -2431,7 +2431,7 @@ git commit -m "feat(i18n): add the audit, correction and send-back texts" -m "Co
 
 **Interfaces:**
 - Consumes: the Task 2 schemas and input types (`auditQueuePageSchema`, `auditDtoSchema`, `auditDetailSchema`, `auditItemVerdictSchema`, `correctionResultSchema`, `reworkRequestSchema`, `executionCorrectionsSchema`, `resubmitResultSchema`, `AuditQueueQuery`, `AuditVerdictInput`, `FinishAuditInput`, `CancelAuditInput`, `SendAuditReportInput`, `CorrectAnswersInput`, `SendBackInput`, `ResubmitCommand`); `ApiClient.download` and `ReportFile` (SP7).
-- Produces: the table under *`@taskop/api-client` (Task 4)*: `createAuditsApi(c)` (namespaces `audits` and `corrections`), `type AuditsApi`, `executions.resubmit`, and `ApiError.auditId: string | null`, `ApiError.itemIds: string[] | null` (the last two constructor parameters).
+- Produces: the table under *`@edildy/api-client` (Task 4)*: `createAuditsApi(c)` (namespaces `audits` and `corrections`), `type AuditsApi`, `executions.resubmit`, and `ApiError.auditId: string | null`, `ApiError.itemIds: string[] | null` (the last two constructor parameters).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -2470,7 +2470,7 @@ describe('audit and correction endpoints', () => {
       if (url.endsWith('/resubmit')) return json(200, resubmitted);
       return json(200, audit);
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     expect(await t.audits.list({ queue: 'waiting', siteId: id })).toEqual({ items: [], nextCursor: null });
     expect(await t.audits.start(id)).toEqual(audit);
     expect(await t.audits.setVerdict(id, id, { verdict: 'approved' })).toEqual(verdict);
@@ -2501,18 +2501,18 @@ describe('audit and correction endpoints', () => {
 
   it('gets the audit detail through its schema', async () => {
     const { api } = await authed(() => json(200, { ...audit, verdicts: 'not a list' }));
-    await expect(createTaskopApi(api).audits.get(id)).rejects.toMatchObject({ code: 'INTERNAL' });
+    await expect(createEdildyApi(api).audits.get(id)).rejects.toMatchObject({ code: 'INTERNAL' });
   });
 
   it('downloads the PDF, named by Content-Disposition or audit-<id>.pdf', async () => {
-    const pdf = () => new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="taskop-audit-acilis-2026-11-02.pdf"' } });
+    const pdf = () => new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="edildy-audit-acilis-2026-11-02.pdf"' } });
     const seen: string[] = [];
     const { api } = await authed((url) => {
       seen.push(url);
       return seen.length === 1 ? pdf() : new Response('x', { status: 200 });
     });
-    const a = createTaskopApi(api).audits;
-    expect((await a.downloadReport(id)).filename).toBe('taskop-audit-acilis-2026-11-02.pdf');
+    const a = createEdildyApi(api).audits;
+    expect((await a.downloadReport(id)).filename).toBe('edildy-audit-acilis-2026-11-02.pdf');
     expect((await a.downloadReport(id)).filename).toBe(`audit-${id}.pdf`);
     expect(seen).toEqual([`/api/v1/audits/${id}/report.pdf`, `/api/v1/audits/${id}/report.pdf`]);
   });
@@ -2520,16 +2520,16 @@ describe('audit and correction endpoints', () => {
   it('exposes the existing audit id and the items without a verdict', async () => {
     const errorOf = (code: string, extra: object) => json(409, { error: { code, messageKey: `errors.${code}`, fields: null, retryAfterSeconds: null, requestId: 'r1', ...extra } });
     const exists = await authed(() => errorOf('AUDIT_EXISTS', { auditId: id }));
-    await expect(createTaskopApi(exists.api).audits.start(id)).rejects.toMatchObject({ code: 'AUDIT_EXISTS', auditId: id, itemIds: null });
+    await expect(createEdildyApi(exists.api).audits.start(id)).rejects.toMatchObject({ code: 'AUDIT_EXISTS', auditId: id, itemIds: null });
     const incomplete = await authed(() => errorOf('AUDIT_INCOMPLETE', { itemIds: [id] }));
-    await expect(createTaskopApi(incomplete.api).audits.finish(id, { result: 'passed' })).rejects.toMatchObject({ code: 'AUDIT_INCOMPLETE', itemIds: [id], auditId: null });
+    await expect(createEdildyApi(incomplete.api).audits.finish(id, { result: 'passed' })).rejects.toMatchObject({ code: 'AUDIT_INCOMPLETE', itemIds: [id], auditId: null });
   });
 });
 ```
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api-client test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api-client test`
 Expected: FAIL: `t.audits` is undefined.
 
 - [ ] **Step 3: Extend `ApiError`**
@@ -2555,7 +2555,7 @@ Expected: FAIL: `t.audits` is undefined.
 - [ ] **Step 4: Add the endpoints**
 
 `packages/api-client/src/endpoints.ts`:
-- add to the `@taskop/contracts` import list:
+- add to the `@edildy/contracts` import list:
 
 ```ts
   auditDetailSchema,
@@ -2583,7 +2583,7 @@ Expected: FAIL: `t.audits` is undefined.
       resubmit: (id: string, body: ResubmitCommand) => c.request('POST', `/executions/${id}/resubmit`, { body, schema: resubmitResultSchema }),
 ```
 
-- in `createTaskopApi`, after `...createReportsApi(c),` add `...createAuditsApi(c),`
+- in `createEdildyApi`, after `...createReportsApi(c),` add `...createAuditsApi(c),`
 - append:
 
 ```ts
@@ -2621,7 +2621,7 @@ export type AuditsApi = ReturnType<typeof createAuditsApi>;
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client typecheck && pnpm --filter @taskop/api-client build && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client typecheck && pnpm --filter @edildy/api-client build && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS. Tasks 1–4 are now complete: Parts 2 and 3 can start.
 
 - [ ] **Step 6: Commit**
@@ -2821,7 +2821,7 @@ describe('audit and correction tables (SP8 spec §4)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- audit-db`
+Run: `pnpm --filter @edildy/api test -- audit-db`
 Expected: FAIL: `invalid input value for enum occurrence_status` / `relation "execution_corrections" does not exist`.
 
 - [ ] **Step 3: Add the enum values and generate 0015**
@@ -2833,7 +2833,7 @@ In `apps/api/src/db/schema.ts`:
 Run:
 
 ```bash
-pnpm --filter @taskop/api exec drizzle-kit generate --name audit_corrections
+pnpm --filter @edildy/api exec drizzle-kit generate --name audit_corrections
 ```
 
 Check: `apps/api/drizzle/0015_audit_corrections.sql` contains exactly
@@ -2860,7 +2860,7 @@ In `checklists`, after `sourceVersionId: uuid('source_version_id'),` add:
 After `export const problemSeverity = …;` add:
 
 ```ts
-// Must match CORRECTION_KINDS in @taskop/contracts.
+// Must match CORRECTION_KINDS in @edildy/contracts.
 export const correctionKind = pgEnum('correction_kind', ['manual', 'rework']);
 ```
 
@@ -2982,7 +2982,7 @@ and in its config, after `notification_rules_lead_ck` add
 At the end of the file add:
 
 ```ts
-// Must match AUDIT_STATUSES, AUDIT_RESULTS, AUDIT_VERDICTS and AUDIT_REPORT_STATUSES in @taskop/contracts.
+// Must match AUDIT_STATUSES, AUDIT_RESULTS, AUDIT_VERDICTS and AUDIT_REPORT_STATUSES in @edildy/contracts.
 export const auditStatus = pgEnum('audit_status', ['in_progress', 'finished', 'cancelled']);
 export const auditResult = pgEnum('audit_result', ['passed', 'failed']);
 export const auditVerdict = pgEnum('audit_verdict', ['approved', 'rejected']);
@@ -3059,7 +3059,7 @@ export const auditItemVerdicts = pgTable(
 Run:
 
 ```bash
-pnpm --filter @taskop/api exec drizzle-kit generate --name audit_corrections_tables
+pnpm --filter @edildy/api exec drizzle-kit generate --name audit_corrections_tables
 ```
 
 Check `apps/api/drizzle/0016_audit_corrections_tables.sql`: it creates the five enum types, the four tables, adds the columns to `checklists`, `executions`, `execution_problems` and `notification_rules`, drops the constraint `execution_problems_item_uq`, creates `execution_problems_active_item_uq … WHERE cleared_at is null`, the foreign keys, checks and indexes. It must not use the two values 0015 added: `grep -n "correction_required" apps/api/drizzle/0016_audit_corrections_tables.sql` prints nothing, and `'rework'` appears only in `CREATE TYPE "public"."correction_kind" AS ENUM('manual', 'rework')` (a type created in this file, which is allowed).
@@ -3098,17 +3098,17 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Corrections are append-only (spec §4.2).
-GRANT SELECT, INSERT ON execution_corrections TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON execution_corrections TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- A send-back is closed by a resubmit or a withdrawal; nothing else of it ever changes.
-GRANT SELECT, INSERT ON execution_rework_requests TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON execution_rework_requests TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT UPDATE (resubmitted_at, withdrawn_at, withdrawn_by_user_id) ON execution_rework_requests TO taskop_app, taskop_platform;
+GRANT UPDATE (resubmitted_at, withdrawn_at, withdrawn_by_user_id) ON execution_rework_requests TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- Audits are never deleted; verdicts are cleared by the auditor and reset by a resubmit.
-GRANT SELECT, INSERT, UPDATE ON audits TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON audits TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON audit_item_verdicts TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON audit_item_verdicts TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- The backfill below must see every tenant's rows (see 0004 for why row_security is switched off).
 SET LOCAL row_security = off;
@@ -3145,7 +3145,7 @@ and the final `delete` gets `isNull(executionProblems.clearedAt),` as its first 
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- audit-db executions-db executions-answers executions-complete tasks-db problems-resolution roles notifications-db reports-db`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- audit-db executions-db executions-answers executions-complete tasks-db problems-resolution roles notifications-db reports-db`
 Expected: PASS. The global setup applies 0015 and 0016 to a fresh container in one transaction; a "unsafe use of new value" error there means `0016` mentions one of the two new enum values.
 
 - [ ] **Step 8: Commit**
@@ -3178,7 +3178,7 @@ git commit -m "feat(api): add the audit and correction tables, the snapshot trig
 `apps/api/test/corrections-recalculate.test.ts`:
 
 ```ts
-import type { Answers } from '@taskop/contracts';
+import type { Answers } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -3302,7 +3302,7 @@ describe('recalculation after close (SP8 spec §6.3)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- corrections-recalculate`
+Run: `pnpm --filter @edildy/api test -- corrections-recalculate`
 Expected: FAIL: `Cannot find module '../src/executions/recalculation'`.
 
 - [ ] **Step 3: Split the problem writer**
@@ -3311,7 +3311,7 @@ Expected: FAIL: `Cannot find module '../src/executions/recalculation'`.
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Answers, type ChecklistContent, type DerivedProblem, deriveProblems } from '@taskop/contracts';
+import { type Answers, type ChecklistContent, type DerivedProblem, deriveProblems } from '@edildy/contracts';
 import { and, eq, isNull, notInArray, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { DomainEvents } from '../common/domain-events';
@@ -3433,7 +3433,7 @@ export class ProblemWriter {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Answers, type ChecklistContent, computeScore, type ExecutionProgress, progress, type ScoreResult } from '@taskop/contracts';
+import { type Answers, type ChecklistContent, computeScore, type ExecutionProgress, progress, type ScoreResult } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { executions } from '../db/schema';
@@ -3478,7 +3478,7 @@ In `apps/api/src/executions/executions.module.ts`, add `ExecutionRecalculator` (
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- corrections-recalculate executions-answers executions-complete tasks-problems problems-resolution notification-events`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- corrections-recalculate executions-answers executions-complete tasks-problems problems-resolution notification-events`
 Expected: PASS. The SP4 and SP5 tests show the open-run writer still deletes vanished problems and keeps those with a task.
 
 - [ ] **Step 6: Commit**
@@ -3512,7 +3512,7 @@ git commit -m "feat(api): recalculate score and problems after close, clearing i
 `apps/api/test/audit-fixtures.ts`:
 
 ```ts
-import type { Answers } from '@taskop/contracts';
+import type { Answers } from '@edildy/contracts';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
 import { claimOk, completeExecution, type ExecutionWorld, executionWorld, registerPhoto, type TestWorker } from './execution-fixtures';
@@ -3856,7 +3856,7 @@ In `apps/api/src/common/error.filter.test.ts`, append inside `describe('toAppErr
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- corrections.test error.filter`
+Run: `pnpm --filter @edildy/api test -- corrections.test error.filter`
 Expected: FAIL: `POST /executions/:id/corrections` answers 404 (no route), and the filter maps `audits.issues.commentRequired` to `errors.validation.invalid`. (`AppErrorDetails` has no `auditId`: the typecheck in Step 5 catches it.)
 
 - [ ] **Step 4: Implement**
@@ -3879,7 +3879,7 @@ Expected: FAIL: `POST /executions/:id/corrections` answers 404 (no route), and t
 `apps/api/src/executions/run-locks.ts`:
 
 ```ts
-import { canCorrect } from '@taskop/contracts';
+import { canCorrect } from '@edildy/contracts';
 import { and, eq, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { DbService } from '../db/db.service';
@@ -3925,7 +3925,7 @@ export function snapshotColumns(e: ExecutionRow, now: Date): Partial<Pick<Execut
 `apps/api/src/executions/correction-apply.ts`:
 
 ```ts
-import { type Answer, type Answers, type ChecklistContent, type CorrectAnswersParams, walkItems } from '@taskop/contracts';
+import { type Answer, type Answers, type ChecklistContent, type CorrectAnswersParams, walkItems } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 
 /**
@@ -3959,7 +3959,7 @@ export function applyCorrection(content: ChecklistContent, before: Answers, chan
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Answer, type Answers, answerIssues, changedItemIds, type CorrectAnswersParams, type CorrectionResult, requirements, type ScoreResult } from '@taskop/contracts';
+import { type Answer, type Answers, answerIssues, changedItemIds, type CorrectAnswersParams, type CorrectionResult, requirements, type ScoreResult } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { AppError } from '../common/app-error';
@@ -4062,7 +4062,7 @@ export class CorrectionResultResponse extends createZodDto(correctionResultSchem
 ```ts
 import { Body, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { CorrectionResult } from '@taskop/contracts';
+import type { CorrectionResult } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { type Actor, CurrentActor } from '../scheduling/actor';
@@ -4142,7 +4142,7 @@ export class ExecutionsModule {}
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- corrections.test error.filter corrections-recalculate executions-read`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- corrections.test error.filter corrections-recalculate executions-read`
 Expected: PASS. In `refuses a stale answersRev…` the two requests serialise on the occurrence lock; the second sees rev 2 and answers 409.
 
 - [ ] **Step 6: Commit**
@@ -4292,7 +4292,7 @@ describe('send-back and withdrawal (spec §3.1, §6.2)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- send-back`
+Run: `pnpm --filter @edildy/api test -- send-back`
 Expected: FAIL: the send-back routes answer 404.
 
 - [ ] **Step 3: Add the domain event**
@@ -4310,7 +4310,7 @@ Expected: FAIL: the send-back routes answer 404.
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { Answer, ReworkItem, ReworkRequest } from '@taskop/contracts';
+import type { Answer, ReworkItem, ReworkRequest } from '@edildy/contracts';
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { executionReworkRequests, users } from '../db/schema';
@@ -4436,7 +4436,7 @@ import {
   type ScoreResult,
   type SendBackParams,
   walkItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { AppError } from '../common/app-error';
@@ -4562,7 +4562,7 @@ export class SendBackDto extends createZodDto(sendBackInputSchema) {}
 export class ReworkRequestResponse extends createZodDto(reworkRequestSchema) {}
 ```
 
-`apps/api/src/executions/corrections.controller.ts`: import `type ReworkRequest` from `@taskop/contracts` and `ReworkRequestResponse, SendBackDto` from `./dto`, then add inside the class after `correct`:
+`apps/api/src/executions/corrections.controller.ts`: import `type ReworkRequest` from `@edildy/contracts` and `ReworkRequestResponse, SendBackDto` from `./dto`, then add inside the class after `correct`:
 
 ```ts
     @Post(':id/send-back')
@@ -4586,7 +4586,7 @@ export class ReworkRequestResponse extends createZodDto(reworkRequestSchema) {}
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- send-back corrections.test`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- send-back corrections.test`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -4859,7 +4859,7 @@ describe('rework on the phone (spec §3.2, §6.2)', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- rework.test`
+Run: `pnpm --filter @edildy/api test -- rework.test`
 Expected: FAIL: the first save answers `409 EXECUTION_NOT_ACTIVE` (the device time is after `closes_at`) and `/resubmit` is 404.
 
 - [ ] **Step 3: Add the event, the executor lock and the verdict reset**
@@ -4977,7 +4977,7 @@ import {
   type ReworkItem,
   type ScoreResult,
   visibleItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -5119,7 +5119,7 @@ export class ResubmitResultResponse extends createZodDto(resubmitResultSchema) {
 ```
 
 `apps/api/src/executions/executions.controller.ts`:
-- add `ResubmitResult` to the type import from `@taskop/contracts`, `ResubmitCommandDto, ResubmitResultResponse` to the `./dto` import, and `import { ReworkService } from './rework.service';`
+- add `ResubmitResult` to the type import from `@edildy/contracts`, `ResubmitCommandDto, ResubmitResultResponse` to the `./dto` import, and `import { ReworkService } from './rework.service';`
 - add `@Inject(ReworkService) private readonly rework: ReworkService,` to the constructor;
 - add after `complete`:
 
@@ -5156,7 +5156,7 @@ export class ResubmitResultResponse extends createZodDto(resubmitResultSchema) {
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- rework.test send-back executions-answers executions-media executions-sync executions-sweep executions-complete`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- rework.test send-back executions-answers executions-media executions-sync executions-sweep executions-complete`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -5295,7 +5295,7 @@ describe('reading corrections (spec §6.2, NFR-07.05)', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- corrections-read`
+Run: `pnpm --filter @edildy/api test -- corrections-read`
 Expected: FAIL: `GET /executions/:id/corrections` is 404 and the detail still has the Task 2 placeholders.
 
 - [ ] **Step 3: Write the history and the brief**
@@ -5304,7 +5304,7 @@ Expected: FAIL: `GET /executions/:id/corrections` is 404 and the detail still ha
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Answer, type AnswerDiff, type Answers, answersEqual, type Correction, type ExecutionCorrections, type ScoreResult, walkItems } from '@taskop/contracts';
+import { type Answer, type AnswerDiff, type Answers, answersEqual, type Correction, type ExecutionCorrections, type ScoreResult, walkItems } from '@edildy/contracts';
 import { asc, eq, getTableColumns } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { DbService } from '../db/db.service';
@@ -5376,7 +5376,7 @@ export class CorrectionHistory {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type AuditBrief, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@taskop/contracts';
+import { type AuditBrief, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@edildy/contracts';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { auditItemVerdicts, audits, checklists } from '../db/schema';
@@ -5411,7 +5411,7 @@ import { auditItemVerdicts, audits, checklists } from '../db/schema';
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { ExecutionCorrections, ExecutionDetail, ScoreResult } from '@taskop/contracts';
+import type { ExecutionCorrections, ExecutionDetail, ScoreResult } from '@edildy/contracts';
 import { asc, eq, getTableColumns } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -5549,7 +5549,7 @@ with, above the class:
 const READ_KEYS = ['assignments.view', 'reports.view', 'audits.perform', 'executions.correct'] as const satisfies readonly PermissionKey[];
 ```
 
-and `import type { PermissionKey } from '@taskop/contracts';`.
+and `import type { PermissionKey } from '@edildy/contracts';`.
 
 `apps/api/src/executions/dto.ts`: add `executionCorrectionsSchema` to the import and `export class ExecutionCorrectionsResponse extends createZodDto(executionCorrectionsSchema) {}`.
 
@@ -5568,7 +5568,7 @@ and `import type { PermissionKey } from '@taskop/contracts';`.
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- corrections-read executions-read executions-scope reports-run-access tasks-problems problems-resolution`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- corrections-read executions-read executions-scope reports-run-access tasks-problems problems-resolution`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -5639,7 +5639,7 @@ describe('audit settings and the audit queue on completion (spec §3.1, §4.1)',
 
   it('reads and writes the settings on the platform in-tenant route too', async () => {
     const w = await executionWorld(t);
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     await ownerQuery("insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')", [
       email,
       await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 }),
@@ -5712,7 +5712,7 @@ describe('audit settings and the audit queue on completion (spec §3.1, §4.1)',
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- audit-required`
+Run: `pnpm --filter @edildy/api test -- audit-required`
 Expected: FAIL: the PATCH answers `requiresAudit: false` (the field is dropped) and the run stays `completed`.
 
 - [ ] **Step 3: Store and return the settings**
@@ -5798,7 +5798,7 @@ export interface Transition {
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- audit-required checklists occurrence-writer executions-complete executions-sweep notification-events`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- audit-required checklists occurrence-writer executions-complete executions-sweep notification-events`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -5830,7 +5830,7 @@ git commit -m "feat(api): checklist audit settings, and completed runs that requ
 `apps/api/test/audits.test.ts`:
 
 ```ts
-import { auditScore, type AuditVerdict, missingVerdicts } from '@taskop/contracts';
+import { auditScore, type AuditVerdict, missingVerdicts } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { type AuditWorld, auditLogOf, auditWorld, correct, sendBack, startAudit } from './audit-fixtures';
@@ -5998,7 +5998,7 @@ describe('audits: start, read, verdicts, cancel (spec §3.1, §6.2)', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- audits.test`
+Run: `pnpm --filter @edildy/api test -- audits.test`
 Expected: FAIL: `POST /executions/:id/audits` answers 404.
 
 - [ ] **Step 3: Write the row mapping and the service**
@@ -6006,7 +6006,7 @@ Expected: FAIL: `POST /executions/:id/audits` answers 404.
 `apps/api/src/audits/audit-rows.ts`:
 
 ```ts
-import { type AuditActor, type AuditDto, type AuditItemVerdict, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@taskop/contracts';
+import { type AuditActor, type AuditDto, type AuditItemVerdict, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@edildy/contracts';
 import type { audits } from '../db/schema';
 
 export type AuditRow = typeof audits.$inferSelect;
@@ -6052,7 +6052,7 @@ import {
   type AuditVerdictParams,
   canStartAudit,
   statusAfterAuditCancel,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, asc, eq, getTableColumns, inArray, ne } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { AppError } from '../common/app-error';
@@ -6235,7 +6235,7 @@ import {
   cancelAuditInputSchema,
   finishAuditInputSchema,
   sendAuditReportInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class AuditDtoResponse extends createZodDto(auditDtoSchema) {}
@@ -6254,7 +6254,7 @@ export class SendAuditReportDto extends createZodDto(sendAuditReportInputSchema)
 ```ts
 import { Body, Delete, Get, HttpCode, Inject, Param, Post, Put } from '@nestjs/common';
 import { ApiCreatedResponse, ApiNoContentResponse, ApiOkResponse } from '@nestjs/swagger';
-import type { AuditDetail, AuditDto, AuditItemVerdict } from '@taskop/contracts';
+import type { AuditDetail, AuditDto, AuditItemVerdict } from '@edildy/contracts';
 import { controllerDecorators, named, perm, permAny, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { type Actor, CurrentActor } from '../scheduling/actor';
@@ -6352,7 +6352,7 @@ export class AuditsModule {}
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- audits.test corrections-read send-back`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- audits.test corrections-read send-back`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -6661,7 +6661,7 @@ describe('the audit queue (GET /audits, Spec decision 13)', () => {
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- audits-finish audits-queue`
+Run: `pnpm --filter @edildy/api test -- audits-finish audits-queue`
 Expected: FAIL: `POST /audits/:id/finish` and `GET /audits` answer 404.
 
 - [ ] **Step 4: Add the event and the queue names**
@@ -6774,7 +6774,7 @@ import { AUDIT_QUEUES, type AuditReportJobData } from './report/queues';
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type AuditQueueParams, type AuditQueueRow, type AuditResult, type AuditStatus, type OccurrenceStatus, type Page, runAuditState } from '@taskop/contracts';
+import { type AuditQueueParams, type AuditQueueRow, type AuditResult, type AuditStatus, type OccurrenceStatus, type Page, runAuditState } from '@edildy/contracts';
 import { type SQL, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { occurrences } from '../db/schema';
@@ -6922,7 +6922,7 @@ export class AuditQueueQuery {
 
 - [ ] **Step 8: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- audits-finish audits-queue audits.test`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- audits-finish audits-queue audits.test`
 Expected: PASS.
 
 - [ ] **Step 9: Commit**
@@ -6963,13 +6963,13 @@ import { SmtpMailer } from './mailer';
 
 describe('SmtpMailer', () => {
   it('passes attachments to nodemailer with the sender', async () => {
-    const mailer = new SmtpMailer({ SMTP_URL: 'smtp://localhost:1025', MAIL_FROM: 'Taskop <no-reply@taskop.test>' } as AppConfig);
+    const mailer = new SmtpMailer({ SMTP_URL: 'smtp://localhost:1025', MAIL_FROM: 'Edildy <no-reply@edildy.test>' } as AppConfig);
     const transport = (mailer as unknown as { transport: { sendMail: (m: object) => Promise<unknown> } }).transport;
     const sendMail = vi.spyOn(transport, 'sendMail').mockResolvedValue({});
     const pdf = Buffer.from('%PDF-1.7');
     await mailer.send({ to: 'qa@acme.az', subject: 'S', text: 'T', attachments: [{ filename: 'a.pdf', content: pdf, contentType: 'application/pdf' }] });
     expect(sendMail).toHaveBeenCalledWith({
-      from: 'Taskop <no-reply@taskop.test>', to: 'qa@acme.az', subject: 'S', text: 'T',
+      from: 'Edildy <no-reply@edildy.test>', to: 'qa@acme.az', subject: 'S', text: 'T',
       attachments: [{ filename: 'a.pdf', content: pdf, contentType: 'application/pdf' }],
     });
   });
@@ -6997,7 +6997,7 @@ describe('auditReportMail', () => {
 `apps/api/src/audits/report/answer-text.test.ts`:
 
 ```ts
-import { type Item, newItem, type NumberItem, type SingleChoiceItem, type YesNoItem } from '@taskop/contracts';
+import { type Item, newItem, type NumberItem, type SingleChoiceItem, type YesNoItem } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { answerLine, answerText } from './answer-text';
 
@@ -7273,7 +7273,7 @@ export class MemoryMailer {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- mailer templates.test answer-text audit-report-builder audit-report-perf`
+Run: `pnpm --filter @edildy/api test -- mailer templates.test answer-text audit-report-builder audit-report-perf`
 Expected: FAIL: `auditReportMail`, `answer-text` and `audit-report-builder` don't exist, and the mailer test's `attachments` is not part of `MailMessage` (typecheck).
 
 - [ ] **Step 3: Add attachments and the report mail**
@@ -7301,8 +7301,8 @@ export interface MailMessage {
 `apps/api/src/mail/templates.ts`, append (and add the imports at the top):
 
 ```ts
-import { AUDIT_REPORT_CONTENT_TYPE, type AuditResult } from '@taskop/contracts';
-import { az, interpolate } from '@taskop/i18n';
+import { AUDIT_REPORT_CONTENT_TYPE, type AuditResult } from '@edildy/contracts';
+import { az, interpolate } from '@edildy/i18n';
 ```
 
 ```ts
@@ -7345,8 +7345,8 @@ export function toPdf(doc: ReportDocument): Promise<Buffer> {
 `apps/api/src/audits/report/answer-text.ts`:
 
 ```ts
-import { type Answer, isAnswered, type Item } from '@taskop/contracts';
-import { az, interpolate } from '@taskop/i18n';
+import { type Answer, isAnswered, type Item } from '@edildy/contracts';
+import { az, interpolate } from '@edildy/i18n';
 
 const L = az.audits.report;
 
@@ -7389,8 +7389,8 @@ export function answerLine(item: Item, a: Answer | undefined): string {
 `apps/api/src/audits/report/audit-report-builder.ts`:
 
 ```ts
-import { AUDIT_LIMITS, type AuditResult, type AuditScore, type AuditVerdict, type ProblemSeverity } from '@taskop/contracts';
-import { az, interpolate } from '@taskop/i18n';
+import { AUDIT_LIMITS, type AuditResult, type AuditScore, type AuditVerdict, type ProblemSeverity } from '@edildy/contracts';
+import { az, interpolate } from '@edildy/i18n';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { formatInstant } from '../../reports/export/report-table';
 import { renderPdf } from '../../reports/pdf/pdf-document';
@@ -7519,7 +7519,7 @@ export function auditReportDefinition(d: AuditReportData): TDocumentDefinitions 
   return {
     pageSize: 'A4',
     pageMargins: [28, 28, 28, 40],
-    info: { title: `${L.title} ${d.auditId}`, creator: 'Taskop' },
+    info: { title: `${L.title} ${d.auditId}`, creator: 'Edildy' },
     defaultStyle: { font: 'NotoSans', fontSize: 9 },
     styles: {
       tenant: { fontSize: 14, bold: true },
@@ -7548,7 +7548,7 @@ export function buildAuditReport(d: AuditReportData): Promise<Buffer> {
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- mailer templates.test answer-text audit-report-builder audit-report-perf pdf-document auth-signup`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- mailer templates.test answer-text audit-report-builder audit-report-perf pdf-document auth-signup`
 Expected: PASS. The performance test prints one line such as `audit report: 1800 ms, heap +120 MB, rss 640 MB, 58 MB PDF`; copy it into the commit message body. If the PDF holds fewer than 40 images, pdfmake did not take the `data:` URLs from `images`: check that the `image` value is the dictionary key (`photo0`, …), not the URL.
 
 - [ ] **Step 6: Commit**
@@ -7607,11 +7607,11 @@ export class MemoryStorage {
   }
 
   async presignPut(key: string, contentType: string, contentLength: number): Promise<PresignedPut> {
-    return { url: `http://files.taskop.test/${key}`, headers: { 'Content-Type': contentType, 'Content-Length': String(contentLength) }, expiresAt: new Date(Date.now() + 900_000) };
+    return { url: `http://files.edildy.test/${key}`, headers: { 'Content-Type': contentType, 'Content-Length': String(contentLength) }, expiresAt: new Date(Date.now() + 900_000) };
   }
 
   async presignGet(key: string): Promise<{ url: string; expiresAt: Date }> {
-    return { url: `http://files.taskop.test/${key}`, expiresAt: new Date(Date.now() + 300_000) };
+    return { url: `http://files.edildy.test/${key}`, expiresAt: new Date(Date.now() + 300_000) };
   }
 }
 ```
@@ -7682,7 +7682,7 @@ import { ownerQuery } from './owner-db';
 import { noisePng } from './png';
 import { MONDAY_0800 } from './scheduling-fixtures';
 
-const FILE = 'taskop-audit-icra-yoxlamasi-2026-11-02.pdf';
+const FILE = 'edildy-audit-icra-yoxlamasi-2026-11-02.pdf';
 
 interface AuditDbRow {
   report_status: string;
@@ -7821,7 +7821,7 @@ describe('the audit report job (spec §7.2)', () => {
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- audit-report-job storage-objects`
+Run: `pnpm --filter @edildy/api test -- audit-report-job storage-objects`
 Expected: FAIL: `AuditReportJob` doesn't exist and `S3Service.putObject` is not a function.
 
 - [ ] **Step 4: Store and read whole objects**
@@ -7852,7 +7852,7 @@ Expected: FAIL: `AuditReportJob` doesn't exist and `S3Service.putObject` is not 
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Answers, answersEqual, type AuditResult, type AuditScore, type ScoreResult, visibleItems } from '@taskop/contracts';
+import { type Answers, answersEqual, type AuditResult, type AuditScore, type ScoreResult, visibleItems } from '@edildy/contracts';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { DbService } from '../../db/db.service';
 import { auditItemVerdicts, audits, checklists, checklistVersions, executionCorrections, executionMedia, executionProblems, executions, occurrences, sites, tenants, users } from '../../db/schema';
@@ -7897,7 +7897,7 @@ export class AuditReportLoader {
         .leftJoin(users, eq(users.id, audits.auditorUserId))
         .where(eq(audits.id, auditId));
       if (!r?.result) return null;
-      return { checklistName: r.checklistName, siteName: r.siteName, localDate: r.localDate, result: r.result, auditorName: r.auditorName ?? 'Taskop' };
+      return { checklistName: r.checklistName, siteName: r.siteName, localDate: r.localDate, result: r.result, auditorName: r.auditorName ?? 'Edildy' };
     });
   }
 
@@ -7973,7 +7973,7 @@ export class AuditReportLoader {
             depth,
             answer: answerLine(item, current),
             original: changed ? answerLine(item, original![item.id]) : null,
-            correctedBy: correction ? { name: correction.actorName ?? 'Taskop', reason: correction.reason } : null,
+            correctedBy: correction ? { name: correction.actorName ?? 'Edildy', reason: correction.reason } : null,
             verdict: verdict?.verdict ?? null,
             verdictComment: verdict?.comment ?? null,
             problem: problem ? { severity: problem.severity, note: problem.note } : null,
@@ -7996,7 +7996,7 @@ export class AuditReportLoader {
       startedAt: x.e.startedAt,
       completedAt: x.e.completedAt,
       syncedAt: x.e.completedReceivedAt,
-      auditorName: a.auditorName ?? 'Taskop',
+      auditorName: a.auditorName ?? 'Edildy',
       finishedAt: a.audit.finishedAt!,
       result: a.audit.result!,
       auditScore: a.audit.auditScore as AuditScore,
@@ -8018,7 +8018,7 @@ export class AuditReportLoader {
 
 ```ts
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { AUDIT_REPORT_CONTENT_TYPE, auditReportFileName } from '@taskop/contracts';
+import { AUDIT_REPORT_CONTENT_TYPE, auditReportFileName } from '@edildy/contracts';
 import { eq, sql } from 'drizzle-orm';
 import { Clock } from '../../common/clock';
 import { sanitiseForLog } from '../../common/error.filter';
@@ -8178,7 +8178,7 @@ export class AuditReportJob implements OnModuleInit {
 ```
 
 `apps/api/src/audits/audits.controller.ts`:
-- add `StreamableFile` to the Nest import, `ApiProduces` to the swagger import, `AUDIT_REPORT_CONTENT_TYPE` as a value import from `@taskop/contracts`, and `SendAuditReportDto` to the `./dto` import;
+- add `StreamableFile` to the Nest import, `ApiProduces` to the swagger import, `AUDIT_REPORT_CONTENT_TYPE` as a value import from `@edildy/contracts`, and `SendAuditReportDto` to the `./dto` import;
 - add after `finish`:
 
 ```ts
@@ -8205,7 +8205,7 @@ export class AuditReportJob implements OnModuleInit {
 
 - [ ] **Step 8: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- audit-report-job storage-objects audits-finish jobs-wiring executions-storage`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- audit-report-job storage-objects audits-finish jobs-wiring executions-storage`
 Expected: PASS. `jobs-wiring` shows the new worker queue is created when jobs are enabled.
 
 - [ ] **Step 9: Commit**
@@ -8403,7 +8403,7 @@ describe('SP8 texts', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- audit-notifications notification-rules notification-templates`
+Run: `pnpm --filter @edildy/api test -- audit-notifications notification-rules notification-templates`
 Expected: FAIL: the events are recorded but fan-out fails to render them (`Notification type run.correction_required cannot be rendered…`), and the rules API ignores `resultFilter`.
 
 - [ ] **Step 3: Payloads and targets**
@@ -8494,11 +8494,11 @@ export type RuleTarget = OccurrenceTarget | ProblemTarget | AssignmentTarget | T
 - [ ] **Step 4: Texts and recipients**
 
 `apps/api/src/notifications/notification-templates.ts`:
-- imports gain `import { az, interpolate } from '@taskop/i18n';` and `RunTarget` from `./notification-targets`;
+- imports gain `import { az, interpolate } from '@edildy/i18n';` and `RunTarget` from `./notification-targets`;
 - add before `renderNotification`:
 
 ```ts
-/** SP8 spec §7.1: the texts live in @taskop/i18n (az.notifications.templates). */
+/** SP8 spec §7.1: the texts live in @edildy/i18n (az.notifications.templates). */
 function runText(type: NotificationType, r: RunTarget): { title: string; body: string } | null {
   const T = az.notifications.templates;
   const place = { checklist: r.occurrence.checklistName, site: r.occurrence.siteName };
@@ -8607,7 +8607,7 @@ and update the `outcome` column comment in `apps/api/src/db/schema.ts` (`notific
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- audit-notifications notification-rules notification-templates notification-fanout notification-recipients notification-events notification-rules-api`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- audit-notifications notification-rules notification-templates notification-fanout notification-recipients notification-events notification-rules-api`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -8728,7 +8728,7 @@ In `apps/api/test/reports-export.test.ts`, `exports runs as CSV…`: the expecte
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- audit-reports report-tables reports-export`
+Run: `pnpm --filter @edildy/api test -- audit-reports report-tables reports-export`
 Expected: FAIL: `auditState` is always null, the cleared problem still counts, the CSV has 15 columns.
 
 - [ ] **Step 3: Skip cleared problems and add the audit columns**
@@ -8871,7 +8871,7 @@ const auditJoin = sql`left join audits au on au.execution_id = r.execution_id an
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- audit-reports report-tables reports-export reports-runs reports-summary reports-problems-tasks reports-scope`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- audit-reports report-tables reports-export reports-runs reports-summary reports-problems-tasks reports-scope`
 Expected: PASS. `reports-summary`'s cross-check still agrees for every status, `correction_required` included.
 
 - [ ] **Step 5: Commit**
@@ -8915,7 +8915,7 @@ describe('audit and correction scope, permissions and platform admins (spec §5,
   let platform: Api;
   beforeAll(async () => {
     t = await createTestApp({}, { clock });
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     await ownerQuery("insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')", [
       email,
       await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 }),
@@ -8994,7 +8994,7 @@ describe('audit and correction scope, permissions and platform admins (spec §5,
   it('lets platform admins correct, send back and audit inside the tenant, attributed to them', async () => {
     const a = await world();
     const base = `/api/v1/platform/tenants/${a.w.s.tenantId}`;
-    const fix = await platform.post(`${base}/executions/${a.executionId}/corrections`, { answersRev: 1, changes: [{ itemId: a.w.c.note.id, answer: { text: 'Taskop dəstəyi' } }], reason: 'Müştərinin xahişi' });
+    const fix = await platform.post(`${base}/executions/${a.executionId}/corrections`, { answersRev: 1, changes: [{ itemId: a.w.c.note.id, answer: { text: 'Edildy dəstəyi' } }], reason: 'Müştərinin xahişi' });
     expect(fix.status, JSON.stringify(fix.body)).toBe(200);
     expect(await correctionRows(a.executionId)).toEqual([expect.objectContaining({ actor_user_id: null, actor_platform_admin_id: expect.any(String) })]);
     expect((await auditLogOf(a.executionId)).at(-1)).toMatchObject({ action: 'execution.corrected', actor_user_id: null, actor_platform_admin_id: expect.any(String) });
@@ -9045,28 +9045,28 @@ In `apps/api/test/openapi.test.ts`, append inside `describe('OpenAPI', …)`:
 
 - [ ] **Step 2: Run them**
 
-Run: `pnpm --filter @taskop/api test -- audit-scope openapi`
+Run: `pnpm --filter @edildy/api test -- audit-scope openapi`
 Expected: PASS. If a status in the matrix differs, read the body: a 400 where 404 is expected means a body that should be valid is not; fix the request in the test, never the expectation of 404 for out-of-scope callers.
 
 - [ ] **Step 3: Run the full suite**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client build && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint && pnpm --filter @taskop/api test && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/mobile typecheck && pnpm lint`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client build && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint && pnpm --filter @edildy/api test && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/mobile typecheck && pnpm lint`
 Expected: PASS: every API test file, including `audit-db`, `corrections-recalculate`, `corrections`, `send-back`, `rework`, `corrections-read`, `audit-required`, `audits`, `audits-finish`, `audits-queue`, `audit-report-perf`, `audit-report-job`, `storage-objects`, `audit-notifications`, `audit-reports`, `audit-scope` and the extended SP4–SP7 tests; the web and mobile typechecks (this part only added contract fields, keys and fixture defaults).
 
 - [ ] **Step 4: Try it locally**
 
 ```bash
 docker compose up -d
-pnpm --filter @taskop/api db:setup
-pnpm --filter @taskop/api db:seed
-pnpm --filter @taskop/api dev
+pnpm --filter @edildy/api db:setup
+pnpm --filter @edildy/api db:seed
+pnpm --filter @edildy/api dev
 ```
 
 In another terminal, as the seeded manager:
 
 ```bash
 TOKEN=$(curl -s localhost:3000/api/v1/auth/login/staff -H 'content-type: application/json' \
-  -d '{"email":"manager@demo.taskop.az","password":"DemoPassword123","client":"web"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).accessToken')
+  -d '{"email":"manager@demo.edildy.az","password":"DemoPassword123","client":"web"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).accessToken')
 curl -s "localhost:3000/api/v1/me" -H "Authorization: Bearer $TOKEN" | node -pe 'JSON.parse(require("fs").readFileSync(0)).permissions.includes("executions.correct")'
 ```
 

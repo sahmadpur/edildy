@@ -1,6 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 import { Alert, StyleSheet } from 'react-native';
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import i18n from '@/lib/i18n';
 import { colors } from '@/lib/theme';
 import { ME, OCC, OCC2, OCC3, OCC4, OCC5, occurrence, OTHER, OTHER_EXECUTION, REWORK_DUE, reworkSync, syncResponse, VERSION2, versionOf } from '@/offline/testing/fixtures';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type NotificationRuleDto, RULE_TYPES, type RuleType, type SystemRoleKey, type UpdateNotificationRuleOutput } from '@taskop/contracts';
+import { type NotificationRuleDto, RULE_TYPES, type RuleType, type SystemRoleKey, type UpdateNotificationRuleOutput } from '@edildy/contracts';
 import { eq, inArray } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

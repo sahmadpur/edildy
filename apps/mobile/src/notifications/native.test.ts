@@ -22,7 +22,7 @@ jest.mock('expo-constants', () => ({
 jest.mock('@/lib/secure-storage', () => {
   const store = new Map<string, string>();
   return {
-    STORAGE_KEYS: { pushToken: 'taskop.pushToken' },
+    STORAGE_KEYS: { pushToken: 'edildy.pushToken' },
     secureStorage: {
       get: async (k: string) => store.get(k) ?? null,
       set: async (k: string, v: string) => void store.set(k, v),
@@ -64,7 +64,7 @@ describe('native push port', () => {
     expect((await handler.handleNotification(note(pushData({ userId: OTHER })))).shouldShowBanner).toBe(false);
     current = null;
     expect((await handler.handleNotification(note(pushData()))).shouldShowList).toBe(false);
-    expect(N.setNotificationChannelAsync).toHaveBeenCalledWith('default', { name: 'Taskop bildirişləri', importance: 6, sound: 'default' });
+    expect(N.setNotificationChannelAsync).toHaveBeenCalledWith('default', { name: 'Edildy bildirişləri', importance: 6, sound: 'default' });
   });
 
   it('clears the app badge whenever the session becomes anonymous, including a session that expired', () => {

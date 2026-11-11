@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { TenantDto } from '@taskop/contracts';
+import type { TenantDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { TenantResponse, UpdateTenantDto } from './dto';
 import { TenantService } from './tenant.service';

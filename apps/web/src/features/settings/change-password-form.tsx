@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { changeCredentialInputSchema } from '@taskop/contracts';
+import { changeCredentialInputSchema } from '@edildy/contracts';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';

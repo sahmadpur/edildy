@@ -1,6 +1,6 @@
 import { Body, Delete, Get, HttpCode, Inject, Param, Post, Put, Query, StreamableFile } from '@nestjs/common';
 import { ApiCreatedResponse, ApiNoContentResponse, ApiOkResponse, ApiProduces } from '@nestjs/swagger';
-import { AUDIT_REPORT_CONTENT_TYPE, type AuditDetail, type AuditDto, type AuditItemVerdict, type AuditQueueRow, type Page } from '@taskop/contracts';
+import { AUDIT_REPORT_CONTENT_TYPE, type AuditDetail, type AuditDto, type AuditItemVerdict, type AuditQueueRow, type Page } from '@edildy/contracts';
 import { controllerDecorators, named, perm, permAny, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { type Actor, CurrentActor } from '../scheduling/actor';

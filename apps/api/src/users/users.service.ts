@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type Page, secretSchemaFor, type UserDto, type UserWithSecret } from '@taskop/contracts';
+import { type Page, secretSchemaFor, type UserDto, type UserWithSecret } from '@edildy/contracts';
 import { and, asc, eq, gt, ilike, inArray, or, type SQL, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { CredentialService } from '../auth/credential.service';

@@ -2,7 +2,7 @@ import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectComm
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { Readable } from 'node:stream';
 import { Inject, Injectable, type OnModuleDestroy } from '@nestjs/common';
-import { MEDIA_LIMITS } from '@taskop/contracts';
+import { MEDIA_LIMITS } from '@edildy/contracts';
 import { APP_CONFIG, type AppConfig } from '../config/config';
 
 export interface PresignedPut {

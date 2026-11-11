@@ -1,4 +1,4 @@
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 
 export const statusVariant = (status: UserDto['status']) =>
   status === 'active' ? ('default' as const) : status === 'invited' ? ('outline' as const) : ('secondary' as const);

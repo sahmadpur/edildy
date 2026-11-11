@@ -7,8 +7,8 @@ import {
   type Item,
   localDateSchema,
   type ProblemSeverity,
-} from '@taskop/contracts';
-import { formatPercent as formatPercentIn } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { formatPercent as formatPercentIn } from '@edildy/i18n';
 import type { TFunction } from 'i18next';
 import { optionLabel } from '@/features/checklists/labels';
 import { formatLocalDate, type Variant } from '@/features/scheduling/labels';

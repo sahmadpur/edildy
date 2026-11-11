@@ -1,4 +1,4 @@
-import type { AssignmentListQuery, OccurrenceDto, OccurrenceListQuery } from '@taskop/contracts';
+import type { AssignmentListQuery, OccurrenceDto, OccurrenceListQuery } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 

@@ -47,7 +47,7 @@ These are non-blocking findings from the sub-project 2 task reviews and the fina
 - **e2e flakiness.**
   - `foundation.spec.ts` uses only `Date.now()` as the signup suffix, so parallel repeats can collide.
   - The local signup rate limit throttles repeated runs.
-  - `pnpm --filter @taskop/api start` doesn't load `.env` locally.
+  - `pnpm --filter @edildy/api start` doesn't load `.env` locally.
 - **Mobile Jest** times out at 5 s under parallel `pnpm test` load. It passes on its own or with `--concurrency=1`, so it may flake in CI.
 
 ## Process and tooling

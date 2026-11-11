@@ -1,4 +1,4 @@
-import { type ExecutionDetail, walkItems } from '@taskop/contracts';
+import { type ExecutionDetail, walkItems } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useFormatDateTime } from '@/lib/format';

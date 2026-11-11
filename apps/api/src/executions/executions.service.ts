@@ -14,7 +14,7 @@ import {
   reworkViolations,
   type SaveAnswersResult,
   type ScoreResult,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { desc, eq, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

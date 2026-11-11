@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SHIFT_MAX_RANGES, type ShiftDto, type ShiftRange, shiftRangesSchema, type SiteDto } from '@taskop/contracts';
+import { SHIFT_MAX_RANGES, type ShiftDto, type ShiftRange, shiftRangesSchema, type SiteDto } from '@edildy/contracts';
 import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';

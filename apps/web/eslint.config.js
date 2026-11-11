@@ -1,4 +1,4 @@
-import base from '@taskop/config/eslint';
+import base from '@edildy/config/eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import { defineConfig } from 'eslint/config';
 

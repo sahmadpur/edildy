@@ -1,4 +1,4 @@
-import type { RunCounts } from '@taskop/contracts';
+import type { RunCounts } from '@edildy/contracts';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';

@@ -4,7 +4,7 @@ Branch `claude/sub-project-8-44d44c`, implemented 2026-10-15 (subagent-driven; w
 
 ## ⚑ Decide before deploy
 
-- **Audit report PDF memory (Ruling R9c).** One build of a 200-item / 40-photo report peaks at about 0.33–0.55 GB (maxRSS growth), above spec §7.2's 300 MB estimate. Fine on the 6 GB server at `localConcurrency: 2`, but together with an SP7 PDF export it could reach ~1.5 GB. The regular suite only checks time (< 10 s); `pnpm --filter @taskop/api perf:audit-report` (RUN_PERF=1) asserts < 600 MB. Joins the SP7 PDF-memory follow-up.
+- **Audit report PDF memory (Ruling R9c).** One build of a 200-item / 40-photo report peaks at about 0.33–0.55 GB (maxRSS growth), above spec §7.2's 300 MB estimate. Fine on the 6 GB server at `localConcurrency: 2`, but together with an SP7 PDF export it could reach ~1.5 GB. The regular suite only checks time (< 10 s); `pnpm --filter @edildy/api perf:audit-report` (RUN_PERF=1) asserts < 600 MB. Joins the SP7 PDF-memory follow-up.
 - **e2e at default Playwright workers is flaky locally** (foundation.spec sometimes never sends POST /sites; per-IP login limit 20/min). Passes 9/9 with `--workers=2`. CI sets `RL_SIGNUP_IP_PER_HOUR=100`.
 
 ## Deferred (from the final whole-branch review)

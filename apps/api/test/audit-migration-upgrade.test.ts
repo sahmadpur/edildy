@@ -40,7 +40,7 @@ describe('upgrading an existing database to the SP8 migrations (0015, 0016)', ()
     await admin.connect();
     await admin.query(`create database ${database}`);
     // A copy of the migrations folder whose journal stops at 0014.
-    partialFolder = mkdtempSync(path.join(tmpdir(), 'taskop-migrations-'));
+    partialFolder = mkdtempSync(path.join(tmpdir(), 'edildy-migrations-'));
     cpSync(DRIZZLE_DIR, partialFolder, { recursive: true });
     const journalPath = path.join(partialFolder, 'meta', '_journal.json');
     const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as { entries: { tag: string }[] };

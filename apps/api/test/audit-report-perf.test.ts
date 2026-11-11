@@ -1,4 +1,4 @@
-// Run the memory check with `pnpm --filter @taskop/api perf:audit-report` (RUN_PERF=1); the regular suite checks time and images only.
+// Run the memory check with `pnpm --filter @edildy/api perf:audit-report` (RUN_PERF=1); the regular suite checks time and images only.
 import { describe, expect, it } from 'vitest';
 import { type AuditReportData, buildAuditReport, type ReportSection } from '../src/audits/report/audit-report-builder';
 import { noisePng } from './png';

@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import {
   EVIDENCE_LEVELS,
   type EvidenceLevel,
@@ -9,7 +9,7 @@ import {
   TASK_PRIORITIES,
   type TaskDetail,
   type TaskPriority,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

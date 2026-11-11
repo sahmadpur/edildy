@@ -1,4 +1,4 @@
-import type { PushPlatform, RegisterPushDeviceInput } from '@taskop/contracts';
+import type { PushPlatform, RegisterPushDeviceInput } from '@edildy/contracts';
 import type { AppStatePort } from '@/offline/sync-triggers';
 import type { NotificationEvents, PushPermission, PushPort, PushTokenStore, TapResponse } from '../ports';
 

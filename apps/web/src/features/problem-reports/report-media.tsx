@@ -1,4 +1,4 @@
-import type { ProblemMediaRef } from '@taskop/contracts';
+import type { ProblemMediaRef } from '@edildy/contracts';
 import { useMemo, useState } from 'react';
 import { MediaLightbox, MediaThumb, MediaUrlSourceProvider, type ViewableMedia } from '@/features/executions/media';
 import type { MediaUrlSource } from '@/features/executions/queries';

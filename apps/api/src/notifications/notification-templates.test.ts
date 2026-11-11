@@ -1,4 +1,4 @@
-import { isAuditType, NOTIFICATION_TYPES, type NotificationType } from '@taskop/contracts';
+import { isAuditType, NOTIFICATION_TYPES, type NotificationType } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import type { AssignmentTarget, ManualTarget, NotificationTarget, OccurrenceTarget, ProblemReportTarget, ProblemTarget, RunTarget, TaskTarget } from './notification-targets';
 import type { RenderedNotification } from './notification-templates';

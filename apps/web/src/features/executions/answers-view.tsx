@@ -1,4 +1,4 @@
-import { type Answer, type Answers, type ChecklistContent, type ExecutionMediaDto, type ExecutionProblem, type Item, visibleItems } from '@taskop/contracts';
+import { type Answer, type Answers, type ChecklistContent, type ExecutionMediaDto, type ExecutionProblem, type Item, visibleItems } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

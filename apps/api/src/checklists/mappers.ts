@@ -1,4 +1,4 @@
-import type { ChecklistSummary, ChecklistVersionSummary } from '@taskop/contracts';
+import type { ChecklistSummary, ChecklistVersionSummary } from '@edildy/contracts';
 
 export interface ChecklistRow {
   id: string;

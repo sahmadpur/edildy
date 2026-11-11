@@ -1,4 +1,4 @@
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -199,7 +199,7 @@ describe('ReportsPage', () => {
     mocks.api.reports.runs.mockResolvedValue(page([reportRun()]));
     mocks.api.reports.export.mockResolvedValue({
       blob: new Blob(['x']),
-      filename: 'taskop-runs-2026-11-04_2026-11-04.csv',
+      filename: 'edildy-runs-2026-11-04_2026-11-04.csv',
     });
     renderWithRouter(<ReportsPage today={TODAY} />, '/reports?tab=runs');
     await screen.findByRole('button', { name: 'Açılış yoxlaması' });

@@ -11,7 +11,7 @@ import {
   regenerateItemIds,
   type Rule,
   type Section,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { containerDepth, type ContainerRef, containerItems, edit, findItem, insertItem, moveItem, moveSection, type NodeRef, removeItem } from './tree';
 
 export const HISTORY_LIMIT = 50;

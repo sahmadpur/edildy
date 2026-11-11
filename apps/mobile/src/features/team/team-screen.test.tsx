@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { formatDateTime } from '@edildy/i18n';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import '@/lib/i18n';
 import { CHECKLIST, OCC, OCC2, OCC3, T } from '@/offline/testing/fixtures';

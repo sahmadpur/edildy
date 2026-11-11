@@ -1,4 +1,4 @@
-import { MEDIA_LIMITS, PROBLEM_REPORT_LIMITS } from '@taskop/contracts';
+import { MEDIA_LIMITS, PROBLEM_REPORT_LIMITS } from '@edildy/contracts';
 import { MediaLimitError } from './execution-store';
 import { capturedPhoto, capturedVideo } from './testing/fake-transport';
 import { ME, SITE, syncResponse, T, versionOf } from './testing/fixtures';

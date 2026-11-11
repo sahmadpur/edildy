@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { type AuditDetail, type AuditItemVerdict, type AuditVerdictInput, type FinishAuditInput, missingVerdicts, visibleItems } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { type AuditDetail, type AuditItemVerdict, type AuditVerdictInput, type FinishAuditInput, missingVerdicts, visibleItems } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';

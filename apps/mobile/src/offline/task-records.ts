@@ -1,4 +1,4 @@
-import { type SyncTask, TASK_LIMITS, type TaskMediaRegisterInput, type TaskMediaRole } from '@taskop/contracts';
+import { type SyncTask, TASK_LIMITS, type TaskMediaRegisterInput, type TaskMediaRole } from '@edildy/contracts';
 import type { Db } from './db';
 import { type DraftRow, iso, type LocalMedia } from './local-model';
 

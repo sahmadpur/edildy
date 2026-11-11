@@ -30,7 +30,7 @@ describe('report exports (spec §5.4)', () => {
   it('exports runs as CSV with a BOM, Azerbaijani labels and both completion times', async () => {
     const f = await file(w.owner, 'runs', { ...PERIOD, format: 'csv' });
     expect(f.type).toBe('text/csv; charset=utf-8');
-    expect(f.disposition).toBe('attachment; filename="taskop-runs-2026-11-02_2026-11-04.csv"');
+    expect(f.disposition).toBe('attachment; filename="edildy-runs-2026-11-02_2026-11-04.csv"');
     expect([...f.body.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     const rows = csvRows(f.body);
     expect(rows[0]).toEqual([
@@ -68,7 +68,7 @@ describe('report exports (spec §5.4)', () => {
   it('exports the full report as one Excel sheet per section with typed cells', async () => {
     const f = await file(w.owner, 'full', { ...PERIOD, format: 'xlsx' });
     expect(f.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    expect(f.disposition).toBe('attachment; filename="taskop-full-2026-11-02_2026-11-04.xlsx"');
+    expect(f.disposition).toBe('attachment; filename="edildy-full-2026-11-02_2026-11-04.xlsx"');
     const sheets = await readXlsxFile(f.body);
     expect(sheets.map((s) => [s.sheet, s.data.length])).toEqual([
       ['Xülasə', 13], ['Gündəlik', 4], ['Obyektlər', 5], ['Əməkdaşlar', 6],
@@ -87,7 +87,7 @@ describe('report exports (spec §5.4)', () => {
   it('exports a PDF with the tenant, the period, the filters and Azerbaijani labels', async () => {
     const f = await file(w.owner, 'summary', { ...PERIOD, siteId: w.sites.zoneA1, format: 'pdf' });
     expect(f.type).toBe('application/pdf');
-    expect(f.disposition).toBe('attachment; filename="taskop-summary-2026-11-02_2026-11-04.pdf"');
+    expect(f.disposition).toBe('attachment; filename="edildy-summary-2026-11-02_2026-11-04.pdf"');
     expect(f.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     const text = await pdfText(f.body);
     for (const s of ['Acme MMC', 'Xülasə hesabatı', 'Dövr: 02.11.2026 – 04.11.2026', 'Filtrlər: Obyekt: Zona A1', 'Hazırlanma vaxtı: 04.11.2026 12:00', 'Tamamlanma faizi 57.1', 'Gündəlik']) {

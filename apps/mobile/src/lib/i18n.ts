@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, resources } from '@taskop/i18n';
+import { DEFAULT_LOCALE, resources } from '@edildy/i18n';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 

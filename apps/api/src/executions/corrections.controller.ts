@@ -1,6 +1,6 @@
 import { Body, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { CorrectionResult, ReworkRequest } from '@taskop/contracts';
+import type { CorrectionResult, ReworkRequest } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { type Actor, CurrentActor } from '../scheduling/actor';

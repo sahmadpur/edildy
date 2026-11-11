@@ -1,4 +1,4 @@
-import type { Language } from '@taskop/i18n';
+import type { Language } from '@edildy/i18n';
 import { setLanguage } from './i18n';
 import { api, session } from './session';
 

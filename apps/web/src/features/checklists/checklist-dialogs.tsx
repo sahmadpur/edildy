@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Field } from '@/components/field';

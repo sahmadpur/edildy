@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import i18n from '@/lib/i18n';

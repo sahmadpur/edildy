@@ -211,7 +211,7 @@ export default {
     assignees: 'Исполнители',
     history: 'История',
     actorSystem: 'Система',
-    actorPlatform: 'Поддержка Taskop',
+    actorPlatform: 'Поддержка Edildy',
     cancel: 'Отменить выполнение',
     cancelReason: 'Причина отмены',
     cancelled: 'Выполнение отменено',

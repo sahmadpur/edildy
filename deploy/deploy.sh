@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Deploys the stack in /opt/taskop (§9 of the deployment plan). Run on the server as the deploy user:
-#   ./deploy.sh <tag>      pull ghcr.io/sahmadpur/taskop-*:<tag> (e.g. sha-1a2b3c4), then deploy it
+# Deploys the stack in /opt/edildy (§9 of the deployment plan). Run on the server as the deploy user:
+#   ./deploy.sh <tag>      pull ghcr.io/sahmadpur/edildy-*:<tag> (e.g. sha-1a2b3c4), then deploy it
 #   ./deploy.sh --build    build the images from ./src (a checkout of the repository), then deploy them
 # Steps: images → pre-deploy pg_dump → migrate → up -d → wait for the API health check → prune old images.
 set -euo pipefail
@@ -12,7 +12,7 @@ mode=${1:?usage: deploy.sh <tag> | --build}
 set_images() {
   for name in landing web api; do
     key="$(echo "$name" | tr a-z A-Z)_IMAGE"
-    sed -i "s|^$key=.*|$key=$1/taskop-$name:$2|" .env
+    sed -i "s|^$key=.*|$key=$1/edildy-$name:$2|" .env
   done
 }
 
@@ -28,7 +28,7 @@ fi
 mkdir -p backups
 if compose ps --status running postgres --quiet | grep -q .; then
   dump="backups/pre-deploy-$(date -u +%Y%m%dT%H%M%SZ).dump"
-  compose exec -T postgres pg_dump -U taskop_owner -d taskop -Fc > "$dump"
+  compose exec -T postgres pg_dump -U edildy_owner -d edildy -Fc > "$dump"
   echo "Database backed up to $dump"
 fi
 

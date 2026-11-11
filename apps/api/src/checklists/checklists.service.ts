@@ -10,7 +10,7 @@ import {
   type Page,
   regenerateIds,
   validateForPublish,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, desc, eq, getTableColumns, ilike, inArray, lt, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { escapeLike } from '../common/sql';

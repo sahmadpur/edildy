@@ -1,4 +1,4 @@
-import type { TaskDetail } from '@taskop/contracts';
+import type { TaskDetail } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';

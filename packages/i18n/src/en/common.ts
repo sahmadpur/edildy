@@ -1,5 +1,5 @@
 export default {
-  appName: 'Taskop',
+  appName: 'Edildy',
   save: 'Save',
   cancel: 'Cancel',
   create: 'Create',

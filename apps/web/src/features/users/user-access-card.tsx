@@ -1,4 +1,4 @@
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';

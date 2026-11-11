@@ -1,5 +1,5 @@
-import type { NotificationItem } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import type { NotificationItem } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

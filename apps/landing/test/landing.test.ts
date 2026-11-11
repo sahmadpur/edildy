@@ -1,5 +1,5 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-import { az, en, ru } from '@taskop/i18n';
+import { az, en, ru } from '@edildy/i18n';
 import { describe, expect, it } from 'vitest';
 import Landing from '../src/components/Landing.astro';
 import LegalPage from '../src/components/LegalPage.astro';
@@ -28,9 +28,9 @@ describe('landing page', () => {
     const russian = await render('ru');
     expect(russian).toContain(ru.landing.hero.title);
     for (const html of [english, russian]) {
-      expect(html).toContain('hreflang="az" href="https://taskop.app/"');
-      expect(html).toContain('hreflang="en" href="https://taskop.app/en/"');
-      expect(html).toContain('hreflang="ru" href="https://taskop.app/ru/"');
+      expect(html).toContain('hreflang="az" href="https://edildy.com/"');
+      expect(html).toContain('hreflang="en" href="https://edildy.com/en/"');
+      expect(html).toContain('hreflang="ru" href="https://edildy.com/ru/"');
     }
     // The switch itself: three links, the current one marked.
     expect(english).toContain('href="/ru/" hreflang="ru"');
@@ -48,6 +48,6 @@ describe('landing page', () => {
     const container = await AstroContainer.create();
     const html = await container.renderToString(LegalPage, { props: { lang: 'en', kind: 'privacy' } });
     expect(html).toContain(en.landing.legal.privacyTitle);
-    expect(html).toContain('hello@taskop.app');
+    expect(html).toContain('hello@edildy.com');
   });
 });

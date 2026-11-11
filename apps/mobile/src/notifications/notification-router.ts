@@ -1,4 +1,4 @@
-import type { NotificationTargetKind } from '@taskop/contracts';
+import type { NotificationTargetKind } from '@edildy/contracts';
 import type { OfflineServices } from '@/offline/services';
 import type { NotificationEvents, TapResponse } from './ports';
 import { readPushData } from './push-data';
@@ -90,7 +90,7 @@ export async function routeForTarget(target: NotificationTarget, ctx: RouteConte
   return ctx.canManageTasks() ? { pathname: '/review/[id]', params: { id, n: ctx.nonce() } } : INBOX;
 }
 
-/** A push meant for someone else, or data that is not a Taskop push, opens the inbox only. */
+/** A push meant for someone else, or data that is not a Edildy push, opens the inbox only. */
 export async function routeForPush(raw: unknown, ctx: RouteContext): Promise<NotificationRoute> {
   const data = readPushData(raw);
   if (data === null || data.userId !== ctx.userId) return INBOX;

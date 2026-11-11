@@ -1,11 +1,11 @@
-# Taskop Mobile Execution — Part 1: Contracts, Storage & API — Implementation Plan
+# Edildy Mobile Execution — Part 1: Contracts, Storage & API — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Let workers start, answer and complete occurrences from the phone (online or offline, with photo/video evidence and problem flags), and let managers read the results, by adding execution contracts, i18n strings, the `@taskop/api-client` methods, the executions/media/problems tables, SeaweedFS storage behind an `S3Service`, and every API endpoint of the sub-project 4 spec §6.
+**Goal:** Let workers start, answer and complete occurrences from the phone (online or offline, with photo/video evidence and problem flags), and let managers read the results, by adding execution contracts, i18n strings, the `@edildy/api-client` methods, the executions/media/problems tables, SeaweedFS storage behind an `S3Service`, and every API endpoint of the sub-project 4 spec §6.
 
 **Architecture:**
-- **Pure execution logic** lives in `@taskop/contracts` so the phone and the API compute the same thing: `progress`, `deriveProblems`, `answerIssues` and `mediaLimitFor`, next to the command schemas, the read models and `MEDIA_LIMITS`.
+- **Pure execution logic** lives in `@edildy/contracts` so the phone and the API compute the same thing: `progress`, `deriveProblems`, `answerIssues` and `mediaLimitFor`, next to the command schemas, the read models and `MEDIA_LIMITS`.
 - **One new NestJS module, `executions`**, imports `SchedulingModule`. Scheduling never imports the executions module; it only reads the `executions` table, through the pure row mappers in `executions/mappers.ts`.
   - `ExecutionsService` handles the three upload commands (claim, answers, complete). Every command is idempotent through client-generated UUIDv7 IDs.
   - `MediaService` registers media, issues presigned URLs and confirms uploads. `MediaJobs` runs the daily `media.cleanup`.
@@ -24,22 +24,22 @@
 - Part 2 (`apps/mobile`) and Part 3 (`apps/web`) are written against the section **Interfaces for Parts 2 and 3** below. They can start once **Tasks 1–5** are merged into the feature branch: those tasks need nothing from the API and give both apps every type, schema, pure function, i18n key and client method. Parts 2 and 3 need Tasks 6–17 merged before their integration and end-to-end tests run against a real API.
 
 **Deployment plan note (not a task).** `docs/superpowers/specs/2026-10-09-deployment-design.md` exists only on `origin/claude/remaining-phases-72a9e6` (PR #2), not in this worktree. Whoever merges PR #2 after this sub-project applies these doc-only edits there:
-- §5 "Presigned photo and video uploads": replace "e.g. `files.taskop.app` (exact routing decided in sub-project 4; signed URLs include the host name)" with "on `files.taskop.app`. The Caddyfile gets `files.taskop.app { reverse_proxy seaweedfs:8333 }`. Caddy's `reverse_proxy` keeps the original `Host` header by default, which S3 signatures need; do not add `header_up Host`."
-- §7: replace the `S3_*` row's value "added in sub-project 4" with `S3_ENDPOINT=http://seaweedfs:8333`, `S3_PUBLIC_ENDPOINT=https://files.taskop.app`, `S3_BUCKET=taskop-media`, `S3_ACCESS_KEY` / `S3_SECRET_KEY` (random, 32+ characters, also written into the server's `s3.json`), `S3_FORCE_PATH_STYLE=true`.
+- §5 "Presigned photo and video uploads": replace "e.g. `files.edildy.com` (exact routing decided in sub-project 4; signed URLs include the host name)" with "on `files.edildy.com`. The Caddyfile gets `files.edildy.com { reverse_proxy seaweedfs:8333 }`. Caddy's `reverse_proxy` keeps the original `Host` header by default, which S3 signatures need; do not add `header_up Host`."
+- §7: replace the `S3_*` row's value "added in sub-project 4" with `S3_ENDPOINT=http://seaweedfs:8333`, `S3_PUBLIC_ENDPOINT=https://files.edildy.com`, `S3_BUCKET=edildy-media`, `S3_ACCESS_KEY` / `S3_SECRET_KEY` (random, 32+ characters, also written into the server's `s3.json`), `S3_FORCE_PATH_STYLE=true`.
 - §8 "Questions for sub-project 4's design": replace the four bullets with the answers: videos 720p, at most 60 s and 60 MB, no compression beyond camera settings; photos resized to 1600 px long edge, JPEG quality 0.7, at most 5 MB; files kept indefinitely until SP9 (retention per plan); media never uploaded is deleted from storage after 14 days (`media.cleanup`); the disk-usage alert stays in §10.
 - §13: mark items 2 and 3 as closed ("answered in the sub-project 4 spec §1 and §9").
-- §14: in the DNS checkbox, change "(and `files.taskop.app` if chosen)" to "and `files.taskop.app`".
+- §14: in the DNS checkbox, change "(and `files.edildy.com` if chosen)" to "and `files.edildy.com`".
 
 ## Global Constraints
 
-- The product name is **Taskop**. Packages are `@taskop/*`. Azerbaijani (`az`) is the only locale.
+- The product name is **Edildy**. Packages are `@edildy/*`. Azerbaijani (`az`) is the only locale.
 - Install new packages with `pnpm add <pkg>@latest`. This part adds exactly three: `@aws-sdk/client-s3` and `@aws-sdk/s3-request-presigner` (dependencies of `apps/api`), and `testcontainers` (dev dependency of `apps/api`). Nothing S3-related exists yet; `apps/api/package.json` has no `@aws-sdk/*` or `minio` package.
 - IDs:
   - `executions.id` and `execution_media.id` are **client-generated UUIDv7** and have no database default.
   - `execution_problems.id` is server-generated (UUIDv7 default).
 - Every new table has `tenant_id uuid not null`, RLS `FORCE`d with the usual `nullif(current_setting('app.tenant_id', true), '')::uuid` policy, and composite `(tenant_id, x_id)` foreign keys.
 - Grants:
-  - `taskop_app` and `taskop_platform` get `SELECT, INSERT, UPDATE` on `executions` and `execution_media`, and no `DELETE`.
+  - `edildy_app` and `edildy_platform` get `SELECT, INSERT, UPDATE` on `executions` and `execution_media`, and no `DELETE`.
   - `execution_problems` also gets `DELETE`, because its rows are derived from the answers and rewritten while the execution is active (see Spec decisions below).
 - Limits (spec §1, §4, §6), exactly:
   - Answers document: ≤ 1,000,000 bytes serialised (UTF-8 JSON). Problem note: 1–2,000 characters. Manual problem media: ≤ 5. Evidence photos (or videos) on a non-media item: ≤ 5.
@@ -56,7 +56,7 @@
     - `clientOffsetMs` is an integer within ±2,000,000,000.
   - Sync window: occurrences whose window overlaps `[now − 1 day, now + 3 days]`. Finished executions are returned for **24 h**.
   - Problems list range: ≤ **92 days**.
-- Storage keys: `t/{tenantId}/e/{executionId}/{mediaId}.{ext}`, where `ext` is `jpg | png | mp4 | mov`. Bucket `taskop-media`, private.
+- Storage keys: `t/{tenantId}/e/{executionId}/{mediaId}.{ext}`, where `ext` is `jpg | png | mp4 | mov`. Bucket `edildy-media`, private.
 - Every error body is `{ error: { code, messageKey, fields, retryAfterSeconds, requestId, issues?, currentRevision?, userIds?, missing? } }`.
 - New error codes and HTTP statuses:
   - `REQUIREMENTS_UNMET` 422 (with `missing`)
@@ -110,7 +110,7 @@ These are the five input classes most likely to bite users that no spec test nam
 ## File Structure
 
 ```
-docker-compose.yml                         minio → seaweedfs + seaweedfs-init (bucket taskop-media)
+docker-compose.yml                         minio → seaweedfs + seaweedfs-init (bucket edildy-media)
 docker/seaweedfs/s3.json                   local S3 identity (dev credentials)
 README.md                                  storage note
 .github/workflows/ci.yml                   + S3_* env for the e2e job's API
@@ -186,9 +186,9 @@ docs/superpowers/execution-follow-ups.md
 ---
 ## Interfaces for Parts 2 and 3
 
-Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@taskop/api-client` once **Tasks 1–5** are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; local dates are `YYYY-MM-DD`.
+Everything below is exported from `@edildy/contracts`, `@edildy/i18n` or `@edildy/api-client` once **Tasks 1–5** are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; local dates are `YYYY-MM-DD`.
 
-### `@taskop/contracts`
+### `@edildy/contracts`
 
 **Execution logic** (`execution-logic.ts`, Task 1):
 - `EXECUTION_STATES = ['active', 'completed', 'partial', 'rejected']`, `executionStateSchema`, `type ExecutionState`
@@ -282,7 +282,7 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
 - `ErrorCode` adds `REQUIREMENTS_UNMET`, `EXECUTION_NOT_ACTIVE`, `NOT_EXECUTOR`, `CLOCK_INVALID`, `MEDIA_TYPE_INVALID`, `MEDIA_TOO_LARGE`, `MEDIA_LIMIT_REACHED`, `MEDIA_NOT_FOUND_IN_STORAGE` and `EVIDENCE_LIVE_ONLY`.
 - `errorBodySchema.error.missing?: Missing[]`
 
-### `@taskop/i18n` (Task 4)
+### `@edildy/i18n` (Task 4)
 
 - `az.errors.<CODE>` for the 9 new codes. `CLOCK_INVALID` is "Telefonun saatını yoxlayın."
 - `az.executions`:
@@ -295,9 +295,9 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
   - `mediaKinds.<MediaKind>`, `mediaSources.<MediaSource>`
 - Part 2 adds phone UI strings to `az.mobile`. Part 3 adds web UI strings to `az.executions` (new keys only; it never renames these).
 
-### `@taskop/api-client` (Task 5)
+### `@edildy/api-client` (Task 5)
 
-`createTaskopApi(c)` now also spreads `createExecutionsApi(c)`, which is also exported on its own with `type ExecutionsApi`:
+`createEdildyApi(c)` now also spreads `createExecutionsApi(c)`, which is also exported on its own with `type ExecutionsApi`:
 
 | Method | HTTP | Returns |
 |---|---|---|
@@ -450,7 +450,7 @@ describe('deriveProblems', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- execution-logic`
+Run: `pnpm --filter @edildy/contracts test -- execution-logic`
 Expected: FAIL, because `progress` and `deriveProblems` are not exported from `./index.js`.
 
 - [ ] **Step 3: Extend `Answer` with a manual problem**
@@ -558,7 +558,7 @@ export * from './execution-logic.js';
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test -- execution-logic checklist-logic && pnpm --filter @taskop/contracts typecheck`
+Run: `pnpm --filter @edildy/contracts test -- execution-logic checklist-logic && pnpm --filter @edildy/contracts typecheck`
 Expected: PASS (2 progress cases, 6 deriveProblems cases; the existing checklist-logic tests are unchanged).
 
 - [ ] **Step 6: Commit**
@@ -703,7 +703,7 @@ describe('commands', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- executions.test`
+Run: `pnpm --filter @edildy/contracts test -- executions.test`
 Expected: FAIL, because `answerIssues`, `answersSchema` and the command schemas are not exported.
 
 - [ ] **Step 3: Implement**
@@ -967,7 +967,7 @@ export * from './executions.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test -- executions.test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test -- executions.test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS (13 `answerIssues` cases included).
 
 - [ ] **Step 5: Commit**
@@ -1067,7 +1067,7 @@ describe('execution read models', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- execution-views`
+Run: `pnpm --filter @edildy/contracts test -- execution-views`
 Expected: FAIL, because `syncQuerySchema` and `problemListQuerySchema` are undefined.
 
 - [ ] **Step 3: Implement the read models**
@@ -1363,7 +1363,7 @@ In `apps/web/src/features/scheduling/assignment-pages.test.tsx`, in the `upcomin
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web test -- scheduling`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web test -- scheduling`
 Expected: PASS. The existing `errors.test.ts` still maps every code to a status ≥ 400.
 
 - [ ] **Step 7: Commit**
@@ -1387,7 +1387,7 @@ git commit -m "feat(contracts): add sync, execution and problem read models and 
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `packages/i18n/src/i18n.test.ts`. Extend the `@taskop/contracts` import with `CLAIM_REJECTION_REASONS`, `EXECUTION_ISSUE_CODES`, `EXECUTION_STATES`, `MEDIA_KINDS`, `MEDIA_SOURCES`, `PROBLEM_SEVERITIES` and `PROBLEM_SOURCES`:
+Append to `packages/i18n/src/i18n.test.ts`. Extend the `@edildy/contracts` import with `CLAIM_REJECTION_REASONS`, `EXECUTION_ISSUE_CODES`, `EXECUTION_STATES`, `MEDIA_KINDS`, `MEDIA_SOURCES`, `PROBLEM_SEVERITIES` and `PROBLEM_SOURCES`:
 
 ```ts
 describe('execution translations', () => {
@@ -1413,7 +1413,7 @@ describe('execution translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.executions` is undefined, and the error-code test fails for the 9 new codes.
 
 - [ ] **Step 3: Implement**
@@ -1481,7 +1481,7 @@ export const az = { common, errors, executions, audit, auth, checklists, mobile,
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1501,7 +1501,7 @@ git commit -m "feat(i18n): add Azerbaijani strings for execution errors, states,
 **Interfaces:**
 - Consumes: the schemas and types of Tasks 2–3.
 - Produces:
-  - `createExecutionsApi(c: ApiClient)`, `type ExecutionsApi`, and the methods in the table under **Interfaces for Parts 2 and 3**, spread into `createTaskopApi`.
+  - `createExecutionsApi(c: ApiClient)`, `type ExecutionsApi`, and the methods in the table under **Interfaces for Parts 2 and 3**, spread into `createEdildyApi`.
   - `ApiError.missing: Missing[] | null`, as the 10th constructor parameter.
 
 - [ ] **Step 1: Write the failing test**
@@ -1530,7 +1530,7 @@ describe('execution endpoints', () => {
       if (url.includes('/problems')) return json(200, { items: [], nextCursor: null });
       return json(200, { executionId: id, state: 'rejected', reason: 'ALREADY_CLAIMED', claim: { executionId: id, executorUserId: id, executorName: 'Murad' }, checklistVersionId: id, startedAt: '2026-11-02T04:00:00.000Z', clockSuspect: false });
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     const now = '2026-11-02T04:00:00.000Z';
     await t.sync.pull([id, id]);
     await t.sync.pull();
@@ -1560,7 +1560,7 @@ describe('execution endpoints', () => {
       json(422, { error: { code: 'REQUIREMENTS_UNMET', messageKey: 'errors.REQUIREMENTS_UNMET', fields: null, retryAfterSeconds: null, requestId: 'r1', missing: [{ itemId: id, kind: 'photo' }] } }),
     );
     const now = '2026-11-02T04:00:00.000Z';
-    await expect(createTaskopApi(api).executions.complete(id, { rev: 1, answers: {}, completedAt: now, deviceTime: now, clientOffsetMs: 0 })).rejects.toMatchObject({
+    await expect(createEdildyApi(api).executions.complete(id, { rev: 1, answers: {}, completedAt: now, deviceTime: now, clientOffsetMs: 0 })).rejects.toMatchObject({
       code: 'REQUIREMENTS_UNMET',
       missing: [{ itemId: id, kind: 'photo' }],
     });
@@ -1570,13 +1570,13 @@ describe('execution endpoints', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api-client test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api-client test`
 Expected: FAIL: `t.sync` is undefined.
 
 - [ ] **Step 3: Implement**
 
 In `packages/api-client/src/errors.ts`:
-- Import `Missing` as a type from `@taskop/contracts`.
+- Import `Missing` as a type from `@edildy/contracts`.
 - Add a last constructor parameter after `userIds`:
 
 ```ts
@@ -1590,7 +1590,7 @@ In `packages/api-client/src/client.ts`, in `toApiError`, pass the new detail:
   return new ApiError(res.status, e.code, e.messageKey, e.fields, e.retryAfterSeconds, e.requestId, e.issues ?? null, e.currentRevision ?? null, e.userIds ?? null, e.missing ?? null);
 ```
 
-In `packages/api-client/src/endpoints.ts`, add these to the `@taskop/contracts` import:
+In `packages/api-client/src/endpoints.ts`, add these to the `@edildy/contracts` import:
 
 ```ts
   type ClaimCommand,
@@ -1609,7 +1609,7 @@ In `packages/api-client/src/endpoints.ts`, add these to the `@taskop/contracts` 
   syncResponseSchema,
 ```
 
-add `...createExecutionsApi(c),` as the last line of the object returned by `createTaskopApi` (after `...createSchedulingApi(c),`), and append:
+add `...createExecutionsApi(c),` as the last line of the object returned by `createEdildyApi` (after `...createSchedulingApi(c),`), and append:
 
 ```ts
 /** Sub-project 4: the phone's sync and upload commands, and the web's execution and problem reads. */
@@ -1641,7 +1641,7 @@ export type ExecutionsApi = ReturnType<typeof createExecutionsApi>;
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client typecheck && pnpm --filter @taskop/api-client build && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client typecheck && pnpm --filter @edildy/api-client build && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS. The empty `knownVersionIds` is dropped from the query string by `toQueryString`.
 
 - [ ] **Step 5: Commit**
@@ -1667,7 +1667,7 @@ git commit -m "feat(api-client): add sync, execution, media and problem endpoint
   - Config:
     - `S3_ENDPOINT` (url): server-side calls.
     - `S3_PUBLIC_ENDPOINT` (url): what presigned URLs are signed against.
-    - `S3_BUCKET` (default `taskop-media`), `S3_ACCESS_KEY`, `S3_SECRET_KEY`.
+    - `S3_BUCKET` (default `edildy-media`), `S3_ACCESS_KEY`, `S3_SECRET_KEY`.
     - `S3_FORCE_PATH_STYLE` (default `true`).
   - `S3Service` (global, from `StorageModule`):
     - `presignPut(key: string, contentType: string, contentLength: number): Promise<{ url: string; headers: Record<string, string>; expiresAt: Date }>`
@@ -1676,7 +1676,7 @@ git commit -m "feat(api-client): add sync, execution, media and problem endpoint
     - `delete(key: string): Promise<void>`
   - Test helpers:
     - `startSeaweedfs(): Promise<Seaweed>`, where `Seaweed = { env: Record<string, string>; stop(): Promise<void> }`. The bucket already exists when it returns.
-    - `testEnv` now includes dummy `S3_*` values. `S3_PUBLIC_ENDPOINT` is `http://files.taskop.test`.
+    - `testEnv` now includes dummy `S3_*` values. `S3_PUBLIC_ENDPOINT` is `http://files.edildy.test`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -1685,8 +1685,8 @@ Add to `apps/api/src/config/config.test.ts`. Extend `valid` with:
 ```ts
   S3_ENDPOINT: 'http://localhost:8333',
   S3_PUBLIC_ENDPOINT: 'http://192.168.1.20:8333',
-  S3_ACCESS_KEY: 'taskop',
-  S3_SECRET_KEY: 'taskop_dev_password',
+  S3_ACCESS_KEY: 'edildy',
+  S3_SECRET_KEY: 'edildy_dev_password',
 ```
 
 and add the test:
@@ -1694,7 +1694,7 @@ and add the test:
 ```ts
   it('reads storage settings with defaults and requires the endpoints', () => {
     const c = loadConfig(valid);
-    expect([c.S3_BUCKET, c.S3_FORCE_PATH_STYLE, c.S3_PUBLIC_ENDPOINT]).toEqual(['taskop-media', true, 'http://192.168.1.20:8333']);
+    expect([c.S3_BUCKET, c.S3_FORCE_PATH_STYLE, c.S3_PUBLIC_ENDPOINT]).toEqual(['edildy-media', true, 'http://192.168.1.20:8333']);
     expect(() => loadConfig({ ...valid, S3_ENDPOINT: undefined })).toThrow(/S3_ENDPOINT/);
   });
 ```
@@ -1705,11 +1705,11 @@ and add the test:
 import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import { GenericContainer, Wait } from 'testcontainers';
 
-const ACCESS_KEY = 'taskop-test';
-const SECRET_KEY = 'taskop-test-secret';
-const BUCKET = 'taskop-media';
+const ACCESS_KEY = 'edildy-test';
+const SECRET_KEY = 'edildy-test-secret';
+const BUCKET = 'edildy-media';
 const S3_JSON = JSON.stringify({
-  identities: [{ name: 'taskop', credentials: [{ accessKey: ACCESS_KEY, secretKey: SECRET_KEY }], actions: ['Admin', 'Read', 'Write', 'List', 'Tagging'] }],
+  identities: [{ name: 'edildy', credentials: [{ accessKey: ACCESS_KEY, secretKey: SECRET_KEY }], actions: ['Admin', 'Read', 'Write', 'List', 'Tagging'] }],
 });
 
 export interface Seaweed {
@@ -1793,21 +1793,21 @@ describe('S3Service against SeaweedFS', () => {
   });
 
   it('keeps the bucket private', async () => {
-    expect((await fetch(`${sw.env.S3_ENDPOINT}/taskop-media/anything.jpg`)).status).toBe(403);
+    expect((await fetch(`${sw.env.S3_ENDPOINT}/edildy-media/anything.jpg`)).status).toBe(403);
   });
 });
 ```
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- config storage`
+Run: `pnpm --filter @edildy/api test -- config storage`
 Expected: FAIL: `testcontainers` and `../src/storage/s3.service` cannot be resolved, and `S3_BUCKET` is undefined.
 
 - [ ] **Step 3: Install the packages**
 
 ```bash
-pnpm --filter @taskop/api add @aws-sdk/client-s3@latest @aws-sdk/s3-request-presigner@latest
-pnpm --filter @taskop/api add -D testcontainers@latest
+pnpm --filter @edildy/api add @aws-sdk/client-s3@latest @aws-sdk/s3-request-presigner@latest
+pnpm --filter @edildy/api add -D testcontainers@latest
 ```
 
 Both AWS packages must end up on the same version line; pnpm resolves `@latest` for each at the same moment, so check that `apps/api/package.json` shows matching versions.
@@ -1821,7 +1821,7 @@ In `apps/api/src/config/config.ts`, add to `configSchema` (before `LOG_LEVEL`):
   S3_ENDPOINT: z.url(),
   /** The host phones and browsers reach; presigned URLs are signed against it (S3 signatures cover the host). */
   S3_PUBLIC_ENDPOINT: z.url(),
-  S3_BUCKET: z.string().min(3).default('taskop-media'),
+  S3_BUCKET: z.string().min(3).default('edildy-media'),
   S3_ACCESS_KEY: z.string().min(1),
   S3_SECRET_KEY: z.string().min(1),
   S3_FORCE_PATH_STYLE: z.stringbool().default(true),
@@ -1834,9 +1834,9 @@ Append to `apps/api/.env.example`:
 S3_ENDPOINT=http://localhost:8333
 # Phones upload here directly. On a physical phone use your Mac's LAN IP, e.g. http://192.168.1.20:8333
 S3_PUBLIC_ENDPOINT=http://localhost:8333
-S3_BUCKET=taskop-media
-S3_ACCESS_KEY=taskop
-S3_SECRET_KEY=taskop_dev_password
+S3_BUCKET=edildy-media
+S3_ACCESS_KEY=edildy
+S3_SECRET_KEY=edildy_dev_password
 S3_FORCE_PATH_STYLE=true
 ```
 
@@ -1845,8 +1845,8 @@ In `apps/api/test/app.ts`, add to `testEnv` (before `...overrides`):
 ```ts
     // Presigning works offline; only the storage tests override these with a real SeaweedFS.
     S3_ENDPOINT: 'http://127.0.0.1:9',
-    S3_PUBLIC_ENDPOINT: 'http://files.taskop.test',
-    S3_BUCKET: 'taskop-media',
+    S3_PUBLIC_ENDPOINT: 'http://files.edildy.test',
+    S3_BUCKET: 'edildy-media',
     S3_ACCESS_KEY: 'test',
     S3_SECRET_KEY: 'test-secret',
     S3_FORCE_PATH_STYLE: 'true',
@@ -1872,7 +1872,7 @@ The `build` job's `pnpm test` starts the SeaweedFS Testcontainer like the Postgr
 import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client, type S3ClientConfig } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Inject, Injectable, type OnModuleDestroy } from '@nestjs/common';
-import { MEDIA_LIMITS } from '@taskop/contracts';
+import { MEDIA_LIMITS } from '@edildy/contracts';
 import { APP_CONFIG, type AppConfig } from '../config/config';
 
 export interface PresignedPut {
@@ -1980,8 +1980,8 @@ In `apps/api/src/app.module.ts`, import `StorageModule` from `'./storage/storage
 {
   "identities": [
     {
-      "name": "taskop",
-      "credentials": [{ "accessKey": "taskop", "secretKey": "taskop_dev_password" }],
+      "name": "edildy",
+      "credentials": [{ "accessKey": "edildy", "secretKey": "edildy_dev_password" }],
       "actions": ["Admin", "Read", "Write", "List", "Tagging"]
     }
   ]
@@ -2004,13 +2004,13 @@ In `docker-compose.yml`, replace the `minio` service with:
     depends_on: [seaweedfs]
     restart: on-failure
     environment:
-      AWS_ACCESS_KEY_ID: taskop
-      AWS_SECRET_ACCESS_KEY: taskop_dev_password
+      AWS_ACCESS_KEY_ID: edildy
+      AWS_SECRET_ACCESS_KEY: edildy_dev_password
       AWS_DEFAULT_REGION: us-east-1
     entrypoint:
       - sh
       - -c
-      - aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket taskop-media || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket taskop-media
+      - aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket edildy-media || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket edildy-media
 ```
 
 and in `volumes:` replace `miniodata: {}` with `seaweedfsdata: {}`.
@@ -2019,7 +2019,7 @@ In `README.md`:
 - Under "First run", after `- Mail catcher (Mailpit): http://localhost:8025`, add:
 
 ```markdown
-- File storage (SeaweedFS, S3 API): http://localhost:8333, private bucket `taskop-media` (created by `seaweedfs-init`). Dev credentials are in `docker/seaweedfs/s3.json`.
+- File storage (SeaweedFS, S3 API): http://localhost:8333, private bucket `edildy-media` (created by `seaweedfs-init`). Dev credentials are in `docker/seaweedfs/s3.json`.
 ```
 
 - Under "Mobile (Expo)", add:
@@ -2040,12 +2040,12 @@ Expected: lines for `-s3`, `-s3.config` and `-dir`. If `-s3.config` is missing, 
 
 ```bash
 docker compose up -d seaweedfs seaweedfs-init && sleep 5 && docker compose logs seaweedfs-init | tail -3
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8333/taskop-media/x.jpg
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8333/edildy-media/x.jpg
 ```
 
 Expected: the init log shows the bucket created (or `head-bucket` succeeding on a re-run), and `curl` prints `403` because the bucket is private.
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- config storage health`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- config storage health`
 Expected: PASS. The first run pulls the SeaweedFS image.
 - If `X-Amz-SignedHeaders` lacks `content-length`, the installed SDK no longer puts the header on the request before presigning. Keep the assertion, because spec §6.7 requires the binding. Find which middleware drops the header with a breakpoint in `S3RequestPresigner.presign`; it is not something to remove from the test. The HEAD size check in Task 15 still catches a wrong size either way.
 
@@ -2200,7 +2200,7 @@ describe('execution tables', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-db`
+Run: `pnpm --filter @edildy/api test -- executions-db`
 Expected: FAIL: the `checklist_version_id` column and the `executions` relation do not exist.
 
 - [ ] **Step 3: Add the tables to the Drizzle schema**
@@ -2223,7 +2223,7 @@ and the foreign key after `occurrences_shift_fk`:
 2. Append at the end of the file:
 
 ```ts
-// Must match EXECUTION_STATES, CLAIM_REJECTION_REASONS, MEDIA_*, PROBLEM_SOURCES and PROBLEM_SEVERITIES in @taskop/contracts.
+// Must match EXECUTION_STATES, CLAIM_REJECTION_REASONS, MEDIA_*, PROBLEM_SOURCES and PROBLEM_SEVERITIES in @edildy/contracts.
 export const executionState = pgEnum('execution_state', ['active', 'completed', 'partial', 'rejected']);
 export const claimRejectionReason = pgEnum('claim_rejection_reason', ['ALREADY_CLAIMED', 'NOT_ASSIGNED', 'NOT_STARTABLE', 'NOT_YET_OPEN', 'CLOSED', 'NOT_ON_SHIFT']);
 export const mediaKind = pgEnum('media_kind', ['photo', 'video']);
@@ -2340,8 +2340,8 @@ export const executionProblems = pgTable(
 - [ ] **Step 4: Generate the migrations**
 
 ```bash
-pnpm --filter @taskop/api exec drizzle-kit generate --name executions
-pnpm --filter @taskop/api exec drizzle-kit generate --custom --name executions_security
+pnpm --filter @edildy/api exec drizzle-kit generate --name executions
+pnpm --filter @edildy/api exec drizzle-kit generate --custom --name executions_security
 ```
 
 Check the output:
@@ -2369,15 +2369,15 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Executions and media are never deleted (SP4 spec §5.3); a never-uploaded medium keeps its row.
-GRANT SELECT, INSERT, UPDATE ON executions, execution_media TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON executions, execution_media TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- Problems are derived from the answers and rewritten on every accepted save while the execution is active.
-GRANT SELECT, INSERT, UPDATE, DELETE ON execution_problems TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON execution_problems TO edildy_app, edildy_platform;
 ```
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-db scheduling-db`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-db scheduling-db`
 Expected: PASS. The global test setup applies the new migrations to a fresh container.
 
 - [ ] **Step 6: Commit**
@@ -2411,7 +2411,7 @@ git commit -m "feat(api): add executions, media and problems tables with the cla
 `apps/api/test/execution-fixtures.ts`:
 
 ```ts
-import type { ChecklistContent } from '@taskop/contracts';
+import type { ChecklistContent } from '@edildy/contracts';
 import { expect } from 'vitest';
 import type { Api } from './scheduling-fixtures';
 
@@ -2517,7 +2517,7 @@ describe('scheduling hooks for executions', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- occurrence-writer`
+Run: `pnpm --filter @edildy/api test -- occurrence-writer`
 Expected: FAIL: `writer.pinVersions is not a function`.
 
 - [ ] **Step 3: Implement**
@@ -2576,7 +2576,7 @@ In `apps/api/src/scheduling/scheduling.module.ts`, replace the `exports` line wi
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- occurrence-writer test/occurrences.test.ts occurrence-jobs`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- occurrence-writer test/occurrences.test.ts occurrence-jobs`
 Expected: PASS. The SP3 `canStart` test still passes unchanged, because `opts` defaults to `{}`.
 
 - [ ] **Step 5: Commit**
@@ -2656,7 +2656,7 @@ import {
   type NumberItem,
   type PhotoItem,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import type { TestApp } from './app';
 import { as, createUserDirect, loginWorker, type SignedUpTenant, signupTenant, siteTypeIdOf } from './fixtures';
@@ -3012,7 +3012,7 @@ describe('claims (POST /executions)', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- device-time executions-claim`
+Run: `pnpm --filter @edildy/api test -- device-time executions-claim`
 Expected: FAIL: `./device-time` does not exist and `POST /api/v1/executions` returns 404.
 
 - [ ] **Step 3: Implement the bounds and the lookups**
@@ -3020,7 +3020,7 @@ Expected: FAIL: `./device-time` does not exist and `POST /api/v1/executions` ret
 `apps/api/src/executions/device-time.ts`:
 
 ```ts
-import { EXECUTION_LIMITS } from '@taskop/contracts';
+import { EXECUTION_LIMITS } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 
 /**
@@ -3048,7 +3048,7 @@ export function clampStart(startedAt: Date, startsAt: Date, receivedAt: Date): {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { ChecklistContent, ClaimRef } from '@taskop/contracts';
+import type { ChecklistContent, ClaimRef } from '@edildy/contracts';
 import { and, eq, inArray, ne } from 'drizzle-orm';
 import { storedContent } from '../checklists/content';
 import { DbService } from '../db/db.service';
@@ -3084,7 +3084,7 @@ export class ExecutionLookups {
 `apps/api/src/executions/dto.ts`:
 
 ```ts
-import { claimCommandSchema, claimResultSchema } from '@taskop/contracts';
+import { claimCommandSchema, claimResultSchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ClaimCommandDto extends createZodDto(claimCommandSchema) {}
@@ -3095,7 +3095,7 @@ export class ClaimResultResponse extends createZodDto(claimResultSchema) {}
 
 ```ts
 import { Injectable, Logger } from '@nestjs/common';
-import { type ClaimRejectionReason, type ClaimResult, progress } from '@taskop/contracts';
+import { type ClaimRejectionReason, type ClaimResult, progress } from '@edildy/contracts';
 import { eq, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -3215,7 +3215,7 @@ export class ExecutionsService {
 ```ts
 import { Body, Controller, HttpCode, Inject, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { ClaimResult } from '@taskop/contracts';
+import type { ClaimResult } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { ClaimCommandDto, ClaimResultResponse } from './dto';
@@ -3260,7 +3260,7 @@ In `apps/api/src/app.module.ts`, import `ExecutionsModule` from `'./executions/e
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- device-time executions-claim`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- device-time executions-claim`
 Expected: PASS (13 claim cases, the 4 `it.each` rows included).
 
 - [ ] **Step 6: Commit**
@@ -3353,7 +3353,7 @@ describe('media registration (POST /executions/:id/media)', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body).toMatchObject({ mediaId: body.id, status: 'pending', headers: { 'Content-Type': 'image/jpeg', 'Content-Length': '1000' } });
     const key = `t/${w.s.tenantId}/e/${executionId}/${body.id}.jpg`;
-    expect(res.body.uploadUrl.startsWith(`http://files.taskop.test/taskop-media/${key}?`)).toBe(true);
+    expect(res.body.uploadUrl.startsWith(`http://files.edildy.test/edildy-media/${key}?`)).toBe(true);
     const row = await ownerQuery('select status, captured_by_user_id, item_id, storage_key, source from execution_media where id = $1', [body.id]);
     expect(row.rows[0]).toEqual({ status: 'pending', captured_by_user_id: w.workers[0].id, item_id: w.c.photo.id, storage_key: key, source: 'camera' });
     const again = await register(api, executionId, body);
@@ -3404,7 +3404,7 @@ describe('media registration (POST /executions/:id/media)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-media`
+Run: `pnpm --filter @edildy/api test -- executions-media`
 Expected: FAIL: `POST /api/v1/executions/:id/media` returns 404 for every case.
 
 - [ ] **Step 3: Implement**
@@ -3432,7 +3432,7 @@ export class MediaUploadTicketResponse extends createZodDto(mediaUploadTicketSch
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { countItems, MEDIA_LIMITS, mediaLimitFor, type MediaUploadTicket } from '@taskop/contracts';
+import { countItems, MEDIA_LIMITS, mediaLimitFor, type MediaUploadTicket } from '@edildy/contracts';
 import { and, count, eq, isNull } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -3561,7 +3561,7 @@ In `executions.module.ts`, add `MediaService` to `providers`.
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-media`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-media`
 Expected: PASS (9 cases). No SeaweedFS is needed: presigning is a local computation.
 
 - [ ] **Step 5: Commit**
@@ -3600,7 +3600,7 @@ git commit -m "feat(api): register execution media with type, size, count and li
 `apps/api/test/executions-answers.test.ts`:
 
 ```ts
-import { type Answers, newItem } from '@taskop/contracts';
+import { type Answers, newItem } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
@@ -3721,7 +3721,7 @@ describe('answers (PUT /executions/:id/answers)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-answers`
+Run: `pnpm --filter @edildy/api test -- executions-answers`
 Expected: FAIL: `PUT /api/v1/executions/:id/answers` returns 404.
 
 - [ ] **Step 3: Implement**
@@ -3746,7 +3746,7 @@ Add to `ExecutionLookups` (import `executionMedia` from the schema and `MediaKin
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Answers, type ChecklistContent, deriveProblems } from '@taskop/contracts';
+import { type Answers, type ChecklistContent, deriveProblems } from '@edildy/contracts';
 import { and, eq, notInArray, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { executionProblems } from '../db/schema';
@@ -3893,7 +3893,7 @@ In `executions.module.ts`, add `ProblemWriter` to `providers`.
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-answers executions-claim error.filter`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-answers executions-claim error.filter`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -3927,7 +3927,7 @@ git commit -m "feat(api): save execution answers with stale-revision handling, v
 `apps/api/test/executions-complete.test.ts`:
 
 ```ts
-import { type Answers } from '@taskop/contracts';
+import { type Answers } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { answersBody, claimBody, claimOk, type ExecutionWorld, executionRow, executionWorld, historyOf, photoBody, registerPhoto } from './execution-fixtures';
@@ -4054,12 +4054,12 @@ describe('completion (POST /executions/:id/complete)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-complete`
+Run: `pnpm --filter @edildy/api test -- executions-complete`
 Expected: FAIL: `POST /api/v1/executions/:id/complete` returns 404.
 
 - [ ] **Step 3: Implement**
 
-In `apps/api/src/common/app-error.ts`, import `Missing` as a type from `@taskop/contracts` and extend `AppErrorDetails`:
+In `apps/api/src/common/app-error.ts`, import `Missing` as a type from `@edildy/contracts` and extend `AppErrorDetails`:
 
 ```ts
   /** REQUIREMENTS_UNMET: what still blocks completion. */
@@ -4158,7 +4158,7 @@ In `executions.controller.ts`, add `CompleteResult` to the contracts type import
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-complete executions-answers`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-complete executions-answers`
 Expected: PASS (7 completion cases).
 
 - [ ] **Step 5: Commit**
@@ -4189,7 +4189,7 @@ git commit -m "feat(api): complete executions with requirements, late and partia
 `apps/api/test/executions-sweep.test.ts`:
 
 ```ts
-import { type Answers } from '@taskop/contracts';
+import { type Answers } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { OccurrenceJobs } from '../src/scheduling/occurrence-jobs';
 import { createTestApp, type TestApp } from './app';
@@ -4296,7 +4296,7 @@ describe('sweep to partial and late revival', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-sweep`
+Run: `pnpm --filter @edildy/api test -- executions-sweep`
 Expected: FAIL: `sweepAll` returns 0 for a started occurrence at `closes_at`.
 
 - [ ] **Step 3: Implement**
@@ -4361,7 +4361,7 @@ interface OpenRow extends Record<string, unknown> {
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-sweep occurrence-jobs executions-complete`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-sweep occurrence-jobs executions-complete`
 Expected: PASS. The SP3 sweep counts are unchanged, because no SP3 test has started occurrences.
 
 - [ ] **Step 5: Commit**
@@ -4520,7 +4520,7 @@ describe('download sync (GET /me/sync)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-sync`
+Run: `pnpm --filter @edildy/api test -- executions-sync`
 Expected: FAIL: `GET /api/v1/me/sync` returns 404.
 
 - [ ] **Step 3: Implement**
@@ -4545,7 +4545,7 @@ export class SyncResponseDto extends createZodDto(syncResponseSchema) {}
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { EXECUTION_LIMITS, type ExecutionProgress, type MyExecution, type SyncResponse } from '@taskop/contracts';
+import { EXECUTION_LIMITS, type ExecutionProgress, type MyExecution, type SyncResponse } from '@edildy/contracts';
 import { and, asc, eq, getTableColumns, gt, gte, inArray, lt, ne, or, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import type { Principal } from '../common/request';
@@ -4658,7 +4658,7 @@ export class SyncService {
 ```ts
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { SyncResponse } from '@taskop/contracts';
+import type { SyncResponse } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { SyncQueryDto, SyncResponseDto } from './dto';
@@ -4682,7 +4682,7 @@ In `executions.module.ts`, add `SyncController` to `controllers` and `SyncServic
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-sync`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-sync`
 Expected: PASS (5 cases).
 
 - [ ] **Step 5: Commit**
@@ -4730,7 +4730,7 @@ git commit -m "feat(api): add the download sync with pinned versions, claims and
 `apps/api/test/executions-storage.test.ts`:
 
 ```ts
-import { localDateOf, type MediaUploadTicket } from '@taskop/contracts';
+import { localDateOf, type MediaUploadTicket } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MEDIA_CLEANUP_QUEUE, MediaJobs } from '../src/executions/media-jobs';
 import { JobsService } from '../src/scheduling/jobs.service';
@@ -4865,7 +4865,7 @@ describe('media upload, confirmation, viewing and cleanup against SeaweedFS', ()
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-storage`
+Run: `pnpm --filter @edildy/api test -- executions-storage`
 Expected: FAIL: `../src/executions/media-jobs` does not exist.
 
 - [ ] **Step 3: Let other modules define pg-boss jobs**
@@ -5005,7 +5005,7 @@ export class MediaUrlResponse extends createZodDto(mediaUrlSchema) {}
 ```ts
 import { Controller, Get, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { MediaConfirmResult, MediaUrl } from '@taskop/contracts';
+import type { MediaConfirmResult, MediaUrl } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
@@ -5037,7 +5037,7 @@ export class MediaController {
 
 ```ts
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { MEDIA_LIMITS } from '@taskop/contracts';
+import { MEDIA_LIMITS } from '@edildy/contracts';
 import { and, asc, eq, isNull, lte, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { sanitiseForLog } from '../common/error.filter';
@@ -5109,7 +5109,7 @@ In `executions.module.ts`, add `MediaController` to `controllers`, and `Executio
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-storage occurrence-jobs executions-media`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-storage occurrence-jobs executions-media`
 Expected: PASS. The SP3 pg-boss wiring test still passes, because `runNow` only widened its parameter type.
 
 - [ ] **Step 6: Commit**
@@ -5300,7 +5300,7 @@ describe('web reads of executions and problems', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- executions-read`
+Run: `pnpm --filter @edildy/api test -- executions-read`
 Expected: FAIL: `detail.execution` is `null` and `GET /api/v1/executions/:id` returns 404.
 
 - [ ] **Step 3: Add the mappers**
@@ -5308,7 +5308,7 @@ Expected: FAIL: `detail.execution` is `null` and `GET /api/v1/executions/:id` re
 Replace `apps/api/src/executions/mappers.ts` with:
 
 ```ts
-import type { DeviceInfo, ExecutionMediaDto, ExecutionProblem, ExecutionProgress, ExecutionSummary, ScoreResult } from '@taskop/contracts';
+import type { DeviceInfo, ExecutionMediaDto, ExecutionProblem, ExecutionProgress, ExecutionSummary, ScoreResult } from '@edildy/contracts';
 import { getTableColumns, sql } from 'drizzle-orm';
 import { executionMedia, executionProblems, executions, users } from '../db/schema';
 
@@ -5383,7 +5383,7 @@ export const asDevice = (v: unknown): DeviceInfo => v as DeviceInfo;
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { ExecutionSummary } from '@taskop/contracts';
+import type { ExecutionSummary } from '@edildy/contracts';
 import { asc, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { executions, users } from '../db/schema';
@@ -5408,7 +5408,7 @@ export class OccurrenceExecutions {
 }
 ```
 
-In `apps/api/src/scheduling/occurrence-queries.ts`, import `type ExecutionBrief` with `OccurrenceDto` from `@taskop/contracts`, and add this field to the `select({ … })` object after `assigneeIds`:
+In `apps/api/src/scheduling/occurrence-queries.ts`, import `type ExecutionBrief` with `OccurrenceDto` from `@edildy/contracts`, and add this field to the `select({ … })` object after `assigneeIds`:
 
 ```ts
         // The counted execution, for list badges and columns (SP4 spec §8).
@@ -5440,7 +5440,7 @@ In `scheduling.module.ts`, add `OccurrenceExecutions` to `providers`.
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { ExecutionDetail, ScoreResult } from '@taskop/contracts';
+import type { ExecutionDetail, ScoreResult } from '@edildy/contracts';
 import { asc, eq, getTableColumns } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -5499,7 +5499,7 @@ export class ExecutionQueries {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Page, type ProblemDto, walkItems } from '@taskop/contracts';
+import { type Page, type ProblemDto, walkItems } from '@edildy/contracts';
 import { and, between, desc, eq, getTableColumns, type SQL, sql } from 'drizzle-orm';
 import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';
@@ -5590,7 +5590,7 @@ export class ProblemPageResponse extends createZodDto(pageOf(problemDtoSchema)) 
 ```ts
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Page, ProblemDto } from '@taskop/contracts';
+import type { Page, ProblemDto } from '@edildy/contracts';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { ProblemListQueryDto, ProblemPageResponse } from './dto';
@@ -5629,7 +5629,7 @@ In `executions.module.ts`, add `ProblemsController` to `controllers`, and `Execu
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- executions-read test/occurrences.test.ts assignments scheduling-scope`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- executions-read test/occurrences.test.ts assignments scheduling-scope`
 Expected: PASS. The SP3 occurrence tests are unchanged: they use `toMatchObject`, and occurrences without executions get `executionBrief: null`, `execution: null` and `rejectedExecutions: []`.
 
 - [ ] **Step 7: Commit**
@@ -5783,14 +5783,14 @@ In `apps/api/test/openapi.test.ts`, add these paths to the `arrayContaining` lis
 
 - [ ] **Step 4: Run the suites and fix gaps**
 
-Run: `pnpm --filter @taskop/api test -- executions-scope executions-isolation openapi`
+Run: `pnpm --filter @edildy/api test -- executions-scope executions-isolation openapi`
 Expected: PASS. If a case fails, fix the service, not the test:
 - Every read of another person's execution or media must go through `ExecutionAccess.assertCanRead`.
 - Every command must find its execution or occurrence under RLS before anything else, so a foreign id is a 404.
 
 - [ ] **Step 5: Run the whole API suite**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint && pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint && pnpm --filter @edildy/api test`
 Expected: PASS (Docker must be running: Postgres for every file, SeaweedFS for the two storage files).
 
 - [ ] **Step 6: Commit**
@@ -5851,13 +5851,13 @@ describe('demo seed', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- seed-demo`
+Run: `pnpm --filter @edildy/api test -- seed-demo`
 Expected: FAIL: `r.rows` is `[]`.
 
 - [ ] **Step 3: Add the seed function**
 
 In `apps/api/src/db/scripts/seed.ts`:
-- Extend the `@taskop/contracts` import to `import { addDays, type Answers, type ChecklistContent, computeScore, countItems, deriveProblems, localDateOf, progress, regenerateIds, zonedTimeToUtc } from '@taskop/contracts';`.
+- Extend the `@edildy/contracts` import to `import { addDays, type Answers, type ChecklistContent, computeScore, countItems, deriveProblems, localDateOf, progress, regenerateIds, zonedTimeToUtc } from '@edildy/contracts';`.
 - Add after `seedDemoScheduling`:
 
 ```ts
@@ -5980,7 +5980,7 @@ async function seedDemoExecution(tx: Tx, tenantId: string): Promise<void> {
 
 - [ ] **Step 4: Run the test and check the seed against the local demo database**
 
-Run: `pnpm --filter @taskop/api test -- seed-demo seed-templates`
+Run: `pnpm --filter @edildy/api test -- seed-demo seed-templates`
 Expected: PASS.
 
 Then, with the local stack from `docker compose up -d` and `apps/api/.env` filled in:

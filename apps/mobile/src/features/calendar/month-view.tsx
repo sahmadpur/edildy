@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { formatLocalDate } from '@taskop/i18n';
+import { formatLocalDate } from '@edildy/i18n';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';

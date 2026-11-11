@@ -1,4 +1,4 @@
-import type { ChecklistListQuery, TemplateListQuery } from '@taskop/contracts';
+import type { ChecklistListQuery, TemplateListQuery } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useWorkspace } from './workspace';
 

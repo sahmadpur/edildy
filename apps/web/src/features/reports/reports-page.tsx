@@ -1,4 +1,4 @@
-import { REPORT_KINDS, type ReportFiltersQuery as Filters, type ReportKind } from '@taskop/contracts';
+import { REPORT_KINDS, type ReportFiltersQuery as Filters, type ReportKind } from '@edildy/contracts';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';

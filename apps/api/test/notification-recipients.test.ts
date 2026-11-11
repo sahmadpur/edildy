@@ -1,4 +1,4 @@
-import type { NotificationRuleDto, RuleType } from '@taskop/contracts';
+import type { NotificationRuleDto, RuleType } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { DbService } from '../src/db/db.service';
 import { NotificationRecipients } from '../src/notifications/notification-recipients';

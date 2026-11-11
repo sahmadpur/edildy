@@ -1,4 +1,4 @@
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { screen, within } from '@testing-library/react-native';
 import i18n from '@/lib/i18n';
 import { checklist } from '@/offline/testing/fixtures';

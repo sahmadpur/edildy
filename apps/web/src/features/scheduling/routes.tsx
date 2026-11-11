@@ -1,4 +1,4 @@
-import { localDateSchema } from '@taskop/contracts';
+import { localDateSchema } from '@edildy/contracts';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';

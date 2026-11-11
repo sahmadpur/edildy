@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { listCommands } from './outbox';
 import { capturedPhoto } from './testing/fake-transport';
 import { REPORT, SITE, syncReport, syncResponse, T, versionOf } from './testing/fixtures';

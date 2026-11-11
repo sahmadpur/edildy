@@ -1,4 +1,4 @@
-import type { MediaUploadTicket, MediaUrl, TaskDetail } from '@taskop/contracts';
+import type { MediaUploadTicket, MediaUrl, TaskDetail } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { S3Service } from '../src/storage/s3.service';
 import { TaskJobs } from '../src/tasks/task-jobs';

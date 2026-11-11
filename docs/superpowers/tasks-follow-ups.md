@@ -3,7 +3,7 @@
 Items found while building sub-project 5 that are out of its scope. ⚑ marks the ones to look at first.
 
 - ⚑ **Notifications (SP6).** `task.assigned`, `task.accepted`, `task.submitted`, `task.rejected`, `task.completed`, `task.cancelled` and `task.overdue` are emitted with no listeners. SP6 subscribes for FR-14.10 (completion to the creator) and FR-15.03 (overdue).
-- ⚑ **Production bucket CORS.** Apply the "Deployment plan note" of `docs/superpowers/plans/2026-10-12-tasks-1-api.md` to the deployment plan: the `taskop-media` bucket on `files.taskop.app` must allow origin `https://admin.taskop.app` (`GET`, `PUT`, `HEAD`; `Content-Type`, `Content-Length`; expose `ETag`), or web uploads fail in the browser while the phone keeps working.
+- ⚑ **Production bucket CORS.** Apply the "Deployment plan note" of `docs/superpowers/plans/2026-10-12-tasks-1-api.md` to the deployment plan: the `edildy-media` bucket on `files.edildy.com` must allow origin `https://admin.edildy.com` (`GET`, `PUT`, `HEAD`; `Content-Type`, `Content-Length`; expose `ETag`), or web uploads fail in the browser while the phone keeps working.
 - ⚑ **Platform-admin reads.** The task endpoints are tenant-only. Add `platform/tenants/:tenantId/tasks…` variants with the `route-mode` pattern if support needs them.
 - **Permission backfill.** `0010_tasks_security.sql` gave the task keys to the existing Admin, Manager and Auditor roles (SP2–SP4 backfilled Admin only). Nothing was deployed then; revisit the rule before the first production migration of a later sub-project.
 - **Overdue in the timeline.** `overdue_at` is a flag with a timestamp, not a `task_status_history` row. If reports (SP7, FR-18.12) need it in the status timeline, add an event-type column to the history table.
@@ -22,7 +22,7 @@ Small items noticed while reviewing each piece of the tasks API and left for lat
 ### Tests
 
 - Request-schema tests could cover more combinations of evidence, review and list-query settings.
-- The database test for the tasks migration could also assert: the backfill start index is found, replaying it is harmless and bumps `roles.version`, the `taskop_platform` grants, and `WITH CHECK` on the other tables.
+- The database test for the tasks migration could also assert: the backfill start index is found, replaying it is harmless and bumps `roles.version`, the `edildy_platform` grants, and `WITH CHECK` on the other tables.
 - Missing coverage on reading and listing:
   - media attached to another execution
   - paging a resolved list with a cursor

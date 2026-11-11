@@ -1,5 +1,5 @@
-import type { ChecklistVersionSummary } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import type { ChecklistVersionSummary } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -132,7 +132,7 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
               <TableRow key={v.id}>
                 <TableCell>{v.number ? t('checklists.versionN', { n: v.number }) : <Badge variant="outline">{t('checklists.draft')}</Badge>}</TableCell>
                 <TableCell>{v.publishedAt ? formatDateTime(v.publishedAt, { locale, timeZone: ws.timeZone }) : '—'}</TableCell>
-                <TableCell>{v.publishedBy ? (v.publishedBy.kind === 'platform' ? t('checklists.detail.taskop') : v.publishedBy.name) : '—'}</TableCell>
+                <TableCell>{v.publishedBy ? (v.publishedBy.kind === 'platform' ? t('checklists.detail.edildy') : v.publishedBy.name) : '—'}</TableCell>
                 <TableCell>{v.changeNote ?? '—'}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">

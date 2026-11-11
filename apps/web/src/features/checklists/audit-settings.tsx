@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, type ChecklistDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, type ChecklistDetail } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmailListInput } from '@/components/email-list-input';

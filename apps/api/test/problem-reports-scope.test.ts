@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DataScope, PermissionKey } from '@taskop/contracts';
+import type { DataScope, PermissionKey } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { TaskReader } from '../src/common/request';
 import { DbService } from '../src/db/db.service';

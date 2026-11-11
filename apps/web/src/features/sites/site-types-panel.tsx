@@ -1,4 +1,4 @@
-import type { SiteTypeDto } from '@taskop/contracts';
+import type { SiteTypeDto } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

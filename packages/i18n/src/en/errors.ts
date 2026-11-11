@@ -4,7 +4,7 @@ export default {
   INVALID_CREDENTIALS: 'Incorrect sign-in details.',
   ACCOUNT_LOCKED: 'The account is temporarily locked. Try again in {{minutes}} minutes.',
   RATE_LIMITED: 'Too many attempts. Try again in {{minutes}} minutes.',
-  TENANT_SUSPENDED: 'The organisation account is suspended. Contact Taskop support.',
+  TENANT_SUSPENDED: 'The organisation account is suspended. Contact Edildy support.',
   FORBIDDEN: 'You do not have permission for this action.',
   NOT_FOUND: 'Not found.',
   REFERENCE_NOT_FOUND: 'The selected item was not found or is not active.',

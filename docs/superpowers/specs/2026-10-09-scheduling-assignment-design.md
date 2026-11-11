@@ -1,4 +1,4 @@
-# Taskop — Sub-project 3: Scheduling & Assignment — Design Spec
+# Edildy — Sub-project 3: Scheduling & Assignment — Design Spec
 
 - **Date:** 2026-10-09
 - **Status:** Draft for review
@@ -133,7 +133,7 @@ The Foundation rules apply: UUIDv7 IDs, `timestamptz` in UTC, `tenant_id` with a
 **`occurrence_status_history`** (append-only)
 - `id`, `tenant_id`, `occurrence_id`, `from_status?` (null on creation), `to_status`, `at`
 - `actor_user_id?`, `actor_platform_admin_id?` (both null = system), `reason?`
-- `taskop_app` gets `INSERT, SELECT` only, like `audit_log`.
+- `edildy_app` gets `INSERT, SELECT` only, like `audit_log`.
 
 ### 4.2 Integrity rules (enforced by the service, inside the tenant transaction)
 
@@ -145,7 +145,7 @@ The Foundation rules apply: UUIDv7 IDs, `timestamptz` in UTC, `tenant_id` with a
 
 ### 4.3 Migration
 
-Adds the tables, enums, RLS policies, grants, the pg-boss schema bootstrap (`pgboss`, owned by the migration account; `taskop_app` gets the grants pg-boss needs), and the new permission keys for existing Owner and Admin roles (§6).
+Adds the tables, enums, RLS policies, grants, the pg-boss schema bootstrap (`pgboss`, owned by the migration account; `edildy_app` gets the grants pg-boss needs), and the new permission keys for existing Owner and Admin roles (§6).
 
 ## 5. Lifecycle and jobs
 
@@ -336,7 +336,7 @@ Dates and times are shown in the tenant timezone with `Intl`; all strings are az
   - `canStart`: every reason code, and `late`.
   - Roster replace and copy; rejects users not at the site.
   - **Tenant isolation suite** extended to every new endpoint. **Scope suite:** a `site_subtree` manager sees and writes only their sites; `own` sees only their own; `/me/occurrences` returns only the caller's.
-  - `UPDATE`/`DELETE` on `occurrence_status_history` fails for `taskop_app`.
+  - `UPDATE`/`DELETE` on `occurrence_status_history` fails for `edildy_app`.
 - **Web (Vitest + Testing Library):**
   - schedule builder (UI → `Recurrence` JSON → summary)
   - roster grid editing and copy dialog

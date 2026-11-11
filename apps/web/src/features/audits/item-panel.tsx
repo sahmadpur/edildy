@@ -1,4 +1,4 @@
-import { AUDIT_LIMITS, type AuditDetail, type AuditItemVerdict, type AuditVerdict, type ExecutionMediaDto, type Item } from '@taskop/contracts';
+import { AUDIT_LIMITS, type AuditDetail, type AuditItemVerdict, type AuditVerdict, type ExecutionMediaDto, type Item } from '@edildy/contracts';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';

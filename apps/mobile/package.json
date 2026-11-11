@@ -1,15 +1,15 @@
 {
-  "name": "@taskop/mobile",
+  "name": "@edildy/mobile",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
     "@hookform/resolvers": "^5.9.1",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@tanstack/react-query": "^5.104.1",
-    "@taskop/api-client": "workspace:*",
-    "@taskop/brand": "workspace:*",
-    "@taskop/contracts": "workspace:*",
-    "@taskop/i18n": "workspace:*",
+    "@edildy/api-client": "workspace:*",
+    "@edildy/brand": "workspace:*",
+    "@edildy/contracts": "workspace:*",
+    "@edildy/i18n": "workspace:*",
     "expo": "~57.0.30",
     "expo-camera": "~57.0.6",
     "expo-constants": "~57.0.22",
@@ -40,7 +40,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@taskop/config": "workspace:*",
+    "@edildy/config": "workspace:*",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "29.5.14",
     "@types/node": "^26.6.4",
@@ -58,7 +58,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "jest",
-    "eas-build-post-install": "pnpm --filter \"@taskop/mobile^...\" run build"
+    "eas-build-post-install": "pnpm --filter \"@edildy/mobile^...\" run build"
   },
   "private": true,
   "version": "0.1.0",
@@ -69,7 +69,7 @@
       "^@/(.*)$": "<rootDir>/src/$1"
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!(?:.pnpm/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo\\+[^/]+/.*|expo-router|react-navigation|@react-navigation/.*|@taskop/.*|zod))"
+      "node_modules/(?!(?:.pnpm/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo\\+[^/]+/.*|expo-router|react-navigation|@react-navigation/.*|@edildy/.*|zod))"
     ],
     "setupFiles": [
       "<rootDir>/src/test/setup.ts"

@@ -1,5 +1,5 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import { FINAL_TASK_STATUSES, type TaskHistoryReason } from '@taskop/contracts';
+import { FINAL_TASK_STATUSES, type TaskHistoryReason } from '@edildy/contracts';
 import { and, asc, eq, isNotNull, notInArray, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { DomainEvents } from '../common/domain-events';

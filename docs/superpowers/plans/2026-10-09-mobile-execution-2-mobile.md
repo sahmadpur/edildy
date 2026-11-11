@@ -1,4 +1,4 @@
-# Taskop Mobile Execution — Part 2: Mobile App — Implementation Plan
+# Edildy Mobile Execution — Part 2: Mobile App — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -25,19 +25,19 @@
 ## Global Constraints
 
 - All Foundation Part 3 (mobile) constraints still apply:
-  - Expo-managed packages are installed with `pnpm --filter @taskop/mobile exec expo install <pkg>` so versions match SDK 57.
-  - All text comes from `@taskop/i18n`, with phone strings under `az.mobile`.
+  - Expo-managed packages are installed with `pnpm --filter @edildy/mobile exec expo install <pkg>` so versions match SDK 57.
+  - All text comes from `@edildy/i18n`, with phone strings under `az.mobile`.
   - Touch targets are at least 44 pt.
   - A network failure never logs the user out.
 - `apps/mobile/AGENTS.md`: Expo changes every SDK, so check APIs against `https://docs.expo.dev/versions/v57.0.0/` before writing native code. Never hand-edit `ios/` or `android/`; configure native behaviour in `app.json`.
-- **The shared packages ship `dist/`.** Before running any mobile test or typecheck, build them: `pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build`. Commands below say "(after building the shared packages)" where this matters.
+- **The shared packages ship `dist/`.** Before running any mobile test or typecheck, build them: `pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build`. Commands below say "(after building the shared packages)" where this matters.
 - **Native modules are never imported by code that Jest loads.** Only these import `expo-sqlite`, `expo-camera`, `expo-image-picker`, `expo-image-manipulator`, `expo-file-system`, `expo-network`, `expo-video`, `expo-crypto` or `@/lib/session`:
   - `src/offline/native/*`
   - `src/offline/offline-provider.tsx`
   - `src/features/execution/capture.tsx`
   - Tests that render a screen importing `./capture` mock it with `jest.mock('./capture', …)`.
 - **Database:**
-  - One SQLCipher database, `taskop.db`. Its key is 32 random bytes from `expo-crypto`, hex-encoded and kept in SecureStore under `taskop.dbKey` with `AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY` (FR-10.10).
+  - One SQLCipher database, `edildy.db`. Its key is 32 random bytes from `expo-crypto`, hex-encoded and kept in SecureStore under `edildy.dbKey` with `AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY` (FR-10.10).
   - The key is applied with `PRAGMA key = "x'<64 hex>'"` before any other statement.
   - Migrations are forward-only and tracked with `PRAGMA user_version`.
 - **Atomicity:** every worker action (start, answer, attach media, flag a problem, complete) runs in **one** `db.transaction(…)` that writes its rows and appends its outbox command. Inside a transaction callback only the `tx` handle is used. Calling the outer `db` from inside one would deadlock the queue.
@@ -195,7 +195,7 @@ describe('native configuration', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/app-config.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/app-config.test.ts`
 Expected: FAIL. `options('expo-sqlite')` is `undefined` and `expo-sqlite` is missing from `dependencies`.
 
 - [ ] **Step 3: Install the modules**
@@ -203,7 +203,7 @@ Expected: FAIL. `options('expo-sqlite')` is `undefined` and `expo-sqlite` is mis
 From the repo root:
 
 ```bash
-pnpm --filter @taskop/mobile exec expo install expo-sqlite expo-camera expo-image-picker expo-image-manipulator expo-file-system expo-network expo-video expo-crypto
+pnpm --filter @edildy/mobile exec expo install expo-sqlite expo-camera expo-image-picker expo-image-manipulator expo-file-system expo-network expo-video expo-crypto
 ```
 
 `expo install` may add bare plugin entries to `app.json`. Step 4 replaces the `plugins` array completely.
@@ -241,14 +241,14 @@ In `apps/mobile/app.json`, replace `"plugins"` with:
       [
         "expo-camera",
         {
-          "cameraPermission": "Taskop yoxlamalar zamanı foto və video çəkmək üçün kameradan istifadə edir.",
-          "microphonePermission": "Taskop video sübutlarda səsi yazmaq üçün mikrofondan istifadə edir.",
+          "cameraPermission": "Edildy yoxlamalar zamanı foto və video çəkmək üçün kameradan istifadə edir.",
+          "microphonePermission": "Edildy video sübutlarda səsi yazmaq üçün mikrofondan istifadə edir.",
           "recordAudioAndroid": true
         }
       ],
       [
         "expo-image-picker",
-        { "photosPermission": "Taskop sübut kimi qalereyadan foto və video seçmək üçün icazə istəyir." }
+        { "photosPermission": "Edildy sübut kimi qalereyadan foto və video seçmək üçün icazə istəyir." }
       ],
       "expo-video"
     ],
@@ -282,15 +282,15 @@ Checklist execution uses native modules that Expo Go does not ship (SQLCipher, c
 ipconfig getifaddr en0                     # your Mac's LAN IP, e.g. 192.168.1.20
 # apps/mobile/.env:  EXPO_PUBLIC_API_URL=http://192.168.1.20:3000
 # apps/api/.env:     S3_PUBLIC_ENDPOINT=http://192.168.1.20:8333   (presigned upload URLs point here)
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
-pnpm --filter @taskop/mobile android -- --device
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
+pnpm --filter @edildy/mobile android -- --device
 ```
 The phone and the Mac must be on the same Wi-Fi, and the macOS firewall must accept incoming connections for Node (port 3000) and Docker (port 8333). The iOS simulator can keep `localhost`.
 ````
 
 - [ ] **Step 5: Run the test, typecheck and resolve the config**
 
-Run: `pnpm --filter @taskop/mobile test -- src/app-config.test.ts && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile exec expo config --type prebuild > /dev/null`
+Run: `pnpm --filter @edildy/mobile test -- src/app-config.test.ts && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile exec expo config --type prebuild > /dev/null`
 Expected: PASS (3 tests). Typecheck is clean, and `expo config` exits 0. Exit 0 proves every plugin resolves with its options.
 
 - [ ] **Step 6: Commit**
@@ -319,7 +319,7 @@ git commit -m "chore(mobile): add SQLCipher, camera, picker, file system, networ
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `packages/i18n/src/i18n.test.ts`, and add `MISSING_KINDS` to its `@taskop/contracts` import:
+Append to `packages/i18n/src/i18n.test.ts`, and add `MISSING_KINDS` to its `@edildy/contracts` import:
 
 ```ts
 describe('mobile execution translations', () => {
@@ -348,7 +348,7 @@ describe('mobile execution translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL. `az.mobile.finish` is undefined.
 
 - [ ] **Step 3: Implement**
@@ -514,7 +514,7 @@ export default {
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/mobile test -- src/features`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/mobile test -- src/features`
 Expected: PASS. The existing mobile login and change-secret tests still pass.
 
 - [ ] **Step 5: Commit**
@@ -643,7 +643,7 @@ describe('local database', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline/db.test.ts`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline/db.test.ts`
 Expected: FAIL: `Cannot find module './db'`.
 
 - [ ] **Step 3: Implement**
@@ -868,7 +868,7 @@ export function failingDriver(base: SqlDriver, pattern: RegExp): SqlDriver & { a
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/db.test.ts && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/db.test.ts && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (6 tests). Node may print an `ExperimentalWarning` for SQLite, which is harmless.
 
 - [ ] **Step 5: Commit**
@@ -887,7 +887,7 @@ git commit -m "feat(mobile): add the local SQLite layer with queued transactions
 - Test: `apps/mobile/src/offline/ids.test.ts`, `clock.test.ts`, `local-model.test.ts`, `content.test.ts`
 
 **Interfaces:**
-- Consumes: `Db`, `getMeta` (Task 3); `EXECUTION_LIMITS`, `parseDraftContent`, `walkItems`, `idSchema` and the types `Answers`, `ChecklistContent`, `Item`, `ClaimRef`, `ClaimRejectionReason`, `ExecutionState`, `MediaKind`, `MediaSource`, `OccurrenceStatus` from `@taskop/contracts`.
+- Consumes: `Db`, `getMeta` (Task 3); `EXECUTION_LIMITS`, `parseDraftContent`, `walkItems`, `idSchema` and the types `Answers`, `ChecklistContent`, `Item`, `ClaimRef`, `ClaimRejectionReason`, `ExecutionState`, `MediaKind`, `MediaSource`, `OccurrenceStatus` from `@edildy/contracts`.
 - Produces:
   - `uuidv7(now: number, random: (byteCount: number) => Uint8Array): string`
   - `interface Clock { now(): number }`, `systemClock`
@@ -906,7 +906,7 @@ git commit -m "feat(mobile): add the local SQLite layer with queued transactions
 `apps/mobile/src/offline/ids.test.ts`:
 
 ```ts
-import { idSchema } from '@taskop/contracts';
+import { idSchema } from '@edildy/contracts';
 import { uuidv7 } from './ids';
 
 const filled = (byte: number) => (n: number) => new Uint8Array(n).fill(byte);
@@ -987,7 +987,7 @@ describe('local rows', () => {
 `apps/mobile/src/offline/content.test.ts`:
 
 ```ts
-import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 import { findItem, loadContent } from './content';
 
 describe('checklist content gate', () => {
@@ -1017,7 +1017,7 @@ describe('checklist content gate', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/ids.test.ts src/offline/clock.test.ts src/offline/local-model.test.ts src/offline/content.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/ids.test.ts src/offline/clock.test.ts src/offline/local-model.test.ts src/offline/content.test.ts`
 Expected: FAIL. The modules do not exist.
 
 - [ ] **Step 3: Implement**
@@ -1050,7 +1050,7 @@ export function uuidv7(now: number, random: (byteCount: number) => Uint8Array): 
 `apps/mobile/src/offline/clock.ts`:
 
 ```ts
-import { EXECUTION_LIMITS } from '@taskop/contracts';
+import { EXECUTION_LIMITS } from '@edildy/contracts';
 import { type Db, getMeta } from './db';
 
 export interface Clock {
@@ -1081,7 +1081,7 @@ export const isClockSkewed = (offsetMs: number): boolean => Math.abs(offsetMs) >
 `apps/mobile/src/offline/local-model.ts`:
 
 ```ts
-import type { Answers, ClaimRef, ClaimRejectionReason, ExecutionState, MediaKind, MediaSource, OccurrenceStatus } from '@taskop/contracts';
+import type { Answers, ClaimRef, ClaimRejectionReason, ExecutionState, MediaKind, MediaSource, OccurrenceStatus } from '@edildy/contracts';
 
 export const iso = (ms: number): string => new Date(ms).toISOString();
 /** Server instants in the same 24-character form as `iso`, so SQLite text comparison orders them correctly. */
@@ -1260,7 +1260,7 @@ export const toMedia = (r: MediaRow): LocalMedia => ({
 `apps/mobile/src/offline/content.ts`:
 
 ```ts
-import { type ChecklistContent, type Item, parseDraftContent, walkItems } from '@taskop/contracts';
+import { type ChecklistContent, type Item, parseDraftContent, walkItems } from '@edildy/contracts';
 
 /** The highest checklist content schemaVersion this app understands (SP2 §3.2). */
 export const SUPPORTED_SCHEMA_VERSION = 1;
@@ -1289,7 +1289,7 @@ export function findItem(content: ChecklistContent, itemId: string): Item | unde
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (db 6, ids 2, clock 3, local-model 2, content 3).
 
 - [ ] **Step 5: Commit**
@@ -1308,7 +1308,7 @@ git commit -m "feat(mobile): add UUIDv7 ids, clock offset, local row models and 
 - Test: `apps/mobile/src/offline/outbox.test.ts`, `sync-pull.test.ts`, `user-scope.test.ts`
 
 **Interfaces:**
-- Consumes: Tasks 3–4; `SyncResponse`, `MyExecution` from `@taskop/contracts`.
+- Consumes: Tasks 3–4; `SyncResponse`, `MyExecution` from `@edildy/contracts`.
 - Produces:
   - `interface ChangeFeed { emit(): void; subscribe(listener): () => void }`, `createChangeFeed()`
   - Outbox basics: `COMMAND_KINDS = ['claim', 'media', 'answers', 'complete']`, `type CommandKind`, `interface OutboxCommand { seq, executionId, kind, refId, rev, payload, status, attempts, errorCode, errorKey, createdAt }`
@@ -1347,7 +1347,7 @@ import {
   type SyncOccurrence,
   type SyncResponse,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { Clock } from '../clock';
 import { uuidv7 } from '../ids';
 
@@ -1673,7 +1673,7 @@ describe('user scope', () => {
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/outbox.test.ts src/offline/sync-pull.test.ts src/offline/user-scope.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/outbox.test.ts src/offline/sync-pull.test.ts src/offline/user-scope.test.ts`
 Expected: FAIL: the modules do not exist.
 
 - [ ] **Step 4: Implement**
@@ -1824,7 +1824,7 @@ export async function listCommands(db: Db): Promise<QueueEntry[]> {
 `apps/mobile/src/offline/sync-pull.ts`:
 
 ```ts
-import type { MyExecution, SyncResponse } from '@taskop/contracts';
+import type { MyExecution, SyncResponse } from '@edildy/contracts';
 import { type Db, setMeta } from './db';
 import { type ExecutionRow, iso, normIso } from './local-model';
 
@@ -1934,7 +1934,7 @@ export async function ensureUser(db: Db, userId: string, files: FileRemover): Pr
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (outbox 3, sync-pull 4, user-scope 3, plus the earlier offline tests).
 
 - [ ] **Step 6: Commit**
@@ -1955,7 +1955,7 @@ git commit -m "feat(mobile): add the command outbox, /me/sync application and pe
 **Interfaces:**
 - Consumes:
   - Tasks 3–5
-  - From `@taskop/contracts`: `requirements`, `deriveProblems`, `mediaLimitFor`, `MEDIA_LIMITS`, `EXECUTION_LIMITS`, and the types `Answer`, `Answers`, `ManualProblem`, `DeviceInfo`, `MediaKind`, `MediaSource`, `Missing`
+  - From `@edildy/contracts`: `requirements`, `deriveProblems`, `mediaLimitFor`, `MEDIA_LIMITS`, `EXECUTION_LIMITS`, and the types `Answer`, `Answers`, `ManualProblem`, `DeviceInfo`, `MediaKind`, `MediaSource`, `Missing`
 - Produces:
   - Start rules: `type StartBlock = 'notYetOpen' | 'closed' | 'claimedByOther' | 'finished' | 'needsUpdate' | 'notDownloaded'`, `startBlock(o: LocalOccurrence, userId, now: number, content: ContentLoad['kind']): StartBlock | null`
   - Errors: `ExecutionLockedError` (`.state`), `StartRefusedError` (`.reason: StartBlock`), `MediaLimitError`, `LiveOnlyError`
@@ -2038,7 +2038,7 @@ export function capturedVideo(t: FakeTransport, over: Partial<CapturedMedia> = {
 `apps/mobile/src/offline/testing/harness.ts`:
 
 ```ts
-import type { SyncResponse } from '@taskop/contracts';
+import type { SyncResponse } from '@edildy/contracts';
 import { type ChangeFeed, createChangeFeed } from '../change-feed';
 import type { Db } from '../db';
 import { createExecutionStore, type ExecutionStore, type WriteKind } from '../execution-store';
@@ -2084,7 +2084,7 @@ export async function createHarness(o: { at?: string; db?: Db } = {}): Promise<H
 `apps/mobile/src/offline/execution-store.test.ts`:
 
 ```ts
-import { requirements } from '@taskop/contracts';
+import { requirements } from '@edildy/contracts';
 import type { ContentLoad } from './content';
 import { ExecutionLockedError, LiveOnlyError, MediaLimitError, type StartBlock, startBlock } from './execution-store';
 import type { LocalOccurrence } from './local-model';
@@ -2289,7 +2289,7 @@ describe('atomic actions', () => {
 
 - [ ] **Step 3: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/execution-store.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/execution-store.test.ts`
 Expected: FAIL: `Cannot find module './execution-store'`.
 
 - [ ] **Step 4: Implement**
@@ -2310,7 +2310,7 @@ import {
   type MediaSource,
   type Missing,
   requirements,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { ChangeFeed } from './change-feed';
 import type { Clock } from './clock';
 import { type ContentLoad, findItem, loadContent } from './content';
@@ -2685,7 +2685,7 @@ export type ExecutionStore = ReturnType<typeof createExecutionStore>;
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (execution-store: 8 `startBlock` cases + 13 tests).
 
 - [ ] **Step 6: Commit**
@@ -2707,8 +2707,8 @@ git commit -m "feat(mobile): add the execution store with atomic writes, media r
 **Interfaces:**
 - Consumes:
   - Tasks 3–6
-  - From `@taskop/api-client`: `ApiError`, `type ExecutionsApi`
-  - From `@taskop/contracts`: the command and result types
+  - From `@edildy/api-client`: `ApiError`, `type ExecutionsApi`
+  - From `@edildy/contracts`: the command and result types
 - Produces:
   - `interface SyncApi` (the slice of `ExecutionsApi`: `sync.pull`, `executions.{claim, saveAnswers, complete, registerMedia}`, `media.confirmUploaded`). `api` from `@/lib/session` satisfies it.
   - `type Failure = { kind: 'retry' } | { kind: 'auth' } | { kind: 'permanent'; code; messageKey }`, `classifyError(e: unknown): Failure`
@@ -2738,7 +2738,7 @@ import type {
   SaveAnswersCommand,
   SaveAnswersResult,
   SyncResponse,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { SyncApi } from '../sync-api';
 import { ME, syncResponse, VERSION } from './fixtures';
 
@@ -2793,7 +2793,7 @@ export function createFakeApi(): FakeApi {
       registerMedia: async (_executionId, b) => ({
         mediaId: b.id,
         status: 'pending',
-        uploadUrl: `http://files.test/taskop-media/${b.id}`,
+        uploadUrl: `http://files.test/edildy-media/${b.id}`,
         headers: { 'Content-Type': b.mime, 'Content-Length': String(b.bytes) },
         expiresAt: '2026-11-02T05:00:00.000Z',
       }),
@@ -2845,7 +2845,7 @@ export function createFakeApi(): FakeApi {
 Replace `apps/mobile/src/offline/testing/harness.ts` with:
 
 ```ts
-import type { SyncResponse } from '@taskop/contracts';
+import type { SyncResponse } from '@edildy/contracts';
 import { type ChangeFeed, createChangeFeed } from '../change-feed';
 import type { Db } from '../db';
 import { createExecutionStore, type ExecutionStore, type WriteKind } from '../execution-store';
@@ -2897,7 +2897,7 @@ export async function createHarness(o: { at?: string; db?: Db } = {}): Promise<H
 `apps/mobile/src/offline/sync-api.test.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { classifyError } from './sync-api';
 
 describe('classifyError', () => {
@@ -2925,7 +2925,7 @@ describe('classifyError', () => {
 `apps/mobile/src/offline/media-queue.test.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { iso } from './local-model';
 import { createMediaQueue, LOCAL_FILE_KEEP_DAYS, MEDIA_MAX_ATTEMPTS, mediaErrorKey } from './media-queue';
 import { capturedPhoto, capturedVideo } from './testing/fake-transport';
@@ -2964,7 +2964,7 @@ describe('media queue', () => {
     expect(peak).toBe(1);
     expect(h.transport.uploads[0]).toEqual({
       uri: m.photo.localUri,
-      url: `http://files.test/taskop-media/${m.photoId}`,
+      url: `http://files.test/edildy-media/${m.photoId}`,
       headers: { 'Content-Type': 'image/jpeg', 'Content-Length': '250000' },
     });
     expect(h.api.calls.map((c) => [c.method, c.id])).toEqual([
@@ -3056,7 +3056,7 @@ describe('media queue', () => {
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/sync-api.test.ts src/offline/media-queue.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/sync-api.test.ts src/offline/media-queue.test.ts`
 Expected: FAIL: `./sync-api` and `./media-queue` do not exist.
 
 - [ ] **Step 4: Implement**
@@ -3064,7 +3064,7 @@ Expected: FAIL: `./sync-api` and `./media-queue` do not exist.
 `apps/mobile/src/offline/sync-api.ts`:
 
 ```ts
-import { ApiError, type ExecutionsApi } from '@taskop/api-client';
+import { ApiError, type ExecutionsApi } from '@edildy/api-client';
 
 /** The slice of the API client the offline layer uses (Part 1 Task 5). `api` from '@/lib/session' satisfies it. */
 export interface SyncApi {
@@ -3092,7 +3092,7 @@ export function classifyError(e: unknown): Failure {
 `apps/mobile/src/offline/media-queue.ts`:
 
 ```ts
-import type { MediaUploadTicket } from '@taskop/contracts';
+import type { MediaUploadTicket } from '@edildy/contracts';
 import type { ChangeFeed } from './change-feed';
 import { clampOffset, type Clock, readOffset } from './clock';
 import type { Db } from './db';
@@ -3243,7 +3243,7 @@ export function createMediaQueue(deps: { db: Db; api: SyncApi; clock: Clock; tra
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (sync-api 9, media-queue 6; the store tests still pass with the new harness).
 
 - [ ] **Step 6: Commit**
@@ -3263,7 +3263,7 @@ git commit -m "feat(mobile): add the resumable media upload queue and API error 
 - Test: `apps/mobile/src/offline/sync-engine.test.ts`
 
 **Interfaces:**
-- Consumes: Tasks 3–7; the command and result types from `@taskop/contracts`.
+- Consumes: Tasks 3–7; the command and result types from `@edildy/contracts`.
 - Produces:
   - Triggers:
     - `type SyncTrigger = 'start' | 'reconnect' | 'foreground' | 'interval' | 'local' | 'claim' | 'manual' | 'retry'`
@@ -3312,7 +3312,7 @@ and return them: `return { db, clock, feed, transport, store, api, mediaQueue, e
 `apps/mobile/src/offline/sync-engine.test.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { ExecutionLockedError } from './execution-store';
 import { listCommands, outboxCounts } from './outbox';
 import { backoffDelay, indicatorOf, type SyncStatus } from './sync-engine';
@@ -3563,7 +3563,7 @@ describe('indicatorOf', () => {
 
 - [ ] **Step 3: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/sync-engine.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/sync-engine.test.ts`
 Expected: FAIL: `Cannot find module './sync-engine'` (also from the harness).
 
 - [ ] **Step 4: Implement**
@@ -3580,7 +3580,7 @@ import type {
   RegisterMediaCommand,
   SaveAnswersCommand,
   SyncResponse,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { ChangeFeed } from './change-feed';
 import { clampOffset, type Clock, measureOffset, readOffset } from './clock';
 import { type Db, getMeta } from './db';
@@ -3880,7 +3880,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (sync-engine: 4 + 6 backoff cases + 2 + 4 + 2 + 1). No test waits on wall-clock time.
 
 - [ ] **Step 6: Commit**
@@ -4087,7 +4087,7 @@ describe('claimRejectionText', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/sync-triggers.test.ts src/offline/services.test.ts src/features/sync/claim-rejection.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/sync-triggers.test.ts src/offline/services.test.ts src/features/sync/claim-rejection.test.ts`
 Expected: FAIL: the modules do not exist.
 
 - [ ] **Step 3: Implement the triggers, services, context and hooks**
@@ -4156,7 +4156,7 @@ export function startSyncTriggers(o: { run: (trigger: SyncTrigger) => void; netw
 `apps/mobile/src/offline/services.ts`:
 
 ```ts
-import type { DeviceInfo } from '@taskop/contracts';
+import type { DeviceInfo } from '@edildy/contracts';
 import { type ChangeFeed, createChangeFeed } from './change-feed';
 import type { Clock } from './clock';
 import { type Db, migrate } from './db';
@@ -4327,7 +4327,7 @@ export function useNow(intervalMs = 15_000): number {
 `apps/mobile/src/features/sync/claim-rejection.ts`:
 
 ```ts
-import type { ClaimRejectionReason } from '@taskop/contracts';
+import type { ClaimRejectionReason } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 
 /** Spec §7.2: "Bu checklist artıq {name} tərəfindən icra olunur" when the winner is known, else the reason. */
@@ -4341,7 +4341,7 @@ export function claimRejectionText(t: TFunction, reason: ClaimRejectionReason, b
 `apps/mobile/src/offline/testing/test-services.ts`:
 
 ```ts
-import type { SyncResponse } from '@taskop/contracts';
+import type { SyncResponse } from '@edildy/contracts';
 import type { Db } from '../db';
 import { createOfflineServices, type OfflineServices } from '../services';
 import type { ClaimRejection } from '../sync-engine';
@@ -4427,8 +4427,8 @@ import * as SecureStore from 'expo-secure-store';
 import * as SQLite from 'expo-sqlite';
 import { createDb, type Db, type SqlDriver, type SqlValue } from '../db';
 
-const DB_NAME = 'taskop.db';
-const KEY_NAME = 'taskop.dbKey';
+const DB_NAME = 'edildy.db';
+const KEY_NAME = 'edildy.dbKey';
 
 const toHex = (bytes: Uint8Array) => Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 
@@ -4554,7 +4554,7 @@ export function rnAppState(): AppStatePort {
 `apps/mobile/src/offline/native/device.ts`:
 
 ```ts
-import type { DeviceInfo } from '@taskop/contracts';
+import type { DeviceInfo } from '@edildy/contracts';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
@@ -4716,7 +4716,7 @@ export default function AppLayout() {
 
 - [ ] **Step 6: Run the tests, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS: triggers 3, services 4, claim-rejection 1, and every earlier suite. The typecheck covers the native adapters against the installed SDK 57 type definitions. If a signature differs from what Task 1 Step 3 recorded, fix only the adapter.
 
 - [ ] **Step 7: Commit**
@@ -4736,7 +4736,7 @@ git commit -m "feat(mobile): wire sync triggers, the encrypted store and the off
 
 **Interfaces:**
 - Consumes:
-  - `MEDIA_LIMITS` and the `MediaKind`/`MediaSource` types from `@taskop/contracts`
+  - `MEDIA_LIMITS` and the `MediaKind`/`MediaSource` types from `@edildy/contracts`
   - `CapturedMedia` (Task 6), `mediaDirectory` (Task 9), `uuidv7` (Task 4)
   - Expo modules: `expo-camera`, `expo-image-picker`, `expo-image-manipulator`, `expo-file-system`, `expo-video`, `expo-crypto`
 - Produces:
@@ -4795,7 +4795,7 @@ describe('media capture rules', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution/media-capture.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution/media-capture.test.ts`
 Expected: FAIL: `Cannot find module './media-capture'`.
 
 - [ ] **Step 3: Implement**
@@ -4803,7 +4803,7 @@ Expected: FAIL: `Cannot find module './media-capture'`.
 `apps/mobile/src/features/execution/media-capture.ts`:
 
 ```ts
-import { MEDIA_LIMITS } from '@taskop/contracts';
+import { MEDIA_LIMITS } from '@edildy/contracts';
 
 /** Spec §1: photos are resized on the phone to a 1600 px long edge. Null when already small enough. */
 export function photoResize(width: number, height: number): { width: number } | { height: number } | null {
@@ -4842,7 +4842,7 @@ export const fileExtension = (mime: string): string => (MEDIA_LIMITS.extensions 
 `apps/mobile/src/features/execution/capture.tsx`:
 
 ```tsx
-import { MEDIA_LIMITS, type MediaKind, type MediaSource } from '@taskop/contracts';
+import { MEDIA_LIMITS, type MediaKind, type MediaSource } from '@edildy/contracts';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { getRandomBytes } from 'expo-crypto';
 import { File } from 'expo-file-system';
@@ -5032,7 +5032,7 @@ const styles = StyleSheet.create({
 
 - [ ] **Step 4: Run the tests and typecheck**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution/media-capture.test.ts && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution/media-capture.test.ts && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (4 resize cases, 4 video cases, 2 tests). The typecheck checks `capture.tsx` against the SDK 57 definitions of `CameraView`, `ImageManipulator.manipulate`, `File.moveSync` and `launchImageLibraryAsync`. If a name differs, follow the installed `.d.ts` and keep the behaviour: 1600 px, JPEG 0.7, 720p, 60 s, camera-only on live-only items.
 
 - [ ] **Step 5: Commit**
@@ -5055,7 +5055,7 @@ git commit -m "feat(mobile): capture photos and 720p videos within the media lim
 - Consumes:
   - `useSyncStatus`, `useLiveQuery`, `useOffline` (Task 9); `indicatorOf` (Task 8)
   - `listCommands` (Task 5); `mediaErrorKey` (Task 7); `isClockSkewed` (Task 4)
-  - `formatDateTime` from `@taskop/i18n`
+  - `formatDateTime` from `@edildy/i18n`
 - Produces:
   - `<SyncIndicator />`: a pill with `testID="sync-indicator-<synced|pending|offline|failed>"` that pushes `/sync`
   - `<SyncScreen />`:
@@ -5143,7 +5143,7 @@ The `meta` row `clockOffsetMs` exists because `seed()` runs `applyPull`, which w
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/sync/sync.test.tsx`
+Run: `pnpm --filter @edildy/mobile test -- src/features/sync/sync.test.tsx`
 Expected: FAIL: `Cannot find module './sync-indicator'`.
 
 - [ ] **Step 3: Implement**
@@ -5197,7 +5197,7 @@ const styles = StyleSheet.create({
 `apps/mobile/src/features/sync/sync-screen.tsx`:
 
 ```tsx
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5316,7 +5316,7 @@ and add this after the `change-secret` screen:
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/sync && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/features/sync && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (sync 4, claim-rejection 1).
 
 - [ ] **Step 5: Commit**
@@ -5341,7 +5341,7 @@ git commit -m "feat(mobile): show sync status in the header and list the outbox 
 **Interfaces:**
 - Consumes:
   - `OccurrenceView`, `StartRefusedError` (Task 6); `useOffline`, `useLiveQuery`, `useNow` (Task 9); `SyncIndicator` (Task 11)
-  - `intlLocale` from `@taskop/i18n`
+  - `intlLocale` from `@edildy/i18n`
 - Produces:
   - `formatTime(iso, timeZone): string` (`HH:MM`), `localDate(ms, timeZone): string` (`YYYY-MM-DD`)
   - Grouping:
@@ -5502,7 +5502,7 @@ describe('My checklists', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/lib/time.test.ts src/features/checklists src/features/home`
+Run: `pnpm --filter @edildy/mobile test -- src/lib/time.test.ts src/features/checklists src/features/home`
 Expected: FAIL: the modules do not exist.
 
 - [ ] **Step 3: Implement**
@@ -5510,7 +5510,7 @@ Expected: FAIL: the modules do not exist.
 `apps/mobile/src/lib/time.ts`:
 
 ```ts
-import { intlLocale } from '@taskop/i18n';
+import { intlLocale } from '@edildy/i18n';
 
 /** HH:MM in the tenant's time zone (24 h). */
 export function formatTime(iso: string, timeZone: string): string {
@@ -5790,7 +5790,7 @@ In `packages/i18n/src/az/mobile.ts`, delete the line `recent: 'Son tapşırıqla
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n build && pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/i18n build && pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS: time 1, group-occurrences 9 + 1, home 3, and every earlier suite.
 
 - [ ] **Step 5: Commit**
@@ -5814,7 +5814,7 @@ git commit -m "feat(mobile): show my checklists grouped as now, in progress, upc
 
 **Interfaces:**
 - Consumes:
-  - From `@taskop/contracts`: `visibleItems`, `progress`, `requirements`, `deriveProblems`, `evidenceAllows`, `mediaLimitFor`, `ruleMatches`, `hasRules`, `MEDIA_KINDS`, `MEDIA_LIMITS`, `EXECUTION_LIMITS`, `PROBLEM_SEVERITIES`
+  - From `@edildy/contracts`: `visibleItems`, `progress`, `requirements`, `deriveProblems`, `evidenceAllows`, `mediaLimitFor`, `ruleMatches`, `hasRules`, `MEDIA_KINDS`, `MEDIA_LIMITS`, `EXECUTION_LIMITS`, `PROBLEM_SEVERITIES`
   - The store errors (Task 6), the hooks (Task 9), `CaptureModal`/`pickFromGallery`/`VideoPreview`/`CaptureError` (Task 10), `SyncIndicator` and `claimRejectionText` (Tasks 9, 11)
 - Produces:
   - `<CommitInput value onCommit … />`: autosaves 500 ms after typing stops, on blur and on unmount (`COMMIT_DELAY_MS = 500`)
@@ -5984,7 +5984,7 @@ describe('ExecutionScreen', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution`
 Expected: FAIL. `./datetime-format` and `./execution-screen` do not exist.
 
 - [ ] **Step 3: Implement the shared input and the date formats**
@@ -6062,7 +6062,7 @@ const styles = StyleSheet.create({
 `apps/mobile/src/features/execution/datetime-format.ts`:
 
 ```ts
-import type { DateTimeMode } from '@taskop/contracts';
+import type { DateTimeMode } from '@edildy/contracts';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -6107,7 +6107,7 @@ export function nowInputFor(mode: DateTimeMode, ms: number): string {
 `apps/mobile/src/features/execution/parts.tsx`:
 
 ```tsx
-import type { MediaKind, MediaSource } from '@taskop/contracts';
+import type { MediaKind, MediaSource } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '@/lib/theme';
@@ -6243,7 +6243,7 @@ import {
   type Missing,
   type NumberItem,
   ruleMatches,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -6483,7 +6483,7 @@ const styles = StyleSheet.create({
 `apps/mobile/src/features/execution/problem-sheet.tsx`:
 
 ```tsx
-import { EXECUTION_LIMITS, type ManualProblem, MEDIA_KINDS, MEDIA_LIMITS, type MediaKind, type MediaSource, PROBLEM_SEVERITIES, type ProblemSeverity } from '@taskop/contracts';
+import { EXECUTION_LIMITS, type ManualProblem, MEDIA_KINDS, MEDIA_LIMITS, type MediaKind, type MediaSource, PROBLEM_SEVERITIES, type ProblemSeverity } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -6625,7 +6625,7 @@ export function useExecution(executionId: string): ExecutionData | null | undefi
 `apps/mobile/src/features/execution/execution-screen.tsx`:
 
 ```tsx
-import { deriveProblems, type MediaKind, type MediaSource, progress, requirements, visibleItems } from '@taskop/contracts';
+import { deriveProblems, type MediaKind, type MediaSource, progress, requirements, visibleItems } from '@edildy/contracts';
 import { router } from 'expo-router';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6890,7 +6890,7 @@ In `apps/mobile/app/(app)/_layout.tsx`:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (datetime-format 3, execution-screen 8, media-capture from Task 10).
 
 - [ ] **Step 7: Commit**
@@ -6981,7 +6981,7 @@ describe('FinishScreen', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution/finish-screen.test.tsx`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution/finish-screen.test.tsx`
 Expected: FAIL: `Cannot find module './finish-screen'`.
 
 - [ ] **Step 3: Implement**
@@ -6989,7 +6989,7 @@ Expected: FAIL: `Cannot find module './finish-screen'`.
 `apps/mobile/src/features/execution/finish-screen.tsx`:
 
 ```tsx
-import { computeScore, deriveProblems, requirements, walkItems } from '@taskop/contracts';
+import { computeScore, deriveProblems, requirements, walkItems } from '@edildy/contracts';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7117,7 +7117,7 @@ In `apps/mobile/app/(app)/_layout.tsx`, add `<Tabs.Screen name="execution/[id]/f
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS (finish-screen 2 plus the Task 13 suites).
 
 - [ ] **Step 5: Commit**
@@ -7224,7 +7224,7 @@ describe('logout', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/profile/profile-screen.test.tsx`
+Run: `pnpm --filter @edildy/mobile test -- src/features/profile/profile-screen.test.tsx`
 Expected: FAIL. No alert is shown: the current button calls `session.signOut()` directly, and the occurrences are not cleared.
 
 - [ ] **Step 3: Implement**
@@ -7265,7 +7265,7 @@ In `apps/mobile/src/features/profile/profile-screen.tsx`:
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS: profile 3 and every other suite.
 
 - [ ] **Step 5: Commit**
@@ -7289,18 +7289,18 @@ git commit -m "feat(mobile): warn twice before logging out with unsynced data an
 - [ ] **Step 1: Run every automated check**
 
 ```bash
-pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build
-pnpm --filter @taskop/i18n test
-pnpm --filter @taskop/mobile test
-pnpm --filter @taskop/mobile typecheck
-pnpm --filter @taskop/mobile lint
-pnpm --filter @taskop/mobile exec expo config --type prebuild > /dev/null
-pnpm --filter @taskop/mobile exec expo-doctor
+pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build
+pnpm --filter @edildy/i18n test
+pnpm --filter @edildy/mobile test
+pnpm --filter @edildy/mobile typecheck
+pnpm --filter @edildy/mobile lint
+pnpm --filter @edildy/mobile exec expo config --type prebuild > /dev/null
+pnpm --filter @edildy/mobile exec expo-doctor
 ```
 
 Expected:
 - All suites pass. No test is skipped, and Jest reports no open handles.
-- `expo-doctor` reports no SDK 57 version mismatch. If it suggests fixes, run `pnpm --filter @taskop/mobile exec expo install --fix`, rerun the suite and commit `apps/mobile/package.json` and `pnpm-lock.yaml`.
+- `expo-doctor` reports no SDK 57 version mismatch. If it suggests fixes, run `pnpm --filter @edildy/mobile exec expo install --fix`, rerun the suite and commit `apps/mobile/package.json` and `pnpm-lock.yaml`.
 
 - [ ] **Step 2: Start the stack for a phone on the LAN**
 
@@ -7310,9 +7310,9 @@ ipconfig getifaddr en0                     # e.g. 192.168.1.20
 # apps/api/.env:    S3_PUBLIC_ENDPOINT=http://192.168.1.20:8333
 # apps/mobile/.env: EXPO_PUBLIC_API_URL=http://192.168.1.20:3000
 pnpm db:setup && pnpm db:seed              # demo tenant with a worker and today's occurrences
-pnpm --filter @taskop/api dev
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
-pnpm --filter @taskop/mobile android -- --device
+pnpm --filter @edildy/api dev
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
+pnpm --filter @edildy/mobile android -- --device
 ```
 
 Expected: the app installs as a development build, and a seeded worker can log in. "Mənim tapşırıqlarım" shows today's occurrences under İndi / Gələcək, and the header indicator turns green after the first sync.
@@ -7321,7 +7321,7 @@ Expected: the app installs as a development build, and a seeded worker can log i
 
 Tick each item in the PR description, with the phone model and OS version:
 
-1. **Encrypted at rest.** On the iOS simulator, run `find "$(xcrun simctl get_app_container booted az.taskop.app data)" -name 'taskop.db' -exec head -c 16 {} \; | xxd`. Expected: random bytes, **not** `SQLite format 3`.
+1. **Encrypted at rest.** On the iOS simulator, run `find "$(xcrun simctl get_app_container booted az.taskop.app data)" -name 'edildy.db' -exec head -c 16 {} \; | xxd`. Expected: random bytes, **not** `SQLite format 3`.
 2. **Airplane mode.**
    - Turn on airplane mode. Start an open occurrence, answer every item, take a photo, flag a manual problem with a video, and complete.
    - Expected while offline: the indicator is amber "N gözləyir", and the card moves to Bitmiş.

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { isWholeDayWindow } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { isWholeDayWindow } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { StatusChip } from '@/components/chip';

@@ -19,20 +19,20 @@ describe('auditReportMail', () => {
 });
 
 describe('languages', () => {
-  const base = { to: 'a@acme.az', fullName: 'Ayşə', webUrl: 'https://app.taskop.app', token: 't0k/en' };
+  const base = { to: 'a@acme.az', fullName: 'Ayşə', webUrl: 'https://app.edildy.com', token: 't0k/en' };
 
   it('writes the account e-mails in English and Russian with the same link', () => {
     const en = verifyEmailMail({ ...base, locale: 'en' });
-    expect(en.subject).toBe('Taskop — confirm your e-mail address');
+    expect(en.subject).toBe('Edildy — confirm your e-mail address');
     expect(en.text).toContain('Hello, Ayşə!');
-    expect(en.text).toContain('https://app.taskop.app/verify-email?token=t0k%2Fen');
+    expect(en.text).toContain('https://app.edildy.com/verify-email?token=t0k%2Fen');
     const ru = passwordResetMail({ ...base, locale: 'ru' });
-    expect(ru.subject).toBe('Taskop — восстановление пароля');
-    expect(ru.text).toContain('https://app.taskop.app/reset-password?token=t0k%2Fen');
+    expect(ru.subject).toBe('Edildy — восстановление пароля');
+    expect(ru.text).toContain('https://app.edildy.com/reset-password?token=t0k%2Fen');
     const invite = inviteMail({ ...base, orgName: 'Acme', locale: 'en' });
-    expect(invite.subject).toBe('Taskop — invitation to Acme');
+    expect(invite.subject).toBe('Edildy — invitation to Acme');
     expect(invite.text).toContain('"Acme"');
-    expect(inviteMail({ ...base, orgName: 'Acme', locale: 'az' }).subject).toBe('Taskop — Acme təşkilatına dəvət');
+    expect(inviteMail({ ...base, orgName: 'Acme', locale: 'az' }).subject).toBe('Edildy — Acme təşkilatına dəvət');
   });
 
   it('writes the audit report e-mail in English and Russian', () => {

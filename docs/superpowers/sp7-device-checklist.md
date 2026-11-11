@@ -15,7 +15,7 @@ docker compose -p foundation start         # the existing demo Postgres (5432) a
 ipconfig getifaddr en0                     # e.g. 192.168.1.20 (needed for a real phone; the simulator can use localhost)
 cp -n apps/api/.env.example apps/api/.env
 cp -n apps/mobile/.env.example apps/mobile/.env
-pnpm --filter @taskop/api keys:generate    # only if apps/api/.env has empty JWT_PRIVATE_KEY / JWT_PUBLIC_KEY: paste its output into apps/api/.env
+pnpm --filter @edildy/api keys:generate    # only if apps/api/.env has empty JWT_PRIVATE_KEY / JWT_PUBLIC_KEY: paste its output into apps/api/.env
 ```
 
 Do not run `docker compose up -d` from this worktree: it would create a second compose project that collides with `foundation` on ports 5432 and 8333.
@@ -29,17 +29,17 @@ Edit the two gitignored files:
 
 ```bash
 pnpm db:setup && pnpm db:seed              # applies 0013_reports and 0014_reports_permissions, creates the demo tenant
-pnpm --filter @taskop/api db:seed-report-volume   # optional, about a minute: the "perf" tenant for item 8
-pnpm --filter @taskop/api dev              # API on http://localhost:3000
-pnpm --filter @taskop/web dev              # optional web admin on http://localhost:5173 (proxies /api to :3000)
+pnpm --filter @edildy/api db:seed-report-volume   # optional, about a minute: the "perf" tenant for item 8
+pnpm --filter @edildy/api dev              # API on http://localhost:3000
+pnpm --filter @edildy/web dev              # optional web admin on http://localhost:5173 (proxies /api to :3000)
 ```
 
 Mobile app in the iOS Simulator (Expo needs the full Xcode toolchain):
 
 ```bash
-pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios
-# real phone (items 6 and 9): DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
+pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios
+# real phone (items 6 and 9): DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
 ```
 
 A profile cached before the migration lacks `reports.view` until the app refreshes it, so kill and reopen the app once after `db:setup`.
@@ -48,10 +48,10 @@ A profile cached before the migration lacks `reports.view` until the app refresh
 
 | Who | Sign in | Credentials |
 |---|---|---|
-| Leyla, Manager, scope `site_subtree` | Rəhbər tab, email | `manager@demo.taskop.az` / `DemoPassword123` |
-| Owner, scope `all` | Rəhbər tab, email | `owner@demo.taskop.az` / `DemoPassword123` |
+| Leyla, Manager, scope `site_subtree` | Rəhbər tab, email | `manager@demo.edildy.az` / `DemoPassword123` |
+| Owner, scope `all` | Rəhbər tab, email | `owner@demo.edildy.az` / `DemoPassword123` |
 | Workers `elvin` and `nigar` | Worker tab, org code `demo` | PIN `482915` |
-| Perf manager, scope `site_subtree` (optional tenant) | Rəhbər tab, email | `perf-manager@taskop.test` / `PerfPassword123` |
+| Perf manager, scope `site_subtree` (optional tenant) | Rəhbər tab, email | `perf-manager@edildy.test` / `PerfPassword123` |
 
 Seed data used below: yesterday's partial "Səhər təmizliyi" run by elvin with two problems (one rule problem "Pis qoxu var?" = yes, one manual). A daily "Səhər təmizliyi" assignment for elvin (shift Səhər 08:00 to 16:00) produces today's occurrence once the API cron has run. Leyla's `site_subtree` scope gives her only elvin as a person (not nigar), so her employee picker offers just elvin.
 
@@ -59,17 +59,17 @@ Seed data used below: yesterday's partial "Səhər təmizliyi" run by elvin with
 
 ```bash
 curl -s -X POST http://localhost:3000/api/v1/auth/login/staff -H 'Content-Type: application/json' \
-  -d '{"email":"owner@demo.taskop.az","password":"DemoPassword123","client":"web"}'
+  -d '{"email":"owner@demo.edildy.az","password":"DemoPassword123","client":"web"}'
 ```
 
-Read `accessToken` from the JSON reply. Use the owner's login for the all-tenant numbers, or `manager@demo.taskop.az` to compare with Leyla's phone.
+Read `accessToken` from the JSON reply. Use the owner's login for the all-tenant numbers, or `manager@demo.edildy.az` to compare with Leyla's phone.
 
 ## B. Checklist
 
 1. **Workers never see the tab.**
    - Sign in as `elvin` (org code `demo`, PIN `482915`). Expected: the tabs Əsas, Tapşırıqlar and Profil, with no Komanda.
-   - On the simulator run `xcrun simctl openurl booted taskop://team`. Expected: the app stays on Əsas.
-   - Run `xcrun simctl openurl booted taskop://team/run/<any occurrence id>`. Expected: Əsas.
+   - On the simulator run `xcrun simctl openurl booted edildy://team`. Expected: the app stays on Əsas.
+   - Run `xcrun simctl openurl booted edildy://team/run/<any occurrence id>`. Expected: Əsas.
 2. **The manager's tab and today's tiles.**
    - Log out and sign in as Leyla on the Rəhbər tab. Expected: a Komanda tab between Tapşırıqlar and Profil, opening on "Bu gün".
    - Expected: six tiles: Tamamlanıb, Tamamlanmayıb, Gecikib, Yarımçıq, Problemli, Tamamlanma faizi.
@@ -98,7 +98,7 @@ Read `accessToken` from the JSON reply. Use the owner's login for the all-tenant
    - Expected: nothing on the screen can be edited, and back returns to the list where it was.
 7. **Read-only unexecuted run.** Open an overdue or missed run. Expected: the header, "İcraçılar" with the assignees (or "Təyin edilməyib"), and "Hələ icra edilməyib". No answers are requested.
 8. **Paging on a big tenant.**
-   - Sign in as `perf-manager@taskop.test` on the Rəhbər tab, choose "30 gün" and "Hamısı", and scroll fast to the bottom several times.
+   - Sign in as `perf-manager@edildy.test` on the Rəhbər tab, choose "30 gün" and "Hamısı", and scroll fast to the bottom several times.
    - Expected: rows keep coming 50 at a time with a spinner at the bottom, no row appears twice, and scrolling stops at the end.
    - Pull to refresh at the top. Expected: the list restarts at the first page.
 9. **Offline.** (real phone, or Network Link Conditioner on the simulator)
@@ -110,7 +110,7 @@ Read `accessToken` from the JSON reply. Use the owner's login for the all-tenant
     - On the web, create a custom role with `reports.view` and the `site_subtree` scope, and give it to a second staff user. Sign in as that user on the phone and open Komanda.
     - On the web, remove `reports.view` from the role. On the phone, pull to refresh.
     - Expected: "Bu əməliyyat üçün icazəniz yoxdur." briefly, then the Komanda tab disappears and the app shows Əsas.
-11. **Another manager on the same phone.** Log out Leyla and sign in as `owner@demo.taskop.az`. Open Komanda. Expected: the owner's numbers (scope `all`). Leyla's tiles never appear, not even for a moment.
+11. **Another manager on the same phone.** Log out Leyla and sign in as `owner@demo.edildy.az`. Open Komanda. Expected: the owner's numbers (scope `all`). Leyla's tiles never appear, not even for a moment.
 12. **The tenant's day, not the phone's.**
     - In iOS Settings, General, Date & Time, turn off "Set Automatically" and pick New York.
     - At a Baku time between 00:00 and 08:00 (still the previous day in New York), open Komanda. Expected: "Bu gün" shows the Baku day's numbers, the same as the web dashboard.

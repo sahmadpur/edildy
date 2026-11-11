@@ -1,5 +1,5 @@
 import { hash } from '@node-rs/argon2';
-import { addDays, localDateOf, regenerateIds } from '@taskop/contracts';
+import { addDays, localDateOf, regenerateIds } from '@edildy/contracts';
 import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { uuidv7 } from 'uuidv7';
@@ -56,12 +56,12 @@ export async function seedReportVolume(url: string): Promise<void> {
       const passwordHash = await hash(PASSWORD, ARGON);
       const ownerId = uuidv7();
       await tx.insert(schema.users).values({
-        id: ownerId, tenantId, fullName: 'Perf Sahib', roleId: roleIds.owner, kind: 'staff', email: 'perf-owner@taskop.test',
+        id: ownerId, tenantId, fullName: 'Perf Sahib', roleId: roleIds.owner, kind: 'staff', email: 'perf-owner@edildy.test',
         credentialHash: passwordHash, credentialKind: 'password', status: 'active', emailVerifiedAt: new Date(),
       });
       const managerId = uuidv7();
       await tx.insert(schema.users).values({
-        id: managerId, tenantId, fullName: 'Perf Menecer', roleId: roleIds.manager, kind: 'staff', email: 'perf-manager@taskop.test',
+        id: managerId, tenantId, fullName: 'Perf Menecer', roleId: roleIds.manager, kind: 'staff', email: 'perf-manager@edildy.test',
         credentialHash: passwordHash, credentialKind: 'password', status: 'active', emailVerifiedAt: new Date(), managerId: ownerId,
       });
       await tx.insert(schema.userSites).values({ tenantId, userId: managerId, siteId: branchIds[0]! });
@@ -147,8 +147,8 @@ export async function seedReportVolume(url: string): Promise<void> {
     });
     const [{ n }] = (await db.execute<{ n: number }>(sql`select count(*)::int as n from occurrences where tenant_id = ${tenantId}`)).rows as [{ n: number }];
     console.log(`Tenant "perf" created: ${n} occurrences from ${first} to ${today}.`);
-    console.log(`  Owner (all):            perf-owner@taskop.test / ${PASSWORD}`);
-    console.log(`  Manager (site_subtree): perf-manager@taskop.test / ${PASSWORD} (Filial 1 and its zones)`);
+    console.log(`  Owner (all):            perf-owner@edildy.test / ${PASSWORD}`);
+    console.log(`  Manager (site_subtree): perf-manager@edildy.test / ${PASSWORD} (Filial 1 and its zones)`);
   } finally {
     await db.$client.end();
   }

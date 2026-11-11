@@ -1,6 +1,6 @@
-import { ApiError } from '@taskop/api-client';
-import type { PlatformTenantDto } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import type { PlatformTenantDto } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useDeferredValue, useEffect, useState } from 'react';

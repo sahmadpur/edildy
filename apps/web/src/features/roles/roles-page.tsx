@@ -1,4 +1,4 @@
-import type { RoleDto } from '@taskop/contracts';
+import type { RoleDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { az } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { az } from '@edildy/i18n';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

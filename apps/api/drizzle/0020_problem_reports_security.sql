@@ -13,4 +13,4 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Reports and their media are never deleted; the cleanup job purges objects of stale pending media and keeps the rows.
-GRANT SELECT, INSERT, UPDATE ON problem_reports, problem_report_media TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON problem_reports, problem_report_media TO edildy_app, edildy_platform;

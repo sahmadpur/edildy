@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import type { ChecklistContent, SyncResponse } from '@taskop/contracts';
+import type { ChecklistContent, SyncResponse } from '@edildy/contracts';
 
 /** UUIDv7 (RFC 9562): 48-bit Unix ms, version 7, variant 10, random rest. The phone generates IDs like this. */
 function uuidv7(): string {
@@ -32,7 +32,7 @@ test('a worker executes an occurrence through the API, then the owner reads it i
   const email = `exe-${suffix}@example.az`;
   const password = 'e2e owner password';
 
-  // Tenant, site, worker and a published checklist from a Taskop template.
+  // Tenant, site, worker and a published checklist from a Edildy template.
   const signup = await request.post('/api/v1/auth/signup', {
     data: { orgName: 'E2E İcra MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
   });

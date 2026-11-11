@@ -1,4 +1,4 @@
-import { auditScore, type AuditVerdict, missingVerdicts } from '@taskop/contracts';
+import { auditScore, type AuditVerdict, missingVerdicts } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { type AuditWorld, auditLogOf, auditWorld, correct, sendBack, startAudit } from './audit-fixtures';

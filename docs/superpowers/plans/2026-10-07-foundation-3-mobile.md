@@ -1,23 +1,23 @@
-# Taskop Foundation — Part 3: Mobile App — Implementation Plan
+# Edildy Foundation — Part 3: Mobile App — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the Taskop Expo app shell: worker login (org code + username + PIN) and staff login (email + password), secure token storage with automatic refresh, offline-tolerant session restore, a placeholder home screen in the style of the mockup (product document p. 20), and a profile screen with PIN/password change and logout.
+**Goal:** Build the Edildy Expo app shell: worker login (org code + username + PIN) and staff login (email + password), secure token storage with automatic refresh, offline-tolerant session restore, a placeholder home screen in the style of the mockup (product document p. 20), and a profile screen with PIN/password change and logout.
 
-**Architecture:** Expo (latest SDK) with Expo Router. The shared `@taskop/api-client` runs in `mobile` mode: the refresh token lives in Expo SecureStore and is sent in the request body. The session store keeps the last `Me` profile in SecureStore so a worker who opens the app offline stays signed in (offline *checklist execution* is sub-project 4). Screens are thin route files around testable components in `src/features`.
+**Architecture:** Expo (latest SDK) with Expo Router. The shared `@edildy/api-client` runs in `mobile` mode: the refresh token lives in Expo SecureStore and is sent in the request body. The session store keeps the last `Me` profile in SecureStore so a worker who opens the app offline stays signed in (offline *checklist execution* is sub-project 4). Screens are thin route files around testable components in `src/features`.
 
 **Tech Stack:** Expo SDK (latest, currently 57), Expo Router, React Native, expo-secure-store, TanStack Query, react-hook-form + Zod, i18next, Jest (jest-expo) + React Native Testing Library.
 
-**Spec:** `docs/superpowers/specs/2026-10-07-foundation-design.md` (§9). **Depends on:** Part 1 (API) and Part 2 Task W1 (`@taskop/api-client`).
+**Spec:** `docs/superpowers/specs/2026-10-07-foundation-design.md` (§9). **Depends on:** Part 1 (API) and Part 2 Task W1 (`@edildy/api-client`).
 
 ## Global Constraints
 
 - All Part 1 and Part 2 Global Constraints apply.
-- Install Expo-managed packages with `pnpm --filter @taskop/mobile exec expo install <pkg>` so versions match the SDK; everything else with `pnpm add <pkg>@latest`.
-- App name **Taskop**; bundle id / package `az.taskop.app`; URL scheme `taskop`.
+- Install Expo-managed packages with `pnpm --filter @edildy/mobile exec expo install <pkg>` so versions match the SDK; everything else with `pnpm add <pkg>@latest`.
+- App name **Edildy**; bundle id / package `az.taskop.app`; URL scheme `edildy`.
 - Tokens: access token in memory; refresh token, cached `Me` and the remembered org code in SecureStore. Never AsyncStorage for tokens.
 - A network failure must never log the user out; only an API `UNAUTHENTICATED` on refresh does.
-- Touch targets ≥ 44 pt; all text from `@taskop/i18n` (`mobile` namespace plus shared `common`/`errors`).
+- Touch targets ≥ 44 pt; all text from `@edildy/i18n` (`mobile` namespace plus shared `common`/`errors`).
 
 ## Review Focus
 
@@ -61,11 +61,11 @@ apps/mobile/
 - Test: `apps/mobile/src/lib/session.test.ts`
 
 **Interfaces:**
-- Consumes: `ApiClient`, `createTaskopApi`, `ApiError`, `TokenStore` from `@taskop/api-client`.
+- Consumes: `ApiClient`, `createEdildyApi`, `ApiError`, `TokenStore` from `@edildy/api-client`.
 - Produces:
   - `secureStorage { get(key): Promise<string|null>; set(key, value): Promise<void>; remove(key): Promise<void> }` and `STORAGE_KEYS = { refreshToken, me, orgCode }`.
   - `type MobileSession = { status: 'loading' } | { status: 'anonymous' } | { status: 'authenticated'; me: Me; offline: boolean }`.
-  - `session { get(); subscribe(l); bootstrap(); signedIn(r: LoginResult); refreshMe(); signOut(); rememberOrgCode(code); getOrgCode(): Promise<string|null> }`, `useSession()`, `api: TaskopApi`.
+  - `session { get(); subscribe(l); bootstrap(); signedIn(r: LoginResult); refreshMe(); signOut(); rememberOrgCode(code); getOrgCode(): Promise<string|null> }`, `useSession()`, `api: EdildyApi`.
   - `colors`, `spacing` in `theme.ts`.
 
 - [ ] **Step 1: Create the app from the Expo template**
@@ -74,7 +74,7 @@ apps/mobile/
 pnpm create expo-app@latest apps/mobile --template blank-typescript --no-install
 cd apps/mobile
 ```
-Edit `apps/mobile/package.json`: set `"name": "@taskop/mobile"`, `"private": true`, `"main": "expo-router/entry"`, and these scripts (keep the template's others):
+Edit `apps/mobile/package.json`: set `"name": "@edildy/mobile"`, `"private": true`, `"main": "expo-router/entry"`, and these scripts (keep the template's others):
 ```json
 "scripts": {
   "dev": "expo start",
@@ -88,10 +88,10 @@ Edit `apps/mobile/package.json`: set `"name": "@taskop/mobile"`, `"private": tru
 Then from the repo root:
 ```bash
 pnpm install
-pnpm --filter @taskop/mobile exec expo install expo-router expo-linking expo-constants expo-status-bar expo-secure-store react-native-safe-area-context react-native-screens
-pnpm --filter @taskop/mobile exec expo install jest-expo jest @types/jest -- --save-dev
-pnpm --filter @taskop/mobile add @tanstack/react-query@latest react-hook-form@latest @hookform/resolvers@latest i18next@latest react-i18next@latest zod@latest "@taskop/contracts@workspace:*" "@taskop/i18n@workspace:*" "@taskop/api-client@workspace:*"
-pnpm --filter @taskop/mobile add -D @testing-library/react-native@latest eslint@latest "@taskop/config@workspace:*"
+pnpm --filter @edildy/mobile exec expo install expo-router expo-linking expo-constants expo-status-bar expo-secure-store react-native-safe-area-context react-native-screens
+pnpm --filter @edildy/mobile exec expo install jest-expo jest @types/jest -- --save-dev
+pnpm --filter @edildy/mobile add @tanstack/react-query@latest react-hook-form@latest @hookform/resolvers@latest i18next@latest react-i18next@latest zod@latest "@edildy/contracts@workspace:*" "@edildy/i18n@workspace:*" "@edildy/api-client@workspace:*"
+pnpm --filter @edildy/mobile add -D @testing-library/react-native@latest eslint@latest "@edildy/config@workspace:*"
 ```
 Delete the template's `App.tsx` and `index.ts` (Expo Router's entry replaces them).
 
@@ -99,9 +99,9 @@ Delete the template's `App.tsx` and `index.ts` (Expo Router's entry replaces the
 ```json
 {
   "expo": {
-    "name": "Taskop",
+    "name": "Edildy",
     "slug": "taskop",
-    "scheme": "taskop",
+    "scheme": "edildy",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -141,7 +141,7 @@ Add Jest config to `apps/mobile/package.json`:
   "preset": "jest-expo",
   "moduleNameMapper": { "^@/(.*)$": "<rootDir>/src/$1" },
   "transformIgnorePatterns": [
-    "node_modules/(?!(?:.pnpm/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|expo-router|react-navigation|@react-navigation/.*|@taskop/.*|zod))"
+    "node_modules/(?!(?:.pnpm/)?((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|expo-router|react-navigation|@react-navigation/.*|@edildy/.*|zod))"
   ]
 }
 ```
@@ -154,7 +154,7 @@ EXPO_PUBLIC_API_URL=http://localhost:3000
 
 `apps/mobile/eslint.config.js`:
 ```js
-import base from '@taskop/config/eslint';
+import base from '@edildy/config/eslint';
 export default base;
 ```
 (If Metro fails to resolve workspace packages under pnpm's isolated layout, add `node-linker=hoisted` to the root `.npmrc` and re-run `pnpm install`.)
@@ -205,7 +205,7 @@ export default {
   },
 } as const;
 ```
-Register `mobile` in `packages/i18n/src/az/index.ts`; run `pnpm --filter @taskop/i18n build`.
+Register `mobile` in `packages/i18n/src/az/index.ts`; run `pnpm --filter @edildy/i18n build`.
 
 - [ ] **Step 3: Write the failing test**
 
@@ -213,7 +213,7 @@ Register `mobile` in `packages/i18n/src/az/index.ts`; run `pnpm --filter @taskop
 ```ts
 const store = new Map<string, string>();
 jest.mock('./secure-storage', () => ({
-  STORAGE_KEYS: { refreshToken: 'taskop.refreshToken', me: 'taskop.me', orgCode: 'taskop.orgCode' },
+  STORAGE_KEYS: { refreshToken: 'edildy.refreshToken', me: 'edildy.me', orgCode: 'edildy.orgCode' },
   secureStorage: {
     get: jest.fn(async (k: string) => store.get(k) ?? null),
     set: jest.fn(async (k: string, v: string) => void store.set(k, v)),
@@ -247,33 +247,33 @@ describe('mobile session', () => {
   });
 
   it('restores the session through refresh and caches the profile', async () => {
-    store.set('taskop.refreshToken', 'r1');
+    store.set('edildy.refreshToken', 'r1');
     (global.fetch as jest.Mock).mockResolvedValue(json(200, { accessToken: 'a', accessTokenExpiresAt: '2026-10-07T10:00:00.000Z', refreshToken: 'r2', me }));
     await session.bootstrap();
     expect(session.get()).toMatchObject({ status: 'authenticated', offline: false });
-    expect(store.get('taskop.refreshToken')).toBe('r2');
-    expect(JSON.parse(store.get('taskop.me')!).user.username).toBe('elvin');
+    expect(store.get('edildy.refreshToken')).toBe('r2');
+    expect(JSON.parse(store.get('edildy.me')!).user.username).toBe('elvin');
   });
 
   it('restores the cached profile when offline', async () => {
-    store.set('taskop.refreshToken', 'r1');
-    store.set('taskop.me', JSON.stringify(me));
+    store.set('edildy.refreshToken', 'r1');
+    store.set('edildy.me', JSON.stringify(me));
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.bootstrap();
     expect(session.get()).toMatchObject({ status: 'authenticated', offline: true });
-    expect(store.get('taskop.refreshToken')).toBe('r1');
+    expect(store.get('edildy.refreshToken')).toBe('r1');
   });
 
   it('clears storage when refresh is rejected', async () => {
-    store.set('taskop.refreshToken', 'r1');
-    store.set('taskop.me', JSON.stringify(me));
+    store.set('edildy.refreshToken', 'r1');
+    store.set('edildy.me', JSON.stringify(me));
     (global.fetch as jest.Mock).mockResolvedValue(
       json(401, { error: { code: 'UNAUTHENTICATED', messageKey: 'errors.UNAUTHENTICATED', fields: null, retryAfterSeconds: null, requestId: null } }),
     );
     await session.bootstrap();
     expect(session.get()).toEqual({ status: 'anonymous' });
-    expect(store.has('taskop.refreshToken')).toBe(false);
-    expect(store.has('taskop.me')).toBe(false);
+    expect(store.has('edildy.refreshToken')).toBe(false);
+    expect(store.has('edildy.me')).toBe(false);
   });
 
   it('signs out locally even when the server is unreachable', async () => {
@@ -281,7 +281,7 @@ describe('mobile session', () => {
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.signOut();
     expect(session.get()).toEqual({ status: 'anonymous' });
-    expect(store.has('taskop.refreshToken')).toBe(false);
+    expect(store.has('edildy.refreshToken')).toBe(false);
   });
 
   it('remembers the org code', async () => {
@@ -293,7 +293,7 @@ describe('mobile session', () => {
 
 - [ ] **Step 4: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/mobile test`
+Run: `pnpm --filter @edildy/mobile test`
 Expected: FAIL — `./session` / `./secure-storage` not found.
 
 - [ ] **Step 5: Implement**
@@ -303,9 +303,9 @@ Expected: FAIL — `./session` / `./secure-storage` not found.
 import * as SecureStore from 'expo-secure-store';
 
 export const STORAGE_KEYS = {
-  refreshToken: 'taskop.refreshToken',
-  me: 'taskop.me',
-  orgCode: 'taskop.orgCode',
+  refreshToken: 'edildy.refreshToken',
+  me: 'edildy.me',
+  orgCode: 'edildy.orgCode',
 } as const;
 
 export const secureStorage = {
@@ -317,8 +317,8 @@ export const secureStorage = {
 
 `apps/mobile/src/lib/session.ts`:
 ```ts
-import { ApiClient, ApiError, createTaskopApi, type TokenStore } from '@taskop/api-client';
-import { type LoginResult, type Me, meSchema } from '@taskop/contracts';
+import { ApiClient, ApiError, createEdildyApi, type TokenStore } from '@edildy/api-client';
+import { type LoginResult, type Me, meSchema } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 import { secureStorage, STORAGE_KEYS } from './secure-storage';
 
@@ -365,7 +365,7 @@ const apiClient = new ApiClient({
     set({ status: 'authenticated', me: r.me, offline: false });
   },
 });
-export const api = createTaskopApi(apiClient);
+export const api = createEdildyApi(apiClient);
 
 export const session = {
   get: (): MobileSession => state,
@@ -413,7 +413,7 @@ export function useSession(): MobileSession {
 
 `apps/mobile/src/lib/i18n.ts`:
 ```ts
-import { DEFAULT_LOCALE, resources } from '@taskop/i18n';
+import { DEFAULT_LOCALE, resources } from '@edildy/i18n';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -457,7 +457,7 @@ export default function RootLayout() {
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -534,7 +534,7 @@ describe('LoginScreen', () => {
   });
 
   it('shows the translated API error', async () => {
-    const { ApiError } = jest.requireActual('@taskop/api-client');
+    const { ApiError } = jest.requireActual('@edildy/api-client');
     loginWorker.mockRejectedValue(new ApiError(401, 'INVALID_CREDENTIALS', 'errors.INVALID_CREDENTIALS'));
     render(<LoginScreen />);
     fireEvent.changeText(screen.getByLabelText('Təşkilat kodu'), 'acme');
@@ -567,7 +567,7 @@ jest.mock('@/lib/session', () => ({ api: { auth: { changeCredential: (...a: unkn
 
 describe('ChangeSecretScreen', () => {
   it('shows the weak-PIN field error', async () => {
-    const { ApiError } = jest.requireActual('@taskop/api-client');
+    const { ApiError } = jest.requireActual('@edildy/api-client');
     changeCredential.mockRejectedValue(new ApiError(400, 'VALIDATION_FAILED', 'errors.VALIDATION_FAILED', { newSecret: 'errors.validation.pinWeak' }));
     render(<ChangeSecretScreen onDone={jest.fn()} />);
     fireEvent.changeText(screen.getByLabelText('Cari PIN/şifrə'), '730184');
@@ -591,7 +591,7 @@ describe('ChangeSecretScreen', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `pnpm --filter @taskop/mobile test`
+Run: `pnpm --filter @edildy/mobile test`
 Expected: FAIL — screen modules missing.
 
 - [ ] **Step 3: Implement components**
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
 
 `apps/mobile/src/components/form-error.tsx`:
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text } from 'react-native';
 import { colors } from '@/lib/theme';
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
 
 `apps/mobile/src/features/auth/login-screen.tsx`:
 ```tsx
-import { loginStaffInputSchema, loginWorkerInputSchema } from '@taskop/contracts';
+import { loginStaffInputSchema, loginWorkerInputSchema } from '@edildy/contracts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -796,7 +796,7 @@ export function LoginScreen() {
 
   return (
     <Screen>
-      <Text style={styles.brand}>Taskop</Text>
+      <Text style={styles.brand}>Edildy</Text>
       <Text style={styles.title}>{t('mobile.login.title')}</Text>
       <View style={styles.toggle}>
         {(['worker', 'staff'] as const).map((m) => (
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
 
 `apps/mobile/src/features/profile/change-secret-screen.tsx`:
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'react-native';
@@ -1109,18 +1109,18 @@ export default function ChangeSecretRoute() {
   );
 }
 ```
-(`@expo/vector-icons` ships with Expo; if the template doesn't list it, run `pnpm --filter @taskop/mobile exec expo install @expo/vector-icons`. The `roles.systemNames.*` keys used on the profile screen come from Part 2 Task W6.)
+(`@expo/vector-icons` ships with Expo; if the template doesn't list it, run `pnpm --filter @edildy/mobile exec expo install @expo/vector-icons`. The `roles.systemNames.*` keys used on the profile screen come from Part 2 Task W6.)
 
 - [ ] **Step 6: Run tests and type-check**
 
-Run: `pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS.
 
 - [ ] **Step 7: Manual check on a simulator or phone**
 
 ```bash
 cp apps/mobile/.env.example apps/mobile/.env   # set your LAN IP for a physical phone
-pnpm --filter @taskop/mobile dev               # press i (iOS simulator) or a (Android), or scan with Expo Go
+pnpm --filter @edildy/mobile dev               # press i (iOS simulator) or a (Android), or scan with Expo Go
 ```
 With the API running and the demo seed loaded: log in as org code `DEMO `, username `Elvin`, PIN `482915` → home greets "Salam, Elvin!". Kill the API, restart the app → home shows the offline banner. Restart the API, change the PIN on Profile → log out → log in with the new PIN.
 

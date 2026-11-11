@@ -1,6 +1,6 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import type { NotificationItem, NotificationRuleDto } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { NotificationItem, NotificationRuleDto } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { uuidv7 } from 'uuidv7';
 
 function apiAs(request: APIRequestContext, accessToken: string) {
@@ -98,7 +98,7 @@ test('an admin changes the task.assigned rule and messages a team; the member se
   await expect(recipient).toContainText('Cihaz yoxdur');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Çıxış' }).click();
-  await expect(page.getByRole('heading', { name: 'Taskop-a daxil olun' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Edildy-yə daxil olun' })).toBeVisible();
 
   // The member on the web (decision 16): a worker session with the web client's refresh cookie.
   const web = await page.request.post('/api/v1/auth/login/worker', {

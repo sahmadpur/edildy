@@ -1,5 +1,5 @@
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import type { ChecklistContent, SyncResponse, TaskDetail } from '@taskop/contracts';
+import type { ChecklistContent, SyncResponse, TaskDetail } from '@edildy/contracts';
 // The phone's client ids (UUIDv7), from the package the web already uses (decision 13).
 import { uuidv7 } from 'uuidv7';
 
@@ -25,7 +25,7 @@ test('a closed run’s problem becomes a task on the web; the worker answers thr
   const email = `task-${suffix}@example.az`;
   const password = 'e2e owner password';
 
-  // Tenant, site, worker and a published checklist from a Taskop template.
+  // Tenant, site, worker and a published checklist from a Edildy template.
   const signup = await request.post('/api/v1/auth/signup', {
     data: { orgName: 'E2E Tapşırıq MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
   });

@@ -1,4 +1,4 @@
-import type { ChecklistsApi, TemplatesApi } from '@taskop/api-client';
+import type { ChecklistsApi, TemplatesApi } from '@edildy/api-client';
 import type { ReactElement } from 'react';
 import { vi } from 'vitest';
 import { type ChecklistWorkspace, WorkspaceProvider } from '@/features/checklists/workspace';

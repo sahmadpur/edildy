@@ -7,7 +7,7 @@ export class PasswordHasher {
   private readonly dummyHash: Promise<string>;
 
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {
-    this.dummyHash = this.hash('taskop-timing-equaliser');
+    this.dummyHash = this.hash('edildy-timing-equaliser');
   }
 
   /** argon2id (the library default algorithm) with configured cost. */

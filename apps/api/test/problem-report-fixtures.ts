@@ -1,4 +1,4 @@
-import type { ProblemReportDto } from '@taskop/contracts';
+import type { ProblemReportDto } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { expect } from 'vitest';
 import { DomainEvents } from '../src/common/domain-events';

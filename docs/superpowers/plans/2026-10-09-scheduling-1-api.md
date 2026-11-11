@@ -1,11 +1,11 @@
-# Taskop Scheduling & Assignment — Part 1: Contracts & API — Implementation Plan
+# Edildy Scheduling & Assignment — Part 1: Contracts & API — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add shift templates, dated rosters, assignments (checklist + site + named users + recurrence) and automatically generated occurrences with `pending → overdue → missed` status changes to `@taskop/contracts` and the API, with pg-boss running the two background jobs.
+**Goal:** Add shift templates, dated rosters, assignments (checklist + site + named users + recurrence) and automatically generated occurrences with `pending → overdue → missed` status changes to `@edildy/contracts` and the API, with pg-boss running the two background jobs.
 
 **Architecture:**
-- **Recurrence and timezone maths** are pure functions in `@taskop/contracts`, shared with the web: `scheduleDates`, `slotFor`, `expandSchedule` and `describeSchedule`, built on small `Intl`-based zone helpers.
+- **Recurrence and timezone maths** are pure functions in `@edildy/contracts`, shared with the web: `scheduleDates`, `slotFor`, `expandSchedule` and `describeSchedule`, built on small `Intl`-based zone helpers.
 - **The API** gets one new NestJS module, `scheduling`:
   - Services: shifts, roster, assignments and occurrences.
   - `OccurrenceWriter` is the only code that creates, cancels or changes the status of occurrences, and it writes the status history.
@@ -24,7 +24,7 @@
 
 ## Global Constraints
 
-- The product name is **Taskop**. Packages are `@taskop/*`. Azerbaijani (`az`) is the only locale.
+- The product name is **Edildy**. Packages are `@edildy/*`. Azerbaijani (`az`) is the only locale.
 - Install new packages with `pnpm add <pkg>@latest`. This part adds exactly one: `pg-boss` in `apps/api`.
 - IDs are UUIDv7 for table rows. Every tenant-owned table has `tenant_id uuid not null`, has RLS `FORCE`d with the policy on `nullif(current_setting('app.tenant_id', true), '')::uuid`, and uses composite `(tenant_id, x_id)` foreign keys.
 - All local times are in the **tenant timezone** (`tenants.timezone`). The API sends instants as ISO-8601 UTC and local dates as `YYYY-MM-DD`.
@@ -231,7 +231,7 @@ describe('time zones', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- scheduling-time`
+Run: `pnpm --filter @edildy/contracts test -- scheduling-time`
 Expected: FAIL, because `./scheduling-time.js` does not exist.
 
 - [ ] **Step 3: Implement**
@@ -341,7 +341,7 @@ export * from './scheduling-time.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test -- scheduling-time`
+Run: `pnpm --filter @edildy/contracts test -- scheduling-time`
 Expected: PASS (all cases, including the 6 DST cases).
 
 - [ ] **Step 5: Commit**
@@ -520,7 +520,7 @@ describe('validateSchedule and warnings', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- scheduling.test`
+Run: `pnpm --filter @edildy/contracts test -- scheduling.test`
 Expected: FAIL, because `./scheduling.js` does not exist.
 
 - [ ] **Step 3: Implement**
@@ -738,7 +738,7 @@ export * from './scheduling.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test -- scheduling`
+Run: `pnpm --filter @edildy/contracts test -- scheduling`
 Expected: PASS (both `scheduling-time` and `scheduling` suites).
 
 - [ ] **Step 5: Commit**
@@ -814,7 +814,7 @@ describe('describeSchedule', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- scheduling-describe`
+Run: `pnpm --filter @edildy/contracts test -- scheduling-describe`
 Expected: FAIL, because the module does not exist.
 
 - [ ] **Step 3: Implement**
@@ -881,7 +881,7 @@ export * from './scheduling-describe.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test -- scheduling-describe`
+Run: `pnpm --filter @edildy/contracts test -- scheduling-describe`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -999,7 +999,7 @@ describe('scheduling resources', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- scheduling-resources`
+Run: `pnpm --filter @edildy/contracts test -- scheduling-resources`
 Expected: FAIL, because the imports are undefined.
 
 - [ ] **Step 3: Implement the DTO modules**
@@ -1355,7 +1355,7 @@ In `apps/api/test/roles.test.ts` line 17, update the expected manager permission
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS. The existing `resources.test.ts` and `errors.test.ts` still pass.
 
 - [ ] **Step 6: Record the error-list change in the spec and commit**
@@ -1387,7 +1387,7 @@ git commit -m "feat(contracts): add shift, roster, assignment and occurrence DTO
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `packages/i18n/src/i18n.test.ts`. Extend the `@taskop/contracts` import with `CANCEL_REASON_CODES`, `describeSchedule`, `OCCURRENCE_STATUSES`, `PREVIEW_WARNINGS` and `SCHEDULING_ISSUE_CODES`:
+Append to `packages/i18n/src/i18n.test.ts`. Extend the `@edildy/contracts` import with `CANCEL_REASON_CODES`, `describeSchedule`, `OCCURRENCE_STATUSES`, `PREVIEW_WARNINGS` and `SCHEDULING_ISSUE_CODES`:
 
 ```ts
 describe('scheduling translations', () => {
@@ -1414,7 +1414,7 @@ describe('scheduling translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.scheduling` is undefined, and the error-code test fails for the 15 new codes.
 
 - [ ] **Step 3: Implement**
@@ -1515,7 +1515,7 @@ In `packages/i18n/src/az/index.ts`, import `scheduling from './scheduling.js'` a
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1539,7 +1539,7 @@ git commit -m "feat(i18n): add Azerbaijani strings for scheduling errors, permis
   - Tables: `shifts`, `shiftRoster`, `assignments`, `assignmentAssignees`, `occurrences`, `occurrenceAssignees`, `occurrenceStatusHistory`
 - Column types: `time` columns read back as `'HH:MM:SS'` strings. `date` columns use `mode: 'string'` (`'YYYY-MM-DD'`). `timestamptz` columns are `Date`.
 - Partial unique index `occurrences_live_day_uq` on `(assignment_id, local_date) where status <> 'cancelled'`. Task 10 targets it with `ON CONFLICT DO NOTHING`.
-- Schema `pgboss`, owned by `taskop_app`, so pg-boss can install and upgrade its own tables (Task 12).
+- Schema `pgboss`, owned by `edildy_app`, so pg-boss can install and upgrade its own tables (Task 12).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1644,7 +1644,7 @@ describe('scheduling tables', () => {
 
   it('gives the app account its own pgboss schema', async () => {
     const r = await ownerQuery<{ owner: string }>("select nspowner::regrole::text as owner from pg_namespace where nspname = 'pgboss'");
-    expect(r.rows[0]?.owner).toBe('taskop_app');
+    expect(r.rows[0]?.owner).toBe('edildy_app');
   });
 
   it('backfills the new keys for existing Admin roles', async () => {
@@ -1671,7 +1671,7 @@ describe('scheduling tables', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- scheduling-db`
+Run: `pnpm --filter @edildy/api test -- scheduling-db`
 Expected: FAIL: relation `assignments` does not exist.
 
 - [ ] **Step 3: Add the tables to the Drizzle schema**
@@ -1680,7 +1680,7 @@ In `apps/api/src/db/schema.ts`, add `date` and `time` to the `drizzle-orm/pg-cor
 
 ```ts
 export const assignmentStatus = pgEnum('assignment_status', ['active', 'paused', 'ended']);
-// Must match OCCURRENCE_STATUSES in @taskop/contracts (FR-11.01).
+// Must match OCCURRENCE_STATUSES in @edildy/contracts (FR-11.01).
 export const occurrenceStatus = pgEnum('occurrence_status', [
   'pending',
   'started',
@@ -1860,8 +1860,8 @@ export const occurrenceStatusHistory = pgTable(
 - [ ] **Step 4: Generate the migrations**
 
 ```bash
-pnpm --filter @taskop/api exec drizzle-kit generate --name scheduling
-pnpm --filter @taskop/api exec drizzle-kit generate --custom --name scheduling_security
+pnpm --filter @edildy/api exec drizzle-kit generate --name scheduling
+pnpm --filter @edildy/api exec drizzle-kit generate --custom --name scheduling_security
 ```
 
 Check the output:
@@ -1886,15 +1886,15 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Shifts, assignments and occurrences are never deleted; roster and snapshot rows are replaced.
-GRANT SELECT, INSERT, UPDATE ON shifts, assignments, occurrences TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON shifts, assignments, occurrences TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON shift_roster, assignment_assignees, occurrence_assignees TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON shift_roster, assignment_assignees, occurrence_assignees TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- FR-11.02: status history is append-only.
-GRANT SELECT, INSERT ON occurrence_status_history TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON occurrence_status_history TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- pg-boss keeps its job tables in their own schema, owned by the app account so it can install and upgrade them itself.
-CREATE SCHEMA IF NOT EXISTS pgboss AUTHORIZATION taskop_app;
+CREATE SCHEMA IF NOT EXISTS pgboss AUTHORIZATION edildy_app;
 --> statement-breakpoint
 -- The backfill below must see every tenant's rows (see 0004 for why row_security is switched off).
 SET LOCAL row_security = off;
@@ -1914,7 +1914,7 @@ SET LOCAL row_security = on;
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- scheduling-db checklists-db`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- scheduling-db checklists-db`
 Expected: PASS. The global test setup applies the new migrations to a fresh container.
 
 - [ ] **Step 6: Commit**
@@ -2040,7 +2040,7 @@ describe('emitters', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- domain-events`
+Run: `pnpm --filter @edildy/api test -- domain-events`
 Expected: FAIL: `../src/common/domain-events` does not exist.
 
 - [ ] **Step 3: Implement the clock and the event bus**
@@ -2067,7 +2067,7 @@ export class SystemClock extends Clock {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { OccurrenceStatus } from '@taskop/contracts';
+import type { OccurrenceStatus } from '@edildy/contracts';
 
 export interface DomainEventMap {
   'user.access_changed': { tenantId: string; userId: string };
@@ -2206,7 +2206,7 @@ export async function createTestApp(overrides: Record<string, string> = {}, opts
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- domain-events users checklists`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- domain-events users checklists`
 Expected: PASS. The existing users and checklists suites are unchanged.
 
 - [ ] **Step 7: Commit**
@@ -2243,7 +2243,7 @@ git commit -m "feat(api): add Clock and in-transaction DomainEvents; emit user a
 `apps/api/test/scheduling-fixtures.ts`:
 
 ```ts
-import type { AssignmentDetail, SystemRoleKey } from '@taskop/contracts';
+import type { AssignmentDetail, SystemRoleKey } from '@edildy/contracts';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';
@@ -2396,7 +2396,7 @@ describe('shifts', () => {
 
   it('lets a platform admin manage shifts inside a tenant', async () => {
     const w = await schedulingWorld(t, 0);
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     const admin = await ownerQuery<{ id: string }>(
       "insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support') returning id",
       [email, await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 })],
@@ -2414,7 +2414,7 @@ describe('shifts', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- shifts`
+Run: `pnpm --filter @edildy/api test -- shifts`
 Expected: FAIL: `/api/v1/shifts` returns 404.
 
 - [ ] **Step 3: Implement actor, scope and mappers**
@@ -2528,7 +2528,7 @@ export class SchedulingScope {
 `apps/api/src/scheduling/mappers.ts`:
 
 ```ts
-import type { ShiftDto } from '@taskop/contracts';
+import type { ShiftDto } from '@edildy/contracts';
 
 /** Postgres `time` reads back as 'HH:MM:SS'. */
 export const hhmm = (t: string): string => t.slice(0, 5);
@@ -2574,7 +2574,7 @@ Zod issue messages become `fields` only when they start with `errors.`. Scheduli
 `apps/api/src/scheduling/dto.ts`:
 
 ```ts
-import { createShiftInputSchema, shiftDtoSchema, shiftListQuerySchema, updateShiftInputSchema } from '@taskop/contracts';
+import { createShiftInputSchema, shiftDtoSchema, shiftListQuerySchema, updateShiftInputSchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ShiftListQueryDto extends createZodDto(shiftListQuerySchema) {}
@@ -2587,7 +2587,7 @@ export class ShiftResponse extends createZodDto(shiftDtoSchema) {}
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { ShiftDto } from '@taskop/contracts';
+import type { ShiftDto } from '@edildy/contracts';
 import { and, asc, eq, isNull, or, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { assertIdsExist } from '../common/ids-exist';
@@ -2671,7 +2671,7 @@ export class ShiftsService {
 ```ts
 import { Body, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { ShiftDto } from '@taskop/contracts';
+import type { ShiftDto } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { CreateShiftDto, ShiftListQueryDto, ShiftResponse, UpdateShiftDto } from './dto';
@@ -2735,7 +2735,7 @@ In `apps/api/src/app.module.ts`, import `SchedulingModule` from `'./scheduling/s
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- shifts error.filter`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- shifts error.filter`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -2872,7 +2872,7 @@ describe('roster', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- roster`
+Run: `pnpm --filter @edildy/api test -- roster`
 Expected: FAIL: `/api/v1/roster` returns 404.
 
 - [ ] **Step 3: Implement**
@@ -2891,7 +2891,7 @@ export class RosterCopyResultResponse extends createZodDto(rosterCopyResultSchem
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { addDays, dayNumber, type RosterCopyResult, type RosterDto, type RosterRow } from '@taskop/contracts';
+import { addDays, dayNumber, type RosterCopyResult, type RosterDto, type RosterRow } from '@edildy/contracts';
 import { and, asc, between, eq, inArray } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { DomainEvents } from '../common/domain-events';
@@ -3023,7 +3023,7 @@ export class RosterService {
 ```ts
 import { Body, Get, Inject, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { RosterCopyResult, RosterDto } from '@taskop/contracts';
+import type { RosterCopyResult, RosterDto } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { type Actor, CurrentActor } from './actor';
 import { CopyRosterDto, PutRosterDto, RosterCopyResultResponse, RosterQueryDto, RosterResponse } from './dto';
@@ -3069,7 +3069,7 @@ In `scheduling.module.ts`, add `TenantRosterController` and `PlatformTenantRoste
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- roster`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- roster`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -3111,7 +3111,7 @@ git commit -m "feat(api): add roster read, replace and week copy"
 `apps/api/test/assignments.test.ts`:
 
 ```ts
-import { addDays } from '@taskop/contracts';
+import { addDays } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
@@ -3285,7 +3285,7 @@ describe('assignments', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- test/assignments.test.ts`
+Run: `pnpm --filter @edildy/api test -- test/assignments.test.ts`
 Expected: FAIL: `/api/v1/assignments` returns 404.
 
 - [ ] **Step 3: Add the mappers and DTOs**
@@ -3378,7 +3378,7 @@ import {
   type ShiftHours,
   timingSchema,
   zonedTimeToUtc,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, between, eq, gt, inArray, type SQL, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { Clock } from '../common/clock';
@@ -3561,7 +3561,7 @@ export class OccurrenceWriter {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { OccurrenceDto } from '@taskop/contracts';
+import type { OccurrenceDto } from '@edildy/contracts';
 import { and, asc, eq, getTableColumns, gt, inArray, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { DbService } from '../db/db.service';
@@ -3622,7 +3622,7 @@ import {
   type Timing,
   validateSchedule,
   windowMinutes,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { eq, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -3728,7 +3728,7 @@ import {
   type PreviewWarning,
   SCHEDULING_LIMITS,
   scheduleWarnings,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, between, desc, eq, getTableColumns, ilike, inArray, lt, or, type SQL, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { AppError } from '../common/app-error';
@@ -3883,7 +3883,7 @@ export class AssignmentsService {
 ```ts
 import { Body, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { AssignmentDetail, AssignmentDto, AssignmentPreview, Page } from '@taskop/contracts';
+import type { AssignmentDetail, AssignmentDto, AssignmentPreview, Page } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { type Actor, CurrentActor } from './actor';
@@ -3947,7 +3947,7 @@ In `scheduling.module.ts`:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- test/assignments.test.ts roster shifts`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- test/assignments.test.ts roster shifts`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -4144,7 +4144,7 @@ describe('changing assignments', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- assignment-changes`
+Run: `pnpm --filter @edildy/api test -- assignment-changes`
 Expected: FAIL: `PUT /api/v1/assignments/:id` returns 404.
 
 - [ ] **Step 3: Add update, pause, resume and end**
@@ -4286,7 +4286,7 @@ Add to the controller (import `Put` and `UpdateAssignmentDto`):
 
 ```ts
 import { Injectable, type OnModuleInit } from '@nestjs/common';
-import { localDateOf } from '@taskop/contracts';
+import { localDateOf } from '@edildy/contracts';
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { DomainEvents } from '../common/domain-events';
@@ -4371,7 +4371,7 @@ In `scheduling.module.ts`, add `SchedulingListeners` to `providers`.
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- assignment-changes test/assignments.test.ts shifts roster domain-events`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- assignment-changes test/assignments.test.ts shifts roster domain-events`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -4549,16 +4549,16 @@ describe('pg-boss wiring', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- occurrence-jobs`
+Run: `pnpm --filter @edildy/api test -- occurrence-jobs`
 Expected: FAIL: `../src/scheduling/jobs.service` does not exist.
 
 - [ ] **Step 3: Install pg-boss and add the config**
 
 ```bash
-pnpm --filter @taskop/api add pg-boss@latest
+pnpm --filter @edildy/api add pg-boss@latest
 ```
 
-pg-boss 12 is ESM-only. The API builds to CommonJS, and Node 24 `require()`s ES modules natively, so a normal `import { PgBoss } from 'pg-boss'` works. If `pnpm --filter @taskop/api build && pnpm --filter @taskop/api start` fails with `ERR_REQUIRE_ASYNC_MODULE`, load it with `const { PgBoss } = await import('pg-boss')` inside `onApplicationBootstrap` and keep only `import type` at the top.
+pg-boss 12 is ESM-only. The API builds to CommonJS, and Node 24 `require()`s ES modules natively, so a normal `import { PgBoss } from 'pg-boss'` works. If `pnpm --filter @edildy/api build && pnpm --filter @edildy/api start` fails with `ERR_REQUIRE_ASYNC_MODULE`, load it with `const { PgBoss } = await import('pg-boss')` inside `onApplicationBootstrap` and keep only `import type` at the top.
 
 In `apps/api/src/config/config.ts`, add to `configSchema`:
 
@@ -4595,7 +4595,7 @@ JOBS_CRON=true
 
 ```ts
 import { Injectable, Logger } from '@nestjs/common';
-import type { OccurrenceStatus } from '@taskop/contracts';
+import type { OccurrenceStatus } from '@edildy/contracts';
 import { eq, type SQL, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { sanitiseForLog } from '../common/error.filter';
@@ -4727,7 +4727,7 @@ export class JobsService implements OnApplicationBootstrap, OnModuleDestroy {
 
   async onApplicationBootstrap(): Promise<void> {
     if (!this.config.JOBS_ENABLED) return;
-    const boss = new PgBoss({ connectionString: this.config.DATABASE_APP_URL, schema: 'pgboss', createSchema: false, application_name: 'taskop-jobs' });
+    const boss = new PgBoss({ connectionString: this.config.DATABASE_APP_URL, schema: 'pgboss', createSchema: false, application_name: 'edildy-jobs' });
     boss.on('error', (err) => this.logger.error(`pg-boss: ${String(err)}`));
     await boss.start();
     await this.ensureQueue(boss, QUEUES.dead);
@@ -4773,7 +4773,7 @@ In `scheduling.module.ts`, add `OccurrenceJobs` and `JobsService` to `providers`
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- occurrence-jobs config`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- occurrence-jobs config`
 Expected: PASS. The pg-boss wiring test takes a few seconds while the worker polls.
 
 - [ ] **Step 7: Commit**
@@ -4928,7 +4928,7 @@ describe('occurrences', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- test/occurrences.test.ts`
+Run: `pnpm --filter @edildy/api test -- test/occurrences.test.ts`
 Expected: FAIL: `/api/v1/occurrences` returns 404.
 
 - [ ] **Step 3: Add the mapper and DTOs**
@@ -4965,7 +4965,7 @@ export class OccurrenceDetailResponse extends createZodDto(occurrenceDetailSchem
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { OccurrenceDetail, OccurrenceDto, OccurrenceStatus, Page } from '@taskop/contracts';
+import type { OccurrenceDetail, OccurrenceDto, OccurrenceStatus, Page } from '@edildy/contracts';
 import { and, asc, between, eq, getTableColumns, inArray, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -5116,7 +5116,7 @@ export class EligibilityService {
 ```ts
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { OccurrenceDetail, OccurrenceDto, Page } from '@taskop/contracts';
+import type { OccurrenceDetail, OccurrenceDto, Page } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { CurrentPrincipal } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
@@ -5182,7 +5182,7 @@ In `scheduling.module.ts`:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- test/occurrences.test.ts`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- test/occurrences.test.ts`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -5279,7 +5279,7 @@ describe('scheduling data scope', () => {
   });
 
   it('gives platform admins the whole tenant', async () => {
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     await ownerQuery("insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')", [
       email,
       await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 }),
@@ -5379,7 +5379,7 @@ In `apps/api/test/openapi.test.ts`, add these paths to the `arrayContaining` lis
 
 - [ ] **Step 4: Run the suites and fix gaps**
 
-Run: `pnpm --filter @taskop/api test -- scheduling-scope scheduling-isolation openapi`
+Run: `pnpm --filter @edildy/api test -- scheduling-scope scheduling-isolation openapi`
 Expected: PASS. If a case fails, fix the service, not the test:
 - A write that the spec says needs the site in scope must call `assertSiteWritable`.
 - A foreign id in a body must resolve through an RLS-filtered lookup that throws `REFERENCE_NOT_FOUND`.
@@ -5388,7 +5388,7 @@ Expected: PASS. If a case fails, fix the service, not the test:
 
 - [ ] **Step 5: Run the whole API suite**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint && pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint && pnpm --filter @edildy/api test`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -5413,7 +5413,7 @@ git commit -m "test(api): pin scheduling data scope, tenant isolation and OpenAP
 - [ ] **Step 1: Add the seed function**
 
 In `apps/api/src/db/scripts/seed.ts`:
-- Import `addDays` and `localDateOf` from `@taskop/contracts` and `and` from `drizzle-orm`.
+- Import `addDays` and `localDateOf` from `@edildy/contracts` and `and` from `drizzle-orm`.
 - Add:
 
 ```ts
@@ -5465,7 +5465,7 @@ Run (with the local DB from `docker compose -p foundation start` and `apps/api/.
 pnpm db:setup && pnpm db:seed && pnpm db:seed
 ```
 
-Expected: both seed runs succeed; the second is a no-op for scheduling. Then start the API (`pnpm --filter @taskop/api dev`). Within a few seconds, `select count(*) from occurrences` (as the owner) is at least 14.
+Expected: both seed runs succeed; the second is a no-op for scheduling. Then start the API (`pnpm --filter @edildy/api dev`). Within a few seconds, `select count(*) from occurrences` (as the owner) is at least 14.
 
 - [ ] **Step 3: Write the follow-up notes**
 

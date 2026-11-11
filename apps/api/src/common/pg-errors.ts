@@ -1,4 +1,4 @@
-import type { ErrorCode } from '@taskop/contracts';
+import type { ErrorCode } from '@edildy/contracts';
 
 export interface PgErrorLike {
   code: string;

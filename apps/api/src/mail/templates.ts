@@ -1,5 +1,5 @@
-import { AUDIT_REPORT_CONTENT_TYPE, type AuditResult } from '@taskop/contracts';
-import { interpolate, type Language, translationsFor } from '@taskop/i18n';
+import { AUDIT_REPORT_CONTENT_TYPE, type AuditResult } from '@edildy/contracts';
+import { interpolate, type Language, translationsFor } from '@edildy/i18n';
 import type { MailMessage } from './mailer';
 
 const link = (webUrl: string, path: string, token: string) => `${webUrl}${path}?token=${encodeURIComponent(token)}`;

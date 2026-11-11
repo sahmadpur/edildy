@@ -15,7 +15,7 @@ import {
   RUN_BUCKETS,
   type RunAuditState,
   type RunBucket,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** The period picker: Part 1's presets, then the UI's own "custom" (Part 1: "Custom" is not a preset). */
 export type PeriodChoice = PeriodPreset | 'custom';

@@ -1,4 +1,4 @@
-import { CONTENT_LIMITS, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { CONTENT_LIMITS, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { builderReducer, type BuilderAction, type BuilderState, HISTORY_LIMIT, initialState } from './reducer';
 import { findItem } from './tree';

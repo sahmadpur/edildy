@@ -1,5 +1,5 @@
-import type { ExecutionDetail, OccurrenceStatus } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { ExecutionDetail, OccurrenceStatus } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -110,11 +110,11 @@ describe('Send back', () => {
     expect(mocks.api.corrections.withdraw).toHaveBeenCalledWith('x1');
   });
 
-  it('names Taskop support when a platform admin sent the run back', async () => {
+  it('names Edildy support when a platform admin sent the run back', async () => {
     const f = executionFixture();
     mocks.api.executions.get.mockResolvedValue(f.detail({ state: 'rework', reworkRound: 1, rework: reworkRequest({ requestedBy: null, items: [{ itemId: f.note.id, comment: 'Qeydi doldurun' }] }) }));
     renderWithProviders(<ExecutionTab occurrence={occurrenceDetail({ status: 'correction_required', execution: summary({ state: 'rework' }) })} />);
-    expect(await screen.findByText(/^Taskop dəstəyi · /)).toBeInTheDocument();
+    expect(await screen.findByText(/^Edildy dəstəyi · /)).toBeInTheDocument();
   });
 
   it('shows the banner without actions to someone who cannot correct', async () => {

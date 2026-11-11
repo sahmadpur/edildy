@@ -1,4 +1,4 @@
-import type { SystemRoleKey } from '@taskop/contracts';
+import type { SystemRoleKey } from '@edildy/contracts';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';

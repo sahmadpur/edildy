@@ -114,7 +114,7 @@ export class JobsService implements OnApplicationBootstrap, OnModuleDestroy {
       connectionString: this.config.DATABASE_APP_URL,
       schema: 'pgboss',
       createSchema: false,
-      application_name: 'taskop-jobs',
+      application_name: 'edildy-jobs',
       schedule: this.config.JOBS_CRON,
     });
     boss.on('error', (err) => this.logger.error(`pg-boss: ${String(err)}`));

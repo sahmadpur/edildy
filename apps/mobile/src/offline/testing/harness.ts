@@ -1,4 +1,4 @@
-import type { SyncResponse } from '@taskop/contracts';
+import type { SyncResponse } from '@edildy/contracts';
 import { type ChangeFeed, createChangeFeed } from '../change-feed';
 import type { Db } from '../db';
 import { createExecutionStore, type ExecutionStore, type WriteKind } from '../execution-store';
