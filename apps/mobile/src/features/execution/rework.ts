@@ -1,4 +1,4 @@
-import { type Answers, type ChecklistContent, isAnswered, requirements, type ReworkRequest, visibleItems } from '@taskop/contracts';
+import { type Answers, type ChecklistContent, isAnswered, requirements, type ReworkRequest, visibleItems } from '@edildy/contracts';
 
 /** The manager's comment per flagged item (spec §8.1). */
 export function reworkComments(rework: ReworkRequest | null): ReadonlyMap<string, string> {

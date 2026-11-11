@@ -157,6 +157,6 @@ describe('checklist tables', () => {
   });
 
   it('the permission backfill fails loudly for a role that RLS would filter', async () => {
-    await expect(runBackfill('taskop_app')).rejects.toThrow(/row-level security/);
+    await expect(runBackfill('edildy_app')).rejects.toThrow(/row-level security/);
   });
 });

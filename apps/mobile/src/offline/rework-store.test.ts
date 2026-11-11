@@ -1,4 +1,4 @@
-import type { ReworkRequest } from '@taskop/contracts';
+import type { ReworkRequest } from '@edildy/contracts';
 import { ExecutionLockedError, ItemNotInReworkError, reworkEditable } from './execution-store';
 import { dropMedium } from './refusals';
 import { capturedPhoto } from './testing/fake-transport';

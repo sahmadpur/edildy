@@ -8,7 +8,7 @@ import {
   type RuleType,
   type SystemRoleKey,
   type UpdateNotificationRuleOutput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** A notification_rules row, as stored. */
 export interface RuleRow {

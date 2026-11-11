@@ -10,7 +10,7 @@ import {
   SCHEDULING_LIMITS,
   scheduleWarnings,
   timingSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, between, desc, eq, getTableColumns, ilike, inArray, lt, or, type SQL, sql } from 'drizzle-orm';
 import { inSiteSubtrees, sqlList } from '../common/sql';
 import { actorColumns } from '../checklists/actor';

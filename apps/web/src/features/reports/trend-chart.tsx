@@ -1,5 +1,5 @@
-import type { ReportTrendDay } from '@taskop/contracts';
-import { formatShortDate } from '@taskop/i18n';
+import type { ReportTrendDay } from '@edildy/contracts';
+import { formatShortDate } from '@edildy/i18n';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';

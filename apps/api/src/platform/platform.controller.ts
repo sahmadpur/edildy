@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Page, PlatformLoginResult, PlatformTenantDto } from '@taskop/contracts';
+import type { Page, PlatformLoginResult, PlatformTenantDto } from '@edildy/contracts';
 import { Public } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { AppRequest } from '../common/request';

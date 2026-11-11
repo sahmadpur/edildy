@@ -1,4 +1,4 @@
-import { MEDIA_LIMITS, type MediaKind, type MediaSource } from '@taskop/contracts';
+import { MEDIA_LIMITS, type MediaKind, type MediaSource } from '@edildy/contracts';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { getRandomBytes } from 'expo-crypto';
 import { File } from 'expo-file-system';

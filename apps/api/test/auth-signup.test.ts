@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ALL_PERMISSIONS } from '@taskop/contracts';
+import { ALL_PERMISSIONS } from '@edildy/contracts';
 import { createTestApp, type TestApp } from './app';
 import { signupTenant, uniq } from './fixtures';
 import { ownerQuery } from './owner-db';
@@ -40,7 +40,7 @@ describe('POST /auth/signup', () => {
     });
     expect(web.body.refreshToken).toBeNull();
     const cookie = String(web.headers['set-cookie']);
-    expect(cookie).toContain('taskop_rt=');
+    expect(cookie).toContain('edildy_rt=');
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('Path=/api/v1/auth');
     expect(cookie).toContain('SameSite=Strict');

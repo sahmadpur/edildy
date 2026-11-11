@@ -1,4 +1,4 @@
-import { emptyRunCounts, type OccurrenceStatus, type RunCounts, type TaskStatus } from '@taskop/contracts';
+import { emptyRunCounts, type OccurrenceStatus, type RunCounts, type TaskStatus } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { expect } from 'vitest';
 import type { TestApp } from './app';

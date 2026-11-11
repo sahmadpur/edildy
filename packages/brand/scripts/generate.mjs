@@ -1,5 +1,5 @@
 // Generates tokens.css, the logo SVGs and every raster icon from src/tokens.ts and src/logo.ts, writing the app
-// assets in place so the web app, the landing page and the mobile app never drift. Run: pnpm --filter @taskop/brand generate
+// assets in place so the web app, the landing page and the mobile app never drift. Run: pnpm --filter @edildy/brand generate
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
@@ -95,10 +95,10 @@ const og = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" vi
 <rect width="1200" height="630" fill="${L.deep}"/>
 <rect x="0" y="618" width="1200" height="12" fill="${L.saffron}"/>
 <g transform="translate(96 120)">${tileSvg({ background: L.primary, color: '#FFFFFF', radius: 0.22, size: 120 })}</g>
-<text x="240" y="205" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="72" font-weight="600" letter-spacing="-2" fill="#FFFFFF">Taskop</text>
+<text x="240" y="205" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="72" font-weight="600" letter-spacing="-2" fill="#FFFFFF">Edildy</text>
 <text x="96" y="330" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="44" font-weight="500" fill="#FFFFFF">Sahə komandaları üçün yoxlama vərəqələri</text>
 <text x="96" y="400" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="30" fill="${L.onDeepMuted}">Checklists, tasks and audits for field teams · Чек-листы для полевых команд</text>
-<text x="96" y="540" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="28" fill="${L.saffron}">taskop.app</text>
+<text x="96" y="540" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="28" fill="${L.saffron}">edildy.com</text>
 </svg>`;
 await out(join(root, 'apps', 'landing', 'public', 'og-image.png'), await sharp(Buffer.from(og), { density: 72 }).png().toBuffer());
 

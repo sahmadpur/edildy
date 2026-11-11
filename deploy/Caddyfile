@@ -1,26 +1,26 @@
 # The edge proxy on the production server (§5 of docs/superpowers/specs/2026-10-09-deployment-design.md).
-# Lives at /opt/taskop/Caddyfile, bind-mounted into the caddy service of docker-compose.prod.yml.
+# Lives at /opt/edildy/Caddyfile, bind-mounted into the caddy service of docker-compose.prod.yml.
 #
 # SITE_SCHEME is unset in production, so every site below gets automatic HTTPS (Let's Encrypt) and an
 # HTTP → HTTPS redirect. A local run sets SITE_SCHEME=http in deploy/.env and the sites answer plain HTTP on :80
 # (see deploy/README.md).
 
-# www.taskop.app → taskop.app
-{$SITE_SCHEME:https}://www.taskop.app {
-	redir https://taskop.app{uri} permanent
+# www.edildy.com → edildy.com
+{$SITE_SCHEME:https}://www.edildy.com {
+	redir https://edildy.com{uri} permanent
 }
 
-# The public landing page: static files served by the taskop-landing image (apps/landing/Dockerfile),
+# The public landing page: static files served by the edildy-landing image (apps/landing/Dockerfile),
 # which sets the caching headers and compression itself.
-{$SITE_SCHEME:https}://taskop.app {
+{$SITE_SCHEME:https}://edildy.com {
 	header Strict-Transport-Security "max-age=31536000"
 	reverse_proxy landing:80
 }
 
-# The product: the API under /api, the web app (taskop-web image, SPA fallback) for everything else.
-{$SITE_SCHEME:https}://admin.taskop.app {
+# The product: the API under /api, the web app (edildy-web image, SPA fallback) for everything else.
+{$SITE_SCHEME:https}://admin.edildy.com {
 	header Strict-Transport-Security "max-age=31536000"
-	# Evidence uploads go straight to files.taskop.app; requests here are JSON plus report downloads.
+	# Evidence uploads go straight to files.edildy.com; requests here are JSON plus report downloads.
 	request_body /api/* {
 		max_size 20MB
 	}
@@ -35,7 +35,7 @@
 
 # Storage: SeaweedFS's S3 API for presigned uploads and downloads (S3_PUBLIC_ENDPOINT). The Host header is passed
 # through unchanged, which the S3 signatures cover. Videos are capped at 60 MB (EXECUTION_LIMITS).
-{$SITE_SCHEME:https}://files.taskop.app {
+{$SITE_SCHEME:https}://files.edildy.com {
 	header Strict-Transport-Security "max-age=31536000"
 	request_body {
 		max_size 100MB

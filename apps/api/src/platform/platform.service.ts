@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { Page, PlatformLoginResult, PlatformTenantDto } from '@taskop/contracts';
+import type { Page, PlatformLoginResult, PlatformTenantDto } from '@edildy/contracts';
 import { and, asc, eq, gt, ilike, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { PasswordHasher } from '../auth/crypto/password-hasher';
 import { TokenService } from '../auth/crypto/token.service';

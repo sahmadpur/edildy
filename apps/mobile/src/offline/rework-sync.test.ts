@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { ExecutionLockedError } from './execution-store';
 import { listCommands, outboxCounts } from './outbox';
 import { indicatorOf } from './sync-engine';

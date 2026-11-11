@@ -1,4 +1,4 @@
-import type { ProblemReportDto } from '@taskop/contracts';
+import type { ProblemReportDto } from '@edildy/contracts';
 
 /** Test data for the problem report tests (2026-11-06 design). Not imported by application code. */
 export const REPORT_AT = '2026-11-02T04:00:00.000Z';

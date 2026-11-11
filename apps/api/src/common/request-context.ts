@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { Client } from '@taskop/contracts';
+import type { Client } from '@edildy/contracts';
 import type { NextFunction, Request, Response } from 'express';
 
 export interface RequestMeta {

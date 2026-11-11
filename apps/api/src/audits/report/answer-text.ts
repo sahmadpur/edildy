@@ -1,5 +1,5 @@
-import { type Answer, isAnswered, type Item } from '@taskop/contracts';
-import { interpolate, type Language, translationsFor } from '@taskop/i18n';
+import { type Answer, isAnswered, type Item } from '@edildy/contracts';
+import { interpolate, type Language, translationsFor } from '@edildy/i18n';
 
 /** An answer as the audit report prints it (spec §7.2). */
 export function answerText(item: Item, a: Answer | undefined, locale: Language): string {

@@ -1,4 +1,4 @@
-import { DATA_SCOPES, type DataScope, type PermissionCatalog, type PermissionKey, type RoleDto } from '@taskop/contracts';
+import { DATA_SCOPES, type DataScope, type PermissionCatalog, type PermissionKey, type RoleDto } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Field } from '@/components/field';

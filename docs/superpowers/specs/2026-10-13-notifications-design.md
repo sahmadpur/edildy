@@ -1,4 +1,4 @@
-# Taskop — Sub-project 6: Notifications — Design Spec
+# Edildy — Sub-project 6: Notifications — Design Spec
 
 - **Date:** 2026-10-13
 - **Status:** Draft for review

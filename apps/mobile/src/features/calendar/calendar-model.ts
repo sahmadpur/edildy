@@ -1,4 +1,4 @@
-import { addDays, isWholeDayWindow, type OccurrenceDto, zonedTimeToUtc } from '@taskop/contracts';
+import { addDays, isWholeDayWindow, type OccurrenceDto, zonedTimeToUtc } from '@edildy/contracts';
 import { cardDot } from '@/features/checklists/occurrence-card';
 import { GROUP_KEYS, type Groups } from '@/features/checklists/group-occurrences';
 import { colors } from '@/lib/theme';

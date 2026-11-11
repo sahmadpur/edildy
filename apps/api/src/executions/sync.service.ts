@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EXECUTION_LIMITS, type ExecutionProgress, type MyExecution, type SyncResponse } from '@taskop/contracts';
+import { EXECUTION_LIMITS, type ExecutionProgress, type MyExecution, type SyncResponse } from '@edildy/contracts';
 import { and, asc, eq, getTableColumns, gt, gte, inArray, lt, ne, or } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import type { Principal } from '../common/request';

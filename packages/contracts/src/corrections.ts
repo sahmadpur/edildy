@@ -65,7 +65,7 @@ export const reworkRequestSchema = z.object({
   items: z.array(reworkItemSchema),
   /** Informational: nothing happens when it passes (spec §3.2). */
   dueAt: isoDateTimeSchema.nullable(),
-  /** null = a platform admin (Taskop support) sent it back. */
+  /** null = a platform admin (Edildy support) sent it back. */
   requestedBy: userRefSchema.nullable(),
   requestedAt: isoDateTimeSchema,
   resubmittedAt: isoDateTimeSchema.nullable(),

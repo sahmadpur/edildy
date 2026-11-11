@@ -1,4 +1,4 @@
-# Taskop — Sub-project 2: Checklist Builder & Templates — Design Spec
+# Edildy — Sub-project 2: Checklist Builder & Templates — Design Spec
 
 - **Date:** 2026-10-08
 - **Status:** Draft for review
@@ -29,7 +29,7 @@ Decisions made during brainstorming:
 2. A user with `checklists.publish` can publish the draft as an immutable version. Editing later produces v2, v3… and earlier versions never change.
 3. The builder supports all FR-08.01 answer types, required/optional items, nested conditional follow-ups, per-answer evidence requirements, problem flags and weights. Items can be reordered by drag-and-drop and by "Move to…".
 4. Checklists can be deactivated and reactivated without losing any version.
-5. Tenants can browse Taskop's global templates by industry, create a checklist from one, and save their own checklists as private templates.
+5. Tenants can browse Edildy's global templates by industry, create a checklist from one, and save their own checklists as private templates.
 6. Platform admins can author global templates and build or publish checklists inside a customer's tenant, with honest attribution in the audit log.
 7. Pure functions in `packages/contracts` decide which items are visible, what is still missing, and the score. Sub-project 4 reuses them unchanged.
 
@@ -192,9 +192,9 @@ The Foundation rules apply: UUIDv7 IDs, `timestamptz` in UTC, `tenant_id` with a
 
 - **Immutable published versions.** A `BEFORE UPDATE OR DELETE` trigger on `checklist_versions` raises an error when `OLD.state = 'published'`. The draft → published transition is an `UPDATE` where `OLD.state = 'draft'`, so it is allowed. The only `DELETE` allowed is of a draft (NFR-06, FR-06.11).
 - **Grants:**
-  - `taskop_app` gets `SELECT, INSERT, UPDATE` on `checklists` and `tenant_templates`, and `SELECT, INSERT, UPDATE, DELETE` on `checklist_versions`; the trigger limits that `DELETE` to drafts.
-  - On `global_templates`, `taskop_app` gets `SELECT` only, through the view `global_templates_published` (`where published`), and has no direct table access.
-  - `taskop_platform` has full DML on `global_templates`.
+  - `edildy_app` gets `SELECT, INSERT, UPDATE` on `checklists` and `tenant_templates`, and `SELECT, INSERT, UPDATE, DELETE` on `checklist_versions`; the trigger limits that `DELETE` to drafts.
+  - On `global_templates`, `edildy_app` gets `SELECT` only, through the view `global_templates_published` (`where published`), and has no direct table access.
+  - `edildy_platform` has full DML on `global_templates`.
 - **Migration:** adds the new tables, enums, trigger, grants, RLS policies, and the new permission keys for existing Owner and Admin roles (§5).
 
 ### 4.3 Template categories
@@ -324,7 +324,7 @@ The sidebar gets **Checklists** (`checklists.view`) and **Templates** (`checklis
 - **Checklist detail:**
   - Metadata (editable), and actions: open draft / edit, copy, save as template, deactivate/reactivate.
   - Version history table. Each version can be opened as a read-only builder view or restored as a draft.
-- **Template gallery:** tabs for "Taskop" and "Our templates", category cards with counts (FR-07.02), and a template preview (read-only builder). "Use template" asks for a name and creates the checklist (FR-07.03). In "Our templates", there is edit and deactivate (`templates.manage`).
+- **Template gallery:** tabs for "Edildy" and "Our templates", category cards with counts (FR-07.02), and a template preview (read-only builder). "Use template" asks for a name and creates the checklist (FR-07.03). In "Our templates", there is edit and deactivate (`templates.manage`).
 - **Builder:** described below. It runs in *checklist draft* mode or *template* mode (save only, no publish or versions).
 - **Platform area:**
   - "Templates": a list with publish/unpublish, plus the builder in template mode.
@@ -386,10 +386,10 @@ The sidebar gets **Checklists** (`checklists.view`) and **Templates** (`checklis
   - Discard draft; restore an old version as a draft.
   - Create from a global template, a tenant template and a version (copy). The result has regenerated IDs and records its source.
   - Save as template; deactivate/reactivate, with writes blocked while deactivated.
-  - **Trigger:** raw SQL `UPDATE`/`DELETE` of a published version as `taskop_app` fails.
+  - **Trigger:** raw SQL `UPDATE`/`DELETE` of a published version as `edildy_app` fails.
   - **Permissions:** Manager can draft but gets 403 on publish; Auditor can only read; Worker gets 403 everywhere.
   - **Tenant isolation:** the suite is extended to every new endpoint, including tenant B passing tenant A's template, checklist or version IDs as a `from` source, and B probing A's IDs on every route.
-  - **Global templates:** unpublished templates are invisible and unusable through tenant routes, and `taskop_app` cannot write `global_templates`.
+  - **Global templates:** unpublished templates are invisible and unusable through tenant routes, and `edildy_app` cannot write `global_templates`.
   - **Platform:** building inside a tenant writes rows that are visible to that tenant only, with platform-admin attribution columns and `actor_platform_admin_id` in the audit log.
   - **Audit:** each listed action writes exactly one entry with correct before/after values; autosave writes none.
 - **Web (Vitest + Testing Library):** reducer actions (moves within and across sections and follow-up lists, undo/redo), "Move to…" dialog, rules editor, autosave coalescing and the conflict banner, permission-gated Publish button, and preview showing or hiding follow-ups.

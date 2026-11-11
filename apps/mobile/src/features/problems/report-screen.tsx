@@ -1,5 +1,5 @@
-import { PROBLEM_REPORT_LIMITS, type ProblemReportDto } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { PROBLEM_REPORT_LIMITS, type ProblemReportDto } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

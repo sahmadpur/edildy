@@ -1,4 +1,4 @@
-import { addDays, SCHEDULING_LIMITS } from '@taskop/contracts';
+import { addDays, SCHEDULING_LIMITS } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';

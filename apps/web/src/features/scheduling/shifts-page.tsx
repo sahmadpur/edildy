@@ -1,4 +1,4 @@
-import { formatShiftRanges, type ShiftDto } from '@taskop/contracts';
+import { formatShiftRanges, type ShiftDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -327,7 +327,7 @@ export default {
   },
   notifications: {
     bell: 'Notifications, {{count}} unread',
-    channel: 'Taskop notifications',
+    channel: 'Edildy notifications',
     unread: 'Unread',
     online: 'An internet connection is required to view notifications.',
     profile: {

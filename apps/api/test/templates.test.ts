@@ -1,4 +1,4 @@
-import { blankContent } from '@taskop/contracts';
+import { blankContent } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';
@@ -16,8 +16,8 @@ describe('templates', () => {
     t = await createTestApp();
     const ins = await ownerQuery<{ id: string }>(
       `insert into global_templates (id, name, category, content, item_count, published, sort_order) values
-       (gen_random_uuid(), 'Taskop: Mətbəx', 'restaurant', $1::jsonb, 2, true, 1),
-       (gen_random_uuid(), 'Taskop: Gizli', 'restaurant', $1::jsonb, 2, false, 2) returning id`,
+       (gen_random_uuid(), 'Edildy: Mətbəx', 'restaurant', $1::jsonb, 2, true, 1),
+       (gen_random_uuid(), 'Edildy: Gizli', 'restaurant', $1::jsonb, 2, false, 2) returning id`,
       [JSON.stringify(sampleContent())],
     );
     [globalId, hiddenId] = ins.rows.map((r) => r.id) as [string, string];

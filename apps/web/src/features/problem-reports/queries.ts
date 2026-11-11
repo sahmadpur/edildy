@@ -1,4 +1,4 @@
-import type { CloseProblemReportInput, ProblemReportListQuery } from '@taskop/contracts';
+import type { CloseProblemReportInput, ProblemReportListQuery } from '@edildy/contracts';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { MediaUrlSource } from '@/features/executions/queries';
 import { api } from '@/lib/session';

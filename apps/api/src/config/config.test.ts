@@ -2,17 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { loadConfig } from './config';
 
 const valid = {
-  DATABASE_APP_URL: 'postgres://a:b@localhost:5432/taskop',
-  DATABASE_PLATFORM_URL: 'postgres://c:d@localhost:5432/taskop',
+  DATABASE_APP_URL: 'postgres://a:b@localhost:5432/edildy',
+  DATABASE_PLATFORM_URL: 'postgres://c:d@localhost:5432/edildy',
   JWT_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----',
   JWT_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\\nabc\\n-----END PUBLIC KEY-----',
   WEB_URL: 'http://localhost:5173',
   SMTP_URL: 'smtp://localhost:1025',
-  MAIL_FROM: 'Taskop <no-reply@taskop.local>',
+  MAIL_FROM: 'Edildy <no-reply@edildy.local>',
   S3_ENDPOINT: 'http://localhost:8333',
   S3_PUBLIC_ENDPOINT: 'http://192.168.1.20:8333',
-  S3_ACCESS_KEY: 'taskop',
-  S3_SECRET_KEY: 'taskop_dev_password',
+  S3_ACCESS_KEY: 'edildy',
+  S3_SECRET_KEY: 'edildy_dev_password',
 };
 
 describe('loadConfig', () => {
@@ -29,7 +29,7 @@ describe('loadConfig', () => {
   });
   it('reads storage settings with defaults and requires the endpoints', () => {
     const c = loadConfig(valid);
-    expect([c.S3_BUCKET, c.S3_FORCE_PATH_STYLE, c.S3_PUBLIC_ENDPOINT]).toEqual(['taskop-media', true, 'http://192.168.1.20:8333']);
+    expect([c.S3_BUCKET, c.S3_FORCE_PATH_STYLE, c.S3_PUBLIC_ENDPOINT]).toEqual(['edildy-media', true, 'http://192.168.1.20:8333']);
     expect(() => loadConfig({ ...valid, S3_ENDPOINT: undefined })).toThrow(/S3_ENDPOINT/);
   });
   it('turns real push on except in tests, and reads the optional Expo token', () => {

@@ -6,8 +6,8 @@ import {
   progress,
   requirements,
   visibleItems,
-} from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router } from 'expo-router';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

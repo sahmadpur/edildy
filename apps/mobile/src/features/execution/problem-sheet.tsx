@@ -1,4 +1,4 @@
-import { EXECUTION_LIMITS, type ManualProblem, MEDIA_KINDS, MEDIA_LIMITS, type MediaKind, type MediaSource, PROBLEM_SEVERITIES, type ProblemSeverity } from '@taskop/contracts';
+import { EXECUTION_LIMITS, type ManualProblem, MEDIA_KINDS, MEDIA_LIMITS, type MediaKind, type MediaSource, PROBLEM_SEVERITIES, type ProblemSeverity } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';

@@ -1,4 +1,4 @@
-import base from '@taskop/config/eslint';
+import base from '@edildy/config/eslint';
 import globals from 'globals';
 
 // .astro files are not linted (no parser configured); the TypeScript beside them is.

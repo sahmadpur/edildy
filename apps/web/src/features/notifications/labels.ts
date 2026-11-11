@@ -1,4 +1,4 @@
-import { DELIVERY_STATUSES, type DeliveryCounts, isProblemType, type NotificationItem, type NotificationType } from '@taskop/contracts';
+import { DELIVERY_STATUSES, type DeliveryCounts, isProblemType, type NotificationItem, type NotificationType } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import type { OccurrenceTab } from '@/features/scheduling/occurrence-dialog';
 import type { ScheduleSearch } from '@/features/scheduling/routes';

@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import {
   AUDIT_RESULT_FILTERS,
   type AuditResultFilter,
@@ -9,7 +9,7 @@ import {
   type NotificationRuleDto,
   type RoleDto,
   type UpdateNotificationRuleInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';

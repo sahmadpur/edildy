@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { type Missing, requirements, visibleItems, walkItems } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { type Missing, requirements, visibleItems, walkItems } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

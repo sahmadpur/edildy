@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import { addDays, type ChecklistContent, type ReportSummary, type SyncResponse } from '@taskop/contracts';
+import { addDays, type ChecklistContent, type ReportSummary, type SyncResponse } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 
 /** The tenant's local date (new tenants are in Asia/Baku, which has no DST). */
@@ -24,7 +24,7 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   const email = `rep-${suffix}@example.az`;
   const password = 'e2e owner password';
 
-  // Tenant, site, worker and a published checklist from a Taskop template.
+  // Tenant, site, worker and a published checklist from a Edildy template.
   const signup = await request.post('/api/v1/auth/signup', {
     data: { orgName: 'E2E Hesabat MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
   });
@@ -156,7 +156,7 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   const downloading = page.waitForEvent('download');
   await page.getByRole('group', { name: 'Bu cədvəl' }).getByRole('menuitem', { name: 'Excel' }).click();
   const download = await downloading;
-  expect(download.suggestedFilename()).toBe(`taskop-runs-${addDays(today, -6)}_${today}.xlsx`);
+  expect(download.suggestedFilename()).toBe(`edildy-runs-${addDays(today, -6)}_${today}.xlsx`);
   // An .xlsx file is a ZIP archive.
   const bytes = await readFile(await download.path());
   expect(bytes.subarray(0, 2).toString('latin1')).toBe('PK');

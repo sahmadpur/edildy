@@ -1,4 +1,4 @@
-import { ASSIGNMENT_STATUSES, type AssignmentDto, toListParam } from '@taskop/contracts';
+import { ASSIGNMENT_STATUSES, type AssignmentDto, toListParam } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { type ReactNode, useDeferredValue, useState } from 'react';

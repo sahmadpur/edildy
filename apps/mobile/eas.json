@@ -9,11 +9,11 @@
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://admin.taskop.app" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://admin.edildy.com" }
     },
     "production": {
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_URL": "https://admin.taskop.app" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://admin.edildy.com" }
     }
   },
   "submit": {

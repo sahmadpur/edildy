@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';

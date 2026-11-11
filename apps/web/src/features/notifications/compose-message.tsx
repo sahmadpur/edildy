@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { MESSAGE_LIMITS, type SendMessageInput } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { MESSAGE_LIMITS, type SendMessageInput } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type Answers, countItems, MEDIA_LIMITS, type MediaConfirmResult, type MediaUploadTicket, type MediaUrl, mediaLimitFor, type ReworkItem, visibleItems } from '@taskop/contracts';
+import { type Answers, countItems, MEDIA_LIMITS, type MediaConfirmResult, type MediaUploadTicket, type MediaUrl, mediaLimitFor, type ReworkItem, visibleItems } from '@edildy/contracts';
 import { and, count, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

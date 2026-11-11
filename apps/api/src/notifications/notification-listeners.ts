@@ -1,5 +1,5 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { CHECKLIST_REMINDER_TYPES, type NotificationType, type OccurrenceStatus } from '@taskop/contracts';
+import { CHECKLIST_REMINDER_TYPES, type NotificationType, type OccurrenceStatus } from '@edildy/contracts';
 import { and, eq, isNotNull, isNull, ne } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { DomainEvents, type TaskEvent, type TaskEventName } from '../common/domain-events';

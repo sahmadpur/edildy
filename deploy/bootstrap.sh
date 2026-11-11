@@ -2,7 +2,7 @@
 # One-time setup of a fresh Ubuntu 24.04 server (§4 of the deployment plan). Run as root:
 #   ssh root@<server> 'bash -s' < deploy/bootstrap.sh
 # Safe to re-run. Does: UTC clock, security updates, Docker with log rotation, a firewall (22/80/443),
-# key-only SSH, a `deploy` user in the docker group with root's SSH keys, /opt/taskop, swap, cron jobs.
+# key-only SSH, a `deploy` user in the docker group with root's SSH keys, /opt/edildy, swap, cron jobs.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
@@ -27,7 +27,7 @@ cat > /etc/docker/daemon.json <<'EOF'
 EOF
 systemctl restart docker
 
-# The deploy user: runs docker compose in /opt/taskop; logs in with the same keys as root.
+# The deploy user: runs docker compose in /opt/edildy; logs in with the same keys as root.
 id deploy > /dev/null 2>&1 || adduser --disabled-password --gecos '' deploy
 usermod -aG docker deploy
 install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
@@ -35,10 +35,10 @@ touch /home/deploy/.ssh/authorized_keys
 sort -u /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys -o /home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
-install -d -m 750 -o deploy -g deploy /opt/taskop /opt/taskop/backups
+install -d -m 750 -o deploy -g deploy /opt/edildy /opt/edildy/backups
 
 # Key-only SSH. Root keeps key login (prohibit-password) so the server stays reachable for maintenance.
-cat > /etc/ssh/sshd_config.d/10-taskop.conf <<'EOF'
+cat > /etc/ssh/sshd_config.d/10-edildy.conf <<'EOF'
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin prohibit-password
@@ -63,8 +63,8 @@ if ! swapon --show | grep -q /swapfile; then
 fi
 
 # Nightly database backup (03:15 UTC) and a weekly prune of unused images.
-cat > /etc/cron.d/taskop <<'EOF'
-15 3 * * * deploy /opt/taskop/backup.sh >> /opt/taskop/backups/backup.log 2>&1
+cat > /etc/cron.d/edildy <<'EOF'
+15 3 * * * deploy /opt/edildy/backup.sh >> /opt/edildy/backups/backup.log 2>&1
 30 4 * * 0 root docker image prune -af --filter until=168h > /dev/null
 EOF
 

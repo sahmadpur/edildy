@@ -1,4 +1,4 @@
-import { type AssignmentDto, type ExecutionBrief, type OccurrenceDto, type OccurrenceHistoryEntry, type Recurrence, recurrenceSchema, type ShiftDto, type ShiftRange, timingSchema, type UserRef } from '@taskop/contracts';
+import { type AssignmentDto, type ExecutionBrief, type OccurrenceDto, type OccurrenceHistoryEntry, type Recurrence, recurrenceSchema, type ShiftDto, type ShiftRange, timingSchema, type UserRef } from '@edildy/contracts';
 import type { assignments, occurrences, occurrenceStatusHistory } from '../db/schema';
 
 export interface ShiftRow {

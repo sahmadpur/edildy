@@ -1,4 +1,4 @@
-import { type ChecklistContent, type Item, parseDraftContent, walkItems } from '@taskop/contracts';
+import { type ChecklistContent, type Item, parseDraftContent, walkItems } from '@edildy/contracts';
 
 /** The highest checklist content schemaVersion this app understands (SP2 §3.2). */
 export const SUPPORTED_SCHEMA_VERSION = 1;

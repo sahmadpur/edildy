@@ -1,4 +1,4 @@
-import type { ExecutionDetail, ExecutionSummary, OccurrenceDetail, OccurrenceStatus } from '@taskop/contracts';
+import type { ExecutionDetail, ExecutionSummary, OccurrenceDetail, OccurrenceStatus } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';

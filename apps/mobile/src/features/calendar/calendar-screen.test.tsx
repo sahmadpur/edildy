@@ -1,6 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
-import type { OccurrenceDto } from '@taskop/contracts';
-import { formatLocalDate } from '@taskop/i18n';
+import type { OccurrenceDto } from '@edildy/contracts';
+import { formatLocalDate } from '@edildy/i18n';
 import { renderTeam } from '@/features/team/testing/render';
 import { OCC, OCC2, OCC3, occurrence, OTHER, OTHER_EXECUTION, syncResponse, versionOf } from '@/offline/testing/fixtures';
 import { createTestServices, type TestServices } from '@/offline/testing/test-services';

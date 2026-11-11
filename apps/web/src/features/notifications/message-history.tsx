@@ -1,4 +1,4 @@
-import type { DeliveryChannel, MessageDetail, MessageSummary } from '@taskop/contracts';
+import type { DeliveryChannel, MessageDetail, MessageSummary } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';

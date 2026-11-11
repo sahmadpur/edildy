@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Language, LANGUAGE_STORAGE_KEY, resolveLanguage, resources } from '@taskop/i18n';
+import { DEFAULT_LOCALE, type Language, LANGUAGE_STORAGE_KEY, resolveLanguage, resources } from '@edildy/i18n';
 import i18n from 'i18next';
 import { initReactI18next, useTranslation } from 'react-i18next';
 

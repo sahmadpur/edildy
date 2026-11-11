@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import '@/lib/i18n';
 import { CHECKLIST, OCC, OCC2, OCC3, OCC4 } from '@/offline/testing/fixtures';

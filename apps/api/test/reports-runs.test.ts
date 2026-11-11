@@ -1,4 +1,4 @@
-import type { Page, ReportRun } from '@taskop/contracts';
+import type { Page, ReportRun } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';

@@ -1,4 +1,4 @@
-import type { ChecklistContent, ContentIssue } from '@taskop/contracts';
+import type { ChecklistContent, ContentIssue } from '@edildy/contracts';
 
 export interface NodeIssue {
   field: string | null;

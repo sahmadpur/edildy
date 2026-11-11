@@ -1,4 +1,4 @@
-import { requirements } from '@taskop/contracts';
+import { requirements } from '@edildy/contracts';
 import type { ContentLoad } from './content';
 import { setMeta } from './db';
 import { ExecutionLockedError, LiveOnlyError, MediaLimitError, mediaRegisterBody, type StartBlock, startBlock } from './execution-store';

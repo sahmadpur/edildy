@@ -1,5 +1,5 @@
-import { CANCEL_REASON_CODES, type LocalDate, type OccurrenceStatus, type ReportRun } from '@taskop/contracts';
-import { formatPercent } from '@taskop/i18n';
+import { CANCEL_REASON_CODES, type LocalDate, type OccurrenceStatus, type ReportRun } from '@edildy/contracts';
+import { formatPercent } from '@edildy/i18n';
 import { currentLanguage } from '@/lib/language';
 import type { TFunction } from 'i18next';
 

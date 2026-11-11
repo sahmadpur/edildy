@@ -1,4 +1,4 @@
-import type { AuditEntryDto } from '@taskop/contracts';
+import type { AuditEntryDto } from '@edildy/contracts';
 import { screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/render';

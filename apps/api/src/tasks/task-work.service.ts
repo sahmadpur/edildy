@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type MediaKind, TASK_LIMITS, type TaskDetail, type TaskEvidence, type TaskStatus, taskEvidenceMet, taskTransition } from '@taskop/contracts';
+import { type MediaKind, TASK_LIMITS, type TaskDetail, type TaskEvidence, type TaskStatus, taskEvidenceMet, taskTransition } from '@edildy/contracts';
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

@@ -1,4 +1,4 @@
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { counts, notificationItem } from './fixtures';

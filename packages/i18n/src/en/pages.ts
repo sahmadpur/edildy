@@ -6,7 +6,7 @@ export default {
   schedule: 'The runs your assignments create, week by week. Click a run to see its answers.',
   calendar: 'Planned and completed checks by month. Hover over a check to see its details.',
   checklists: 'The lists of questions answered during a check. Start a checklist from scratch or from a template.',
-  templates: 'Ready-made starting points for new checklists: Taskop templates and your own.',
+  templates: 'Ready-made starting points for new checklists: Edildy templates and your own.',
   tasks: '"All" is every task you can see; "Created by me" is only the ones you created.',
   audits: 'A second look at finished checks. Start an audit and rate the result.',
   users: 'Here you invite employees to inspection work and create teams.',
@@ -19,5 +19,5 @@ export default {
   messages: 'Send a message to people, teams or sites.',
   notifications: 'Every notification you received. Click one to open the related page.',
   newAssignment: 'Choose the checklist, the site, who does it and when.',
-  globalTemplates: 'Taskop templates every organisation can see.',
+  globalTemplates: 'Edildy templates every organisation can see.',
 } as const;

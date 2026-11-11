@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PERMISSION_GROUPS, type PermissionCatalog, type PermissionKey, type RoleDto } from '@taskop/contracts';
+import { PERMISSION_GROUPS, type PermissionCatalog, type PermissionKey, type RoleDto } from '@edildy/contracts';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';

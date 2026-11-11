@@ -1,4 +1,4 @@
-import { type ChecklistContent, countItems, hasRules, ITEM_TYPES, type Item, type ItemType } from '@taskop/contracts';
+import { type ChecklistContent, countItems, hasRules, ITEM_TYPES, type Item, type ItemType } from '@edildy/contracts';
 import { Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

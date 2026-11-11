@@ -1,4 +1,4 @@
-import { pageOf, platformLoginInputSchema, platformLoginResultSchema, platformTenantDtoSchema, platformTenantListQuerySchema } from '@taskop/contracts';
+import { pageOf, platformLoginInputSchema, platformLoginResultSchema, platformTenantDtoSchema, platformTenantListQuerySchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class PlatformLoginDto extends createZodDto(platformLoginInputSchema) {}

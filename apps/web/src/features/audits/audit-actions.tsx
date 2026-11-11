@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, AUDIT_RESULTS, type AuditDetail, type AuditResult, type FinishAuditInput, reportRecipients } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, AUDIT_RESULTS, type AuditDetail, type AuditResult, type FinishAuditInput, reportRecipients } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

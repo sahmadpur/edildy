@@ -8,7 +8,7 @@ import {
   updateSiteInputSchema,
   updateSiteTypeInputSchema,
   updateTenantInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class UpdateTenantDto extends createZodDto(updateTenantInputSchema) {}

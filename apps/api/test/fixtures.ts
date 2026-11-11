@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import type { LoginResult, Me, SystemRoleKey } from '@taskop/contracts';
+import type { LoginResult, Me, SystemRoleKey } from '@edildy/contracts';
 import { and, eq } from 'drizzle-orm';
 import { expect } from 'vitest';
 import { PasswordHasher } from '../src/auth/crypto/password-hasher';

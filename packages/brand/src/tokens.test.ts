@@ -48,6 +48,6 @@ describe('logo', () => {
     expect(markSvg({ size: 24 })).toMatch(/^<svg [^>]*viewBox="0 0 64 64"[^>]*width="24"/);
     expect(tileSvg({ background: light.primary, color: '#FFFFFF', radius: 0.22 })).toContain('<rect width="64" height="64" rx="14.08"');
     expect(tileSvg({ background: 'none', color: '#FFFFFF' })).not.toContain('<rect');
-    expect(wordmarkSvg()).toContain('Taskop');
+    expect(wordmarkSvg()).toContain('Edildy');
   });
 });

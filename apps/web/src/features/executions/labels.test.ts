@@ -1,4 +1,4 @@
-import { type DateTimeItem, type MultiChoiceItem, newItem, type NumberItem, type YesNoItem } from '@taskop/contracts';
+import { type DateTimeItem, type MultiChoiceItem, newItem, type NumberItem, type YesNoItem } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import {

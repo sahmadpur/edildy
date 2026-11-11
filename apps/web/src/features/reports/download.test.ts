@@ -19,10 +19,10 @@ describe('saveFile', () => {
     });
     const blob = new Blob(['x']);
 
-    saveFile({ blob, filename: 'taskop-runs-2026-11-01_2026-11-30.xlsx' });
+    saveFile({ blob, filename: 'edildy-runs-2026-11-01_2026-11-30.xlsx' });
 
     expect(createObjectURL).toHaveBeenCalledWith(blob);
-    expect(clicked).toEqual([{ href: 'blob:report', download: 'taskop-runs-2026-11-01_2026-11-30.xlsx', attached: true }]);
+    expect(clicked).toEqual([{ href: 'blob:report', download: 'edildy-runs-2026-11-01_2026-11-30.xlsx', attached: true }]);
     expect(document.querySelector('a[download]')).toBeNull();
     expect(revokeObjectURL).not.toHaveBeenCalled();
     vi.advanceTimersByTime(REVOKE_AFTER_MS);

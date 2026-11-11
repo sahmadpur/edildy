@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { ShiftDto } from '@taskop/contracts';
+import type { ShiftDto } from '@edildy/contracts';
 import { and, asc, eq, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { assertIdsExist } from '../common/ids-exist';

@@ -1,4 +1,4 @@
-import type { ContentIssue, ErrorCode, Missing } from '@taskop/contracts';
+import type { ContentIssue, ErrorCode, Missing } from '@edildy/contracts';
 
 export type ClientErrorCode = ErrorCode | 'NETWORK';
 

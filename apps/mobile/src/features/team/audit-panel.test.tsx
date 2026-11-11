@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { fireEvent, screen, within } from '@testing-library/react-native';
 import { Alert, StyleSheet } from 'react-native';
 import i18n from '@/lib/i18n';
@@ -107,7 +107,7 @@ describe('Audit (spec §8.2, FR-19.02–06)', () => {
     await open();
     await fireEvent.press(await screen.findByRole('button', { name: tr('audits.actions.finish') }));
     const sheet = within(screen.getByTestId('finish-sheet'));
-    expect(sheet.getByText('Hesabat göndəriləcək: audit@demo.taskop.az')).toBeTruthy();
+    expect(sheet.getByText('Hesabat göndəriləcək: audit@demo.edildy.az')).toBeTruthy();
     await fireEvent.press(sheet.getByRole('radio', { name: tr('audits.results.failed') }));
     await fireEvent.changeText(sheet.getByLabelText(tr('audits.fields.comment')), 'İki bənd uyğun deyil');
     await fireEvent.changeText(sheet.getByLabelText(tr('audits.fields.extraEmails')), 'Boss@Demo.az, qa@demo.az;boss@demo.az');
@@ -261,7 +261,7 @@ describe('Audit (spec §8.2, FR-19.02–06)', () => {
     await open();
     await fireEvent.press(await screen.findByRole('button', { name: tr('audits.actions.finish') }));
     const sheet = within(screen.getByTestId('finish-sheet'));
-    const list = ['AUDIT@demo.taskop.az', ...Array.from({ length: 19 }, (_, i) => `u${i}@demo.az`)].join(' ');
+    const list = ['AUDIT@demo.edildy.az', ...Array.from({ length: 19 }, (_, i) => `u${i}@demo.az`)].join(' ');
     await fireEvent.changeText(sheet.getByLabelText(tr('audits.fields.extraEmails')), list);
     await fireEvent.press(sheet.getByRole('button', { name: tr('audits.actions.finish') }));
     await eventually(async () => expect(mockFinish).toHaveBeenCalledTimes(1));

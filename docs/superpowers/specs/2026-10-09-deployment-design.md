@@ -1,4 +1,4 @@
-# Taskop — Deployment Plan
+# Edildy — Deployment Plan
 
 - **Date:** 2026-10-09
 - **Status:** Decisions recorded; implementation starts once all sub-projects are finished
@@ -14,9 +14,9 @@
 | Hosting | **Own VPS on Hetzner Cloud.** Chosen over Railway (2–5× the cost for an always-on setup) and Contabo (weaker reliability). |
 | Server | Hetzner **Arm** server, **4 vCPU / 6 GB RAM / 80 GB SSD**, Ubuntu 24.04, EU location (Falkenstein, Nuremberg or Helsinki). All images must be built for `linux/arm64`. |
 | Deploy method | **Docker Compose + Caddy** on the server. **GitHub Actions** builds the images, pushes them to GitHub's container registry (GHCR) and deploys over SSH. No Coolify or Dokploy. |
-| Repository | **Make `sahmadpur/taskop` private** (it is public today). |
-| Domain | **`taskop.app`**. The `.app` domain requires HTTPS in every browser; Caddy provides it automatically. |
-| URLs | **`taskop.app`**: the public landing page (`www.taskop.app` redirects to it). **`admin.taskop.app`**: the product. Caddy serves the web app at `/` and proxies `/api/*` to the API; the mobile app also calls the API here. This matches the web client, which already calls `/api/v1` on its own origin, so no CORS or cross-site cookie changes are needed. |
+| Repository | **Make `sahmadpur/edildy` private** (it is public today). |
+| Domain | **`edildy.com`**. The `.app` domain requires HTTPS in every browser; Caddy provides it automatically. |
+| URLs | **`edildy.com`**: the public landing page (`www.edildy.com` redirects to it). **`admin.edildy.com`**: the product. Caddy serves the web app at `/` and proxies `/api/*` to the API; the mobile app also calls the API here. This matches the web client, which already calls `/api/v1` on its own origin, so no CORS or cross-site cookie changes are needed. |
 | File storage | **SeaweedFS**, self-hosted on the same server (and locally in place of MinIO). It is used through the S3 API, so a move to Hetzner Object Storage later only changes config and copies the data. **Not MinIO**: its Community Edition is archived and no longer publishes images. |
 | Email | **Resend** (SMTP), sending from your domain with SPF and DKIM. Mailpit stays for local development. |
 | Mobile builds | **Local builds** with `eas build --local` on a free Expo account. No paid Expo plan. `eas submit` uploads to TestFlight and Google Play internal testing. |
@@ -37,7 +37,7 @@
 With a single environment, every deploy reaches real users. To keep that safe:
 
 - **CI must pass before deploying:** lint, typecheck, unit and integration tests, and Playwright end-to-end tests.
-- **A test tenant in production** ("Taskop Test") for checking each release on the real server. Real customers are never used for testing.
+- **A test tenant in production** ("Edildy Test") for checking each release on the real server. Real customers are never used for testing.
 - **Back up the database before migrating:** each deploy takes a `pg_dump` before running migrations.
 - **Migrations add before they remove.** Add new columns and tables first, and drop old ones in a later release. A few seconds of downtime while the API restarts is acceptable.
 - **Rollback:** images are tagged with the git commit, so redeploying an earlier tag rolls the code back. Migrations are not rolled back automatically; recover from the pre-deploy dump if needed.
@@ -51,7 +51,7 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
 - **Hetzner Cloud Firewall:** allow only TCP 22, 80 and 443 (and UDP 443 for HTTP/3). Postgres and SeaweedFS are never exposed to the internet.
 - **Hetzner server backups** enabled (daily snapshots).
 - **Hardening:** SSH key login only; root and password login disabled; a non-root `deploy` user in the `docker` group; automatic security updates (`unattended-upgrades`); optionally fail2ban.
-- **Directory layout:** `/opt/taskop/` holds `docker-compose.prod.yml`, `Caddyfile`, `.env` (mode `600`) and `backups/`.
+- **Directory layout:** `/opt/edildy/` holds `docker-compose.prod.yml`, `Caddyfile`, `.env` (mode `600`) and `backups/`.
 - **Docker:** container log rotation (`json-file`, max-size 10m, max-file 5) and a weekly image prune.
 
 ### Expected resource use (early pilot)
@@ -72,12 +72,12 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
                     ┌─────▼─────┐
                     │   Caddy   │  automatic HTTPS (Let's Encrypt)
                     └─┬───┬───┬─┘
-     taskop.app       │   │   │  admin.taskop.app
+     edildy.com       │   │   │  admin.edildy.com
    ┌──────────────────▼┐  │  ┌▼────────────────────────────┐
    │ landing page files│  │  │ /* → web app files           │
    └───────────────────┘  │  │      (SPA fallback)          │
                           │  └──────────────────────────────┘
-       admin.taskop.app   │
+       admin.edildy.com   │
        /api/*       ┌─────▼──┐
                     │  API   │
                     │ NestJS │
@@ -91,36 +91,36 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
 ```
 
 - **`docker-compose.prod.yml`** services: `caddy`, `api`, `postgres`, `seaweedfs`, and a one-off `migrate` that runs `node dist/db/scripts/setup.js`.
-- **The landing page** (`taskop.app`) is `apps/landing`, an Astro static site. `apps/landing/Dockerfile` builds it (build stage on the build machine's architecture, `PLATFORM_URL=https://admin.taskop.app` as a build argument) and copies `dist/` into a `caddy:2.11-alpine` image (`taskop-landing`) whose own `Caddyfile` serves the files on port 80 with `Cache-Control: public, max-age=31536000, immutable` for the hashed `/_astro/*` files and `public, max-age=300, must-revalidate` for HTML and the other unhashed files. The edge Caddy (`deploy/Caddyfile`) has the site blocks `taskop.app` (HSTS, `reverse_proxy landing:80`) and `www.taskop.app` (permanent redirect to the apex); Caddy issues the certificates. `deploy/docker-compose.prod.yml` holds both services; `SITE_SCHEME=http` in `.env` turns off HTTPS for a local run (`deploy/README.md`).
-- **The web app** is built with Vite. Its `dist/` is baked into a small Caddy-based image (`taskop-web`), so Caddy serves the files directly.
+- **The landing page** (`edildy.com`) is `apps/landing`, an Astro static site. `apps/landing/Dockerfile` builds it (build stage on the build machine's architecture, `PLATFORM_URL=https://admin.edildy.com` as a build argument) and copies `dist/` into a `caddy:2.11-alpine` image (`edildy-landing`) whose own `Caddyfile` serves the files on port 80 with `Cache-Control: public, max-age=31536000, immutable` for the hashed `/_astro/*` files and `public, max-age=300, must-revalidate` for HTML and the other unhashed files. The edge Caddy (`deploy/Caddyfile`) has the site blocks `edildy.com` (HSTS, `reverse_proxy landing:80`) and `www.edildy.com` (permanent redirect to the apex); Caddy issues the certificates. `deploy/docker-compose.prod.yml` holds both services; `SITE_SCHEME=http` in `.env` turns off HTTPS for a local run (`deploy/README.md`).
+- **The web app** is built with Vite. Its `dist/` is baked into a small Caddy-based image (`edildy-web`), so Caddy serves the files directly.
 - **pg-boss runs inside the API process** (sub-project 3). One API container is enough. pg-boss locks jobs in Postgres, so a second replica later would be safe.
 - **Health check:** `GET /api/v1/health`, used by Docker, the deploy script and the uptime monitor.
-- **Presigned photo and video uploads:** phones need a public URL for storage. Caddy exposes SeaweedFS's S3 endpoint on its own host, e.g. `files.taskop.app` (exact routing decided in sub-project 4; signed URLs include the host name).
+- **Presigned photo and video uploads:** phones need a public URL for storage. Caddy exposes SeaweedFS's S3 endpoint on its own host, e.g. `files.edildy.com` (exact routing decided in sub-project 4; signed URLs include the host name).
 
 ## 6. Database
 
 - The `postgres:18` image (multi-arch) with a named volume, reachable only on the internal network.
 - **Roles:** the same roles as local development, created by the existing setup script:
-  - `taskop_owner`: runs migrations and owns the schema and the `pgboss` schema.
-  - `taskop_app`: the API's runtime connection, subject to row-level security.
-  - `taskop_platform`: platform-admin access.
+  - `edildy_owner`: runs migrations and owns the schema and the `pgboss` schema.
+  - `edildy_app`: the API's runtime connection, subject to row-level security.
+  - `edildy_platform`: platform-admin access.
 - **Migrations:** the deploy runs `docker compose run --rm migrate` before restarting the API. It calls `setupDatabase()`, which ensures the roles exist and then runs the Drizzle migrations from `apps/api/drizzle`.
 - **First platform admin:** a one-off run of `create-platform-admin` on the server after the first deploy. It needs a compiled `dist/` entry point, since the production image has no `tsx`.
 
 ## 7. Configuration and secrets
 
-`/opt/taskop/.env` on the server, mode `600`, with a copy in your password manager. It is never committed (this matters even more while the repo is public).
+`/opt/edildy/.env` on the server, mode `600`, with a copy in your password manager. It is never committed (this matters even more while the repo is public).
 
 | Variable | Production value |
 |---|---|
 | `NODE_ENV` | `production` |
 | `PORT` | `3000` (internal) |
-| `DATABASE_OWNER_URL` / `DATABASE_APP_URL` / `DATABASE_PLATFORM_URL` | `postgres://…@postgres:5432/taskop` with strong random passwords |
+| `DATABASE_OWNER_URL` / `DATABASE_APP_URL` / `DATABASE_PLATFORM_URL` | `postgres://…@postgres:5432/edildy` with strong random passwords |
 | `APP_DB_PASSWORD` / `PLATFORM_DB_PASSWORD` | random, 32+ characters |
-| `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` | generated once with `pnpm --filter @taskop/api keys:generate` |
-| `WEB_URL` | `https://admin.taskop.app` |
+| `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` | generated once with `pnpm --filter @edildy/api keys:generate` |
+| `WEB_URL` | `https://admin.edildy.com` |
 | `SMTP_URL` | Resend SMTP (`smtps://resend:<api-key>@smtp.resend.com:465`) |
-| `MAIL_FROM` | `Taskop <no-reply@taskop.app>` |
+| `MAIL_FROM` | `Edildy <no-reply@edildy.com>` |
 | `COOKIE_SECURE` | `true` |
 | `TRUST_PROXY` | `true` (behind Caddy) |
 | `LOG_LEVEL` | `info` |
@@ -145,7 +145,7 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
 **Workflow `deploy.yml`, triggered on push to `main`:**
 
 1. **Check:** `pnpm install`, then lint, typecheck and test (the integration tests use a Postgres service container), then Playwright end-to-end tests.
-2. **Build images:** `taskop-api`, `taskop-web` and `taskop-landing`, for `linux/arm64`, tagged `sha-<commit>` and `latest`, pushed to `ghcr.io/sahmadpur/…`.
+2. **Build images:** `edildy-api`, `edildy-web` and `edildy-landing`, for `linux/arm64`, tagged `sha-<commit>` and `latest`, pushed to `ghcr.io/sahmadpur/…`.
 3. **Deploy over SSH:**
    - `docker compose pull`
    - `pg_dump` (pre-deploy backup)
@@ -176,15 +176,15 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
 - **Restore test:** restore the database dump and the files onto a temporary server **before the pilot**, then once a quarter.
 
 **Monitoring**
-- **Uptime:** an external monitor on `https://admin.taskop.app/api/v1/health` (UptimeRobot or Better Stack free tier) that emails or pings you.
+- **Uptime:** an external monitor on `https://admin.edildy.com/api/v1/health` (UptimeRobot or Better Stack free tier) that emails or pings you.
 - **Disk:** a cron script alerts at 80% disk use, and also reports a failed nightly backup (through healthchecks.io's free tier or a Resend email).
 - **Logs:** the API logs JSON with pino to Docker's rotated logs, read with `docker compose logs`. A log service can come later if needed.
 - **Job failures:** pg-boss dead-letter jobs are logged at error level (sub-project 3). Check them with `docker compose logs api | grep -i dead`. Alerting can come later.
 
 ## 11. Email (Resend)
 
-- Create a Resend account and verify `taskop.app`: add Resend's **SPF and DKIM** DNS records, plus a **DMARC** record (`p=none` to start).
-- Send from `no-reply@taskop.app`. The free tier covers invites and password resets during the pilot.
+- Create a Resend account and verify `edildy.com`: add Resend's **SPF and DKIM** DNS records, plus a **DMARC** record (`p=none` to start).
+- Send from `no-reply@edildy.com`. The free tier covers invites and password resets during the pilot.
 - Before the pilot, send a test invite to Gmail and Outlook inboxes and confirm it doesn't land in spam.
 
 ## 12. Mobile apps
@@ -193,9 +193,9 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
 - **Expo account:** free. Builds run on your Mac with `eas build --local`, and uploads use `eas submit`.
 - **`apps/mobile/eas.json` profiles:**
   - `development`: dev client, local API.
-  - `preview`: internal distribution against `https://admin.taskop.app`.
-  - `production`: store builds against `https://admin.taskop.app`.
-- **API URL:** `EXPO_PUBLIC_API_URL=https://admin.taskop.app` for the preview and production profiles. The API base path stays `/api/v1`.
+  - `preview`: internal distribution against `https://admin.edildy.com`.
+  - `production`: store builds against `https://admin.edildy.com`.
+- **API URL:** `EXPO_PUBLIC_API_URL=https://admin.edildy.com` for the preview and production profiles. The API base path stays `/api/v1`.
 - **Version numbers:** `version` set in `app.json`; build numbers increased automatically by EAS (`autoIncrement`).
 - **Mac requirements:**
   - iOS: Xcode, with the `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` workaround.
@@ -219,17 +219,17 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
 |---|---|---|
 | 1 | **Data residency:** do Azerbaijani clients require personal data stored in-country? This could rule out Hetzner's EU locations for production. | Before the pilot (ask the client early) |
 | 2 | **Video limits:** maximum length and resolution, and whether to compress on the phone. | Sub-project 4 design |
-| 3 | **The public host for presigned uploads** (`files.taskop.app` vs a path on `admin.taskop.app`). | Sub-project 4 design |
+| 3 | **The public host for presigned uploads** (`files.edildy.com` vs a path on `admin.edildy.com`). | Sub-project 4 design |
 | 4 | **Is GitHub's native Arm runner available on the private repo?** If not, use the QEMU fallback (§9). | First CI run |
 | 5 | **Uptime and alert tools:** UptimeRobot vs Better Stack, healthchecks.io vs email only. | Deployment |
-| 6 | ~~**Landing page:** what builds it and whether it lives on the same server.~~ Answered: `apps/landing` (Astro) in the monorepo, served by Caddy on the same server as the `taskop-landing` image (§5). | Done |
+| 6 | ~~**Landing page:** what builds it and whether it lives on the same server.~~ Answered: `apps/landing` (Astro) in the monorepo, served by Caddy on the same server as the `edildy-landing` image (§5). | Done |
 
 ## 14. Your checklist (needs your accounts)
 
 - [ ] Make the GitHub repo private.
 - [ ] Hetzner: create the project and the Arm server (4 vCPU / 6 GB / 80 GB, Ubuntu 24.04, EU), add your SSH key, set up the Cloud Firewall (22/80/443), enable backups.
 - [ ] Hetzner: order a Storage Box (smallest size) for off-server backups.
-- [ ] DNS: `A` and `AAAA` records for `taskop.app`, `www.taskop.app` and `admin.taskop.app` (and `files.taskop.app` if chosen) pointing at the server.
+- [ ] DNS: `A` and `AAAA` records for `edildy.com`, `www.edildy.com` and `admin.edildy.com` (and `files.edildy.com` if chosen) pointing at the server.
 - [ ] Resend: create an account, verify the domain (SPF, DKIM, DMARC records), create an API key.
 - [ ] Expo: create a free account.
 - [ ] App Store Connect: register `az.taskop.app` and create the app record.
@@ -241,7 +241,7 @@ If the pilot grows, a staging stack can be added as a second Compose project on 
 1. `apps/api/Dockerfile` and `apps/web/Dockerfile` (multi-stage, arm64 final stage, non-root). `apps/landing/Dockerfile` is done.
 2. Compiled entry points for the setup and `create-platform-admin` scripts in the production image.
 3. `deploy/` folder:
-   - `docker-compose.prod.yml` and `Caddyfile` (started: the `caddy` and `landing` services and the `taskop.app` site blocks)
+   - `docker-compose.prod.yml` and `Caddyfile` (started: the `caddy` and `landing` services and the `edildy.com` site blocks)
    - `.env.example` (started)
    - `bootstrap.sh`: server hardening, Docker, `deploy` user, log rotation, cron jobs
    - `backup.sh`: `pg_dump`, `rclone` to the Storage Box, retention

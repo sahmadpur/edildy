@@ -12,7 +12,7 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Cleanup deletes old notifications and events, devices are removed at logout, rule overrides are reset (SP6 spec §5, §6.3).
-GRANT SELECT, INSERT, UPDATE, DELETE ON notification_events, notifications, notification_deliveries, push_devices, notification_rules TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON notification_events, notifications, notification_deliveries, push_devices, notification_rules TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- The backfill below must see every tenant's rows (see 0004 for why row_security is switched off).
 SET LOCAL row_security = off;

@@ -1,4 +1,4 @@
-import type { ReportFiltersQuery as ReportFilters } from '@taskop/contracts';
+import type { ReportFiltersQuery as ReportFilters } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { errorText } from '@/lib/errors';

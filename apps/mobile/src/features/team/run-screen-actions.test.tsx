@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { PermissionKey } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { PermissionKey } from '@edildy/contracts';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import i18n from '@/lib/i18n';

@@ -1,4 +1,4 @@
-import { formatTime as formatTimeIn } from '@taskop/i18n';
+import { formatTime as formatTimeIn } from '@edildy/i18n';
 import { currentLanguage } from './language';
 
 /** HH:MM in the tenant's time zone (24 h), in the UI language. */

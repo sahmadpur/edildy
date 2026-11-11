@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Page, ProblemDto } from '@taskop/contracts';
+import type { Page, ProblemDto } from '@edildy/contracts';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { ProblemListQueryDto, ProblemPageResponse } from './dto';

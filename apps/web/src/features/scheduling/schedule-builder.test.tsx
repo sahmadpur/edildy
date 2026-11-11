@@ -1,4 +1,4 @@
-import type { Recurrence, ShiftDto, Timing } from '@taskop/contracts';
+import type { Recurrence, ShiftDto, Timing } from '@edildy/contracts';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';

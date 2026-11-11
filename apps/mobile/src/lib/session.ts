@@ -1,5 +1,5 @@
-import { ApiClient, createTaskopApi, type TokenStore } from '@taskop/api-client';
-import { type LoginResult, type Me, meSchema } from '@taskop/contracts';
+import { ApiClient, createEdildyApi, type TokenStore } from '@edildy/api-client';
+import { type LoginResult, type Me, meSchema } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 import { secureStorage, STORAGE_KEYS } from './secure-storage';
 
@@ -65,7 +65,7 @@ const apiClient = new ApiClient({
     set({ status: 'authenticated', me: r.me, offline: false });
   },
 });
-export const api = createTaskopApi(apiClient);
+export const api = createEdildyApi(apiClient);
 
 export const session = {
   get: (): MobileSession => state,

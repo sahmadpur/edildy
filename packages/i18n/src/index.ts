@@ -20,7 +20,7 @@ export const LANGUAGE_FLAGS: Record<Language, string> = { az: '🇦🇿', en: '�
 export const isLanguage = (value: unknown): value is Language => typeof value === 'string' && (LANGUAGES as readonly string[]).includes(value);
 
 /**
- * The language to start in: the stored choice, else the first of the user's preferred languages Taskop has, else
+ * The language to start in: the stored choice, else the first of the user's preferred languages Edildy has, else
  * Azerbaijani. `preferred` are BCP 47 tags (`navigator.languages`, the device locales).
  */
 export function resolveLanguage(stored: unknown, preferred: readonly string[] = []): Language {
@@ -33,7 +33,7 @@ export function resolveLanguage(stored: unknown, preferred: readonly string[] = 
 }
 
 /** The storage key both apps and the landing page use for the chosen language. */
-export const LANGUAGE_STORAGE_KEY = 'taskop.language';
+export const LANGUAGE_STORAGE_KEY = 'edildy.language';
 
 export const resources = { az: { translation: az }, en: { translation: en }, ru: { translation: ru } } as const;
 

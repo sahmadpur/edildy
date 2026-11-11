@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Field } from '@/components/field';

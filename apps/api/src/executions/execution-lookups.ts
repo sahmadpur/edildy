@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type ChecklistContent, type ClaimRef, type Item, type RegisteredMedia, walkItems } from '@taskop/contracts';
+import { type ChecklistContent, type ClaimRef, type Item, type RegisteredMedia, walkItems } from '@edildy/contracts';
 import { and, eq, inArray, ne } from 'drizzle-orm';
 import { storedContent } from '../checklists/content';
 import { DbService } from '../db/db.service';

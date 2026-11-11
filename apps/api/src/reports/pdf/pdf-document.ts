@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { type Language, translationsFor } from '@taskop/i18n';
+import { type Language, translationsFor } from '@edildy/i18n';
 import pdfmake from 'pdfmake';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { cellText, formatDate, formatInstant, type ReportDocument, type ReportTable } from '../export/report-table';
@@ -38,7 +38,7 @@ export function pdfDefinition(doc: ReportDocument): TDocumentDefinitions {
     pageSize: 'A4',
     pageOrientation: 'landscape',
     pageMargins: [28, 28, 28, 36],
-    info: { title: `${doc.title} ${doc.from}_${doc.to}`, creator: 'Taskop' },
+    info: { title: `${doc.title} ${doc.from}_${doc.to}`, creator: 'Edildy' },
     defaultStyle: { font: 'NotoSans', fontSize: 8 },
     styles: {
       tenant: { fontSize: 14, bold: true },

@@ -7,7 +7,7 @@ import {
   type GlobalTemplateDto,
   type GlobalTemplateSummary,
   validateForPublish,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { asc, eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { AuditService } from '../db/audit.service';
@@ -31,7 +31,7 @@ const summary = (r: Row): GlobalTemplateSummary => ({
 const dto = (r: Row): GlobalTemplateDto => ({ ...summary(r), revision: r.revision, content: storedContent(r.content) });
 const meta = (r: Row) => ({ name: r.name, description: r.description, category: r.category, sortOrder: r.sortOrder });
 
-/** Taskop's global library, on the platform connection (no tenant, no RLS). Audited as platform scope. */
+/** Edildy's global library, on the platform connection (no tenant, no RLS). Audited as platform scope. */
 @Injectable()
 export class GlobalTemplatesService {
   constructor(

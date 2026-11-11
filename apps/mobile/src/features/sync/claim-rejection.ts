@@ -1,4 +1,4 @@
-import type { ClaimRejectionReason } from '@taskop/contracts';
+import type { ClaimRejectionReason } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 
 /** Spec §7.2: "Bu checklist artıq {name} tərəfindən icra olunur" when the winner is known, else the reason. */

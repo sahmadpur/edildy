@@ -1,6 +1,6 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import { CHECKLIST_REMINDER_TYPES, type NotificationRuleDto, type NotificationType, type OccurrenceStatus } from '@taskop/contracts';
-import type { Language } from '@taskop/i18n';
+import { CHECKLIST_REMINDER_TYPES, type NotificationRuleDto, type NotificationType, type OccurrenceStatus } from '@edildy/contracts';
+import type { Language } from '@edildy/i18n';
 import { and, asc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { userLanguages } from '../common/locale';

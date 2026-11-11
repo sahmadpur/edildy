@@ -328,7 +328,7 @@ export default {
   },
   notifications: {
     bell: 'Bildirişlər, {{count}} oxunmamış',
-    channel: 'Taskop bildirişləri',
+    channel: 'Edildy bildirişləri',
     unread: 'Oxunmamış',
     online: 'Bildirişlərə baxmaq üçün internet bağlantısı tələb olunur.',
     profile: {

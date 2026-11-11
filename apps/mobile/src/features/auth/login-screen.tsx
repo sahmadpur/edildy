@@ -1,4 +1,4 @@
-import { loginStaffInputSchema, loginWorkerInputSchema } from '@taskop/contracts';
+import { loginStaffInputSchema, loginWorkerInputSchema } from '@edildy/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, type TextInput, View } from 'react-native';
@@ -86,7 +86,7 @@ export function LoginScreen() {
             <View style={styles.lockup}>
               <Image source={mark} style={styles.mark} accessibilityIgnoresInvertColors />
               <Text accessibilityRole="header" style={styles.wordmark}>
-                Taskop
+                Edildy
               </Text>
             </View>
             <Text style={styles.lede}>{mode === 'worker' ? t('mobile.login.hint') : t('mobile.login.staffHint')}</Text>

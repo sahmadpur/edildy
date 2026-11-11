@@ -1,4 +1,4 @@
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 
 export interface SiteNode extends SiteDto {
   children: SiteNode[];

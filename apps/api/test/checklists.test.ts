@@ -1,4 +1,4 @@
-import { blankContent, newItem, newSection } from '@taskop/contracts';
+import { blankContent, newItem, newSection } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';

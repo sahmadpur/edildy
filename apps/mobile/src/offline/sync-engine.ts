@@ -18,7 +18,7 @@ import {
   syncTaskSchema,
   type TaskActionCommand,
   type TaskMediaRegisterInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { ChangeFeed } from './change-feed';
 import { clampOffset, type Clock, measureOffset, readOffset, serverTime } from './clock';
 import { type Db, getMeta } from './db';

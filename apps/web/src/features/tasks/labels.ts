@@ -12,7 +12,7 @@ import {
   timeToMinutes,
   tzOffsetMinutes,
   zonedTimeToUtc,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import type { Variant } from '@/features/scheduling/labels';
 

@@ -1,5 +1,5 @@
-import { tzOffsetMinutes } from '@taskop/contracts';
-import { type Language, translationsFor } from '@taskop/i18n';
+import { tzOffsetMinutes } from '@edildy/contracts';
+import { type Language, translationsFor } from '@edildy/i18n';
 
 /** How a column is typed in Excel and printed in CSV and PDF. */
 export type ColumnType = 'text' | 'int' | 'decimal' | 'number' | 'date' | 'datetime' | 'bool';

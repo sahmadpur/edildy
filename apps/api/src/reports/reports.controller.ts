@@ -11,7 +11,7 @@ import {
   type ReportSummary,
   type ReportTasks,
   type SiteReportRow,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import type { Principal } from '../common/request';

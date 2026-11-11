@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type AuditQueueParams, type AuditQueueRow, type AuditResult, type AuditStatus, type OccurrenceStatus, type Page, runAuditState } from '@taskop/contracts';
+import { type AuditQueueParams, type AuditQueueRow, type AuditResult, type AuditStatus, type OccurrenceStatus, type Page, runAuditState } from '@edildy/contracts';
 import { type SQL, sql } from 'drizzle-orm';
 import { inSiteSubtrees, sqlList } from '../common/sql';
 import { DbService } from '../db/db.service';

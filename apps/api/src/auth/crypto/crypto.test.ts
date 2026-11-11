@@ -1,4 +1,4 @@
-import { isWeakPin } from '@taskop/contracts';
+import { isWeakPin } from '@edildy/contracts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../../config/config';
 import { testEnv } from '../../../test/app';

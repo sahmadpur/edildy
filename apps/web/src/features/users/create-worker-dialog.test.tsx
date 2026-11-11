@@ -50,7 +50,7 @@ describe('CreateWorkerDialog', () => {
   });
 
   it('maps API field errors onto inputs', async () => {
-    const { ApiError } = await import('@taskop/api-client');
+    const { ApiError } = await import('@edildy/api-client');
     createWorker.mockRejectedValue(new ApiError(409, 'USERNAME_TAKEN', 'errors.USERNAME_TAKEN', { username: 'errors.USERNAME_TAKEN' }));
     renderWithProviders(<CreateWorkerDialog open onOpenChange={vi.fn()} orgCode="acme" onCreated={vi.fn()} />);
     await userEvent.type(screen.getByLabelText('Ad və soyad'), 'Elvin Məmmədov');

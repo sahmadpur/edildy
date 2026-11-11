@@ -1,4 +1,4 @@
-import { MEDIA_KINDS, type MediaKind, PROBLEM_REPORT_LIMITS, PROBLEM_SEVERITIES, type ProblemSeverity, type ReportSite } from '@taskop/contracts';
+import { MEDIA_KINDS, type MediaKind, PROBLEM_REPORT_LIMITS, PROBLEM_SEVERITIES, type ProblemSeverity, type ReportSite } from '@edildy/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

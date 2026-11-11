@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { applyPull } from './sync-pull';
 import { syncResponse, T } from './testing/fixtures';
 import { openTestDb } from './testing/node-db';

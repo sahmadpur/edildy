@@ -32,7 +32,7 @@ test('owner signs up, creates a site and a worker, and finds the worker after lo
   await page.getByRole('button', { name: 'Hazırdır' }).click();
 
   await page.getByRole('button', { name: 'Çıxış' }).click();
-  await expect(page.getByRole('heading', { name: 'Taskop-a daxil olun' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Edildy-yə daxil olun' })).toBeVisible();
   await page.getByLabel('E-poçt', { exact: true }).fill(email);
   await page.getByLabel('Şifrə', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Daxil ol' }).click();

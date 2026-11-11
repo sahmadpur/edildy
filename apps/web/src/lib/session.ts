@@ -1,5 +1,5 @@
-import { ApiClient, ApiError, createTaskopApi, memoryTokenStore } from '@taskop/api-client';
-import type { LoginResult, Me, PermissionKey } from '@taskop/contracts';
+import { ApiClient, ApiError, createEdildyApi, memoryTokenStore } from '@edildy/api-client';
+import type { LoginResult, Me, PermissionKey } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 import { setLanguage } from './i18n';
 import { queryClient } from './query';
@@ -24,7 +24,7 @@ export const apiClient = new ApiClient({
   },
   onRefreshed: (r) => set({ status: 'authenticated', me: r.me }),
 });
-export const api = createTaskopApi(apiClient);
+export const api = createEdildyApi(apiClient);
 
 /** A language saved on the profile wins over this browser's choice, so every device of the user agrees. */
 function applyProfileLanguage(me: Me): void {

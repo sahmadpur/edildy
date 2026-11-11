@@ -1,4 +1,4 @@
-import { type Language, LANGUAGE_NAMES, LANGUAGES } from '@taskop/i18n';
+import { type Language, LANGUAGE_NAMES, LANGUAGES } from '@edildy/i18n';
 import { Check, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

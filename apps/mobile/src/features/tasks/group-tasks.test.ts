@@ -1,4 +1,4 @@
-import type { SyncTask, TaskStatus } from '@taskop/contracts';
+import type { SyncTask, TaskStatus } from '@edildy/contracts';
 import type { TaskView } from '@/offline/task-store';
 import { syncTask, T, TASK, TASK2, TASK3, TASK4, TASK5, TEAM } from '@/offline/testing/fixtures';
 import { groupTasks, taskCounts } from './group-tasks';

@@ -1,4 +1,4 @@
-import { CONTENT_LIMITS, type Item, NUMBER_OPS, RANGE_OPS, type Rule, type RuleItem } from '@taskop/contracts';
+import { CONTENT_LIMITS, type Item, NUMBER_OPS, RANGE_OPS, type Rule, type RuleItem } from '@edildy/contracts';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';

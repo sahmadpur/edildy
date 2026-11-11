@@ -1,4 +1,4 @@
-import type { ReportProblems, ReportTasks } from '@taskop/contracts';
+import type { ReportProblems, ReportTasks } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';

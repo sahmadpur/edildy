@@ -1,9 +1,9 @@
-# Taskop — Sub-project 4: Mobile Execution, Offline Sync & Evidence — Design Spec
+# Edildy — Sub-project 4: Mobile Execution, Offline Sync & Evidence — Design Spec
 
 - **Date:** 2026-10-09
 - **Status:** Draft for review
 - **Source requirements:** `docs/PS Checkly 20293009 v05.pdf` — FR-09.11–12, FR-10.01–15, FR-11.01–02 (remaining statuses), FR-12.01–08, FR-13.01–03/05, BR-11–13, NFR-06.04–05, NFR-08.04–05, NFR-10.01–02/04
-- **Builds on:** `2026-10-07-foundation-design.md` (tenancy, RLS, auth, mobile login), `2026-10-08-checklist-builder-design.md` (checklist content, `visibleItems`/`requirements`/`computeScore`), `2026-10-09-scheduling-assignment-design.md` (occurrences, `canStart`, sweep, `/me/occurrences`), `2026-10-09-deployment-design.md` (SeaweedFS, `files.taskop.app`)
+- **Builds on:** `2026-10-07-foundation-design.md` (tenancy, RLS, auth, mobile login), `2026-10-08-checklist-builder-design.md` (checklist content, `visibleItems`/`requirements`/`computeScore`), `2026-10-09-scheduling-assignment-design.md` (occurrences, `canStart`, sweep, `/me/occurrences`), `2026-10-09-deployment-design.md` (SeaweedFS, `files.edildy.com`)
 
 ## 1. Context and decisions
 
@@ -19,7 +19,7 @@ Decisions made during brainstorming:
 | Device time (BR-11) | **Trusted within bounds.** Device start/complete times decide on-time, late, partial and missed. Server receipt times are stored beside them. Clock offset is measured at each sync; a skew > 5 min marks the execution `clock_suspect`. |
 | Partial | **Automatic at window close.** An execution started but not completed by `closes_at` becomes `partial`; answers are kept and locked. No manual "finish incomplete". |
 | Media limits | **Lean.** Photos resized on the phone to 1600 px long edge, JPEG quality 0.7. Video recorded at 720p, max 60 s, no extra compression library. Files kept indefinitely; retention per plan comes with SP9. |
-| Upload host | **`files.taskop.app`** (its own subdomain, because S3 signatures cover the path). Locally the phone uses the Mac's LAN IP on port 8333. |
+| Upload host | **`files.edildy.com`** (its own subdomain, because S3 signatures cover the path). Locally the phone uses the Mac's LAN IP on port 8333. |
 | Version pinning | The occurrence pins the checklist version current when it is **first downloaded or started**, so offline execution uses exactly the content the phone holds. |
 
 ## 2. Goals and non-goals
@@ -114,7 +114,7 @@ Foundation rules apply: UUIDv7 IDs, `timestamptz` in UTC, `tenant_id` leading in
 
 ### 5.3 Migration
 
-Adds the column, tables, RLS policies and grants (`taskop_app`: `SELECT, INSERT, UPDATE` on the three tables; no `DELETE`).
+Adds the column, tables, RLS policies and grants (`edildy_app`: `SELECT, INSERT, UPDATE` on the three tables; no `DELETE`).
 
 ## 6. Sync protocol and API
 
@@ -243,10 +243,10 @@ Expo SDK 57 modules, used through development builds (not Expo Go): `expo-sqlite
 
 ## 9. Storage and infrastructure
 
-- `docker-compose.yml`: replace `minio` with SeaweedFS (`chrislusf/seaweedfs`, `weed server -s3`, S3 on port 8333, a named volume) and a one-off init container that creates the private bucket `taskop-media`.
+- `docker-compose.yml`: replace `minio` with SeaweedFS (`chrislusf/seaweedfs`, `weed server -s3`, S3 on port 8333, a named volume) and a one-off init container that creates the private bucket `edildy-media`.
 - API `S3Service` (AWS SDK v3), configured only by `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_FORCE_PATH_STYLE`. Server-side calls (HEAD, DELETE) use `S3_ENDPOINT`; presigned URLs are signed against `S3_PUBLIC_ENDPOINT`.
 - Local: `S3_PUBLIC_ENDPOINT=http://<mac-lan-ip>:8333`; the mobile `.env` gets `EXPO_PUBLIC_API_URL=http://<mac-lan-ip>:3000`.
-- Deployment plan update (doc only): `files.taskop.app` block in the Caddyfile (`reverse_proxy seaweedfs:8333`, preserving `Host`), §8 questions answered with this spec's limits, §13 items 2 and 3 closed.
+- Deployment plan update (doc only): `files.edildy.com` block in the Caddyfile (`reverse_proxy seaweedfs:8333`, preserving `Host`), §8 questions answered with this spec's limits, §13 items 2 and 3 closed.
 
 ## 10. Testing
 

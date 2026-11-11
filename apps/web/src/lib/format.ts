@@ -1,4 +1,4 @@
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { useCallback } from 'react';
 import { useMe } from './session';
 import { useLocale } from '@/lib/i18n';

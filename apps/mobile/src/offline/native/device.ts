@@ -1,4 +1,4 @@
-import type { DeviceInfo } from '@taskop/contracts';
+import type { DeviceInfo } from '@edildy/contracts';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 

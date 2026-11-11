@@ -1,5 +1,5 @@
 {
-  "name": "@taskop/api",
+  "name": "@edildy/api",
   "version": "0.0.0",
   "private": true,
   "files": [
@@ -30,8 +30,8 @@
     "@nestjs/platform-express": "^12.1.2",
     "@nestjs/swagger": "^12.0.2",
     "@node-rs/argon2": "^2.2.2",
-    "@taskop/contracts": "workspace:*",
-    "@taskop/i18n": "workspace:*",
+    "@edildy/contracts": "workspace:*",
+    "@edildy/i18n": "workspace:*",
     "cookie-parser": "^1.4.7",
     "drizzle-orm": "^0.45.3",
     "expo-server-sdk": "^7.2.0",
@@ -55,7 +55,7 @@
     "@nestjs/testing": "^12.1.2",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.16.13",
-    "@taskop/config": "workspace:*",
+    "@edildy/config": "workspace:*",
     "@testcontainers/postgresql": "^12.2.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",

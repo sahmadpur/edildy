@@ -1,6 +1,6 @@
-import { ApiError } from '@taskop/api-client';
-import { type ChecklistContent, type ExecutionSummary, type OccurrenceDetail, type ReworkRequest, runAuditState, walkItems } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { type ChecklistContent, type ExecutionSummary, type OccurrenceDetail, type ReworkRequest, runAuditState, walkItems } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';

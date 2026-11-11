@@ -23,7 +23,7 @@ import {
   shiftDtoSchema,
   shiftListQuerySchema,
   updateShiftInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ShiftListQueryDto extends createZodDto(shiftListQuerySchema) {}

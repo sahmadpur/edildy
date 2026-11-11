@@ -1,13 +1,13 @@
-# Taskop Checklist Builder — Part 2: API Client & Web — Implementation Plan
+# Edildy Checklist Builder — Part 2: API Client & Web — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give tenant users and Taskop platform admins a web checklist builder covering checklists, versions, templates and preview, backed by the Part 1 API.
+**Goal:** Give tenant users and Edildy platform admins a web checklist builder covering checklists, versions, templates and preview, backed by the Part 1 API.
 
 **Architecture:**
 - **Workspace context.** All checklist screens read one `ChecklistWorkspace` context, which holds the API group, permissions, route prefix and navigation function. The same pages therefore serve tenant users (`/checklists…`) and platform admins working inside a tenant (`/platform/tenants/:id/checklists…`).
 - **Builder state.** The builder is a pure reducer (content plus undo/redo) over the shared `ChecklistContent` type. A debounced, single-flight autosave hook sends saves with the last known `revision`.
-- **Shared validation.** Content validation and preview logic come from `@taskop/contracts`, so the web app and the API agree exactly.
+- **Shared validation.** Content validation and preview logic come from `@edildy/contracts`, so the web app and the API agree exactly.
 
 **Tech Stack:** React 19.2.3, Vite, TanStack Router + Query, Tailwind + shadcn/ui, i18next, `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` (new), Vitest + Testing Library, Playwright.
 
@@ -18,9 +18,9 @@
 
 ## Global Constraints
 
-- The product name is **Taskop**. All user-visible text goes through i18n keys (`az` only). Never hard-code Azerbaijani strings in components.
+- The product name is **Edildy**. All user-visible text goes through i18n keys (`az` only). Never hard-code Azerbaijani strings in components.
 - Install new packages with `pnpm add <pkg>@latest`. React stays pinned at 19.2.3 repo-wide (Expo).
-- Content types, validation (`validateForPublish`), evaluation (`visibleItems`, `requirements`, `computeScore`), factories (`newItem`, `newRule`, `newSection`) and `regenerateItemIds` come from `@taskop/contracts`. Never re-implement them in the web app.
+- Content types, validation (`validateForPublish`), evaluation (`visibleItems`, `requirements`, `computeScore`), factories (`newItem`, `newRule`, `newSection`) and `regenerateItemIds` come from `@edildy/contracts`. Never re-implement them in the web app.
 - Builder rules (spec §7.2):
   - Autosave runs 1.5 s after the last change and on `visibilitychange`/`pagehide`, with one save in flight at a time.
   - A 409 stops autosave and shows a reload banner.
@@ -34,7 +34,7 @@
   - Template changes need `templates.manage`.
   - The **Checklists** nav item needs `checklists.view`; **Templates** needs `checklists.manage`.
   - Platform admins hold all of these.
-- Dates are formatted with `@taskop/i18n` `formatDateTime` in the tenant timezone (platform pages use `Asia/Baku`).
+- Dates are formatted with `@edildy/i18n` `formatDateTime` in the tenant timezone (platform pages use `Asia/Baku`).
 
 ## Review Focus
 
@@ -70,7 +70,7 @@ apps/web/src/
     template-picker.tsx
     checklist-detail-page.tsx  versions, actions
     checklist-dialogs.tsx   EditDetailsDialog, SaveAsTemplateDialog
-    templates-page.tsx      gallery (Taskop / ours) + new template
+    templates-page.tsx      gallery (Edildy / ours) + new template
     editor-pages.tsx        ChecklistDraftPage, ChecklistVersionPage, TemplateEditorPage
     routes.tsx              param → page adapters for both route trees
     builder/
@@ -111,7 +111,7 @@ apps/web/e2e/checklists.spec.ts
   - `ApiError.issues: ContentIssue[] | null` and `ApiError.currentRevision: number | null`
   - `createChecklistsApi(c, base = '')` → `{ list, get, create, update, version, draft, startDraft, saveDraft, discardDraft, publish, deactivate, reactivate, saveAsTemplate }`, typed as `ChecklistsApi`
   - `createTemplatesApi(c, base = '')` → `{ list, get, create, update, saveContent, deactivate, reactivate }`, typed as `TemplatesApi`
-  - `TaskopApi.checklists` and `TaskopApi.templates`
+  - `EdildyApi.checklists` and `EdildyApi.templates`
   - `PlatformApi.globalTemplates` → `{ list, get, create, update, saveContent, publish, unpublish }`
   - `PlatformApi.inTenant(tenantId)` → `{ checklists, templates }`, with paths under `/platform/tenants/:tenantId`
 
@@ -129,19 +129,19 @@ describe('checklist endpoints', () => {
     const { api } = setup(() =>
       json(422, { error: { code: 'CHECKLIST_INVALID_CONTENT', messageKey: 'errors.CHECKLIST_INVALID_CONTENT', fields: null, retryAfterSeconds: null, requestId: 'r', issues } }),
     );
-    const e = await createTaskopApi(api).checklists.publish(cid, { revision: 1 }).catch((x: unknown) => x);
+    const e = await createEdildyApi(api).checklists.publish(cid, { revision: 1 }).catch((x: unknown) => x);
     expect(e).toBeInstanceOf(ApiError);
     expect((e as ApiError).issues).toEqual(issues);
     const { api: api2 } = setup(() =>
       json(409, { error: { code: 'CHECKLIST_DRAFT_CONFLICT', messageKey: 'x', fields: null, retryAfterSeconds: null, requestId: null, currentRevision: 7 } }),
     );
-    const e2 = (await createTaskopApi(api2).checklists.saveDraft(cid, { content: {}, revision: 1 }).catch((x: unknown) => x)) as ApiError;
+    const e2 = (await createEdildyApi(api2).checklists.saveDraft(cid, { content: {}, revision: 1 }).catch((x: unknown) => x)) as ApiError;
     expect([e2.code, e2.currentRevision, e2.issues]).toEqual(['CHECKLIST_DRAFT_CONFLICT', 7, null]);
   });
 
   it('builds tenant and platform-in-tenant paths', async () => {
     const { api, fetchMock } = setup(() => json(200, { revision: 2, issues: [] }));
-    await createTaskopApi(api).checklists.saveDraft(cid, { content: {}, revision: 1 });
+    await createEdildyApi(api).checklists.saveDraft(cid, { content: {}, revision: 1 });
     await createPlatformApi(api).inTenant(cid).checklists.saveDraft(cid, { content: {}, revision: 1 });
     await createPlatformApi(api).inTenant(cid).templates.saveContent(cid, { content: {}, revision: 1 });
     expect(fetchMock.mock.calls.map((c) => `${c[1].method} ${c[0]}`)).toEqual([
@@ -153,7 +153,7 @@ describe('checklist endpoints', () => {
 
   it('discards a draft with DELETE and no body', async () => {
     const { api, fetchMock } = setup(() => new Response(null, { status: 204 }));
-    await expect(createTaskopApi(api).checklists.discardDraft(cid)).resolves.toBeUndefined();
+    await expect(createEdildyApi(api).checklists.discardDraft(cid)).resolves.toBeUndefined();
     expect(fetchMock.mock.calls[0]![1]).toMatchObject({ method: 'DELETE', body: undefined });
   });
 });
@@ -161,14 +161,14 @@ describe('checklist endpoints', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/api-client test`
+Run: `pnpm --filter @edildy/api-client test`
 Expected: FAIL. `checklists` is undefined on the API.
 
 - [ ] **Step 3: Implement**
 
 `errors.ts`, which gains two trailing constructor params:
 ```ts
-import type { ContentIssue, ErrorCode } from '@taskop/contracts';
+import type { ContentIssue, ErrorCode } from '@edildy/contracts';
 
 export type ClientErrorCode = ErrorCode | 'NETWORK';
 
@@ -198,7 +198,7 @@ export class ApiError extends Error {
   return new ApiError(res.status, e.code, e.messageKey, e.fields, e.retryAfterSeconds, e.requestId, e.issues ?? null, e.currentRevision ?? null);
 ```
 
-`endpoints.ts`: add these imports to the existing `@taskop/contracts` import list: `checklistDetailSchema`, `type ChecklistListQuery`, `checklistSummarySchema`, `checklistVersionSchema`, `checklistVersionSummarySchema`, `contentSaveResultSchema`, `type CreateChecklistInput`, `type CreateTemplateInput`, `globalTemplateSchema`, `globalTemplateSummarySchema`, `type PublishInput`, `type SaveAsTemplateInput`, `type SaveContentInput`, `type StartDraftInput`, `type TemplateListQuery`, `templateSchema`, `templateSummarySchema`, `type UpdateChecklistInput`, `type UpdateGlobalTemplateInput`, `type UpdateTemplateInput`. Then add:
+`endpoints.ts`: add these imports to the existing `@edildy/contracts` import list: `checklistDetailSchema`, `type ChecklistListQuery`, `checklistSummarySchema`, `checklistVersionSchema`, `checklistVersionSummarySchema`, `contentSaveResultSchema`, `type CreateChecklistInput`, `type CreateTemplateInput`, `globalTemplateSchema`, `globalTemplateSummarySchema`, `type PublishInput`, `type SaveAsTemplateInput`, `type SaveContentInput`, `type StartDraftInput`, `type TemplateListQuery`, `templateSchema`, `templateSummarySchema`, `type UpdateChecklistInput`, `type UpdateGlobalTemplateInput`, `type UpdateTemplateInput`. Then add:
 ```ts
 /** `base` is '' for tenant users or `/platform/tenants/<id>` for platform admins working in a tenant. */
 export function createChecklistsApi(c: ApiClient, base = '') {
@@ -236,7 +236,7 @@ export function createTemplatesApi(c: ApiClient, base = '') {
 }
 export type TemplatesApi = ReturnType<typeof createTemplatesApi>;
 ```
-In `createTaskopApi`, add:
+In `createEdildyApi`, add:
 ```ts
     checklists: createChecklistsApi(c),
     templates: createTemplatesApi(c),
@@ -260,7 +260,7 @@ In `createPlatformApi`, add:
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client typecheck && pnpm --filter @taskop/api-client build`
+Run: `pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client typecheck && pnpm --filter @edildy/api-client build`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -303,7 +303,7 @@ git commit -m "feat(api-client): add checklist and template endpoints and error 
 
 `apps/web/src/features/checklists/builder/fixtures.ts`:
 ```ts
-import { blankContent, type ChecklistContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 
 /** S1: [A (rule → A1 (rule → A11)), B], S2: [C]. Shared by the builder tests. */
 export function treeFixture() {
@@ -332,7 +332,7 @@ export function treeFixture() {
 
 `apps/web/src/features/checklists/builder/tree.test.ts`:
 ```ts
-import type { ChecklistContent } from '@taskop/contracts';
+import type { ChecklistContent } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { treeFixture } from './fixtures';
 import { canMoveTo, containerDepth, findItem, listContainers, moveItem, moveSection, rootItemId, subtreeHeight } from './tree';
@@ -461,13 +461,13 @@ describe('builderReducer', () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `pnpm --filter @taskop/web test -- builder/`
+Run: `pnpm --filter @edildy/web test -- builder/`
 Expected: FAIL, because the modules don't exist.
 
 - [ ] **Step 3: Implement `tree.ts`**
 
 ```ts
-import { type ChecklistContent, CONTENT_LIMITS, hasRules, type Item } from '@taskop/contracts';
+import { type ChecklistContent, CONTENT_LIMITS, hasRules, type Item } from '@edildy/contracts';
 
 export type ContainerRef = { kind: 'section'; sectionId: string } | { kind: 'rule'; itemId: string; ruleId: string };
 export type NodeRef = { kind: 'settings' } | { kind: 'section'; id: string } | { kind: 'item'; id: string };
@@ -630,7 +630,7 @@ import {
   regenerateItemIds,
   type Rule,
   type Section,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { containerDepth, type ContainerRef, containerItems, edit, findItem, insertItem, moveItem, moveSection, type NodeRef, removeItem } from './tree';
 
 export const HISTORY_LIMIT = 50;
@@ -792,7 +792,7 @@ export function builderReducer(state: BuilderState, action: BuilderAction): Buil
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test -- builder/`
+Run: `pnpm --filter @edildy/web test -- builder/`
 Expected: PASS.
 
 The version count in `coalesces typing…`: 4 edits (3 coalesced labels count as 3 versions, plus `required`), then 2 undos and 1 redo, gives 7.
@@ -825,8 +825,8 @@ git commit -m "feat(web): add checklist builder tree helpers and undoable reduce
 
 `apps/web/src/features/checklists/builder/use-autosave.test.ts`:
 ```ts
-import { ApiError } from '@taskop/api-client';
-import { blankContent, type ChecklistContent } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { blankContent, type ChecklistContent } from '@edildy/contracts';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAutosave } from './use-autosave';
@@ -933,7 +933,7 @@ describe('useAutosave', () => {
 
 `apps/web/src/features/checklists/builder/issues.test.ts`:
 ```ts
-import { validateForPublish } from '@taskop/contracts';
+import { validateForPublish } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { indexIssues } from './issues';
 import { treeFixture } from './fixtures';
@@ -962,14 +962,14 @@ The fixture's rules have empty `optionIds` (from `newRule`), so `A` and `A1` bot
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `pnpm --filter @taskop/web test -- use-autosave issues`
+Run: `pnpm --filter @edildy/web test -- use-autosave issues`
 Expected: FAIL, because the modules don't exist.
 
 - [ ] **Step 3: Implement `use-autosave.ts`**
 
 ```ts
-import { ApiError } from '@taskop/api-client';
-import type { ChecklistContent, ContentSaveResult } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { ChecklistContent, ContentSaveResult } from '@edildy/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error' | 'conflict';
@@ -1067,7 +1067,7 @@ In the in-flight test, the second `flush()` call returns the same promise as the
 - [ ] **Step 4: Implement `issues.ts`**
 
 ```ts
-import type { ChecklistContent, ContentIssue } from '@taskop/contracts';
+import type { ChecklistContent, ContentIssue } from '@edildy/contracts';
 
 export interface NodeIssue {
   field: string | null;
@@ -1115,7 +1115,7 @@ export function indexIssues(content: ChecklistContent, issues: ContentIssue[]): 
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test -- use-autosave issues`
+Run: `pnpm --filter @edildy/web test -- use-autosave issues`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -1187,17 +1187,17 @@ Replace `packages/i18n/src/az/checklists.ts` with the Part 1 content (`issues`, 
     open: 'Bax',
     restore: 'Qaralama kimi bərpa et',
     saveAsTemplate: 'Şablon kimi saxla',
-    taskop: 'Taskop',
+    edildy: 'Edildy',
     confirmDeactivate: '«{{name}}» deaktiv edilsin? Versiyalar və tarixçə saxlanılacaq.',
     deactivatedBanner: 'Bu yoxlama vərəqəsi deaktivdir və dəyişdirilə bilməz.',
     discardDraft: 'Qaralamanı sil',
     confirmDiscard: 'Qaralamadakı dərc edilməmiş dəyişikliklər silinsin?',
-    source: { global: 'Taskop şablonundan yaradılıb', tenant: 'Öz şablonumuzdan yaradılıb', version: 'Başqa yoxlama vərəqəsinin surətidir' },
+    source: { global: 'Edildy şablonundan yaradılıb', tenant: 'Öz şablonumuzdan yaradılıb', version: 'Başqa yoxlama vərəqəsinin surətidir' },
   },
   saveAsTemplate: { title: 'Şablon kimi saxla', done: 'Şablon yaradıldı' },
   templates: {
     title: 'Şablonlar',
-    taskop: 'Taskop şablonları',
+    edildy: 'Edildy şablonları',
     ours: 'Bizim şablonlar',
     new: 'Yeni şablon',
     use: 'İstifadə et',
@@ -1331,18 +1331,18 @@ Replace `packages/i18n/src/az/checklists.ts` with the Part 1 content (`issues`, 
 `packages/i18n/src/az/platform.ts`: add
 ```ts
   nav: { tenants: 'Təşkilatlar', templates: 'Şablonlar' },
-  workspaceBanner: 'Siz Taskop administratoru kimi «{{name}}» təşkilatında işləyirsiniz.',
+  workspaceBanner: 'Siz Edildy administratoru kimi «{{name}}» təşkilatında işləyirsiniz.',
   backToTenants: 'Təşkilatlara qayıt',
 ```
 and inside `tenants` add `checklists: 'Yoxlama vərəqələri',`.
 
-Run `pnpm --filter @taskop/i18n build`.
+Run `pnpm --filter @edildy/i18n build`.
 
 - [ ] **Step 2: Write the failing test**
 
 `apps/web/src/test/workspace.tsx`:
 ```tsx
-import type { ChecklistsApi, TemplatesApi } from '@taskop/api-client';
+import type { ChecklistsApi, TemplatesApi } from '@edildy/api-client';
 import type { ReactElement } from 'react';
 import { vi } from 'vitest';
 import { type ChecklistWorkspace, WorkspaceProvider } from '@/features/checklists/workspace';
@@ -1374,7 +1374,7 @@ export function renderInWorkspace(ui: ReactElement, ws = fakeWorkspace()) {
 
 `apps/web/src/features/checklists/checklists-page.test.tsx`:
 ```tsx
-import type { ChecklistSummary } from '@taskop/contracts';
+import type { ChecklistSummary } from '@edildy/contracts';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1449,14 +1449,14 @@ describe('ChecklistsPage', () => {
 
 - [ ] **Step 3: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test -- checklists-page`
+Run: `pnpm --filter @edildy/web test -- checklists-page`
 Expected: FAIL, because the modules don't exist.
 
 - [ ] **Step 4: Workspace, queries, labels**
 
 `apps/web/src/features/checklists/workspace.tsx`:
 ```tsx
-import type { ChecklistsApi, TemplatesApi } from '@taskop/api-client';
+import type { ChecklistsApi, TemplatesApi } from '@edildy/api-client';
 import { useNavigate } from '@tanstack/react-router';
 import { createContext, type MouseEvent, type ReactNode, useContext, useMemo } from 'react';
 import { platformApi } from '@/features/platform/platform-session';
@@ -1542,7 +1542,7 @@ export function WsLink({ to, children, className }: { to: string; children: Reac
 
 `apps/web/src/features/checklists/queries.ts`:
 ```ts
-import type { ChecklistListQuery, TemplateListQuery } from '@taskop/contracts';
+import type { ChecklistListQuery, TemplateListQuery } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useWorkspace } from './workspace';
 
@@ -1569,7 +1569,7 @@ export function useTemplates(query: TemplateListQuery, enabled = true) {
 
 `apps/web/src/features/checklists/labels.ts`:
 ```ts
-import type { ChoiceOption, Item, TemplateCategory } from '@taskop/contracts';
+import type { ChoiceOption, Item, TemplateCategory } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 
 export function optionLabel(t: TFunction, _item: Item, option: ChoiceOption | { id: string; key: string }, index: number): string {
@@ -1585,7 +1585,7 @@ export const categoryLabel = (t: TFunction, category: TemplateCategory | null): 
 
 `apps/web/src/features/checklists/template-picker.tsx`:
 ```tsx
-import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateSummary } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateSummary } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -1619,7 +1619,7 @@ export function TemplatePicker({ value, onPick }: { value: TemplateSummary | nul
           >
             <span className="font-medium">{tpl.name}</span>
             <span className="text-muted-foreground block text-xs">
-              {tpl.source === 'global' ? t('checklists.templates.taskop') : t('checklists.templates.ours')} · {categoryLabel(t, tpl.category)} ·{' '}
+              {tpl.source === 'global' ? t('checklists.templates.edildy') : t('checklists.templates.ours')} · {categoryLabel(t, tpl.category)} ·{' '}
               {t('checklists.templates.items', { count: tpl.itemCount })}
             </span>
           </button>
@@ -1633,7 +1633,7 @@ export function TemplatePicker({ value, onPick }: { value: TemplateSummary | nul
 
 `apps/web/src/features/checklists/new-checklist-dialog.tsx`:
 ```tsx
-import { TEMPLATE_CATEGORIES, type CreateChecklistInput, type TemplateCategory, type TemplateSummary } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type CreateChecklistInput, type TemplateCategory, type TemplateSummary } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -1781,8 +1781,8 @@ export function NewChecklistDialog({ open, onOpenChange, initialMode = 'blank', 
 
 `apps/web/src/features/checklists/checklists-page.tsx`:
 ```tsx
-import { TEMPLATE_CATEGORIES, type ChecklistStatus, type TemplateCategory } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { TEMPLATE_CATEGORIES, type ChecklistStatus, type TemplateCategory } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -1877,7 +1877,7 @@ export function ChecklistsPage() {
 - [ ] **Step 6: Install the drag-and-drop libraries, add routes and nav**
 
 ```bash
-pnpm --filter @taskop/web add @dnd-kit/core@latest @dnd-kit/sortable@latest @dnd-kit/utilities@latest
+pnpm --filter @edildy/web add @dnd-kit/core@latest @dnd-kit/sortable@latest @dnd-kit/utilities@latest
 ```
 These are the stable `@dnd-kit/core` 6.x and `@dnd-kit/sortable` 10.x packages. Don't use the pre-1.0 `@dnd-kit/react`. Task W5 uses them.
 
@@ -1919,7 +1919,7 @@ Update `apps/web/src/layouts/app-shell.test.tsx` if it asserts the exact list of
 
 - [ ] **Step 7: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS. The `/templates` route doesn't exist yet. Navigating there 404s until W8, which is fine.
 
 - [ ] **Step 8: Commit**
@@ -2015,13 +2015,13 @@ describe('Outline', () => {
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test -- outline`
+Run: `pnpm --filter @edildy/web test -- outline`
 Expected: FAIL, because the module doesn't exist.
 
 - [ ] **Step 3: Implement `move-to-dialog.tsx`**
 
 ```tsx
-import type { ChecklistContent } from '@taskop/contracts';
+import type { ChecklistContent } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -2116,7 +2116,7 @@ export function MoveToDialog({ content, node, onClose, onMove }: Props) {
 import { closestCenter, DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { type ChecklistContent, hasRules, type Item, type Section } from '@taskop/contracts';
+import { type ChecklistContent, hasRules, type Item, type Section } from '@edildy/contracts';
 import { GripVertical, MoveVertical } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2320,7 +2320,7 @@ The test expects `aria-label` order `S1, A, A1, A11, B, S2, C`, which is documen
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test -- outline`
+Run: `pnpm --filter @edildy/web test -- outline`
 Expected: PASS.
 
 The `Move to hides invalid targets` test moves `A`. Its subtree height is 2 and it contains both rule containers, so only the two sections are valid targets.
@@ -2352,7 +2352,7 @@ git commit -m "feat(web): add builder outline with drag-and-drop and move-to dia
 
 `apps/web/src/features/checklists/builder/inspector.test.tsx`:
 ```tsx
-import { blankContent, type ChecklistContent, newItem, newSection, type SingleChoiceItem, type YesNoItem } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, newItem, newSection, type SingleChoiceItem, type YesNoItem } from '@edildy/contracts';
 import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'react';
@@ -2462,17 +2462,17 @@ describe('Canvas', () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `pnpm --filter @taskop/web test -- inspector canvas`
+Run: `pnpm --filter @edildy/web test -- inspector canvas`
 Expected: FAIL, because the modules don't exist.
 
 - [ ] **Step 3: Add the two i18n keys**
 
-In `packages/i18n/src/az/checklists.ts`, inside `builder.item`, add `minValue: 'Minimum dəyər',` and `maxValue: 'Maksimum dəyər',`. Then run `pnpm --filter @taskop/i18n build`.
+In `packages/i18n/src/az/checklists.ts`, inside `builder.item`, add `minValue: 'Minimum dəyər',` and `maxValue: 'Maksimum dəyər',`. Then run `pnpm --filter @edildy/i18n build`.
 
 - [ ] **Step 4: Implement `canvas.tsx`**
 
 ```tsx
-import { type ChecklistContent, countItems, hasRules, ITEM_TYPES, type Item, type ItemType } from '@taskop/contracts';
+import { type ChecklistContent, countItems, hasRules, ITEM_TYPES, type Item, type ItemType } from '@edildy/contracts';
 import { Copy, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2641,7 +2641,7 @@ The canvas test uses `getByDisplayValue('C')` because both the inspector and the
 - [ ] **Step 5: Implement `rules-editor.tsx`**
 
 ```tsx
-import { CONTENT_LIMITS, type Item, NUMBER_OPS, RANGE_OPS, type Rule, type RuleItem } from '@taskop/contracts';
+import { CONTENT_LIMITS, type Item, NUMBER_OPS, RANGE_OPS, type Rule, type RuleItem } from '@edildy/contracts';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -2805,7 +2805,7 @@ function RuleCard({ item, rule, n, depth, dispatch, readOnly }: { item: RuleItem
 - [ ] **Step 6: Implement `inspector.tsx`**
 
 ```tsx
-import { type ChecklistContent, DATETIME_MODES, EVIDENCE_LEVELS, hasRules, type Item } from '@taskop/contracts';
+import { type ChecklistContent, DATETIME_MODES, EVIDENCE_LEVELS, hasRules, type Item } from '@edildy/contracts';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { type ReactNode, useId } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -3080,7 +3080,7 @@ Deviation from spec §7.2 (noted): inspector fields are controlled inputs that d
 
 - [ ] **Step 7: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test -- inspector canvas`
+Run: `pnpm --filter @edildy/web test -- inspector canvas`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -3111,7 +3111,7 @@ git commit -m "feat(web): add builder canvas, inspector and rules editor"
 
 `apps/web/src/features/checklists/builder/builder.test.tsx`:
 ```tsx
-import { blankContent, type ChecklistContent, newItem, newSection } from '@taskop/contracts';
+import { blankContent, type ChecklistContent, newItem, newSection } from '@edildy/contracts';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -3171,7 +3171,7 @@ describe('Builder', () => {
 
   it('shows the conflict banner and reload action', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const { ApiError } = await import('@taskop/api-client');
+    const { ApiError } = await import('@edildy/api-client');
     const save = vi.fn().mockRejectedValue(new ApiError(409, 'CHECKLIST_DRAFT_CONFLICT', 'x'));
     const onReload = vi.fn();
     vi.stubGlobal('confirm', () => true);
@@ -3187,7 +3187,7 @@ describe('Builder', () => {
 
 `apps/web/src/features/checklists/builder/preview.test.tsx`:
 ```tsx
-import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -3223,13 +3223,13 @@ describe('PreviewPane', () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `pnpm --filter @taskop/web test -- builder.test preview`
+Run: `pnpm --filter @edildy/web test -- builder.test preview`
 Expected: FAIL, because the modules don't exist.
 
 - [ ] **Step 3: Implement `preview.tsx`**
 
 ```tsx
-import { type Answer, type Answers, type ChecklistContent, computeScore, hasRules, type Item, requirements, ruleMatches, visibleItems } from '@taskop/contracts';
+import { type Answer, type Answers, type ChecklistContent, computeScore, hasRules, type Item, requirements, ruleMatches, visibleItems } from '@edildy/contracts';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -3361,7 +3361,7 @@ In the preview test, the `yes_no` item's weight is 1 with one problem rule. Answ
 - [ ] **Step 4: Implement `builder.tsx`**
 
 ```tsx
-import { type ChecklistContent, type ContentSaveResult, validateForPublish } from '@taskop/contracts';
+import { type ChecklistContent, type ContentSaveResult, validateForPublish } from '@edildy/contracts';
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -3571,7 +3571,7 @@ Regarding the `blocks publishing…` test: a blank content has two issues (`titl
 
 `apps/web/src/features/checklists/editor-pages.tsx`:
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -3706,7 +3706,7 @@ and include both in `checklistsWs.addChildren([...])`.
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -3736,7 +3736,7 @@ git commit -m "feat(web): assemble the checklist builder with autosave, publish 
 
 `apps/web/src/features/checklists/checklist-detail-page.test.tsx`:
 ```tsx
-import type { ChecklistDetail } from '@taskop/contracts';
+import type { ChecklistDetail } from '@edildy/contracts';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -3775,8 +3775,8 @@ describe('ChecklistDetailPage', () => {
     expect(rows).toHaveLength(3);
     expect(within(rows[1]!).getByText('v2')).toBeInTheDocument();
     expect(within(rows[1]!).getByText('Elvin')).toBeInTheDocument();
-    expect(within(rows[2]!).getByText('Taskop')).toBeInTheDocument();
-    expect(screen.getByText('Taskop şablonundan yaradılıb')).toBeInTheDocument();
+    expect(within(rows[2]!).getByText('Edildy')).toBeInTheDocument();
+    expect(screen.getByText('Edildy şablonundan yaradılıb')).toBeInTheDocument();
   });
 
   it('starts a draft from the current version when editing', async () => {
@@ -3830,7 +3830,7 @@ const tpl = (id: string, source: 'global' | 'tenant', name: string, status: 'act
 beforeEach(() => vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} }));
 
 describe('TemplatesPage', () => {
-  it('uses a Taskop template to create a checklist', async () => {
+  it('uses a Edildy template to create a checklist', async () => {
     const ws = fakeWorkspace();
     ws.templates.list.mockImplementation(async (q: { source?: string }) => (q.source === 'global' ? [tpl('g1', 'global', 'Restoran mətbəxi')] : []));
     ws.checklists.create.mockResolvedValue({ id: 'c1' });
@@ -3862,14 +3862,14 @@ describe('TemplatesPage', () => {
 
 - [ ] **Step 2: Run the tests to verify they fail**
 
-Run: `pnpm --filter @taskop/web test -- checklist-detail templates-page`
+Run: `pnpm --filter @edildy/web test -- checklist-detail templates-page`
 Expected: FAIL, because the modules don't exist.
 
 - [ ] **Step 3: Dialogs**
 
 `apps/web/src/features/checklists/checklist-dialogs.tsx`:
 ```tsx
-import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateCategory } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FormError } from '@/components/form-error';
@@ -3964,8 +3964,8 @@ The test calls `saveAsTemplate` with `{ name, category, description: null }`, wh
 
 `apps/web/src/features/checklists/checklist-detail-page.tsx`:
 ```tsx
-import type { ChecklistVersionSummary } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import type { ChecklistVersionSummary } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -4080,7 +4080,7 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
             <TableRow key={v.id}>
               <TableCell>{v.number ? t('checklists.versionN', { n: v.number }) : <Badge variant="outline">{t('checklists.draft')}</Badge>}</TableCell>
               <TableCell>{v.publishedAt ? formatDateTime(v.publishedAt, { locale: 'az', timeZone: ws.timeZone }) : '—'}</TableCell>
-              <TableCell>{v.publishedBy ? (v.publishedBy.kind === 'platform' ? t('checklists.detail.taskop') : v.publishedBy.name) : '—'}</TableCell>
+              <TableCell>{v.publishedBy ? (v.publishedBy.kind === 'platform' ? t('checklists.detail.edildy') : v.publishedBy.name) : '—'}</TableCell>
               <TableCell>{v.changeNote ?? '—'}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
@@ -4150,7 +4150,7 @@ In the `restores…` test, `startDraft` is clicked from row 2 (v1). The page has
 
 `apps/web/src/features/checklists/templates-page.tsx`:
 ```tsx
-import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateSource, type TemplateSummary } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateCategory, type TemplateSource, type TemplateSummary } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -4192,7 +4192,7 @@ export function TemplatesPage() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Tabs value={source} onValueChange={(v) => setSource(v as TemplateSource)}>
           <TabsList>
-            <TabsTrigger value="global">{t('checklists.templates.taskop')}</TabsTrigger>
+            <TabsTrigger value="global">{t('checklists.templates.edildy')}</TabsTrigger>
             <TabsTrigger value="tenant">{t('checklists.templates.ours')}</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -4264,7 +4264,7 @@ export function TemplatesPage() {
 }
 ```
 
-The `uses a Taskop template…` test opens `NewChecklistDialog` with `initialMode="template"` and a preselected template, so clicking "Yarat" creates directly. That dialog's tabs render `TemplatePicker`, which calls `ws.templates.list({ status: 'active' })`. The mock returns `[]` for queries without `source`, which is fine.
+The `uses a Edildy template…` test opens `NewChecklistDialog` with `initialMode="template"` and a preselected template, so clicking "Yarat" creates directly. That dialog's tabs render `TemplatePicker`, which calls `ws.templates.list({ status: 'active' })`. The mock returns `[]` for queries without `source`, which is fine.
 
 Append to `editor-pages.tsx`:
 ```tsx
@@ -4280,7 +4280,7 @@ export function TemplateEditorPage({ source, templateId }: { source: 'global' | 
     <Builder
       key={`${tpl.data.id}:${reloadKey}`}
       title={tpl.data.name}
-      badge={<Badge variant="outline">{source === 'global' ? t('checklists.templates.taskop') : t('checklists.templates.template')}</Badge>}
+      badge={<Badge variant="outline">{source === 'global' ? t('checklists.templates.edildy') : t('checklists.templates.template')}</Badge>}
       initialContent={tpl.data.content}
       initialRevision={tpl.data.revision}
       readOnly={!editable}
@@ -4321,7 +4321,7 @@ and the final `checklistsWs.addChildren([checklistsRoute, checklistDetailRoute, 
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -4373,7 +4373,7 @@ beforeEach(() => {
 
 describe('GlobalTemplatesPage', () => {
   it('publishes and shows validation errors from the API', async () => {
-    const { ApiError } = await import('@taskop/api-client');
+    const { ApiError } = await import('@edildy/api-client');
     mocks.globalTemplates.list.mockResolvedValue([row(false)]);
     mocks.globalTemplates.publish.mockRejectedValue(new ApiError(422, 'CHECKLIST_INVALID_CONTENT', 'errors.CHECKLIST_INVALID_CONTENT'));
     renderWithProviders(
@@ -4409,7 +4409,7 @@ The toast assertion needs the `<Toaster />` rendered next to the page. The theme
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `pnpm --filter @taskop/web test -- global-templates-page`
+Run: `pnpm --filter @edildy/web test -- global-templates-page`
 Expected: FAIL, because the module doesn't exist.
 
 - [ ] **Step 3: Platform layout and tenants page**
@@ -4475,7 +4475,7 @@ Add a matching empty `<TableHead />` and import `Link` from `@tanstack/react-rou
 
 `apps/web/src/features/platform/global-templates-page.tsx`:
 ```tsx
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
@@ -4508,7 +4508,7 @@ export function GlobalTemplatesPage() {
 
   return (
     <div>
-      <PageHeader title={t('checklists.templates.taskop')} actions={<Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
+      <PageHeader title={t('checklists.templates.edildy')} actions={<Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
       <Table>
         <TableHeader>
           <TableRow>
@@ -4697,7 +4697,7 @@ If TanStack's typed `createRoute` rejects the `pt` helper's generic `path: strin
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web build`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web build`
 Expected: PASS. The existing platform tests still pass.
 
 - [ ] **Step 7: Commit**
@@ -4742,7 +4742,7 @@ test('owner builds a checklist from a template, publishes v1 and v2, and v1 stay
   await page.getByRole('button', { name: 'Qeydiyyatdan keç' }).click();
   await expect(page.getByRole('heading', { name: 'Xoş gəlmisiniz, Elvin!' })).toBeVisible();
 
-  // Create from a Taskop template.
+  // Create from a Edildy template.
   await page.getByRole('link', { name: 'Şablonlar' }).click();
   const card = page.locator('[data-slot="card"]', { hasText: 'Gündəlik təmizlik yoxlaması' });
   await card.getByRole('button', { name: 'İstifadə et' }).click();
@@ -4803,7 +4803,7 @@ The "Move to" step relies on the canvas inserting the new item at index 0 (the f
 docker compose -p foundation start
 pnpm db:setup && pnpm db:seed
 pnpm build
-pnpm --filter @taskop/web e2e
+pnpm --filter @edildy/web e2e
 ```
 Expected: both `foundation.spec.ts` and `checklists.spec.ts` pass.
 
@@ -4814,11 +4814,11 @@ pnpm lint && pnpm typecheck && pnpm test
 ```
 Expected: all green. If lint fails only on formatting, run `pnpm format` and re-run.
 
-Manually check the builder in a browser (`pnpm dev`, log in as `owner@demo.taskop.az`):
+Manually check the builder in a browser (`pnpm dev`, log in as `owner@demo.edildy.az`):
 - Drag an item across sections with the mouse.
 - Reorder with the keyboard: focus a drag handle, press Space, use the arrows, press Space.
 - Open the seeded "Anbar qəbulu" draft, preview it, and confirm the follow-ups react to answers.
-- Log in at `/platform/login` (create an admin with `pnpm --filter @taskop/api platform:create-admin` if needed), then open a tenant's checklists and a global template.
+- Log in at `/platform/login` (create an admin with `pnpm --filter @edildy/api platform:create-admin` if needed), then open a tenant's checklists and a global template.
 
 - [ ] **Step 5: Commit**
 
@@ -4835,7 +4835,7 @@ git commit -m "test(web): add checklist builder end-to-end test and seed templat
 |---|---|
 | §7.1 navigation, list, new dialog (blank / template / copy) | W4 |
 | §7.1 detail: metadata, versions, restore, save as template, deactivate | W8 |
-| §7.1 template gallery (Taskop / ours, categories, use, edit) | W8 |
+| §7.1 template gallery (Edildy / ours, categories, use, edit) | W8 |
 | §7.1 platform: global templates and a tenant's checklists | W9 |
 | §7.2 outline: drag-and-drop and "Move to…" | W5 |
 | §7.2 canvas, inspector, rules editor (depth ≤ 3) | W6 |

@@ -1,12 +1,12 @@
 import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { AppError } from './app-error';
 import type { AppRequest, Principal } from './request';
 
-export const IS_PUBLIC_KEY = 'taskop:isPublic';
+export const IS_PUBLIC_KEY = 'edildy:isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
-export const REQUIRED_PERMISSIONS_KEY = 'taskop:requiredPermissions';
+export const REQUIRED_PERMISSIONS_KEY = 'edildy:requiredPermissions';
 /** Every key of a list is needed; with `{ any }`, one of them is enough. */
 export type PermissionRequirement = PermissionKey[] | { any: PermissionKey[] };
 export const RequirePermission = (...keys: PermissionKey[]) => SetMetadata(REQUIRED_PERMISSIONS_KEY, keys satisfies PermissionRequirement);

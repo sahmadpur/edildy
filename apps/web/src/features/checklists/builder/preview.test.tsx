@@ -1,4 +1,4 @@
-import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@taskop/contracts';
+import { blankContent, newItem, newRule, newSection, type YesNoItem } from '@edildy/contracts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';

@@ -1,5 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Logger } from '@nestjs/common';
-import { errorMessageKey } from '@taskop/contracts';
+import { errorMessageKey } from '@edildy/contracts';
 import { DrizzleError, DrizzleQueryError } from 'drizzle-orm';
 import type { Response } from 'express';
 import { ZodSerializationException, ZodValidationException } from 'nestjs-zod';

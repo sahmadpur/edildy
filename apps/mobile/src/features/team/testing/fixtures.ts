@@ -19,7 +19,7 @@ import {
   type ReworkRequest,
   RUN_COUNT_KEYS,
   type RunCounts,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { type Checklist, CHECKLIST, DEVICE, ME, OCC, SITE, T, TASK, TENANT, VERSION } from '@/offline/testing/fixtures';
 
 export const WORKER_A = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4eb0';
@@ -52,7 +52,7 @@ export function teamMe(o: { id?: string; permissions?: PermissionKey[]; dataScop
       fullName: 'Leyla Məmmədova',
       jobTitle: 'Menecer',
       kind: 'staff',
-      email: 'manager@demo.taskop.az',
+      email: 'manager@demo.edildy.az',
       username: null,
       emailVerified: true,
       credentialKind: 'password',
@@ -326,7 +326,7 @@ export function auditDetail(c: Checklist, over: Partial<AuditDetail> = {}): Audi
     execution: executionDetail(c),
     corrections: executionCorrections(),
     auditableItemIds: [c.problem.id, c.comment.id, c.temp.id, c.photo.id, c.note.id],
-    checklistReportEmails: ['audit@demo.taskop.az'],
+    checklistReportEmails: ['audit@demo.edildy.az'],
     requiresAudit: false,
     ...over,
   };

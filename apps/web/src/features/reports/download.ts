@@ -1,4 +1,4 @@
-import type { ReportFile } from '@taskop/api-client';
+import type { ReportFile } from '@edildy/api-client';
 
 /** Long enough for the browser to start the download before the URL goes away. */
 export const REVOKE_AFTER_MS = 60_000;

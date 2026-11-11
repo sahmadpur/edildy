@@ -1,12 +1,12 @@
 /**
  * SP7 spec §9 performance check against a running API on the seeded "perf" tenant:
- *   pnpm --filter @taskop/api db:seed-report-volume
- *   pnpm --filter @taskop/api dev                      (another terminal)
- *   pnpm --filter @taskop/api perf:reports [baseUrl]
+ *   pnpm --filter @edildy/api db:seed-report-volume
+ *   pnpm --filter @edildy/api dev                      (another terminal)
+ *   pnpm --filter @edildy/api perf:reports [baseUrl]
  * Prints the median of 5 timed runs (after one warm-up) per endpoint, range and principal; exits 1 when any 366-day
  * median is at or above the 500 ms target.
  */
-import { addDays, localDateOf } from '@taskop/contracts';
+import { addDays, localDateOf } from '@edildy/contracts';
 
 const BASE = process.argv[2] ?? 'http://localhost:3000/api/v1';
 const TARGET_MS = 500;
@@ -32,8 +32,8 @@ async function timed(token: string, path: string): Promise<number> {
 async function main(): Promise<void> {
   const today = localDateOf(new Date(), 'Asia/Baku');
   const principals: [string, string][] = [
-    ['all', await login('perf-owner@taskop.test')],
-    ['site_subtree', await login('perf-manager@taskop.test')],
+    ['all', await login('perf-owner@edildy.test')],
+    ['site_subtree', await login('perf-manager@edildy.test')],
   ];
   const rows: { scope: string; days: number; endpoint: string; medianMs: number }[] = [];
   for (const [scope, token] of principals) {

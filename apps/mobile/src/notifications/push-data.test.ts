@@ -18,7 +18,7 @@ describe('push data', () => {
     expect(foregroundBehavior(pushData(), ME)).toEqual(SHOWN);
     expect(foregroundBehavior(pushData({ userId: OTHER }), ME)).toEqual(HIDDEN);
     expect(foregroundBehavior(pushData(), null)).toEqual(HIDDEN);
-    // Not a Taskop push (an Expo test message): shown while someone is signed in, never to an anonymous app.
+    // Not a Edildy push (an Expo test message): shown while someone is signed in, never to an anonymous app.
     expect(foregroundBehavior({ note: 'Expo push tool' }, ME)).toEqual(SHOWN);
     expect(foregroundBehavior({ note: 'Expo push tool' }, null)).toEqual(HIDDEN);
   });

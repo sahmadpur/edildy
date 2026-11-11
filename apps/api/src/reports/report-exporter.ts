@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { REPORT_CONTENT_TYPES, REPORT_LIMITS, type ReportExportKind, type ReportExportParams, type ReportTaskCounts, reportFileName, type RunBucket } from '@taskop/contracts';
-import { type Language, translationsFor } from '@taskop/i18n';
+import { REPORT_CONTENT_TYPES, REPORT_LIMITS, type ReportExportKind, type ReportExportParams, type ReportTaskCounts, reportFileName, type RunBucket } from '@edildy/contracts';
+import { type Language, translationsFor } from '@edildy/i18n';
 import { and, inArray, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';

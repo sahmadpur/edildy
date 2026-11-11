@@ -2,7 +2,7 @@ import type { Response } from 'express';
 import type { AppConfig } from '../config/config';
 import { SESSION_TTL_MS } from './session.service';
 
-export const REFRESH_COOKIE = 'taskop_rt';
+export const REFRESH_COOKIE = 'edildy_rt';
 const COOKIE_PATH = '/api/v1/auth';
 
 export function setRefreshCookie(res: Response, token: string, config: AppConfig): void {

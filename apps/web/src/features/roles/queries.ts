@@ -1,4 +1,4 @@
-import type { PermissionKey, SystemRoleKey } from '@taskop/contracts';
+import type { PermissionKey, SystemRoleKey } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { api } from '@/lib/session';

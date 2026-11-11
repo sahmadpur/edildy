@@ -1,4 +1,4 @@
-import { addDays, isoWeekday, type RosterRow } from '@taskop/contracts';
+import { addDays, isoWeekday, type RosterRow } from '@edildy/contracts';
 
 export const weekStartOf = (date: string): string => addDays(date, 1 - isoWeekday(date));
 export const weekDates = (start: string): string[] => Array.from({ length: 7 }, (_, i) => addDays(start, i));

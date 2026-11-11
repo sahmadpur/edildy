@@ -1,4 +1,4 @@
-import { canCorrect, canSendBack, canWithdrawSendBack, type ExecutionDetail, type OccurrenceStatus } from '@taskop/contracts';
+import { canCorrect, canSendBack, canWithdrawSendBack, type ExecutionDetail, type OccurrenceStatus } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

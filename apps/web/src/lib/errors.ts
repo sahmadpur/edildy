@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import type { TFunction } from 'i18next';
 import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 

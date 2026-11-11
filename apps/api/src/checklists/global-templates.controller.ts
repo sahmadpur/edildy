@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { ContentSaveResult, GlobalTemplateDto, GlobalTemplateSummary } from '@taskop/contracts';
+import type { ContentSaveResult, GlobalTemplateDto, GlobalTemplateSummary } from '@edildy/contracts';
 import { Public } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { AppRequest } from '../common/request';

@@ -1,4 +1,4 @@
-import { errorBodySchema, type LoginResult, loginResultSchema } from '@taskop/contracts';
+import { errorBodySchema, type LoginResult, loginResultSchema } from '@edildy/contracts';
 import type { ZodType } from 'zod';
 import { ApiError } from './errors.js';
 

@@ -1,4 +1,4 @@
-import { type Language, translationsFor } from '@taskop/i18n';
+import { type Language, translationsFor } from '@edildy/i18n';
 import writeXlsxFile, { type Cell, type Row, type Sheet } from 'write-excel-file/node';
 import { type CellValue, type ReportColumn, type ReportDocument, wallClock } from './report-table';
 

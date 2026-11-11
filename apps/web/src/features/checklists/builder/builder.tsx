@@ -1,4 +1,4 @@
-import { type ChecklistContent, type ContentSaveResult, validateForPublish } from '@taskop/contracts';
+import { type ChecklistContent, type ContentSaveResult, validateForPublish } from '@edildy/contracts';
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react';
 import { type ReactNode, useEffect, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -211,7 +211,7 @@ export default {
     assignees: 'İcraçılar',
     history: 'Tarixçə',
     actorSystem: 'Sistem',
-    actorPlatform: 'Taskop dəstəyi',
+    actorPlatform: 'Edildy dəstəyi',
     cancel: 'İcranı ləğv et',
     cancelReason: 'Ləğv səbəbi',
     cancelled: 'İcra ləğv edildi',

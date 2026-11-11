@@ -11,7 +11,7 @@ import {
   type Slot,
   timingSchema,
   zonedTimeToUtc,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, between, eq, gt, gte, inArray, lte, ne, type SQL, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { Clock } from '../common/clock';

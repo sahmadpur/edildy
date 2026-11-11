@@ -1,4 +1,4 @@
-import { completionPercent, OCCURRENCE_STATUSES, type OccurrenceStatus, type ReportSummary, tallyRuns } from '@taskop/contracts';
+import { completionPercent, OCCURRENCE_STATUSES, type OccurrenceStatus, type ReportSummary, tallyRuns } from '@edildy/contracts';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DbService } from '../src/db/db.service';

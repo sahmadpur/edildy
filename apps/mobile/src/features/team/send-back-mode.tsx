@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, type ExecutionDetail, sendBackInputSchema, visibleItems } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, type ExecutionDetail, sendBackInputSchema, visibleItems } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';

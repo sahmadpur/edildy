@@ -1,4 +1,4 @@
-import type { Me, ProblemReportState } from '@taskop/contracts';
+import type { Me, ProblemReportState } from '@edildy/contracts';
 import type { Tone } from '@/lib/theme';
 
 /** 2026-11-06 design §7.5: "Hamısı" exists only for assignments.view holders whose scope is wider than their own. */

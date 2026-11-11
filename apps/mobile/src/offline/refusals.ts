@@ -1,4 +1,4 @@
-import type { Answers } from '@taskop/contracts';
+import type { Answers } from '@edildy/contracts';
 import type { Db } from './db';
 import { withoutMedia } from './execution-store';
 import { type ExecutionRow, iso, toExecution } from './local-model';

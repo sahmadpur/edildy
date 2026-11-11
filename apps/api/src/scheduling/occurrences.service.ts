@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { OccurrenceDetail, OccurrenceDto, OccurrenceStatus, Page } from '@taskop/contracts';
+import type { OccurrenceDetail, OccurrenceDto, OccurrenceStatus, Page } from '@edildy/contracts';
 import { and, asc, between, eq, getTableColumns, inArray, type SQL, sql } from 'drizzle-orm';
 import { inSiteSubtrees, sqlList } from '../common/sql';
 import { AppError } from '../common/app-error';

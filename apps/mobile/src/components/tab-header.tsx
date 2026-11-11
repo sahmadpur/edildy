@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { formatLocalDate } from '@taskop/i18n';
+import { formatLocalDate } from '@edildy/i18n';
 import { LanguagePicker } from '@/components/language-picker';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { SyncIndicator } from '@/features/sync/sync-indicator';

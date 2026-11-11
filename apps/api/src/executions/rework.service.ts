@@ -11,7 +11,7 @@ import {
   type ReworkItem,
   type ScoreResult,
   visibleItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

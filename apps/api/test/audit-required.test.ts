@@ -39,7 +39,7 @@ describe('audit settings and the audit queue on completion (spec §3.1, §4.1)',
 
   it('reads and writes the settings on the platform in-tenant route too', async () => {
     const w = await executionWorld(t);
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     await ownerQuery("insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')", [
       email,
       await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 }),

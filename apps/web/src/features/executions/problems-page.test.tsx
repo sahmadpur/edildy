@@ -1,5 +1,5 @@
-import type { ProblemDto } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { ProblemDto } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';

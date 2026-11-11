@@ -12,7 +12,7 @@ import {
   taskMediaRegisterSchema,
   taskSummarySchema,
   updateTaskSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class CreateTaskDto extends createZodDto(createTaskSchema) {}

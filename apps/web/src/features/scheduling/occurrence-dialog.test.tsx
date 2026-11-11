@@ -1,4 +1,4 @@
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { occurrenceDetail } from '@/features/executions/fixtures';

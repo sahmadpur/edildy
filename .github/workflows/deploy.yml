@@ -50,10 +50,10 @@ jobs:
           file: apps/${{ matrix.image }}/Dockerfile
           platforms: linux/amd64
           push: true
-          build-args: PLATFORM_URL=https://admin.taskop.app
+          build-args: PLATFORM_URL=https://admin.edildy.com
           tags: |
-            ghcr.io/sahmadpur/taskop-${{ matrix.image }}:${{ steps.tag.outputs.sha }}
-            ghcr.io/sahmadpur/taskop-${{ matrix.image }}:latest
+            ghcr.io/sahmadpur/edildy-${{ matrix.image }}:${{ steps.tag.outputs.sha }}
+            ghcr.io/sahmadpur/edildy-${{ matrix.image }}:latest
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 15
     environment:
       name: production
-      url: https://admin.taskop.app
+      url: https://admin.edildy.com
     steps:
       - uses: actions/checkout@v5
         with:
@@ -87,14 +87,14 @@ jobs:
       - name: Copy the stack files
         # A rollback keeps the server's current files: they may belong to a newer release than the images.
         if: ${{ !inputs.tag }}
-        run: scp deploy/docker-compose.prod.yml deploy/Caddyfile deploy/deploy.sh deploy/backup.sh deploy/.env.example deploy@${{ secrets.DEPLOY_HOST }}:/opt/taskop/
+        run: scp deploy/docker-compose.prod.yml deploy/Caddyfile deploy/deploy.sh deploy/backup.sh deploy/.env.example deploy@${{ secrets.DEPLOY_HOST }}:/opt/edildy/
       - name: Deploy ${{ steps.tag.outputs.tag }}
         run: |
           ssh deploy@${{ secrets.DEPLOY_HOST }} bash -s <<'EOF'
           set -euo pipefail
           trap 'docker logout ghcr.io > /dev/null' EXIT
           echo '${{ secrets.GITHUB_TOKEN }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin > /dev/null
-          /opt/taskop/deploy.sh '${{ steps.tag.outputs.tag }}'
+          /opt/edildy/deploy.sh '${{ steps.tag.outputs.tag }}'
           EOF
       - name: Public health check
-        run: curl -fsS --retry 5 --retry-delay 3 --retry-all-errors https://admin.taskop.app/api/v1/health
+        run: curl -fsS --retry 5 --retry-delay 3 --retry-all-errors https://admin.edildy.com/api/v1/health

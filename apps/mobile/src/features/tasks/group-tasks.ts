@@ -1,4 +1,4 @@
-import { isFinalTaskStatus } from '@taskop/contracts';
+import { isFinalTaskStatus } from '@edildy/contracts';
 import { isTaskOverdue, isTeamOffer, type TaskView } from '@/offline/task-store';
 
 export const TASK_GROUP_KEYS = ['team', 'mine', 'inReview', 'done'] as const;

@@ -1,4 +1,4 @@
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { buildTree, indentedName, moveTargets } from './tree';
 

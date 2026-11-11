@@ -1,12 +1,12 @@
-# Taskop — Sub-project 1: Foundation — Design Spec
+# Edildy — Sub-project 1: Foundation — Design Spec
 
 - **Date:** 2026-10-07
 - **Status:** Draft for review
-- **Source requirements:** `docs/PS Checkly 20293009 v05.pdf` (product document; the product is named **Taskop**, not "Checkly")
+- **Source requirements:** `docs/PS Checkly 20293009 v05.pdf` (product document; the product is named **Edildy**, not "Checkly")
 
 ## 1. Context
 
-Taskop is a multi-tenant SaaS for digital inspections and checklists. Owners, admins and managers use a **web app** to configure their organisation, build checklists, schedule them and monitor results. Field workers use a **mobile app** (iOS + Android) to execute checklists with live photo/video evidence, offline.
+Edildy is a multi-tenant SaaS for digital inspections and checklists. Owners, admins and managers use a **web app** to configure their organisation, build checklists, schedule them and monitor results. Field workers use a **mobile app** (iOS + Android) to execute checklists with live photo/video evidence, offline.
 
 The full platform is delivered as nine sub-projects, each with its own spec → plan → implementation cycle:
 
@@ -45,7 +45,7 @@ The full platform is delivered as nine sub-projects, each with its own spec → 
 4. Workers can log in on mobile with org code + username + PIN, see a placeholder home screen, change their PIN and log out.
 5. Every sensitive change is written to an append-only audit log, and admins can browse it.
 6. The tests prove that no tenant can read or write another tenant's data.
-7. Taskop staff can list tenants and suspend or reactivate one.
+7. Edildy staff can list tenants and suspend or reactivate one.
 
 **Non-goals** (later sub-projects or later phases):
 
@@ -59,7 +59,7 @@ The full platform is delivered as nine sub-projects, each with its own spec → 
 ## 3. Architecture
 
 ```
-taskop/
+edildy/
 ├─ apps/
 │  ├─ api/        NestJS REST API (OpenAPI docs)
 │  ├─ web/        React + Vite SPA
@@ -89,7 +89,7 @@ Rules that apply to every table:
 
 ### 4.1 Tables
 
-**`tenants`** (RLS uses the policy `id = current_setting('app.tenant_id')::uuid`, so the app account can only see and change its own tenant row. Sign-up creates the new tenant's ID up front and sets `app.tenant_id` to it before inserting. Worker login looks up `org_code` through `taskop_platform`.)
+**`tenants`** (RLS uses the policy `id = current_setting('app.tenant_id')::uuid`, so the app account can only see and change its own tenant row. Sign-up creates the new tenant's ID up front and sets `app.tenant_id` to it before inserting. Worker login looks up `org_code` through `edildy_platform`.)
 - `id`, `name`
 - `org_code`: unique, lowercase, 3–32 characters from `[a-z0-9-]`
 - `timezone`: IANA name, default `Asia/Baku`
@@ -265,9 +265,9 @@ Login fails if the tenant is `suspended` or the user isn't `active`. The error s
 
 | Account | Used by | Privileges |
 |---|---|---|
-| `taskop_owner` | migrations only | owns the schema |
-| `taskop_app` | the API, for all tenant requests | DML on tenant tables. RLS is forced. No `UPDATE`/`DELETE` on `audit_log`. |
-| `taskop_platform` | the `platform` module and the cross-tenant login lookup | `BYPASSRLS`. Used only through a separately injected connection. |
+| `edildy_owner` | migrations only | owns the schema |
+| `edildy_app` | the API, for all tenant requests | DML on tenant tables. RLS is forced. No `UPDATE`/`DELETE` on `audit_log`. |
+| `edildy_platform` | the `platform` module and the cross-tenant login lookup | `BYPASSRLS`. Used only through a separately injected connection. |
 
 ## 7. API surface (beyond auth)
 
@@ -355,10 +355,10 @@ Error codes are defined as an enum in `packages/contracts`. The clients translat
   - manager cycle prevention
   - the last-Owner protections
 - **API integration tests (Vitest + Testcontainers Postgres):** run against a real database with migrations and RLS applied.
-  - **Tenant isolation suite:** seed two tenants, then for every endpoint check that tenant B's token can't read, list, update or reference tenant A's records, including by guessing IDs. In addition, a direct SQL test confirms that `taskop_app` with no `app.tenant_id` set sees zero rows.
+  - **Tenant isolation suite:** seed two tenants, then for every endpoint check that tenant B's token can't read, list, update or reference tenant A's records, including by guessing IDs. In addition, a direct SQL test confirms that `edildy_app` with no `app.tenant_id` set sees zero rows.
   - **Scope suite:** a Manager with `site_subtree` scope sees only users at their sites, and `subordinates` returns everyone below the user in the reporting chain.
   - **Auth flows:** sign-up → verify → login; worker login; account lockout; rate limiting; refresh rotation; reuse detection; deactivation cancels sessions.
-  - **Audit:** each listed action writes exactly one entry with correct before/after values. `UPDATE` or `DELETE` on `audit_log` fails for `taskop_app`.
+  - **Audit:** each listed action writes exactly one entry with correct before/after values. `UPDATE` or `DELETE` on `audit_log` fails for `edildy_app`.
 - **Web:** component tests (Vitest + Testing Library) for the permission grid, site tree editor and user editor. One Playwright end-to-end test: sign-up → create a site → create a worker → log out → log back in as admin and see the worker in the list.
 - **Mobile:** unit tests for the auth store and refresh logic, plus a login screen render test (Jest + React Native Testing Library, the Expo default).
 

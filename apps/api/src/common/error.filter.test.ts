@@ -3,7 +3,7 @@ import { DrizzleQueryError } from 'drizzle-orm';
 import { ZodValidationException } from 'nestjs-zod';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
-import '@taskop/contracts';
+import '@edildy/contracts';
 import { AppError } from './app-error';
 import { AllExceptionsFilter, sanitiseForLog, toAppError } from './error.filter';
 

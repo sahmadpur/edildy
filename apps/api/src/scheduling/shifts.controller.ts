@@ -1,6 +1,6 @@
 import { Body, Get, Inject, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { ShiftDto } from '@taskop/contracts';
+import type { ShiftDto } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { CreateShiftDto, ShiftListQueryDto, ShiftResponse, UpdateShiftDto } from './dto';

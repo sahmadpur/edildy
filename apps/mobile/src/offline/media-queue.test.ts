@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { setMeta } from './db';
 import { iso } from './local-model';
 import { createMediaQueue, LOCAL_FILE_KEEP_DAYS, MEDIA_MAX_ATTEMPTS, mediaErrorKey, UPLOAD_TIMEOUT_MS, UploadTimeoutError, withUploadTimeout } from './media-queue';
@@ -39,7 +39,7 @@ describe('media queue', () => {
     expect(peak).toBe(1);
     expect(h.transport.uploads[0]).toEqual({
       uri: m.photo.localUri,
-      url: `http://files.test/taskop-media/${m.photoId}`,
+      url: `http://files.test/edildy-media/${m.photoId}`,
       headers: { 'Content-Type': 'image/jpeg', 'Content-Length': '250000' },
     });
     expect(h.api.calls.map((c) => [c.method, c.id])).toEqual([

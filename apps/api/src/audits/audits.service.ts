@@ -17,7 +17,7 @@ import {
   reportRecipients,
   type SendAuditReportParams,
   statusAfterAuditCancel,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { and, asc, count, eq, getTableColumns, inArray, isNull } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { AppError } from '../common/app-error';

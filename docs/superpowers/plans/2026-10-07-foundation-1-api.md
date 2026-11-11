@@ -1,8 +1,8 @@
-# Taskop Foundation — Part 1: Monorepo, Contracts & API — Implementation Plan
+# Edildy Foundation — Part 1: Monorepo, Contracts & API — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the pnpm/Turborepo monorepo, the shared `@taskop/contracts` and `@taskop/i18n` packages, and the complete Foundation REST API (tenancy, auth, users, roles, sites, teams, audit, platform admin) with RLS-enforced tenant isolation.
+**Goal:** Build the pnpm/Turborepo monorepo, the shared `@edildy/contracts` and `@edildy/i18n` packages, and the complete Foundation REST API (tenancy, auth, users, roles, sites, teams, audit, platform admin) with RLS-enforced tenant isolation.
 
 **Architecture:** NestJS modular monolith on PostgreSQL via Drizzle ORM. Every request that has a logged-in user runs inside one transaction that sets `app.tenant_id`, so Row-Level Security filters every query. Request/response shapes live in `packages/contracts` (Zod) and are shared with the web and mobile apps (Parts 2 and 3).
 
@@ -17,14 +17,14 @@
 
 ## Global Constraints
 
-- Product name in every user-visible string and identifier is **Taskop** (never "Checkly"). Package scope `@taskop/*`.
+- Product name in every user-visible string and identifier is **Edildy** (never "Checkly"). Package scope `@edildy/*`.
 - Latest stable versions: always install with `pnpm add <pkg>@latest` (never copy old version numbers). Versions verified on 2026-10-07: pnpm 12.9, turbo 2.11, typescript 7.0, @nestjs/core 12.1, drizzle-orm 0.45, zod 4.6, nestjs-zod 5.5, vitest 5.0, jose 6.2, @node-rs/argon2 2.2. If an installed library's API differs from code in this plan, adapt to the installed version and note it in the commit message.
 - Node ≥ 24 (`require(esm)` is relied on: the CommonJS API imports ESM workspace packages).
 - IDs are UUIDv7; timestamps are `timestamptz` (UTC); API sends ISO-8601 UTC strings.
 - Every tenant-owned table: `tenant_id uuid not null`, RLS `FORCE`d with policy on `nullif(current_setting('app.tenant_id', true), '')::uuid`; relations between tenant-owned tables use composite `(tenant_id, x_id)` foreign keys.
 - Users, sites, teams, roles are never deleted (deactivate only).
-- DB accounts: `taskop_owner` (migrations), `taskop_app` (API, RLS forced, no UPDATE/DELETE on `audit_log`), `taskop_platform` (`BYPASSRLS`, platform module + pre-auth lookups only).
-- Access token: EdDSA JWT, 15 min, claims `sub, tid, rid, rv, kind, sid`, audience `taskop-app`. Refresh: opaque `<tenantId>.<43 base64url chars>`, SHA-256 stored, rotation, reuse detection; web 7 days (cookie `taskop_rt`, `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`), mobile 30 days (body).
+- DB accounts: `edildy_owner` (migrations), `edildy_app` (API, RLS forced, no UPDATE/DELETE on `audit_log`), `edildy_platform` (`BYPASSRLS`, platform module + pre-auth lookups only).
+- Access token: EdDSA JWT, 15 min, claims `sub, tid, rid, rv, kind, sid`, audience `edildy-app`. Refresh: opaque `<tenantId>.<43 base64url chars>`, SHA-256 stored, rotation, reuse detection; web 7 days (cookie `edildy_rt`, `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`), mobile 30 days (body).
 - argon2id (OWASP baseline 19 MiB / 2 iterations / parallelism 1, configurable). Passwords 10–128 chars. PINs exactly 6 digits, weak sequences rejected.
 - Lockout: 5 consecutive failures → 15 min. Rate limits: 20 login attempts/min per IP, 10/min per account key; 429 with `retryAfterSeconds`.
 - Error body for every error: `{ "error": { "code", "messageKey", "fields", "retryAfterSeconds", "requestId" } }`; `messageKey = "errors." + code`; field messages are i18n keys.
@@ -46,7 +46,7 @@ The five uncovered input classes most likely to bite users, with the task that p
 ## File Structure
 
 ```
-taskop/
+edildy/
 ├─ package.json, pnpm-workspace.yaml, turbo.json, .prettierrc, .prettierignore, .gitignore, .npmrc
 ├─ docker-compose.yml
 ├─ .github/workflows/ci.yml
@@ -93,7 +93,7 @@ taskop/
 - Create: `packages/config/package.json`, `packages/config/tsconfig.base.json`, `packages/config/tsconfig.lib.json`, `packages/config/eslint.js`
 
 **Interfaces:**
-- Produces: `@taskop/config/tsconfig.base.json`, `@taskop/config/tsconfig.lib.json`, `@taskop/config/eslint` (flat config array). Root scripts `dev, build, lint, typecheck, test, db:setup, db:seed`.
+- Produces: `@edildy/config/tsconfig.base.json`, `@edildy/config/tsconfig.lib.json`, `@edildy/config/eslint` (flat config array). Root scripts `dev, build, lint, typecheck, test, db:setup, db:seed`.
 
 - [ ] **Step 1: Install pnpm 12 globally and verify**
 
@@ -105,7 +105,7 @@ Expected: prints `12.x.x`.
 `package.json`:
 ```json
 {
-  "name": "taskop",
+  "name": "edildy",
   "private": true,
   "packageManager": "pnpm@12.9.1",
   "engines": { "node": ">=24" },
@@ -115,8 +115,8 @@ Expected: prints `12.x.x`.
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "db:setup": "pnpm --filter @taskop/api db:setup",
-    "db:seed": "pnpm --filter @taskop/api db:seed",
+    "db:setup": "pnpm --filter @edildy/api db:setup",
+    "db:seed": "pnpm --filter @edildy/api db:seed",
     "format": "prettier --write ."
   }
 }
@@ -183,7 +183,7 @@ test-results/
 `packages/config/package.json`:
 ```json
 {
-  "name": "@taskop/config",
+  "name": "@edildy/config",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -251,7 +251,7 @@ export default defineConfig(
 Install shared dev tools at the root and in config:
 ```bash
 pnpm add -w -D turbo@latest typescript@latest prettier@latest eslint@latest @eslint/js@latest typescript-eslint@latest
-pnpm --filter @taskop/config add eslint@latest @eslint/js@latest typescript-eslint@latest
+pnpm --filter @edildy/config add eslint@latest @eslint/js@latest typescript-eslint@latest
 ```
 If pnpm prints "Ignored build scripts", run `pnpm approve-builds` and approve `@swc/core` and `esbuild` whenever they appear (now or in later tasks).
 
@@ -262,13 +262,13 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      POSTGRES_DB: taskop
-      POSTGRES_USER: taskop_owner
+      POSTGRES_DB: edildy
+      POSTGRES_USER: edildy_owner
       POSTGRES_PASSWORD: owner_dev_password
     ports: ['5432:5432']
     volumes: ['pgdata:/var/lib/postgresql']
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U taskop_owner -d taskop']
+      test: ['CMD-SHELL', 'pg_isready -U edildy_owner -d edildy']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -279,8 +279,8 @@ services:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: taskop
-      MINIO_ROOT_PASSWORD: taskop_dev_password
+      MINIO_ROOT_USER: edildy
+      MINIO_ROOT_PASSWORD: edildy_dev_password
     ports: ['9000:9000', '9001:9001']
     volumes: ['miniodata:/data']
 volumes:
@@ -297,12 +297,12 @@ Expected: install succeeds; `postgres` shows `healthy`, `mailpit` and `minio` `r
 
 ```bash
 git add package.json pnpm-workspace.yaml turbo.json .npmrc .prettierrc .prettierignore .gitignore docker-compose.yml packages/config pnpm-lock.yaml
-git commit -m "chore: scaffold Taskop monorepo with shared config and local services"
+git commit -m "chore: scaffold Edildy monorepo with shared config and local services"
 ```
 
 ---
 
-### Task 2: `@taskop/contracts` core — Zod error keys, error codes, permissions, credential rules
+### Task 2: `@edildy/contracts` core — Zod error keys, error codes, permissions, credential rules
 
 **Files:**
 - Create: `packages/contracts/package.json`, `packages/contracts/tsconfig.json`, `packages/contracts/eslint.config.js`, `packages/contracts/vitest.config.ts`
@@ -310,7 +310,7 @@ git commit -m "chore: scaffold Taskop monorepo with shared config and local serv
 - Test: `packages/contracts/src/credentials.test.ts`, `src/errors.test.ts`
 
 **Interfaces:**
-- Produces (all exported from `@taskop/contracts`):
+- Produces (all exported from `@edildy/contracts`):
   - `ErrorCode` (const object + type), `ERROR_HTTP_STATUS: Record<ErrorCode, number>`, `errorMessageKey(code): string`, `errorBodySchema`, `ErrorBody`
   - `PERMISSION_GROUPS`, `PermissionKey`, `ALL_PERMISSIONS`, `permissionKeySchema`, `DATA_SCOPES`, `DataScope`, `dataScopeSchema`, `SYSTEM_ROLE_KEYS`, `SystemRoleKey`, `systemRoleKeySchema`, `SYSTEM_ROLE_DEFAULTS`
   - `isWeakPin(pin): boolean`, `pinSchema`, `passwordSchema`, `secretSchemaFor(kind)`, `credentialKindSchema`, `CredentialKind`, `orgCodeSchema`, `usernameSchema`, `emailSchema`
@@ -322,7 +322,7 @@ git commit -m "chore: scaffold Taskop monorepo with shared config and local serv
 `packages/contracts/package.json`:
 ```json
 {
-  "name": "@taskop/contracts",
+  "name": "@edildy/contracts",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -340,12 +340,12 @@ git commit -m "chore: scaffold Taskop monorepo with shared config and local serv
 
 `packages/contracts/tsconfig.json`:
 ```json
-{ "extends": "@taskop/config/tsconfig.lib.json" }
+{ "extends": "@edildy/config/tsconfig.lib.json" }
 ```
 
 `packages/contracts/eslint.config.js`:
 ```js
-import base from '@taskop/config/eslint';
+import base from '@edildy/config/eslint';
 export default base;
 ```
 
@@ -357,8 +357,8 @@ export default defineConfig({ test: { include: ['src/**/*.test.ts'] } });
 
 Run:
 ```bash
-pnpm --filter @taskop/contracts add zod@latest
-pnpm --filter @taskop/contracts add -D vitest@latest typescript@latest eslint@latest "@taskop/config@workspace:*"
+pnpm --filter @edildy/contracts add zod@latest
+pnpm --filter @edildy/contracts add -D vitest@latest typescript@latest eslint@latest "@edildy/config@workspace:*"
 ```
 
 - [ ] **Step 2: Write the failing tests**
@@ -439,7 +439,7 @@ describe('global zod error keys', () => {
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-Run: `pnpm --filter @taskop/contracts test`
+Run: `pnpm --filter @edildy/contracts test`
 Expected: FAIL — cannot resolve `./index.js`.
 
 - [ ] **Step 4: Implement**
@@ -666,7 +666,7 @@ export * from './common.js';
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build`
 Expected: all tests PASS; `packages/contracts/dist/index.js` and `index.d.ts` exist.
 
 - [ ] **Step 6: Commit**
@@ -678,7 +678,7 @@ git commit -m "feat(contracts): add error codes, permissions, credential rules a
 
 ---
 
-### Task 3: `@taskop/contracts` resource schemas
+### Task 3: `@edildy/contracts` resource schemas
 
 **Files:**
 - Create: `packages/contracts/src/auth.ts`, `tenant.ts`, `sites.ts`, `teams.ts`, `roles.ts`, `users.ts`, `audit.ts`, `platform.ts`
@@ -772,7 +772,7 @@ describe('meSchema', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/contracts test`
+Run: `pnpm --filter @edildy/contracts test`
 Expected: FAIL — `createWorkerInputSchema` is not exported.
 
 - [ ] **Step 3: Implement the schemas**
@@ -1200,7 +1200,7 @@ export * from './platform.js';
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build && pnpm --filter @taskop/contracts lint`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build && pnpm --filter @edildy/contracts lint`
 Expected: all PASS, build and lint clean.
 
 - [ ] **Step 5: Commit**
@@ -1212,7 +1212,7 @@ git commit -m "feat(contracts): add resource schemas for auth, tenancy, users, r
 
 ---
 
-### Task 4: `@taskop/i18n` base — Azerbaijani common/error strings and formatting
+### Task 4: `@edildy/i18n` base — Azerbaijani common/error strings and formatting
 
 **Files:**
 - Create: `packages/i18n/package.json`, `tsconfig.json`, `eslint.config.js`, `vitest.config.ts`
@@ -1220,7 +1220,7 @@ git commit -m "feat(contracts): add resource schemas for auth, tenancy, users, r
 - Test: `packages/i18n/src/i18n.test.ts`
 
 **Interfaces:**
-- Consumes: `ErrorCode` from `@taskop/contracts`.
+- Consumes: `ErrorCode` from `@edildy/contracts`.
 - Produces: `resources` (`{ az: { translation: az } }` for i18next), `az` object, `DEFAULT_LOCALE = 'az'`, `intlLocale(locale)`, `formatDateTime(iso, { locale, timeZone })`, `formatDate(iso, { locale, timeZone })`. Translation keys: `common.*`, `errors.<ErrorCode>`, `errors.NETWORK`, `errors.validation.{required,invalid,tooShort,tooLong,email,username,orgCode,pinFormat,pinWeak,passwordLength,timezone}`. Interpolations: `errors.ACCOUNT_LOCKED`/`RATE_LIMITED` use `{{minutes}}`, `errors.INTERNAL` uses `{{requestId}}`.
 - Parts 2 and 3 add namespaces by creating `src/az/<ns>.ts` and adding them to `src/az/index.ts`.
 
@@ -1229,7 +1229,7 @@ git commit -m "feat(contracts): add resource schemas for auth, tenancy, users, r
 `packages/i18n/package.json`:
 ```json
 {
-  "name": "@taskop/i18n",
+  "name": "@edildy/i18n",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -1248,8 +1248,8 @@ git commit -m "feat(contracts): add resource schemas for auth, tenancy, users, r
 
 Run:
 ```bash
-pnpm --filter @taskop/i18n add "@taskop/contracts@workspace:*"
-pnpm --filter @taskop/i18n add -D vitest@latest typescript@latest eslint@latest "@taskop/config@workspace:*"
+pnpm --filter @edildy/i18n add "@edildy/contracts@workspace:*"
+pnpm --filter @edildy/i18n add -D vitest@latest typescript@latest eslint@latest "@edildy/config@workspace:*"
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -1257,7 +1257,7 @@ pnpm --filter @taskop/i18n add -D vitest@latest typescript@latest eslint@latest 
 `packages/i18n/src/i18n.test.ts`:
 ```ts
 import { describe, expect, it } from 'vitest';
-import { ErrorCode } from '@taskop/contracts';
+import { ErrorCode } from '@edildy/contracts';
 import { az, formatDate, formatDateTime } from './index.js';
 
 describe('az translations', () => {
@@ -1283,7 +1283,7 @@ describe('formatting', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: FAIL — cannot resolve `./index.js`.
 
 - [ ] **Step 4: Implement**
@@ -1291,7 +1291,7 @@ Expected: FAIL — cannot resolve `./index.js`.
 `packages/i18n/src/az/common.ts`:
 ```ts
 export default {
-  appName: 'Taskop',
+  appName: 'Edildy',
   save: 'Yadda saxla',
   cancel: 'Ləğv et',
   create: 'Yarat',
@@ -1331,7 +1331,7 @@ export default {
   INVALID_CREDENTIALS: 'Giriş məlumatları yanlışdır.',
   ACCOUNT_LOCKED: 'Hesab müvəqqəti bloklanıb. {{minutes}} dəqiqədən sonra yenidən cəhd edin.',
   RATE_LIMITED: 'Çox sayda cəhd edildi. {{minutes}} dəqiqədən sonra yenidən cəhd edin.',
-  TENANT_SUSPENDED: 'Təşkilatın hesabı dayandırılıb. Taskop dəstəyi ilə əlaqə saxlayın.',
+  TENANT_SUSPENDED: 'Təşkilatın hesabı dayandırılıb. Edildy dəstəyi ilə əlaqə saxlayın.',
   FORBIDDEN: 'Bu əməliyyat üçün icazəniz yoxdur.',
   NOT_FOUND: 'Məlumat tapılmadı.',
   REFERENCE_NOT_FOUND: 'Seçilmiş element tapılmadı və ya aktiv deyil.',
@@ -1411,7 +1411,7 @@ export const resources = { az: { translation: az } } as const;
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -1435,7 +1435,7 @@ git commit -m "feat(i18n): add Azerbaijani common and error strings with timezon
 - Test: `apps/api/src/config/config.test.ts`, `src/common/error.filter.test.ts`, `test/health.test.ts`
 
 **Interfaces:**
-- Consumes: `@taskop/contracts` (`ErrorCode`, `ERROR_HTTP_STATUS`, `errorMessageKey`, `PermissionKey`, `DataScope`, `SystemRoleKey`).
+- Consumes: `@edildy/contracts` (`ErrorCode`, `ERROR_HTTP_STATUS`, `errorMessageKey`, `PermissionKey`, `DataScope`, `SystemRoleKey`).
 - Produces:
   - `loadConfig(env): AppConfig`, `APP_CONFIG` injection token, `ConfigModule.forRoot(config)` (global).
   - `class AppError extends Error { code; fields: Record<string,string>|null; retryAfterSeconds: number|null; get status(): number }` with constructor `(code: ErrorCode, opts?: { fields?; retryAfterSeconds?; message? })`.
@@ -1452,7 +1452,7 @@ git commit -m "feat(i18n): add Azerbaijani common and error strings with timezon
 `apps/api/package.json`:
 ```json
 {
-  "name": "@taskop/api",
+  "name": "@edildy/api",
   "version": "0.0.0",
   "private": true,
   "files": ["dist", "drizzle"],
@@ -1475,7 +1475,7 @@ git commit -m "feat(i18n): add Azerbaijani common and error strings with timezon
 `apps/api/tsconfig.json`:
 ```json
 {
-  "extends": "@taskop/config/tsconfig.base.json",
+  "extends": "@edildy/config/tsconfig.base.json",
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -1534,7 +1534,7 @@ export default defineConfig({
 
 `apps/api/eslint.config.js`:
 ```js
-import base from '@taskop/config/eslint';
+import base from '@edildy/config/eslint';
 export default base;
 ```
 
@@ -1542,17 +1542,17 @@ export default base;
 ```
 NODE_ENV=development
 PORT=3000
-DATABASE_OWNER_URL=postgres://taskop_owner:owner_dev_password@localhost:5432/taskop
-DATABASE_APP_URL=postgres://taskop_app:app_dev_password@localhost:5432/taskop
-DATABASE_PLATFORM_URL=postgres://taskop_platform:platform_dev_password@localhost:5432/taskop
+DATABASE_OWNER_URL=postgres://edildy_owner:owner_dev_password@localhost:5432/edildy
+DATABASE_APP_URL=postgres://edildy_app:app_dev_password@localhost:5432/edildy
+DATABASE_PLATFORM_URL=postgres://edildy_platform:platform_dev_password@localhost:5432/edildy
 APP_DB_PASSWORD=app_dev_password
 PLATFORM_DB_PASSWORD=platform_dev_password
-# Generate with: pnpm --filter @taskop/api keys:generate
+# Generate with: pnpm --filter @edildy/api keys:generate
 JWT_PRIVATE_KEY=
 JWT_PUBLIC_KEY=
 WEB_URL=http://localhost:5173
 SMTP_URL=smtp://localhost:1025
-MAIL_FROM=Taskop <no-reply@taskop.local>
+MAIL_FROM=Edildy <no-reply@edildy.local>
 COOKIE_SECURE=true
 TRUST_PROXY=false
 LOG_LEVEL=info
@@ -1560,8 +1560,8 @@ LOG_LEVEL=info
 
 Install:
 ```bash
-pnpm --filter @taskop/api add @nestjs/common@latest @nestjs/core@latest @nestjs/platform-express@latest @nestjs/swagger@latest reflect-metadata@latest rxjs@latest nestjs-zod@latest zod@latest nestjs-pino@latest pino-http@latest pino@latest cookie-parser@latest uuidv7@latest "@taskop/contracts@workspace:*"
-pnpm --filter @taskop/api add -D @nestjs/testing@latest @swc/cli@latest @swc/core@latest unplugin-swc@latest vitest@latest supertest@latest @types/supertest@latest @types/node@latest @types/express@latest @types/cookie-parser@latest pino-pretty@latest tsx@latest typescript@latest eslint@latest "@taskop/config@workspace:*"
+pnpm --filter @edildy/api add @nestjs/common@latest @nestjs/core@latest @nestjs/platform-express@latest @nestjs/swagger@latest reflect-metadata@latest rxjs@latest nestjs-zod@latest zod@latest nestjs-pino@latest pino-http@latest pino@latest cookie-parser@latest uuidv7@latest "@edildy/contracts@workspace:*"
+pnpm --filter @edildy/api add -D @nestjs/testing@latest @swc/cli@latest @swc/core@latest unplugin-swc@latest vitest@latest supertest@latest @types/supertest@latest @types/node@latest @types/express@latest @types/cookie-parser@latest pino-pretty@latest tsx@latest typescript@latest eslint@latest "@edildy/config@workspace:*"
 ```
 
 - [ ] **Step 2: Write the failing tests**
@@ -1572,13 +1572,13 @@ import { describe, expect, it } from 'vitest';
 import { loadConfig } from './config';
 
 const valid = {
-  DATABASE_APP_URL: 'postgres://a:b@localhost:5432/taskop',
-  DATABASE_PLATFORM_URL: 'postgres://c:d@localhost:5432/taskop',
+  DATABASE_APP_URL: 'postgres://a:b@localhost:5432/edildy',
+  DATABASE_PLATFORM_URL: 'postgres://c:d@localhost:5432/edildy',
   JWT_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----',
   JWT_PUBLIC_KEY: '-----BEGIN PUBLIC KEY-----\\nabc\\n-----END PUBLIC KEY-----',
   WEB_URL: 'http://localhost:5173',
   SMTP_URL: 'smtp://localhost:1025',
-  MAIL_FROM: 'Taskop <no-reply@taskop.local>',
+  MAIL_FROM: 'Edildy <no-reply@edildy.local>',
 };
 
 describe('loadConfig', () => {
@@ -1602,7 +1602,7 @@ import { NotFoundException } from '@nestjs/common';
 import { ZodValidationException } from 'nestjs-zod';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import '@taskop/contracts';
+import '@edildy/contracts';
 import { AppError } from './app-error';
 import { toAppError } from './error.filter';
 
@@ -1670,7 +1670,7 @@ describe('health and error format', () => {
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: FAIL — modules `./config`, `./app-error`, `./app` not found.
 
 - [ ] **Step 4: Implement config**
@@ -1678,7 +1678,7 @@ Expected: FAIL — modules `./config`, `./app-error`, `./app` not found.
 `apps/api/src/config/config.ts`:
 ```ts
 import { z } from 'zod';
-import '@taskop/contracts';
+import '@edildy/contracts';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
 
@@ -1738,7 +1738,7 @@ export class ConfigModule {
 
 `apps/api/src/common/app-error.ts`:
 ```ts
-import { ERROR_HTTP_STATUS, type ErrorCode } from '@taskop/contracts';
+import { ERROR_HTTP_STATUS, type ErrorCode } from '@edildy/contracts';
 
 export class AppError extends Error {
   readonly fields: Record<string, string> | null;
@@ -1761,7 +1761,7 @@ export class AppError extends Error {
 
 `apps/api/src/common/pg-errors.ts`:
 ```ts
-import type { ErrorCode } from '@taskop/contracts';
+import type { ErrorCode } from '@edildy/contracts';
 
 export interface PgErrorLike {
   code: string;
@@ -1789,7 +1789,7 @@ export const UNIQUE_CONSTRAINT_ERRORS: Record<string, { code: ErrorCode; field: 
 `apps/api/src/common/error.filter.ts`:
 ```ts
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Logger } from '@nestjs/common';
-import { errorMessageKey } from '@taskop/contracts';
+import { errorMessageKey } from '@edildy/contracts';
 import type { Response } from 'express';
 import { ZodSerializationException, ZodValidationException } from 'nestjs-zod';
 import type { ZodError } from 'zod';
@@ -1854,7 +1854,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
 `apps/api/src/common/request.ts`:
 ```ts
-import type { DataScope, PermissionKey, SystemRoleKey } from '@taskop/contracts';
+import type { DataScope, PermissionKey, SystemRoleKey } from '@edildy/contracts';
 import type { Request } from 'express';
 
 export interface Principal {
@@ -1901,14 +1901,14 @@ export function currentRequestMeta(): RequestMeta {
 `apps/api/src/common/decorators.ts`:
 ```ts
 import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { AppError } from './app-error';
 import type { AppRequest, Principal } from './request';
 
-export const IS_PUBLIC_KEY = 'taskop:isPublic';
+export const IS_PUBLIC_KEY = 'edildy:isPublic';
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 
-export const REQUIRED_PERMISSIONS_KEY = 'taskop:requiredPermissions';
+export const REQUIRED_PERMISSIONS_KEY = 'edildy:requiredPermissions';
 export const RequirePermission = (...keys: PermissionKey[]) => SetMetadata(REQUIRED_PERMISSIONS_KEY, keys);
 
 export const CurrentPrincipal = createParamDecorator((_data: unknown, ctx: ExecutionContext): Principal => {
@@ -2105,13 +2105,13 @@ const keys = generateKeyPairSync('ed25519', {
 export function testEnv(overrides: Record<string, string> = {}): Record<string, string> {
   return {
     NODE_ENV: 'test',
-    DATABASE_APP_URL: 'postgres://taskop_app:app@localhost:1/taskop',
-    DATABASE_PLATFORM_URL: 'postgres://taskop_platform:platform@localhost:1/taskop',
+    DATABASE_APP_URL: 'postgres://edildy_app:app@localhost:1/edildy',
+    DATABASE_PLATFORM_URL: 'postgres://edildy_platform:platform@localhost:1/edildy',
     JWT_PRIVATE_KEY: keys.privateKey,
     JWT_PUBLIC_KEY: keys.publicKey,
     WEB_URL: 'http://localhost:5173',
     SMTP_URL: 'smtp://localhost:1025',
-    MAIL_FROM: 'Taskop <no-reply@taskop.test>',
+    MAIL_FROM: 'Edildy <no-reply@edildy.test>',
     COOKIE_SECURE: 'false',
     ARGON2_MEMORY_KIB: '1024',
     ARGON2_ITERATIONS: '1',
@@ -2143,7 +2143,7 @@ export async function createTestApp(overrides: Record<string, string> = {}): Pro
 
 - [ ] **Step 8: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api build`
+Run: `pnpm --filter @edildy/api test && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api build`
 Expected: config, filter and health tests PASS; typecheck clean; `apps/api/dist/main.js` exists.
 
 - [ ] **Step 9: Commit**
@@ -2174,8 +2174,8 @@ git commit -m "feat(api): add NestJS skeleton with config validation, error form
 - [ ] **Step 1: Install DB dependencies**
 
 ```bash
-pnpm --filter @taskop/api add drizzle-orm@latest pg@latest
-pnpm --filter @taskop/api add -D drizzle-kit@latest @types/pg@latest @testcontainers/postgresql@latest
+pnpm --filter @edildy/api add drizzle-orm@latest pg@latest
+pnpm --filter @edildy/api add -D drizzle-kit@latest @types/pg@latest @testcontainers/postgresql@latest
 ```
 
 - [ ] **Step 2: Write the schema**
@@ -2466,7 +2466,7 @@ export default defineConfig({
   schema: './src/db/schema.ts',
   out: './drizzle',
   dbCredentials: {
-    url: process.env.DATABASE_OWNER_URL ?? 'postgres://taskop_owner:owner_dev_password@localhost:5432/taskop',
+    url: process.env.DATABASE_OWNER_URL ?? 'postgres://edildy_owner:owner_dev_password@localhost:5432/edildy',
   },
 });
 ```
@@ -2513,13 +2513,13 @@ BEGIN
   END LOOP;
 END $$;
 --> statement-breakpoint
-GRANT USAGE ON SCHEMA public TO taskop_app, taskop_platform;
+GRANT USAGE ON SCHEMA public TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON tenants, site_types, sites, teams, roles, role_permissions, users, user_teams, user_sites, sessions, auth_tokens TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenants, site_types, sites, teams, roles, role_permissions, users, user_teams, user_sites, sessions, auth_tokens TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT ON audit_log TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON audit_log TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON platform_admins, rate_limits TO taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON platform_admins, rate_limits TO edildy_platform;
 ```
 Note for future migrations: every new table needs an explicit `GRANT` here-style in its own migration, plus RLS if tenant-owned.
 
@@ -2553,8 +2553,8 @@ export async function setupDatabase(opts: SetupOptions): Promise<void> {
   const client = new pg.Client({ connectionString: opts.ownerUrl });
   await client.connect();
   try {
-    await ensureLoginRole(client, 'taskop_app', opts.appPassword, false);
-    await ensureLoginRole(client, 'taskop_platform', opts.platformPassword, true);
+    await ensureLoginRole(client, 'edildy_app', opts.appPassword, false);
+    await ensureLoginRole(client, 'edildy_platform', opts.platformPassword, true);
   } finally {
     await client.end();
   }
@@ -2607,16 +2607,16 @@ function withCredentials(url: string, user: string, password: string): string {
 
 export default async function setup(project: TestProject) {
   const container = await new PostgreSqlContainer('postgres:18-alpine')
-    .withDatabase('taskop')
-    .withUsername('taskop_owner')
+    .withDatabase('edildy')
+    .withUsername('edildy_owner')
     .withPassword('owner')
     .start();
   const ownerUrl = container.getConnectionUri();
   await setupDatabase({ ownerUrl, appPassword: 'app', platformPassword: 'platform' });
   project.provide('db', {
     ownerUrl,
-    appUrl: withCredentials(ownerUrl, 'taskop_app', 'app'),
-    platformUrl: withCredentials(ownerUrl, 'taskop_platform', 'platform'),
+    appUrl: withCredentials(ownerUrl, 'edildy_app', 'app'),
+    platformUrl: withCredentials(ownerUrl, 'edildy_platform', 'platform'),
   });
   return async () => {
     await container.stop();
@@ -2739,7 +2739,7 @@ describe('row-level security', () => {
 
 - [ ] **Step 7: Run tests**
 
-Run (Docker must be running): `pnpm --filter @taskop/api test`
+Run (Docker must be running): `pnpm --filter @edildy/api test`
 Expected: `rls.test.ts` PASS (7 tests); earlier tests still PASS. If a test fails, fix the schema/migration — do not weaken the test.
 
 - [ ] **Step 8: Verify against docker-compose Postgres**
@@ -2877,7 +2877,7 @@ describe('AuditService', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test db-context`
+Run: `pnpm --filter @edildy/api test db-context`
 Expected: FAIL — `../src/db/db.service` not found.
 
 - [ ] **Step 3: Implement**
@@ -3074,7 +3074,7 @@ import { DbModule } from './db/db.module';
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -3104,14 +3104,14 @@ git commit -m "feat(api): add tenant-scoped transactions, request interceptor an
 - [ ] **Step 1: Install**
 
 ```bash
-pnpm --filter @taskop/api add @node-rs/argon2@latest jose@latest
+pnpm --filter @edildy/api add @node-rs/argon2@latest jose@latest
 ```
 
 - [ ] **Step 2: Write the failing tests**
 
 `apps/api/src/auth/crypto/crypto.test.ts`:
 ```ts
-import { isWeakPin } from '@taskop/contracts';
+import { isWeakPin } from '@edildy/contracts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../../config/config';
 import { testEnv } from '../../../test/app';
@@ -3225,7 +3225,7 @@ describe('RateLimitService', () => {
 
 - [ ] **Step 3: Run tests to verify they fail**
 
-Run: `pnpm --filter @taskop/api test crypto rate-limit`
+Run: `pnpm --filter @edildy/api test crypto rate-limit`
 Expected: FAIL — modules not found.
 
 - [ ] **Step 4: Implement**
@@ -3241,7 +3241,7 @@ export class PasswordHasher {
   private readonly dummyHash: Promise<string>;
 
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {
-    this.dummyHash = this.hash('taskop-timing-equaliser');
+    this.dummyHash = this.hash('edildy-timing-equaliser');
   }
 
   /** argon2id (the library default algorithm) with configured cost. */
@@ -3276,9 +3276,9 @@ import { APP_CONFIG, type AppConfig } from '../../config/config';
 
 export const ACCESS_TOKEN_TTL_MS = 15 * 60_000;
 export const PLATFORM_TOKEN_TTL_MS = 8 * 60 * 60_000;
-const ISSUER = 'taskop';
-const APP_AUDIENCE = 'taskop-app';
-const PLATFORM_AUDIENCE = 'taskop-platform';
+const ISSUER = 'edildy';
+const APP_AUDIENCE = 'edildy-app';
+const PLATFORM_AUDIENCE = 'edildy-platform';
 
 export interface AccessClaims {
   sub: string;
@@ -3398,7 +3398,7 @@ export function parseOpaqueToken(token: string): { tenantId: string } | null {
 `apps/api/src/auth/crypto/secret-generator.ts`:
 ```ts
 import { randomInt } from 'node:crypto';
-import { isWeakPin } from '@taskop/contracts';
+import { isWeakPin } from '@edildy/contracts';
 
 export function generatePin(): string {
   for (;;) {
@@ -3449,7 +3449,7 @@ export class RateLimitService {
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 6: Commit**
@@ -3480,7 +3480,7 @@ git commit -m "feat(api): add argon2 hashing, EdDSA tokens, opaque tokens, secre
   - `class OneTimeTokenService { create(input: { tenantId; userId; purpose; ttlMs }): Promise<string>; consume(raw: string, purpose): Promise<{ userId: string }> }` (both run inside the current tenant tx; `consume` throws `TOKEN_INVALID`).
   - `SESSION_TTL_MS = { web: 7 days, mobile: 30 days }`; `class SessionService { create(input: { tenantId; userId; client; familyId? }): Promise<{ sessionId: string; refreshToken: string }>; revokeAllForUser(userId: string, exceptSessionId?: string): Promise<void> }`.
   - `class MeService { load(userId: string): Promise<Me> }` (current tenant tx).
-  - `REFRESH_COOKIE = 'taskop_rt'`, `setRefreshCookie(res, token, config)`, `clearRefreshCookie(res, config)`.
+  - `REFRESH_COOKIE = 'edildy_rt'`, `setRefreshCookie(res, token, config)`, `clearRefreshCookie(res, config)`.
   - `class AuthService { signup(input): Promise<IssuedLogin>; verifyEmail(token): Promise<void>; issueLogin(user: { id; tenantId; roleId; kind }, client): Promise<IssuedLogin> }` where `interface IssuedLogin { result: LoginResult; refreshToken: string; client: Client }`.
   - Endpoints: `POST /api/v1/auth/signup` (201, LoginResult), `POST /api/v1/auth/verify-email` (204).
   - Fixtures: `uniq(prefix)`, `signupTenant(t, overrides?)` → `{ orgCode, email, password, tenantId, ownerId, accessToken, me }`, `bearer(token)`.
@@ -3488,8 +3488,8 @@ git commit -m "feat(api): add argon2 hashing, EdDSA tokens, opaque tokens, secre
 - [ ] **Step 1: Install**
 
 ```bash
-pnpm --filter @taskop/api add nodemailer@latest
-pnpm --filter @taskop/api add -D @types/nodemailer@latest
+pnpm --filter @edildy/api add nodemailer@latest
+pnpm --filter @edildy/api add -D @types/nodemailer@latest
 ```
 
 - [ ] **Step 2: Write fixtures and the failing test**
@@ -3497,7 +3497,7 @@ pnpm --filter @taskop/api add -D @types/nodemailer@latest
 `apps/api/test/fixtures.ts`:
 ```ts
 import { randomBytes } from 'node:crypto';
-import type { LoginResult, Me } from '@taskop/contracts';
+import type { LoginResult, Me } from '@edildy/contracts';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
 
@@ -3543,7 +3543,7 @@ export async function signupTenant(t: TestApp, overrides: Record<string, unknown
 `apps/api/test/auth-signup.test.ts`:
 ```ts
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ALL_PERMISSIONS } from '@taskop/contracts';
+import { ALL_PERMISSIONS } from '@edildy/contracts';
 import { createTestApp, type TestApp } from './app';
 import { signupTenant, uniq } from './fixtures';
 import { ownerQuery } from './owner-db';
@@ -3584,7 +3584,7 @@ describe('POST /auth/signup', () => {
     });
     expect(web.body.refreshToken).toBeNull();
     const cookie = String(web.headers['set-cookie']);
-    expect(cookie).toContain('taskop_rt=');
+    expect(cookie).toContain('edildy_rt=');
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('Path=/api/v1/auth');
     expect(cookie).toContain('SameSite=Strict');
@@ -3649,14 +3649,14 @@ describe('POST /auth/verify-email', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test auth-signup`
+Run: `pnpm --filter @edildy/api test auth-signup`
 Expected: FAIL — 404 on `/api/v1/auth/signup`.
 
 - [ ] **Step 4: Implement bootstrap and permission resolver**
 
 `apps/api/src/tenancy/bootstrap.ts`:
 ```ts
-import { SYSTEM_ROLE_DEFAULTS, SYSTEM_ROLE_KEYS, type SystemRoleKey } from '@taskop/contracts';
+import { SYSTEM_ROLE_DEFAULTS, SYSTEM_ROLE_KEYS, type SystemRoleKey } from '@edildy/contracts';
 import type { Executor } from '../db/db.service';
 import { rolePermissions, roles, siteTypes } from '../db/schema';
 
@@ -3683,7 +3683,7 @@ export async function seedTenantDefaults(tx: Executor, tenantId: string): Promis
 
 `apps/api/src/roles/permission-resolver.ts`:
 ```ts
-import { ALL_PERMISSIONS, type PermissionKey, type SystemRoleKey } from '@taskop/contracts';
+import { ALL_PERMISSIONS, type PermissionKey, type SystemRoleKey } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import type { Executor } from '../db/db.service';
 import { rolePermissions } from '../db/schema';
@@ -3743,23 +3743,23 @@ const link = (webUrl: string, path: string, token: string) => `${webUrl}${path}?
 export function verifyEmailMail(p: { to: string; fullName: string; webUrl: string; token: string }): MailMessage {
   return {
     to: p.to,
-    subject: 'Taskop — e-poçt ünvanınızı təsdiqləyin',
-    text: `Salam, ${p.fullName}!\n\nTaskop hesabınızı aktivləşdirmək üçün e-poçt ünvanınızı təsdiqləyin:\n${link(p.webUrl, '/verify-email', p.token)}\n\nKeçid 72 saat etibarlıdır.`,
+    subject: 'Edildy — e-poçt ünvanınızı təsdiqləyin',
+    text: `Salam, ${p.fullName}!\n\nEdildy hesabınızı aktivləşdirmək üçün e-poçt ünvanınızı təsdiqləyin:\n${link(p.webUrl, '/verify-email', p.token)}\n\nKeçid 72 saat etibarlıdır.`,
   };
 }
 
 export function inviteMail(p: { to: string; fullName: string; orgName: string; webUrl: string; token: string }): MailMessage {
   return {
     to: p.to,
-    subject: `Taskop — ${p.orgName} təşkilatına dəvət`,
-    text: `Salam, ${p.fullName}!\n\nSizi Taskop-da "${p.orgName}" təşkilatına dəvət ediblər. Şifrənizi təyin etmək üçün keçidə daxil olun:\n${link(p.webUrl, '/accept-invite', p.token)}\n\nKeçid 7 gün etibarlıdır.`,
+    subject: `Edildy — ${p.orgName} təşkilatına dəvət`,
+    text: `Salam, ${p.fullName}!\n\nSizi Edildy-də "${p.orgName}" təşkilatına dəvət ediblər. Şifrənizi təyin etmək üçün keçidə daxil olun:\n${link(p.webUrl, '/accept-invite', p.token)}\n\nKeçid 7 gün etibarlıdır.`,
   };
 }
 
 export function passwordResetMail(p: { to: string; fullName: string; webUrl: string; token: string }): MailMessage {
   return {
     to: p.to,
-    subject: 'Taskop — şifrənin bərpası',
+    subject: 'Edildy — şifrənin bərpası',
     text: `Salam, ${p.fullName}!\n\nŞifrənizi yeniləmək üçün keçidə daxil olun:\n${link(p.webUrl, '/reset-password', p.token)}\n\nKeçid 1 saat etibarlıdır. Bu sorğunu siz etməmisinizsə, məktubu nəzərə almayın.`,
   };
 }
@@ -3896,7 +3896,7 @@ export class SessionService {
 `apps/api/src/auth/me.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { Me } from '@taskop/contracts';
+import type { Me } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { DbService } from '../db/db.service';
@@ -3948,7 +3948,7 @@ import type { Response } from 'express';
 import type { AppConfig } from '../config/config';
 import { SESSION_TTL_MS } from './session.service';
 
-export const REFRESH_COOKIE = 'taskop_rt';
+export const REFRESH_COOKIE = 'edildy_rt';
 const COOKIE_PATH = '/api/v1/auth';
 
 export function setRefreshCookie(res: Response, token: string, config: AppConfig): void {
@@ -3982,7 +3982,7 @@ import {
   resetPasswordInputSchema,
   signupInputSchema,
   verifyEmailInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class SignupDto extends createZodDto(signupInputSchema) {}
@@ -4001,7 +4001,7 @@ export class MeDto extends createZodDto(meSchema) {}
 `apps/api/src/auth/auth.service.ts`:
 ```ts
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { LoginResult } from '@taskop/contracts';
+import type { LoginResult } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';
@@ -4137,7 +4137,7 @@ export class AuthService {
 ```ts
 import { Body, Controller, HttpCode, Inject, Post, Res } from '@nestjs/common';
 import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
-import type { LoginResult } from '@taskop/contracts';
+import type { LoginResult } from '@edildy/contracts';
 import type { Response } from 'express';
 import { Public } from '../common/decorators';
 import { APP_CONFIG, type AppConfig } from '../config/config';
@@ -4202,7 +4202,7 @@ imports: [ConfigModule.forRoot(config), LoggerModule.forRoot(loggerParams(config
 
 - [ ] **Step 8: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 9: Commit**
@@ -4235,7 +4235,7 @@ git commit -m "feat(api): add tenant sign-up with defaults, sessions, email veri
 
 Append to `apps/api/test/fixtures.ts`:
 ```ts
-import type { SystemRoleKey } from '@taskop/contracts';
+import type { SystemRoleKey } from '@edildy/contracts';
 import { and, eq } from 'drizzle-orm';
 import { PasswordHasher } from '../src/auth/crypto/password-hasher';
 import { DbService } from '../src/db/db.service';
@@ -4451,7 +4451,7 @@ describe('refresh', () => {
     const res = await t.http().post('/api/v1/auth/refresh').set('Cookie', cookie).send({});
     expect(res.status).toBe(200);
     expect(res.body.refreshToken).toBeNull();
-    expect(String(res.headers['set-cookie'])).toContain('taskop_rt=');
+    expect(String(res.headers['set-cookie'])).toContain('edildy_rt=');
   });
 
   it('fails for deactivated users and expired sessions', async () => {
@@ -4475,7 +4475,7 @@ describe('refresh', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test auth-login`
+Run: `pnpm --filter @edildy/api test auth-login`
 Expected: FAIL — 404 on `/api/v1/auth/login/worker`.
 
 - [ ] **Step 4: Implement `LoginLookup`**
@@ -4720,7 +4720,7 @@ In `auth.module.ts` add `LoginLookup` to `providers`.
 
 - [ ] **Step 7: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 8: Commit**
@@ -4864,7 +4864,7 @@ describe('logout and resend verification', () => {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `pnpm --filter @taskop/api test auth-guard permission.guard`
+Run: `pnpm --filter @edildy/api test auth-guard permission.guard`
 Expected: FAIL — `/api/v1/me` 404 and `./permission.guard` missing.
 
 - [ ] **Step 3: Implement loader and guards**
@@ -4872,7 +4872,7 @@ Expected: FAIL — `/api/v1/me` 404 and `./permission.guard` missing.
 `apps/api/src/auth/principal-loader.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -4966,7 +4966,7 @@ export class AuthGuard implements CanActivate {
 ```ts
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { REQUIRED_PERMISSIONS_KEY } from '../common/decorators';
 import type { AppRequest } from '../common/request';
@@ -4992,7 +4992,7 @@ export class PermissionGuard implements CanActivate {
 ```ts
 import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Me } from '@taskop/contracts';
+import type { Me } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { MeDto } from './dto';
@@ -5094,7 +5094,7 @@ export class AuthModule {}
 
 - [ ] **Step 5: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS (health stays public via `@Public()`).
 
 - [ ] **Step 6: Commit**
@@ -5239,7 +5239,7 @@ describe('invite acceptance', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test auth-credentials`
+Run: `pnpm --filter @edildy/api test auth-credentials`
 Expected: FAIL — 404 on `/api/v1/auth/password/forgot`.
 
 - [ ] **Step 4: Implement `CredentialService`**
@@ -5247,7 +5247,7 @@ Expected: FAIL — 404 on `/api/v1/auth/password/forgot`.
 `apps/api/src/auth/credential.service.ts`:
 ```ts
 import { Inject, Injectable } from '@nestjs/common';
-import { secretSchemaFor } from '@taskop/contracts';
+import { secretSchemaFor } from '@edildy/contracts';
 import { and, eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -5396,7 +5396,7 @@ In `auth.module.ts` add `CredentialService` to `providers` and `exports`.
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 7: Commit**
@@ -5423,7 +5423,7 @@ git commit -m "feat(api): add password reset, credential change and invite accep
 
 `apps/api/test/scope.test.ts`:
 ```ts
-import type { DataScope } from '@taskop/contracts';
+import type { DataScope } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ScopeService } from '../src/common/scope.service';
 import { DbService } from '../src/db/db.service';
@@ -5500,7 +5500,7 @@ describe('ScopeService.usersFilter', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test scope`
+Run: `pnpm --filter @edildy/api test scope`
 Expected: FAIL — `../src/common/scope.service` not found.
 
 - [ ] **Step 3: Implement**
@@ -5558,7 +5558,7 @@ Add `CommonModule` to `AppModule` imports.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -5732,7 +5732,7 @@ describe('site types and sites', () => {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test sites`
+Run: `pnpm --filter @edildy/api test sites`
 Expected: FAIL — 404 on `/api/v1/tenant`.
 
 - [ ] **Step 4: Implement DTOs and services**
@@ -5749,7 +5749,7 @@ import {
   updateSiteInputSchema,
   updateSiteTypeInputSchema,
   updateTenantInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class UpdateTenantDto extends createZodDto(updateTenantInputSchema) {}
@@ -5766,7 +5766,7 @@ export class SiteResponse extends createZodDto(siteDtoSchema) {}
 `apps/api/src/tenancy/tenant.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { TenantDto } from '@taskop/contracts';
+import type { TenantDto } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
@@ -5817,7 +5817,7 @@ export class TenantService {
 `apps/api/src/tenancy/site-types.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { SiteTypeDto } from '@taskop/contracts';
+import type { SiteTypeDto } from '@edildy/contracts';
 import { asc, eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { AuditService } from '../db/audit.service';
@@ -5866,7 +5866,7 @@ export class SiteTypesService {
 `apps/api/src/tenancy/sites.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';
@@ -5995,7 +5995,7 @@ export class SitesService {
 ```ts
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { TenantDto } from '@taskop/contracts';
+import type { TenantDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { TenantResponse, UpdateTenantDto } from './dto';
 import { TenantService } from './tenant.service';
@@ -6025,7 +6025,7 @@ export class TenantController {
 ```ts
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { SiteTypeDto } from '@taskop/contracts';
+import type { SiteTypeDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { CreateSiteTypeDto, SiteTypeResponse, UpdateSiteTypeDto } from './dto';
@@ -6062,7 +6062,7 @@ export class SiteTypesController {
 ```ts
 import { Body, Controller, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { SiteDto } from '@taskop/contracts';
+import type { SiteDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { CreateSiteDto, MoveSiteDto, SiteResponse, UpdateSiteDto } from './dto';
@@ -6122,7 +6122,7 @@ Add `TenancyModule` to `AppModule` imports.
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 7: Commit**
@@ -6197,7 +6197,7 @@ describe('teams', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test teams`
+Run: `pnpm --filter @edildy/api test teams`
 Expected: FAIL — 404.
 
 - [ ] **Step 3: Implement**
@@ -6220,7 +6220,7 @@ export async function assertIdsExist(tx: Executor, table: PgTable, idColumn: PgC
 
 `apps/api/src/teams/dto.ts`:
 ```ts
-import { createTeamInputSchema, setTeamMembersInputSchema, teamDtoSchema, updateTeamInputSchema } from '@taskop/contracts';
+import { createTeamInputSchema, setTeamMembersInputSchema, teamDtoSchema, updateTeamInputSchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class CreateTeamDto extends createZodDto(createTeamInputSchema) {}
@@ -6232,7 +6232,7 @@ export class TeamResponse extends createZodDto(teamDtoSchema) {}
 `apps/api/src/teams/teams.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { TeamDto } from '@taskop/contracts';
+import type { TeamDto } from '@edildy/contracts';
 import { asc, eq, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { assertIdsExist } from '../common/ids-exist';
@@ -6321,7 +6321,7 @@ export class TeamsService {
 ```ts
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { TeamDto } from '@taskop/contracts';
+import type { TeamDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { CreateTeamDto, SetTeamMembersDto, TeamResponse, UpdateTeamDto } from './dto';
@@ -6373,7 +6373,7 @@ Add `TeamsModule` to `AppModule` imports.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -6483,7 +6483,7 @@ describe('roles', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test roles`
+Run: `pnpm --filter @edildy/api test roles`
 Expected: FAIL — 404.
 
 - [ ] **Step 3: Implement**
@@ -6496,7 +6496,7 @@ import {
   roleDtoSchema,
   setRolePermissionsInputSchema,
   updateRoleInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class CreateRoleDto extends createZodDto(createRoleInputSchema) {}
@@ -6509,7 +6509,7 @@ export class PermissionCatalogResponse extends createZodDto(permissionCatalogSch
 `apps/api/src/roles/roles.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import { PERMISSION_GROUPS, type PermissionCatalog, type PermissionKey, type RoleDto } from '@taskop/contracts';
+import { PERMISSION_GROUPS, type PermissionCatalog, type PermissionKey, type RoleDto } from '@edildy/contracts';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -6631,7 +6631,7 @@ export class RolesService {
 ```ts
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { PermissionCatalog, RoleDto } from '@taskop/contracts';
+import type { PermissionCatalog, RoleDto } from '@edildy/contracts';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
@@ -6691,7 +6691,7 @@ Add `RolesModule` to `AppModule` imports.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -6725,7 +6725,7 @@ git commit -m "feat(api): add roles with permission catalogue, escalation guard 
 
 `apps/api/test/users.test.ts`:
 ```ts
-import { ALL_PERMISSIONS } from '@taskop/contracts';
+import { ALL_PERMISSIONS } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Principal } from '../src/common/request';
@@ -6941,7 +6941,7 @@ function uniqEmail() {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test users`
+Run: `pnpm --filter @edildy/api test users`
 Expected: FAIL — 404 on `/api/v1/users/workers`.
 
 - [ ] **Step 3: Add `issuePasswordReset` to `CredentialService`**
@@ -6970,7 +6970,7 @@ import {
   userDtoSchema,
   userListQuerySchema,
   userWithSecretSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class UserListQueryDto extends createZodDto(userListQuerySchema) {}
@@ -6987,7 +6987,7 @@ export class UserWithSecretResponse extends createZodDto(userWithSecretSchema) {
 
 `apps/api/src/users/user-mapper.ts`:
 ```ts
-import type { SystemRoleKey, UserDto } from '@taskop/contracts';
+import type { SystemRoleKey, UserDto } from '@edildy/contracts';
 import { eq, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Executor } from '../db/db.service';
@@ -7048,7 +7048,7 @@ export function toUserDto(r: UserRow): UserDto {
 `apps/api/src/users/users.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type Page, secretSchemaFor, type UserDto, type UserWithSecret } from '@taskop/contracts';
+import { type Page, secretSchemaFor, type UserDto, type UserWithSecret } from '@edildy/contracts';
 import { and, asc, eq, gt, ilike, or, type SQL, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { CredentialService } from '../auth/credential.service';
@@ -7343,7 +7343,7 @@ export class UsersService {
 ```ts
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Page, UserDto, UserWithSecret } from '@taskop/contracts';
+import type { Page, UserDto, UserWithSecret } from '@edildy/contracts';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
@@ -7453,7 +7453,7 @@ Note: `POST /users/:id/reset-credential` with an empty body must still validate:
 
 - [ ] **Step 7: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 8: Commit**
@@ -7473,7 +7473,7 @@ git commit -m "feat(api): add users module with worker creation, staff invites, 
 - Test: `apps/api/test/audit-log.test.ts`
 
 **Interfaces:**
-- Produces: `GET /api/v1/audit-log` (`audit.view`) → `Page<AuditEntryDto>`, newest first (cursor = last id, `id < cursor`). Filters: `actorUserId`, `action`, `entityType`, `entityId`, `from`, `to`. Actor `type`: `platform_admin` if `actor_platform_admin_id` set, `user` if `actor_user_id` set, else `system`; `name` is the user's full name (null for platform/system; the web app labels platform actors "Taskop dəstəyi").
+- Produces: `GET /api/v1/audit-log` (`audit.view`) → `Page<AuditEntryDto>`, newest first (cursor = last id, `id < cursor`). Filters: `actorUserId`, `action`, `entityType`, `entityId`, `from`, `to`. Actor `type`: `platform_admin` if `actor_platform_admin_id` set, `user` if `actor_user_id` set, else `system`; `name` is the user's full name (null for platform/system; the web app labels platform actors "Edildy dəstəyi").
 
 - [ ] **Step 1: Write the failing test**
 
@@ -7522,14 +7522,14 @@ describe('GET /audit-log', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test audit-log`
+Run: `pnpm --filter @edildy/api test audit-log`
 Expected: FAIL — 404.
 
 - [ ] **Step 3: Implement**
 
 `apps/api/src/audit-log/dto.ts`:
 ```ts
-import { auditEntryDtoSchema, auditListQuerySchema, pageOf } from '@taskop/contracts';
+import { auditEntryDtoSchema, auditListQuerySchema, pageOf } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class AuditListQueryDto extends createZodDto(auditListQuerySchema) {}
@@ -7539,7 +7539,7 @@ export class AuditPageResponse extends createZodDto(pageOf(auditEntryDtoSchema))
 `apps/api/src/audit-log/audit-log.service.ts`:
 ```ts
 import { Injectable } from '@nestjs/common';
-import type { AuditEntryDto, Page } from '@taskop/contracts';
+import type { AuditEntryDto, Page } from '@edildy/contracts';
 import { and, desc, eq, gte, lt, lte, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { DbService } from '../db/db.service';
@@ -7593,7 +7593,7 @@ export class AuditLogService {
 ```ts
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { AuditEntryDto, Page } from '@taskop/contracts';
+import type { AuditEntryDto, Page } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { AuditLogService } from './audit-log.service';
 import { AuditListQueryDto, AuditPageResponse } from './dto';
@@ -7626,7 +7626,7 @@ Add `AuditLogModule` to `AppModule` imports.
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -7647,10 +7647,10 @@ git commit -m "feat(api): add audit log read endpoint with filters and actor nam
 
 **Interfaces:**
 - Produces:
-  - `POST /api/v1/platform/auth/login` (public, rate-limited) → `PlatformLoginResult` (8-hour token, audience `taskop-platform`, no refresh).
+  - `POST /api/v1/platform/auth/login` (public, rate-limited) → `PlatformLoginResult` (8-hour token, audience `edildy-platform`, no refresh).
   - `PlatformGuard` (verifies platform token + active admin; sets `req.platformAdminId`). Routes are `@Public()` for the app `AuthGuard`, so app tokens are never accepted there and platform tokens are rejected by app routes.
   - `GET /api/v1/platform/tenants?q=&cursor=&limit=` → `Page<PlatformTenantDto>`; `POST /api/v1/platform/tenants/:id/suspend` and `/reactivate` → `PlatformTenantDto`. Suspension revokes all tenant sessions and writes an audit entry with `actor_platform_admin_id`.
-  - Script `pnpm --filter @taskop/api platform:create-admin` (env `PLATFORM_ADMIN_EMAIL`, `PLATFORM_ADMIN_NAME`, `PLATFORM_ADMIN_PASSWORD`; upsert).
+  - Script `pnpm --filter @edildy/api platform:create-admin` (env `PLATFORM_ADMIN_EMAIL`, `PLATFORM_ADMIN_NAME`, `PLATFORM_ADMIN_PASSWORD`; upsert).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -7665,7 +7665,7 @@ import { ownerQuery } from './owner-db';
 describe('platform admin', () => {
   let t: TestApp;
   let token: string;
-  const email = `${uniq('admin')}@taskop.az`;
+  const email = `${uniq('admin')}@edildy.az`;
 
   beforeAll(async () => {
     t = await createTestApp();
@@ -7712,7 +7712,7 @@ describe('platform admin', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test platform`
+Run: `pnpm --filter @edildy/api test platform`
 Expected: FAIL — 404.
 
 - [ ] **Step 3: Implement**
@@ -7724,7 +7724,7 @@ Modify `apps/api/src/common/request.ts` — add to `AppRequest`:
 
 `apps/api/src/platform/dto.ts`:
 ```ts
-import { pageOf, platformLoginInputSchema, platformLoginResultSchema, platformTenantDtoSchema, platformTenantListQuerySchema } from '@taskop/contracts';
+import { pageOf, platformLoginInputSchema, platformLoginResultSchema, platformTenantDtoSchema, platformTenantListQuerySchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class PlatformLoginDto extends createZodDto(platformLoginInputSchema) {}
@@ -7770,7 +7770,7 @@ export class PlatformGuard implements CanActivate {
 `apps/api/src/platform/platform.service.ts`:
 ```ts
 import { Inject, Injectable } from '@nestjs/common';
-import type { Page, PlatformLoginResult, PlatformTenantDto } from '@taskop/contracts';
+import type { Page, PlatformLoginResult, PlatformTenantDto } from '@edildy/contracts';
 import { and, asc, eq, gt, ilike, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { PasswordHasher } from '../auth/crypto/password-hasher';
 import { TokenService } from '../auth/crypto/token.service';
@@ -7860,7 +7860,7 @@ export class PlatformService {
 ```ts
 import { Body, Controller, Get, HttpCode, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Page, PlatformLoginResult, PlatformTenantDto } from '@taskop/contracts';
+import type { Page, PlatformLoginResult, PlatformTenantDto } from '@edildy/contracts';
 import { Public } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { AppRequest } from '../common/request';
@@ -7955,7 +7955,7 @@ main().catch((err: unknown) => {
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `pnpm --filter @taskop/api test`
+Run: `pnpm --filter @edildy/api test`
 Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -8077,7 +8077,7 @@ describe('tenant isolation', () => {
 
 - [ ] **Step 2: Run the suite**
 
-Run: `pnpm --filter @taskop/api test isolation`
+Run: `pnpm --filter @edildy/api test isolation`
 Expected: PASS. Any failure is a real isolation bug — fix the offending service.
 
 - [ ] **Step 3: Commit**
@@ -8097,7 +8097,7 @@ git commit -m "test(api): add tenant isolation suite across all endpoints"
 - Test: `apps/api/test/openapi.test.ts`
 
 **Interfaces:**
-- Produces: OpenAPI UI at `/api/docs`, JSON at `/api/docs-json`; `pnpm --filter @taskop/api keys:generate` prints `JWT_PRIVATE_KEY=`/`JWT_PUBLIC_KEY=` lines (PEM with `\n` escapes); `pnpm db:seed` creates the demo tenant `demo` (idempotent); CI workflow running lint → typecheck → test → build.
+- Produces: OpenAPI UI at `/api/docs`, JSON at `/api/docs-json`; `pnpm --filter @edildy/api keys:generate` prints `JWT_PRIVATE_KEY=`/`JWT_PUBLIC_KEY=` lines (PEM with `\n` escapes); `pnpm db:seed` creates the demo tenant `demo` (idempotent); CI workflow running lint → typecheck → test → build.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -8125,7 +8125,7 @@ describe('OpenAPI', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm --filter @taskop/api test openapi`
+Run: `pnpm --filter @edildy/api test openapi`
 Expected: FAIL — 404.
 
 - [ ] **Step 3: Add Swagger**
@@ -8134,7 +8134,7 @@ In `apps/api/src/app.setup.ts` add at the end of `configureApp` (imports: `Docum
 ```ts
   const document = SwaggerModule.createDocument(
     app,
-    new DocumentBuilder().setTitle('Taskop API').setVersion('1.0').addBearerAuth().build(),
+    new DocumentBuilder().setTitle('Edildy API').setVersion('1.0').addBearerAuth().build(),
   );
   SwaggerModule.setup('api/docs', app, cleanupOpenApiDoc(document));
 ```
@@ -8195,13 +8195,13 @@ async function main(): Promise<void> {
     const ownerId = uuidv7();
     await tx.insert(schema.users).values({
       id: ownerId, tenantId, fullName: 'Demo Sahib', roleId: roleIds.owner, kind: 'staff',
-      email: 'owner@demo.taskop.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
+      email: 'owner@demo.edildy.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
       status: 'active', emailVerifiedAt: new Date(),
     });
     const managerId = uuidv7();
     await tx.insert(schema.users).values({
       id: managerId, tenantId, fullName: 'Leyla Quliyeva', roleId: roleIds.manager, kind: 'staff',
-      email: 'manager@demo.taskop.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
+      email: 'manager@demo.edildy.az', credentialHash: await hash('DemoPassword123', ARGON), credentialKind: 'password',
       status: 'active', emailVerifiedAt: new Date(), managerId: ownerId,
     });
     await tx.insert(schema.userSites).values({ tenantId, userId: managerId, siteId: warehouse.id });
@@ -8219,8 +8219,8 @@ async function main(): Promise<void> {
   });
   await db.$client.end();
   console.log('Demo tenant "demo" created.');
-  console.log('  Owner:   owner@demo.taskop.az / DemoPassword123');
-  console.log('  Manager: manager@demo.taskop.az / DemoPassword123');
+  console.log('  Owner:   owner@demo.edildy.az / DemoPassword123');
+  console.log('  Manager: manager@demo.edildy.az / DemoPassword123');
   console.log('  Workers: org code "demo", usernames elvin / nigar, PIN 482915');
 }
 
@@ -8240,8 +8240,8 @@ RUN npm install -g pnpm@latest
 WORKDIR /repo
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm turbo run build --filter=@taskop/api...
-RUN pnpm --filter @taskop/api deploy --prod --legacy /out
+RUN pnpm turbo run build --filter=@edildy/api...
+RUN pnpm --filter @edildy/api deploy --prod --legacy /out
 
 FROM node:24-alpine
 WORKDIR /app
@@ -8292,7 +8292,7 @@ jobs:
 
 `README.md`:
 ````markdown
-# Taskop
+# Edildy
 
 Digital inspections and checklists platform (web + mobile). Monorepo: `apps/api` (NestJS), `apps/web` (React), `apps/mobile` (Expo), `packages/*` (shared contracts, i18n, API client, config).
 
@@ -8304,7 +8304,7 @@ Node 24+, pnpm 12+, Docker.
 pnpm install
 docker compose up -d
 cp apps/api/.env.example apps/api/.env
-pnpm --filter @taskop/api keys:generate   # paste both lines into apps/api/.env
+pnpm --filter @edildy/api keys:generate   # paste both lines into apps/api/.env
 pnpm db:setup                             # roles + migrations
 pnpm db:seed                              # demo tenant (see output for logins)
 pnpm dev
@@ -8317,27 +8317,27 @@ pnpm dev
 
 ## Platform admin
 ```bash
-PLATFORM_ADMIN_EMAIL=you@taskop.az PLATFORM_ADMIN_NAME="Your Name" PLATFORM_ADMIN_PASSWORD='a long password' \
-  pnpm --filter @taskop/api platform:create-admin
+PLATFORM_ADMIN_EMAIL=you@edildy.az PLATFORM_ADMIN_NAME="Your Name" PLATFORM_ADMIN_PASSWORD='a long password' \
+  pnpm --filter @edildy/api platform:create-admin
 ```
 
 ## Production database notes
-Create the login roles once as a superuser (`taskop_app` with LOGIN; `taskop_platform` with LOGIN BYPASSRLS), then run migrations as the schema owner. Every new table needs its own GRANTs (see `apps/api/drizzle/0002_security.sql`) and, if tenant-owned, RLS.
+Create the login roles once as a superuser (`edildy_app` with LOGIN; `edildy_platform` with LOGIN BYPASSRLS), then run migrations as the schema owner. Every new table needs its own GRANTs (see `apps/api/drizzle/0002_security.sql`) and, if tenant-owned, RLS.
 ````
 
 - [ ] **Step 7: Verify everything**
 
 ```bash
-pnpm --filter @taskop/api test
+pnpm --filter @edildy/api test
 pnpm lint && pnpm typecheck && pnpm build
-pnpm --filter @taskop/api keys:generate   # paste into apps/api/.env
+pnpm --filter @edildy/api keys:generate   # paste into apps/api/.env
 pnpm db:setup && pnpm db:seed
-pnpm --filter @taskop/api dev   # in another terminal:
+pnpm --filter @edildy/api dev   # in another terminal:
 curl -s localhost:3000/api/v1/health
 curl -s -X POST localhost:3000/api/v1/auth/login/worker -H 'content-type: application/json' \
   -d '{"orgCode":"demo","username":"elvin","secret":"482915","client":"mobile"}'
 ```
-Expected: all tests PASS; lint/typecheck/build clean; health returns `{"status":"ok"}`; worker login returns a `LoginResult` with `me.user.fullName = "Elvin Məmmədov"`. Optionally `docker build -f apps/api/Dockerfile -t taskop-api .` succeeds.
+Expected: all tests PASS; lint/typecheck/build clean; health returns `{"status":"ok"}`; worker login returns a `LoginResult` with `me.user.fullName = "Elvin Məmmədov"`. Optionally `docker build -f apps/api/Dockerfile -t edildy-api .` succeeds.
 
 - [ ] **Step 8: Commit**
 

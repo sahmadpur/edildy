@@ -42,7 +42,7 @@ describe('LoginScreen', () => {
   });
 
   it('shows the translated API error', async () => {
-    const { ApiError } = jest.requireActual('@taskop/api-client');
+    const { ApiError } = jest.requireActual('@edildy/api-client');
     mockLoginWorker.mockRejectedValue(new ApiError(401, 'INVALID_CREDENTIALS', 'errors.INVALID_CREDENTIALS'));
     await render(<LoginScreen />);
     await fireEvent.changeText(screen.getByLabelText('Təşkilat kodu'), 'acme');

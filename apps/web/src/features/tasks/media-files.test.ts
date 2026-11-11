@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mediaFileIssue, mediaKindOfMime, type PendingMedia, prepareFiles, readMediaMeta, uploadInstructionMedia } from './media-files';
 

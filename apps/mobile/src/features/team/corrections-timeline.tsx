@@ -1,5 +1,5 @@
-import { type ChecklistContent, type Correction, type ExecutionCorrections, type Item, type ReworkRequest, walkItems } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { type ChecklistContent, type Correction, type ExecutionCorrections, type Item, type ReworkRequest, walkItems } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, spacing, type } from '@/lib/theme';
@@ -33,7 +33,7 @@ export function CorrectionsTimeline({ content, history, timeZone }: { content: C
           <View key={e.request.id} testID={`rework-${e.request.round}`} style={styles.card}>
             <Text style={styles.label}>
               {`${t('corrections.round', { round: e.request.round })} · ${t('mobile.team.history.requested', {
-                // A null requester is a platform admin (Taskop support, Part 1 `reworkRequestSchema`).
+                // A null requester is a platform admin (Edildy support, Part 1 `reworkRequestSchema`).
                 name: e.request.requestedBy?.fullName ?? t('mobile.team.history.platform'),
                 count: e.request.items.length,
               })}`}

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_LOCALE, type Language, LANGUAGE_STORAGE_KEY, resolveLanguage } from '@taskop/i18n';
+import { DEFAULT_LOCALE, type Language, LANGUAGE_STORAGE_KEY, resolveLanguage } from '@edildy/i18n';
 import { getLocales } from 'expo-localization';
 import { useTranslation } from 'react-i18next';
 import i18n from './i18n';

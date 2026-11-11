@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import { isFinalTaskStatus, type ProblemDto, type ProblemReportDto, TASK_LIMITS, type TaskDetail, type TaskMediaDto } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { isFinalTaskStatus, type ProblemDto, type ProblemReportDto, TASK_LIMITS, type TaskDetail, type TaskMediaDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { type ReactNode, useMemo, useRef, useState } from 'react';

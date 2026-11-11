@@ -1,6 +1,6 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { StyleSheet } from 'react-native';
 import '@/lib/i18n';
 import { ME, NOTIFICATION, NOTIFICATION2, NOTIFICATION3, notificationItem, OCC, OCC3, syncResponse, syncTask, T, TASK, versionOf } from '@/offline/testing/fixtures';

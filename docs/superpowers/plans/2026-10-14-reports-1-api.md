@@ -1,8 +1,8 @@
-# Taskop Reports — Part 1: Contracts & API — Implementation Plan
+# Edildy Reports — Part 1: Contracts & API — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Let `reports.view` holders see live, scope-filtered counts, comparisons and lists of the runs, problems and tasks of any period, and let `reports.export` holders download them as CSV, Excel or PDF, by adding the report contracts, i18n strings and `@taskop/api-client` methods, the two permissions with their backfill, the `occurrences (tenant_id, local_date)` index, the `reports` NestJS module with its six endpoints and the exporter of the sub-project 7 spec §3–§5 and §9.
+**Goal:** Let `reports.view` holders see live, scope-filtered counts, comparisons and lists of the runs, problems and tasks of any period, and let `reports.export` holders download them as CSV, Excel or PDF, by adding the report contracts, i18n strings and `@edildy/api-client` methods, the two permissions with their backfill, the `occurrences (tenant_id, local_date)` index, the `reports` NestJS module with its six endpoints and the exporter of the sub-project 7 spec §3–§5 and §9.
 
 **Architecture:**
 - **One rule set, two implementations.** `packages/contracts/src/report-logic.ts` defines the buckets (`classifyRun`), completion % and average score; `apps/api/src/reports/report-queries.ts` implements the same rules as SQL `count(*) filter (…)` columns over a `runs` CTE. Percentages are always computed in TypeScript from the SQL counts and score sums (`completionPercent`, `roundOne`), and a cross-check test compares the SQL counts with `tallyRuns` over the same rows.
@@ -10,38 +10,38 @@
 - **Exports** build a neutral `ReportDocument` (titled sections of typed columns) from the same query results, then write it with `toCsv` (hand-written, BOM, RFC 4180, formula neutralising), `toXlsx` (`write-excel-file/node`, one sheet per section, typed cells) or `toPdf` (`pdfmake` with embedded Noto Sans). A count query runs before any rows are read (10,000-row cap), and each export writes an `reports.exported` audit entry in the same transaction.
 - **Run detail** reuses `GET /occurrences/:id`, `GET /executions/:id` and `GET /media/:id/url`; their permission gate is widened to `assignments.view` **or** `reports.view` (same data scope), see Spec decision 1.
 
-**Tech Stack:** Node 24, TypeScript 7, NestJS 12, nestjs-zod 5, Zod 4, Drizzle ORM 0.45 + drizzle-kit, PostgreSQL 18, Vitest 5, Testcontainers (Postgres), supertest. **New packages (versions checked with `npm view` on 2026-10-14):** `pdfmake@^0.3.11` and `write-excel-file@^4.1.1` (API dependencies; both ship CommonJS for the API's swc CJS build: `pdfmake`'s `main` is `js/index.js`, `write-excel-file/node` has a `require` export), `@types/pdfmake@^0.3.3`, and the test-only `read-excel-file@^9.3.12`, `unpdf@^1.8.1` (PDF text extraction over pdf.js) and `csv-parse@^7.0.3`. The API also gains the workspace dependency `@taskop/i18n` (ESM, loaded through Node 24's `require(esm)` exactly as `@taskop/contracts` already is). Noto Sans Regular and Bold TTFs are committed files, not a package (Task 14).
+**Tech Stack:** Node 24, TypeScript 7, NestJS 12, nestjs-zod 5, Zod 4, Drizzle ORM 0.45 + drizzle-kit, PostgreSQL 18, Vitest 5, Testcontainers (Postgres), supertest. **New packages (versions checked with `npm view` on 2026-10-14):** `pdfmake@^0.3.11` and `write-excel-file@^4.1.1` (API dependencies; both ship CommonJS for the API's swc CJS build: `pdfmake`'s `main` is `js/index.js`, `write-excel-file/node` has a `require` export), `@types/pdfmake@^0.3.3`, and the test-only `read-excel-file@^9.3.12`, `unpdf@^1.8.1` (PDF text extraction over pdf.js) and `csv-parse@^7.0.3`. The API also gains the workspace dependency `@edildy/i18n` (ESM, loaded through Node 24's `require(esm)` exactly as `@edildy/contracts` already is). Noto Sans Regular and Bold TTFs are committed files, not a package (Task 14).
 
 **Spec:** `docs/superpowers/specs/2026-10-14-reports-design.md`
 
 **This plan is Part 1 of 3:**
 - Part 1 (this file): contracts, i18n strings, the API client, the permission migration and index, the `reports` module (six endpoints and the exports), the run-detail permission widening, API tests, the performance seed and timing scripts.
 - Part 2 (`apps/mobile`): `docs/superpowers/plans/2026-10-14-reports-2-mobile.md`. Part 3 (`apps/web`): `docs/superpowers/plans/2026-10-14-reports-3-web.md`. Both are written against the section **Interfaces for Parts 2 and 3** below and do not depend on each other.
-- **Tasks 1–5 unblock Parts 2 and 3:** they need nothing from the API and give both apps every type, zod schema, pure function (`report-logic.ts`, including the period presets), i18n key, permission key, error code and `@taskop/api-client` method (including the export download). Tasks 6 (permission migration) and 7 (run-detail access) must be merged before Parts 2 and 3 run their integration or end-to-end tests against a real API, and Tasks 8–15 before any screen shows real numbers.
+- **Tasks 1–5 unblock Parts 2 and 3:** they need nothing from the API and give both apps every type, zod schema, pure function (`report-logic.ts`, including the period presets), i18n key, permission key, error code and `@edildy/api-client` method (including the export download). Tasks 6 (permission migration) and 7 (run-detail access) must be merged before Parts 2 and 3 run their integration or end-to-end tests against a real API, and Tasks 8–15 before any screen shows real numbers.
 - Unlike SP6, no existing contract field becomes required, so no app fixture breaks; the apps' typechecks stay green after every task of this part.
 
 **Deployment plan note (not a task).** Production may set `REPORTS_STATEMENT_TIMEOUT_MS` (optional, default `15000`). The API image needs nothing else: `pnpm build` copies the PDF fonts into `dist/reports/pdf/fonts` (Task 14). Whoever merges `docs/superpowers/specs/2026-10-09-deployment-design.md` adds the variable to the API's environment list.
 
 ## Global Constraints
 
-- The product name is **Taskop**. Packages are `@taskop/*`. Azerbaijani (`az`) is the only locale; every exported heading, status label and PDF header comes from `@taskop/i18n`.
+- The product name is **Edildy**. Packages are `@edildy/*`. Azerbaijani (`az`) is the only locale; every exported heading, status label and PDF header comes from `@edildy/i18n`.
 - **Range:** `from` and `to` are tenant-local `YYYY-MM-DD` dates, both inclusive. `to − from ≤ 365` days (a range covers at most **366** days), otherwise **`400 REPORT_RANGE_TOO_LONG`**. `from > to` is `400 VALIDATION_FAILED` with `fields.to = 'reports.issues.toBeforeFrom'`.
 - **Pages:** `/reports/runs`, `/reports/problems` and `/reports/tasks` return pages of **50**. Keyset cursors use the same format as `/problems`: `cursor` is the last row's id, compared as a `(sort key, id) < (select … where id = cursor)` tuple.
 - **Exports:** at most **10,000** rows per list section, checked by a count query before any file is built; above that **`422 REPORT_TOO_LARGE`** with `{ rows, limit }` in the error body.
 - **Timeout:** every report request runs `SET LOCAL statement_timeout` = **15 s** (`REPORTS_STATEMENT_TIMEOUT_MS`, default `15000`); SQLSTATE `57014` → **`503 REPORT_TIMEOUT`**.
-- **Error codes** (new, in `@taskop/contracts` and `az.errors`): `REPORT_RANGE_TOO_LONG` (400), `REPORT_TOO_LARGE` (422), `REPORT_TIMEOUT` (503). Everything else uses the existing `VALIDATION_FAILED` (400), `FORBIDDEN` (403), `NOT_FOUND` (404).
+- **Error codes** (new, in `@edildy/contracts` and `az.errors`): `REPORT_RANGE_TOO_LONG` (400), `REPORT_TOO_LARGE` (422), `REPORT_TIMEOUT` (503). Everything else uses the existing `VALIDATION_FAILED` (400), `FORBIDDEN` (403), `NOT_FOUND` (404).
 - **Permissions:** `reports.view` (dashboard, Reports page, Team tab, the six GET endpoints) and `reports.export` (file downloads; also requires `reports.view`), in a new `reports` permission group, last. `SYSTEM_ROLE_DEFAULTS`: Manager and Auditor get both; Owner and Admin get both through `ALL_PERMISSIONS`; Worker gets neither. Migration `0014_reports_permissions.sql` backfills both keys for every existing `admin`, `manager` and `auditor` role and bumps their `version`.
 - **Scope:** runs and problems through `SchedulingScope.occurrences(principal)`, tasks through `TaskScope.readable(principal)`; both fail closed on an unknown scope. Filters are ANDed with the scope: `siteId` matches the site **and its subtree** (`sites.path <@ :path`), `userId` follows spec §3.3, `checklistId` is exact. A filter outside the viewer's scope returns empty results, never 403.
 - **Metrics (spec §3.1):** Planned `status <> 'cancelled'`; Due = Planned and (`due_at <= now` or Completed); Completed `completed | audit_pending | audited`; In progress `started | in_progress`; Pending, Overdue, Partial, Missed by status; With problems / critical from `execution_problems`. Completion % = Completed ÷ Due × 100, one decimal, `null` when Due = 0. Average score = mean of `executions.score->>'percent'` over the period's non-rejected executions where it is not null. Runs belong to a period by `occurrences.local_date`; problems by their occurrence's `local_date`; tasks by `coalesce(due_at, created_at)` converted to the tenant-local day.
 - **Endpoints (all `GET`):** `/reports/summary`, `/reports/sites`, `/reports/employees`, `/reports/runs`, `/reports/problems`, `/reports/tasks`, and `/reports/:kind/export?format=csv|xlsx|pdf` with `kind` ∈ `summary | sites | employees | runs | problems | tasks | full` (`full` takes `xlsx | pdf` only).
-- **File names:** `Content-Disposition: attachment; filename="taskop-<kind>-<from>_<to>.<ext>"`; `Content-Type` `text/csv; charset=utf-8`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or `application/pdf`.
+- **File names:** `Content-Disposition: attachment; filename="edildy-<kind>-<from>_<to>.<ext>"`; `Content-Type` `text/csv; charset=utf-8`, `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or `application/pdf`.
 - **CSV:** UTF-8 with a BOM, comma-separated, RFC 4180 quoting, CRLF line ends; text cells starting with `=`, `+`, `-` or `@` (and tab or CR, Spec decision 19) are prefixed with `'`.
 - **Excel:** numbers and dates are typed cells (`type: Number` / `type: Date` with a format), one sheet per section for the full report. **PDF:** Noto Sans Regular and Bold embedded, header with tenant name, period, filters and generation time.
 - **Time:** timestamps in exports are on the tenant's wall clock; run exports include the device completion time and the server receipt time (FR-10.14). "Now" for Due is the injected `Clock` (one reading per request), so tests move time with `FakeClock`.
 - **Audit:** each successful export writes `reports.exported` (entity type `report`, entity id `null`, `after: { kind, format, filters, rows }`).
 - **Migrations:** `0013_reports.sql` (generated: `occurrences_local_date_idx` on `occurrences (tenant_id, local_date)`) and `0014_reports_permissions.sql` (custom: the backfill). No new tables, no new executions index (Spec decision 24).
 - **Performance target:** every report endpoint answers in **under 500 ms** at a **366-day** range on the volume seed (50 sites, 200 users, one year, about 70k occurrences), for an `all`-scope and a `site_subtree` principal. Indexes beyond `occurrences_local_date_idx` are added only for an endpoint that misses it.
-- **Dependencies, exactly:** API `pdfmake ^0.3.11`, `write-excel-file ^4.1.1`, `@taskop/i18n workspace:*`; API dev `@types/pdfmake ^0.3.3`, `read-excel-file ^9.3.12`, `unpdf ^1.8.1`, `csv-parse ^7.0.3`. Nothing else.
+- **Dependencies, exactly:** API `pdfmake ^0.3.11`, `write-excel-file ^4.1.1`, `@edildy/i18n workspace:*`; API dev `@types/pdfmake ^0.3.3`, `read-excel-file ^9.3.12`, `unpdf ^1.8.1`, `csv-parse ^7.0.3`. Nothing else.
 
 ### Spec decisions this plan makes (ambiguities and gaps, resolved)
 
@@ -53,7 +53,7 @@
 6. **Two more run buckets, `completed` and `in_progress`,** so the Completed and In progress tiles (web) and chips (mobile) can link to a list. `RUN_BUCKETS = ['overdue', 'partial', 'missed', 'problems', 'completed', 'in_progress', 'all']`.
 7. **Runs are ordered `due_at desc, id desc`** (a keyset tuple needs one direction); the cursor is the last occurrence id.
 8. **Run rows add `late` and `clockSuspect`** (spec §8: "the flag is visible in the run list and in exports"). Fields the spec marks optional (`executionId?`, `executor?`, times, `score?`) are always present and `null` when absent.
-9. **The Unassigned row** has `userId: null`, `name: "Təyin edilməyib"` (server-side from `@taskop/i18n`) and `active: true`, and comes last; the other employee rows are ordered by name. Sites come in tree order (`sites.path`) with `path` = ancestor names, root first.
+9. **The Unassigned row** has `userId: null`, `name: "Təyin edilməyib"` (server-side from `@edildy/i18n`) and `active: true`, and comes last; the other employee rows are ordered by name. Sites come in tree order (`sites.path`) with `path` = ancestor names, root first.
 10. **Filters on problems and tasks:** problems' `userId` = the executor (only executed runs have problems); tasks' `userId` = `assignee_user_id` (an unaccepted team task matches no user); tasks' `checklistId` = the checklist of the task's problem (ad-hoc tasks never match); tasks' `siteId` = the task's site in the subtree (tasks without a site never match).
 11. **Task rows** are ordered `coalesce(due_at, created_at) desc, id desc` (the period key) with the same cursor format; `overdue` = `overdue_at is not null` (kept after completion, as `TaskSummary.overdueAt`); "Completed on time / late" count only `completed` tasks.
 12. **Problem and task `counts` come with every page**, computed over the whole filtered set (the cursor does not affect them).
@@ -67,7 +67,7 @@
 20. **Audit entry:** `{ action: 'reports.exported', entityType: 'report', entityId: null, after: { kind, format, filters: { from, to, siteId, userId, checklistId, bucket, severity }, rows } }` (absent filters are `null`; `rows` = data rows written). A refused export (403, 422, 503) writes nothing: the transaction rolls back.
 21. **Export time formats:** CSV and PDF print `DD.MM.YYYY HH:mm` on the tenant's wall clock and `DD.MM.YYYY` for dates; XLSX `Date` cells hold the tenant's wall-clock reading (Excel dates have no zone) with formats `dd.mm.yyyy hh:mm` / `dd.mm.yyyy`. Run exports carry the device start, device completion and server receipt times.
 22. **Fonts** come from the npm tarball `@expo-google-fonts/noto-sans@0.4.2` (Google Fonts' static Noto Sans 400 and 700, SIL OFL 1.1; checked to contain ə, Ə, ğ, ı, İ, ş, ç, ö, ü), renamed to `NotoSans-Regular.ttf` / `NotoSans-Bold.ttf`, with its `LICENSE_FONT` as `OFL.txt`, verified by SHA-256. The API's `build` script copies them into `dist`.
-23. **The API depends on `@taskop/i18n`** for export labels and the Unassigned row name.
+23. **The API depends on `@edildy/i18n`** for export labels and the Unassigned row name.
 24. **Indexes (§5.7):** only `occurrences (tenant_id, local_date)` is new. Executions are already covered twice: `executions_occurrence_idx (tenant_id, occurrence_id)` and the partial unique `executions_claim_uq (occurrence_id) where state <> 'rejected'`, which is exactly the reports' join condition.
 25. **Existing Admin roles are backfilled too:** they were seeded with the permission list of their time, so without the backfill they would lack both keys.
 26. **Problem flags are one aggregated join** per request (problems of the period's occurrences grouped by occurrence), not an `exists` per row.
@@ -147,9 +147,9 @@ apps/api/
 ---
 ## Interfaces for Parts 2 and 3
 
-Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@taskop/api-client` once **Tasks 1–5** of Part 1 are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; dates are `YYYY-MM-DD` in the tenant's timezone.
+Everything below is exported from `@edildy/contracts`, `@edildy/i18n` or `@edildy/api-client` once **Tasks 1–5** of Part 1 are merged. Parts 2 and 3 import these names exactly. All instants are ISO-8601 UTC strings; dates are `YYYY-MM-DD` in the tenant's timezone.
 
-### `@taskop/contracts`
+### `@edildy/contracts`
 
 **Metric rules** (`report-logic.ts`, Part 1 Task 1):
 - `RUN_COUNT_KEYS = ['planned', 'due', 'completed', 'inProgress', 'pending', 'overdue', 'partial', 'missed', 'withProblems', 'withCritical'] as const`, `type RunCountKey`, `type RunCounts = Record<RunCountKey, number>`, `type RunFlags = Record<RunCountKey, boolean>`
@@ -191,14 +191,14 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
 - `reportTaskCountsSchema` / `type ReportTaskCounts = { byStatus: Record<TaskStatus, number> /* in TASK_STATUSES order */; overdueOpen: number; completedOnTime: number; completedLate: number }`
 - `reportTasksSchema` / `type ReportTasks = { counts: ReportTaskCounts; items: ReportTask[]; nextCursor: string | null }`
 - `REPORT_CONTENT_TYPES: Record<ReportFormat, string>` = `{ csv: 'text/csv; charset=utf-8', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', pdf: 'application/pdf' }`
-- `reportFileName(kind: ReportExportKind, from: LocalDate, to: LocalDate, format: ReportFormat): string` — `taskop-<kind>-<from>_<to>.<format>`
+- `reportFileName(kind: ReportExportKind, from: LocalDate, to: LocalDate, format: ReportFormat): string` — `edildy-<kind>-<from>_<to>.<format>`
 
 **Changes to existing contracts** (Part 1 Task 3):
 - `permissions.ts`: `PERMISSION_GROUPS` gains `{ group: 'reports', keys: ['reports.view', 'reports.export'] }` (last). `SYSTEM_ROLE_DEFAULTS.manager.permissions` and `.auditor.permissions` gain both; owner and admin get both through `ALL_PERMISSIONS`; worker none.
 - `errors.ts`: `ErrorCode.REPORT_RANGE_TOO_LONG` (400), `REPORT_TOO_LARGE` (422), `REPORT_TIMEOUT` (503); `errorBodySchema.error` gains `rows?: number` and `limit?: number` (set on `REPORT_TOO_LARGE`).
 - `audit.ts`: `REPORT_AUDIT_ACTIONS = ['reports.exported'] as const`, `type ReportAuditAction`; entity type `report`, entity id `null`.
 
-### `@taskop/i18n` (Part 1 Task 4)
+### `@edildy/i18n` (Part 1 Task 4)
 
 - `az.reports` (new namespace):
   - `title` ("Hesabatlar"), `dashboard` ("İdarə paneli"), `trend` ("Gündəlik icra"), `empty` ("Bu dövr üçün məlumat yoxdur."), `inactive` ("Deaktiv"), `noValue` ("—"), `yes` ("Bəli"), `no` ("Xeyr"), `notCompleted` ("Tamamlanmayıb", the phone's "due − completed" tile)
@@ -221,9 +221,9 @@ Everything below is exported from `@taskop/contracts`, `@taskop/i18n` or `@tasko
 - Existing labels reused as they are: `az.scheduling.statuses.<OccurrenceStatus>`, `az.tasks.statuses`, `az.tasks.priorities`, `az.tasks.resolutions`, `az.executions.severities`, `az.executions.problemSources`, `az.executions.flags.{ late, clockSuspect }`.
 - Part 2 adds phone UI strings to `az.mobile`; Part 3 adds web-only UI strings to `az.reports` (new keys only; it never renames these).
 
-### `@taskop/api-client` (Part 1 Task 5)
+### `@edildy/api-client` (Part 1 Task 5)
 
-`createTaskopApi(c)` spreads `createReportsApi(c)`, also exported with `type ReportsApi`:
+`createEdildyApi(c)` spreads `createReportsApi(c)`, also exported with `type ReportsApi`:
 
 | Method | HTTP | Returns |
 |---|---|---|
@@ -246,7 +246,7 @@ Also exported from `client.ts`: `ApiClient.download(path: string, o?: { query?: 
 - **Ordering:** sites in tree order with `path` = ancestor names; employees by name with the Unassigned row (`userId: null`) last; runs `dueAt` newest first; problems `createdAt` newest first (as `/problems`); tasks by due time (or creation time when undue) newest first. Each paged response has `nextCursor` (`null` on the last page); pass it back as `cursor` with the same filters. Problem and task `counts` are the same on every page.
 - **Sites table** lists only sites with at least one planned run in the period; inactive sites and users keep their history and come with `active: false`.
 - **Run detail:** `GET /occurrences/:id` (the `/schedule` drawer and the phone's unexecuted-run header with `assignees`), `GET /executions/:id` (answers, problems) and `GET /media/:id/url` accept `assignments.view` **or** `reports.view`, inside the viewer's scope (Spec decision 1). Use `ReportRun.executionId` for the execution and `ReportRun.occurrenceId` for the occurrence.
-- **Downloads:** same-origin `GET` with the session's bearer token (no CORS needed); the response is the whole file with `Content-Disposition: attachment; filename="taskop-<kind>-<from>_<to>.<ext>"`. A file is built synchronously; large ones (thousands of rows, PDF) can take a few seconds, so show the spinner.
+- **Downloads:** same-origin `GET` with the session's bearer token (no CORS needed); the response is the whole file with `Content-Disposition: attachment; filename="edildy-<kind>-<from>_<to>.<ext>"`. A file is built synchronously; large ones (thousands of rows, PDF) can take a few seconds, so show the spinner.
 
 ---
 
@@ -435,7 +435,7 @@ describe('periods', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- report-logic`
+Run: `pnpm --filter @edildy/contracts test -- report-logic`
 Expected: FAIL: `classifyRun` (and every other import from `./report-logic`) is not exported from `./index.js`.
 
 - [ ] **Step 3: Implement**
@@ -588,7 +588,7 @@ export * from './report-logic.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS. (If TypeScript reports "not all code paths return a value" for `resolvePeriod`, the switch is not seen as exhaustive: add `default: { const unhandled: never = preset; throw new Error('Unknown preset: ' + String(unhandled)); }` as the last case.)
 
 - [ ] **Step 5: Commit**
@@ -656,9 +656,9 @@ describe('report catalogue', () => {
     expect(REPORT_ISSUE_CODES).toEqual(['reports.issues.toBeforeFrom', 'reports.issues.fullNotCsv']);
   });
 
-  it('names files taskop-<kind>-<from>_<to>.<ext> and types them', () => {
-    expect(reportFileName('runs', '2026-11-01', '2026-11-30', 'csv')).toBe('taskop-runs-2026-11-01_2026-11-30.csv');
-    expect(reportFileName('full', '2026-11-01', '2026-11-30', 'xlsx')).toBe('taskop-full-2026-11-01_2026-11-30.xlsx');
+  it('names files edildy-<kind>-<from>_<to>.<ext> and types them', () => {
+    expect(reportFileName('runs', '2026-11-01', '2026-11-30', 'csv')).toBe('edildy-runs-2026-11-01_2026-11-30.csv');
+    expect(reportFileName('full', '2026-11-01', '2026-11-30', 'xlsx')).toBe('edildy-full-2026-11-01_2026-11-30.xlsx');
     expect(REPORT_CONTENT_TYPES).toEqual({
       csv: 'text/csv; charset=utf-8',
       xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -746,7 +746,7 @@ describe('report responses', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts test -- reports`
+Run: `pnpm --filter @edildy/contracts test -- reports`
 Expected: FAIL: `REPORT_KINDS` and the schemas are not exported.
 
 - [ ] **Step 3: Implement**
@@ -946,8 +946,8 @@ export const REPORT_CONTENT_TYPES: Record<ReportFormat, string> = {
   pdf: 'application/pdf',
 };
 
-/** The download's name (spec §5.4): `taskop-<kind>-<from>_<to>.<ext>`. */
-export const reportFileName = (kind: ReportExportKind, from: string, to: string, format: ReportFormat): string => `taskop-${kind}-${from}_${to}.${format}`;
+/** The download's name (spec §5.4): `edildy-<kind>-<from>_<to>.<ext>`. */
+export const reportFileName = (kind: ReportExportKind, from: string, to: string, format: ReportFormat): string => `edildy-${kind}-${from}_${to}.${format}`;
 ```
 
 Append to `packages/contracts/src/index.ts`:
@@ -958,7 +958,7 @@ export * from './reports.js';
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts typecheck && pnpm --filter @taskop/contracts build`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts typecheck && pnpm --filter @edildy/contracts build`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1022,7 +1022,7 @@ Append to `apps/api/src/common/error.filter.test.ts`, inside `describe('toAppErr
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/contracts test -- reports && pnpm --filter @taskop/api test -- error.filter`
+Run: `pnpm --filter @edildy/contracts test -- reports && pnpm --filter @edildy/api test -- error.filter`
 Expected: FAIL: `REPORT_AUDIT_ACTIONS` is undefined and the last permission group is `notifications`; the error filter maps the issue to `errors.validation.invalid`.
 
 - [ ] **Step 3: Change the contracts**
@@ -1113,7 +1113,7 @@ In `apps/api/test/roles.test.ts`, the expected manager permissions become:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- error.filter roles auth-signup`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- error.filter roles auth-signup`
 Expected: PASS. `auth-signup` sees every permission for the owner (it compares with `ALL_PERMISSIONS`); new tenants' Manager and Auditor roles get the keys from `SYSTEM_ROLE_DEFAULTS` at signup. Do not run the i18n tests yet: `has a message for every API error code` and `labels every permission group and key` fail until Task 4.
 
 - [ ] **Step 6: Commit**
@@ -1133,11 +1133,11 @@ git commit -m "feat(contracts): add report permissions, error codes and the expo
 
 **Interfaces:**
 - Consumes: `RUN_COUNT_KEYS`, `RUN_BUCKETS`, `PERIOD_PRESETS`, `REPORT_KINDS`, `REPORT_EXPORT_KINDS`, `REPORT_ISSUE_CODES` (Tasks 1–2); the new error codes and the `reports` permission group (Task 3).
-- Produces: `az.reports` and the keys listed under `@taskop/i18n` in *Interfaces for Parts 2 and 3*. The API's exporter (Tasks 9, 13–15) reads `az.reports.columns`, `counts`, `measures`, `buckets`, `sheets`, `titles`, `pdf`, `filters`, `employees.unassigned`, `yes` / `no`.
+- Produces: `az.reports` and the keys listed under `@edildy/i18n` in *Interfaces for Parts 2 and 3*. The API's exporter (Tasks 9, 13–15) reads `az.reports.columns`, `counts`, `measures`, `buckets`, `sheets`, `titles`, `pdf`, `filters`, `employees.unassigned`, `yes` / `no`.
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `packages/i18n/src/i18n.test.ts`. Extend the `@taskop/contracts` import with `PERIOD_PRESETS`, `REPORT_EXPORT_KINDS`, `REPORT_ISSUE_CODES`, `REPORT_KINDS`, `RUN_BUCKETS` and `RUN_COUNT_KEYS`:
+Append to `packages/i18n/src/i18n.test.ts`. Extend the `@edildy/contracts` import with `PERIOD_PRESETS`, `REPORT_EXPORT_KINDS`, `REPORT_ISSUE_CODES`, `REPORT_KINDS`, `RUN_BUCKETS` and `RUN_COUNT_KEYS`:
 
 ```ts
 describe('report translations', () => {
@@ -1176,7 +1176,7 @@ describe('report translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.reports` is undefined, the error-code test fails for `REPORT_RANGE_TOO_LONG`, and the permission-label test fails for the `reports` group.
 
 - [ ] **Step 3: Implement**
@@ -1370,7 +1370,7 @@ export const az = { common, errors, executions, audit, auth, checklists, mobile,
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n typecheck && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n typecheck && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS. The apps only gain keys, so their typechecks stay green.
 
 - [ ] **Step 5: Commit**
@@ -1389,7 +1389,7 @@ git commit -m "feat(i18n): add Azerbaijani strings for reports, report errors an
 
 **Interfaces:**
 - Consumes: the schemas and types of Tasks 1–3 (`reportSummarySchema`, `siteReportRowSchema`, `employeeReportRowSchema`, `reportRunPageSchema`, `reportProblemsSchema`, `reportTasksSchema`, `reportFileName`, the `*Query` input types, `ReportExportKind`).
-- Produces: `ApiClient.download`, `DownloadedFile`, `parseContentDispositionFilename`, `ApiError.rows` / `.limit`, `createReportsApi(c: ApiClient)`, `type ReportsApi`, `interface ReportFile`, spread into `createTaskopApi` (method table under **`@taskop/api-client`** in *Interfaces for Parts 2 and 3*).
+- Produces: `ApiClient.download`, `DownloadedFile`, `parseContentDispositionFilename`, `ApiError.rows` / `.limit`, `createReportsApi(c: ApiClient)`, `type ReportsApi`, `interface ReportFile`, spread into `createEdildyApi` (method table under **`@edildy/api-client`** in *Interfaces for Parts 2 and 3*).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1414,7 +1414,7 @@ describe('report endpoints', () => {
   const csvFile = () =>
     new Response(new Uint8Array([0xef, 0xbb, 0xbf, 0x61]), {
       status: 200,
-      headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="taskop-runs-2026-11-02_2026-11-04.csv"' },
+      headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="edildy-runs-2026-11-02_2026-11-04.csv"' },
     });
 
   it('builds every path and query string and parses each response', async () => {
@@ -1427,7 +1427,7 @@ describe('report endpoints', () => {
       if (url.includes('/reports/problems')) return json(200, problems);
       return json(200, tasks);
     });
-    const r = createTaskopApi(api).reports;
+    const r = createEdildyApi(api).reports;
     expect(await r.summary({ ...range, siteId: id })).toEqual(summary);
     expect(await r.sites(range)).toEqual([]);
     expect(await r.employees({ ...range, userId: id })).toEqual([]);
@@ -1450,15 +1450,15 @@ describe('report endpoints', () => {
       seen.push([url, (init.headers as Record<string, string>).Accept!]);
       return csvFile();
     });
-    const file = await createTaskopApi(api).reports.export('runs', { ...range, format: 'csv', bucket: 'missed' });
-    expect(file.filename).toBe('taskop-runs-2026-11-02_2026-11-04.csv');
+    const file = await createEdildyApi(api).reports.export('runs', { ...range, format: 'csv', bucket: 'missed' });
+    expect(file.filename).toBe('edildy-runs-2026-11-02_2026-11-04.csv');
     expect(new Uint8Array(await file.blob.arrayBuffer())).toEqual(new Uint8Array([0xef, 0xbb, 0xbf, 0x61]));
     expect(seen).toEqual([['/api/v1/reports/runs/export?from=2026-11-02&to=2026-11-04&format=csv&bucket=missed', '*/*']]);
   });
 
   it('falls back to the contract file name without Content-Disposition', async () => {
     const { api } = await authed(() => new Response('x', { status: 200 }));
-    expect((await createTaskopApi(api).reports.export('full', { ...range, format: 'pdf' })).filename).toBe('taskop-full-2026-11-02_2026-11-04.pdf');
+    expect((await createEdildyApi(api).reports.export('full', { ...range, format: 'pdf' })).filename).toBe('edildy-full-2026-11-02_2026-11-04.pdf');
   });
 
   it('refreshes and retries a download on UNAUTHENTICATED', async () => {
@@ -1466,14 +1466,14 @@ describe('report endpoints', () => {
       if (url.endsWith('/auth/refresh')) return json(200, loginResult('fresh'));
       return (init.headers as Record<string, string>).Authorization === 'Bearer fresh' ? csvFile() : err(401, 'UNAUTHENTICATED');
     });
-    expect((await api.download('/reports/runs/export', { query: { ...range, format: 'csv' } })).filename).toBe('taskop-runs-2026-11-02_2026-11-04.csv');
+    expect((await api.download('/reports/runs/export', { query: { ...range, format: 'csv' } })).filename).toBe('edildy-runs-2026-11-02_2026-11-04.csv');
   });
 
   it('exposes rows and limit on REPORT_TOO_LARGE', async () => {
     const { api } = await authed(() =>
       json(422, { error: { code: 'REPORT_TOO_LARGE', messageKey: 'errors.REPORT_TOO_LARGE', fields: null, retryAfterSeconds: null, requestId: 'r1', rows: 12000, limit: 10000 } }),
     );
-    await expect(createTaskopApi(api).reports.export('runs', { ...range, format: 'xlsx' })).rejects.toMatchObject({ status: 422, code: 'REPORT_TOO_LARGE', rows: 12000, limit: 10000 });
+    await expect(createEdildyApi(api).reports.export('runs', { ...range, format: 'xlsx' })).rejects.toMatchObject({ status: 422, code: 'REPORT_TOO_LARGE', rows: 12000, limit: 10000 });
   });
 
   it('reads RFC 6266 file names', () => {
@@ -1488,8 +1488,8 @@ describe('report endpoints', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api-client test`
-Expected: FAIL: `parseContentDispositionFilename` is not exported and `createTaskopApi(api).reports` is undefined.
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api-client test`
+Expected: FAIL: `parseContentDispositionFilename` is not exported and `createEdildyApi(api).reports` is undefined.
 
 - [ ] **Step 3: Implement the client changes**
 
@@ -1586,7 +1586,7 @@ export function parseContentDispositionFilename(header: string | null): string |
 
 - [ ] **Step 4: Add the endpoints**
 
-In `packages/api-client/src/endpoints.ts`, add these to the `@taskop/contracts` import:
+In `packages/api-client/src/endpoints.ts`, add these to the `@edildy/contracts` import:
 
 ```ts
   employeeReportRowSchema,
@@ -1604,7 +1604,7 @@ In `packages/api-client/src/endpoints.ts`, add these to the `@taskop/contracts` 
   siteReportRowSchema,
 ```
 
-Add `...createReportsApi(c),` as the last line of the object returned by `createTaskopApi` (after `...createNotificationsApi(c),`), and append:
+Add `...createReportsApi(c),` as the last line of the object returned by `createEdildyApi` (after `...createNotificationsApi(c),`), and append:
 
 ```ts
 /** A downloaded report file (SP7 spec §5.4). */
@@ -1623,7 +1623,7 @@ export function createReportsApi(c: ApiClient) {
       runs: (query: ReportRunsQuery) => c.request('GET', '/reports/runs', { query: q(query), schema: reportRunPageSchema }),
       problems: (query: ReportProblemsQuery) => c.request('GET', '/reports/problems', { query: q(query), schema: reportProblemsSchema }),
       tasks: (query: ReportTasksQuery) => c.request('GET', '/reports/tasks', { query: q(query), schema: reportTasksSchema }),
-      /** The file and its name: Content-Disposition, else `taskop-<kind>-<from>_<to>.<ext>`. */
+      /** The file and its name: Content-Disposition, else `edildy-<kind>-<from>_<to>.<ext>`. */
       export: async (kind: ReportExportKind, query: ReportExportQuery): Promise<ReportFile> => {
         const file = await c.download(`/reports/${kind}/export`, { query: q(query) });
         return { blob: file.blob, filename: file.filename ?? reportFileName(kind, query.from, query.to, query.format) };
@@ -1636,7 +1636,7 @@ export type ReportsApi = ReturnType<typeof createReportsApi>;
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client typecheck && pnpm --filter @taskop/api-client build && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client typecheck && pnpm --filter @edildy/api-client build && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS. Every existing client test still passes: `request` behaves exactly as before (the refresh moved into `sendAuthed`).
 
 - [ ] **Step 6: Commit**
@@ -1720,7 +1720,7 @@ describe('report index and permissions', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- reports-db`
+Run: `pnpm --filter @edildy/api test -- reports-db`
 Expected: FAIL: `occurrences_local_date_idx` is missing and `0014_reports_permissions.sql` does not exist (ENOENT).
 
 - [ ] **Step 3: Add the index to the Drizzle schema**
@@ -1735,8 +1735,8 @@ In `apps/api/src/db/schema.ts`, in the `occurrences` table's index list, after `
 - [ ] **Step 4: Generate the migrations and write the backfill**
 
 ```bash
-pnpm --filter @taskop/api exec drizzle-kit generate --name reports
-pnpm --filter @taskop/api exec drizzle-kit generate --custom --name reports_permissions
+pnpm --filter @edildy/api exec drizzle-kit generate --name reports
+pnpm --filter @edildy/api exec drizzle-kit generate --custom --name reports_permissions
 ```
 
 Check the output:
@@ -1765,7 +1765,7 @@ SET LOCAL row_security = on;
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- reports-db notifications-db tasks-db roles`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- reports-db notifications-db tasks-db roles`
 Expected: PASS. The global test setup applies the new migrations to a fresh container.
 
 - [ ] **Step 6: Commit**
@@ -1874,7 +1874,7 @@ describe('run detail for report viewers (SP7 spec §5.6)', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- permission.guard reports-run-access`
+Run: `pnpm --filter @edildy/api test -- permission.guard reports-run-access`
 Expected: the guard test FAILS on the last expectation (the old guard reads `.length` of the `{ any }` object as `undefined` and lets everyone through); `reports-run-access`: the first two tests PASS (the scope already matches), `lets a reports.view holder…` FAILS with `[404, 403]`, the last one PASSES.
 
 - [ ] **Step 3: Implement**
@@ -1894,7 +1894,7 @@ export const RequireAnyPermission = (...keys: PermissionKey[]) => SetMetadata(RE
 ```ts
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { type PermissionRequirement, REQUIRED_PERMISSIONS_KEY } from '../common/decorators';
 import type { AppRequest } from '../common/request';
@@ -1964,7 +1964,7 @@ In `apps/api/src/executions/executions.controller.ts`, the comment above `get` b
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- permission.guard reports-run-access executions-scope executions-read occurrences executions-media`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- permission.guard reports-run-access executions-scope executions-read occurrences executions-media`
 Expected: PASS. `executions-scope`'s `needs assignments.view to read someone else's execution…` still passes: its role has neither key.
 
 - [ ] **Step 5: Commit**
@@ -2026,7 +2026,7 @@ Whole-tenant numbers for the period (used in Tasks 8–15): planned 15, due 13, 
 `apps/api/test/report-fixtures.ts`:
 
 ```ts
-import { emptyRunCounts, type OccurrenceStatus, type RunCounts, type TaskStatus } from '@taskop/contracts';
+import { emptyRunCounts, type OccurrenceStatus, type RunCounts, type TaskStatus } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
@@ -2309,7 +2309,7 @@ export async function reportWorld(t: TestApp): Promise<ReportWorld> {
 `apps/api/test/reports-summary.test.ts`:
 
 ```ts
-import { completionPercent, OCCURRENCE_STATUSES, type OccurrenceStatus, type ReportSummary, tallyRuns } from '@taskop/contracts';
+import { completionPercent, OCCURRENCE_STATUSES, type OccurrenceStatus, type ReportSummary, tallyRuns } from '@edildy/contracts';
 import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DbService } from '../src/db/db.service';
@@ -2474,7 +2474,7 @@ Append to `apps/api/src/config/config.test.ts`, inside `describe('loadConfig', �
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- reports-summary config`
+Run: `pnpm --filter @edildy/api test -- reports-summary config`
 Expected: FAIL: `../src/reports/report-queries` does not exist (the summary suite cannot load), and `REPORTS_STATEMENT_TIMEOUT_MS` is `undefined`.
 
 - [ ] **Step 4: Add the config**
@@ -2499,7 +2499,7 @@ Append to `apps/api/.env.example`:
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { type ReportFilters, reportRangeTooLong } from '@taskop/contracts';
+import { type ReportFilters, reportRangeTooLong } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';
@@ -2551,7 +2551,7 @@ export class ReportFilterResolver {
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { COMPLETED_STATUSES, completionPercent, IN_PROGRESS_STATUSES, periodDays, type ReportSummary, roundOne, type RunCounts } from '@taskop/contracts';
+import { COMPLETED_STATUSES, completionPercent, IN_PROGRESS_STATUSES, periodDays, type ReportSummary, roundOne, type RunCounts } from '@edildy/contracts';
 import { and, eq, type SQL, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { DbService } from '../db/db.service';
@@ -2692,7 +2692,7 @@ export class ReportQueries {
 
 ```ts
 import { Inject, Injectable } from '@nestjs/common';
-import type { ReportFilters, ReportSummary } from '@taskop/contracts';
+import type { ReportFilters, ReportSummary } from '@edildy/contracts';
 import { sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { pgErrorOf } from '../common/pg-errors';
@@ -2741,7 +2741,7 @@ export class ReportsService {
 `apps/api/src/reports/dto.ts`:
 
 ```ts
-import { reportFiltersSchema, reportSummarySchema } from '@taskop/contracts';
+import { reportFiltersSchema, reportSummarySchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ReportFiltersDto extends createZodDto(reportFiltersSchema) {}
@@ -2753,7 +2753,7 @@ export class ReportSummaryResponse extends createZodDto(reportSummarySchema) {}
 ```ts
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { ReportSummary } from '@taskop/contracts';
+import type { ReportSummary } from '@edildy/contracts';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { ReportFiltersDto, ReportSummaryResponse } from './dto';
@@ -2798,7 +2798,7 @@ In `apps/api/src/app.module.ts`, import `ReportsModule` from `./reports/reports.
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- reports-summary config`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- reports-summary config`
 Expected: PASS. If the cross-check fails while the hand-counted test passes (or the other way round), the SQL in `countColumns` and `classifyRun` disagree: fix the SQL, never the expected numbers.
 
 - [ ] **Step 7: Commit**
@@ -2813,7 +2813,7 @@ git commit -m "feat(api): add the reports module with the statement-timeout guar
 ### Task 9: `GET /reports/sites` and `GET /reports/employees` (attribution, Unassigned row)
 
 **Files:**
-- Modify: `apps/api/package.json` (+ `@taskop/i18n`), `apps/api/src/reports/report-queries.ts`, `reports.service.ts`, `reports.controller.ts`, `dto.ts`
+- Modify: `apps/api/package.json` (+ `@edildy/i18n`), `apps/api/src/reports/report-queries.ts`, `reports.service.ts`, `reports.controller.ts`, `dto.ts`
 - Test: `apps/api/test/reports-tables.test.ts`
 
 **Interfaces:**
@@ -2825,7 +2825,7 @@ git commit -m "feat(api): add the reports module with the statement-timeout guar
 `apps/api/test/reports-tables.test.ts`:
 
 ```ts
-import type { EmployeeReportRow, SiteReportRow } from '@taskop/contracts';
+import type { EmployeeReportRow, SiteReportRow } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
@@ -2910,25 +2910,25 @@ describe('GET /reports/sites and /reports/employees', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- reports-tables`
+Run: `pnpm --filter @edildy/api test -- reports-tables`
 Expected: FAIL: `GET /api/v1/reports/sites` answers 404.
 
 - [ ] **Step 3: Add the i18n dependency**
 
 ```bash
-pnpm --filter @taskop/api add '@taskop/i18n@workspace:*'
+pnpm --filter @edildy/api add '@edildy/i18n@workspace:*'
 ```
 
-`apps/api/package.json` now lists `"@taskop/i18n": "workspace:*"` under `dependencies`. It is ESM like `@taskop/contracts` and loads the same way (Node 24 `require(esm)` in the swc CommonJS build, native ESM under Vitest).
+`apps/api/package.json` now lists `"@edildy/i18n": "workspace:*"` under `dependencies`. It is ESM like `@edildy/contracts` and loads the same way (Node 24 `require(esm)` in the swc CommonJS build, native ESM under Vitest).
 
 - [ ] **Step 4: Implement the queries**
 
 In `apps/api/src/reports/report-queries.ts`:
-- the `@taskop/contracts` import becomes:
+- the `@edildy/contracts` import becomes:
 
 ```ts
-import { COMPLETED_STATUSES, completionPercent, type EmployeeReportRow, IN_PROGRESS_STATUSES, periodDays, type ReportSummary, roundOne, type RunCounts, type SiteReportRow } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { COMPLETED_STATUSES, completionPercent, type EmployeeReportRow, IN_PROGRESS_STATUSES, periodDays, type ReportSummary, roundOne, type RunCounts, type SiteReportRow } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 ```
 
 - add these methods inside `ReportQueries`, after `summary`:
@@ -2985,7 +2985,7 @@ import { az } from '@taskop/i18n';
 
 - [ ] **Step 5: Wire the service, the DTOs and the controller**
 
-In `apps/api/src/reports/reports.service.ts`, the contracts import becomes `import type { EmployeeReportRow, ReportFilters, ReportSummary, SiteReportRow } from '@taskop/contracts';` and these methods follow `summary`:
+In `apps/api/src/reports/reports.service.ts`, the contracts import becomes `import type { EmployeeReportRow, ReportFilters, ReportSummary, SiteReportRow } from '@edildy/contracts';` and these methods follow `summary`:
 
 ```ts
   sites(p: Principal, q: ReportFilters): Promise<SiteReportRow[]> {
@@ -3000,7 +3000,7 @@ In `apps/api/src/reports/reports.service.ts`, the contracts import becomes `impo
 `apps/api/src/reports/dto.ts` becomes:
 
 ```ts
-import { employeeReportRowSchema, reportFiltersSchema, reportSummarySchema, siteReportRowSchema } from '@taskop/contracts';
+import { employeeReportRowSchema, reportFiltersSchema, reportSummarySchema, siteReportRowSchema } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ReportFiltersDto extends createZodDto(reportFiltersSchema) {}
@@ -3009,7 +3009,7 @@ export class SiteReportRowResponse extends createZodDto(siteReportRowSchema) {}
 export class EmployeeReportRowResponse extends createZodDto(employeeReportRowSchema) {}
 ```
 
-In `apps/api/src/reports/reports.controller.ts`, the contracts import becomes `import type { EmployeeReportRow, ReportSummary, SiteReportRow } from '@taskop/contracts';`, the dto import becomes `import { EmployeeReportRowResponse, ReportFiltersDto, ReportSummaryResponse, SiteReportRowResponse } from './dto';`, and these handlers follow `summary`:
+In `apps/api/src/reports/reports.controller.ts`, the contracts import becomes `import type { EmployeeReportRow, ReportSummary, SiteReportRow } from '@edildy/contracts';`, the dto import becomes `import { EmployeeReportRowResponse, ReportFiltersDto, ReportSummaryResponse, SiteReportRowResponse } from './dto';`, and these handlers follow `summary`:
 
 ```ts
   @Get('sites')
@@ -3029,7 +3029,7 @@ In `apps/api/src/reports/reports.controller.ts`, the contracts import becomes `i
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- reports-tables reports-summary`
+Run: `pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- reports-tables reports-summary`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -3060,7 +3060,7 @@ git commit -m "feat(api): add the site and employee report tables" -m "Co-Author
 `apps/api/test/reports-runs.test.ts`:
 
 ```ts
-import type { Page, ReportRun } from '@taskop/contracts';
+import type { Page, ReportRun } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
@@ -3156,13 +3156,13 @@ describe('GET /reports/runs', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- reports-runs`
+Run: `pnpm --filter @edildy/api test -- reports-runs`
 Expected: FAIL: `GET /api/v1/reports/runs` answers 404.
 
 - [ ] **Step 3: Implement the queries**
 
 In `apps/api/src/reports/report-queries.ts`:
-- the `@taskop/contracts` import gains `type OccurrenceStatus`, `type Page`, `type ReportRun`, `type RunBucket`, `type UserRef`.
+- the `@edildy/contracts` import gains `type OccurrenceStatus`, `type Page`, `type ReportRun`, `type RunBucket`, `type UserRef`.
 - add after `runsCte`:
 
 ```ts
@@ -3274,7 +3274,7 @@ const toReportRun = (r: RunRow): ReportRun => ({
 In `apps/api/src/reports/reports.service.ts`, the contracts import becomes:
 
 ```ts
-import { type EmployeeReportRow, type Page, REPORT_LIMITS, type ReportFilters, type ReportRun, type ReportRunsParams, type ReportSummary, type SiteReportRow } from '@taskop/contracts';
+import { type EmployeeReportRow, type Page, REPORT_LIMITS, type ReportFilters, type ReportRun, type ReportRunsParams, type ReportSummary, type SiteReportRow } from '@edildy/contracts';
 ```
 
 and this method follows `employees`:
@@ -3305,7 +3305,7 @@ In `apps/api/src/reports/reports.controller.ts`, add `Page` and `ReportRun` to t
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- reports-runs`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- reports-runs`
 Expected: PASS. (If TypeScript complains that `bucketCondition` does not return on every path, add `default: { const unhandled: never = b; throw new Error('Unknown bucket: ' + String(unhandled)); }`.)
 
 - [ ] **Step 6: Commit**
@@ -3335,7 +3335,7 @@ git commit -m "feat(api): add the paged run list with buckets" -m "Co-Authored-B
 `apps/api/test/reports-problems-tasks.test.ts`:
 
 ```ts
-import type { ReportProblems, ReportTasks } from '@taskop/contracts';
+import type { ReportProblems, ReportTasks } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
@@ -3452,7 +3452,7 @@ describe('GET /reports/problems and /reports/tasks', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- reports-problems-tasks`
+Run: `pnpm --filter @edildy/api test -- reports-problems-tasks`
 Expected: FAIL: `GET /api/v1/reports/problems` answers 404.
 
 - [ ] **Step 3: Implement the queries**
@@ -3483,8 +3483,8 @@ import {
   type RunCounts,
   type SiteReportRow,
   type UserRef,
-} from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { and, desc, eq, type SQL, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { DbService } from '../db/db.service';
@@ -3632,7 +3632,7 @@ import {
   type ReportTasks,
   type ReportTasksParams,
   type SiteReportRow,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 ```
 
 - add `import { TaskScope } from '../tasks/task-scope';`, and the constructor gains `private readonly taskScope: TaskScope,` after `private readonly scheduling: SchedulingScope,`.
@@ -3685,7 +3685,7 @@ In `apps/api/src/reports/reports.controller.ts`, add `ReportProblems` and `Repor
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- reports-problems-tasks reports-runs reports-tables reports-summary`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- reports-problems-tasks reports-runs reports-tables reports-summary`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -3713,7 +3713,7 @@ In the fixture, Leyla (`site_subtree`, Filial A) sees every run except r4 and r1
 `apps/api/test/reports-scope.test.ts`:
 
 ```ts
-import type { EmployeeReportRow, Page, ReportProblems, ReportRun, ReportSummary, ReportTasks, SiteReportRow } from '@taskop/contracts';
+import type { EmployeeReportRow, Page, ReportProblems, ReportRun, ReportSummary, ReportTasks, SiteReportRow } from '@edildy/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
@@ -3810,7 +3810,7 @@ describe('report data scope (spec §4)', () => {
 
 - [ ] **Step 2: Run the test**
 
-Run: `pnpm --filter @taskop/api test -- reports-scope`
+Run: `pnpm --filter @edildy/api test -- reports-scope`
 Expected: PASS. A failure is a scope leak: the failing line names the endpoint and the principal; fix the query in `report-queries.ts` so the scope SQL is part of its `where`, and re-run.
 
 - [ ] **Step 3: Commit**
@@ -3839,7 +3839,7 @@ git commit -m "test(api): pin the data scope of every report" -m "Co-Authored-By
 - [ ] **Step 1: Add the test-only CSV parser**
 
 ```bash
-pnpm --filter @taskop/api add -D csv-parse@^7.0.3
+pnpm --filter @edildy/api add -D csv-parse@^7.0.3
 ```
 
 - [ ] **Step 2: Write the failing tests**
@@ -3942,7 +3942,7 @@ describe('CSV writer', () => {
 `apps/api/src/reports/export/report-tables.test.ts`:
 
 ```ts
-import { emptyRunCounts, type ReportProblem, type ReportRun, type ReportSummary, type ReportTask, type SiteReportRow } from '@taskop/contracts';
+import { emptyRunCounts, type ReportProblem, type ReportRun, type ReportSummary, type ReportTask, type SiteReportRow } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { employeesTable, problemsTable, runsTable, runsTitle, sitesTable, summaryTables, tasksTable } from './report-tables';
 
@@ -4019,7 +4019,7 @@ describe('report tables', () => {
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- export/`
+Run: `pnpm --filter @edildy/api test -- export/`
 Expected: FAIL: `./report-table`, `./csv` and `./report-tables` do not exist.
 
 - [ ] **Step 4: Implement**
@@ -4027,8 +4027,8 @@ Expected: FAIL: `./report-table`, `./csv` and `./report-tables` do not exist.
 `apps/api/src/reports/export/report-table.ts`:
 
 ```ts
-import { tzOffsetMinutes } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { tzOffsetMinutes } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 
 /** How a column is typed in Excel and printed in CSV and PDF. */
 export type ColumnType = 'text' | 'int' | 'decimal' | 'number' | 'date' | 'datetime' | 'bool';
@@ -4146,8 +4146,8 @@ import {
   type RunBucket,
   type RunCounts,
   type SiteReportRow,
-} from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+} from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import type { CellValue, ReportColumn, ReportTable } from './report-table';
 
 const L = az.reports;
@@ -4297,7 +4297,7 @@ export function tasksTable(rows: ReportTask[]): ReportTable {
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api test -- export/`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api test -- export/`
 Expected: PASS. (If TypeScript reports that `cellText` does not return on every path, add `default: return String(v);` as the last case.)
 
 - [ ] **Step 6: Commit**
@@ -4330,8 +4330,8 @@ git commit -m "feat(api): add the export table model, the Azerbaijani report tab
 - [ ] **Step 1: Add the dependencies**
 
 ```bash
-pnpm --filter @taskop/api add pdfmake@^0.3.11 write-excel-file@^4.1.1
-pnpm --filter @taskop/api add -D @types/pdfmake@^0.3.3 read-excel-file@^9.3.12 unpdf@^1.8.1
+pnpm --filter @edildy/api add pdfmake@^0.3.11 write-excel-file@^4.1.1
+pnpm --filter @edildy/api add -D @types/pdfmake@^0.3.3 read-excel-file@^9.3.12 unpdf@^1.8.1
 ```
 
 None of them runs an install script, so `pnpm-workspace.yaml`'s `allowBuilds` needs no entry.
@@ -4473,7 +4473,7 @@ describe('PDF writer', () => {
 
 - [ ] **Step 4: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/api test -- xlsx pdf-document`
+Run: `pnpm --filter @edildy/api test -- xlsx pdf-document`
 Expected: FAIL: `./xlsx` and `./pdf-document` do not exist.
 
 - [ ] **Step 5: Implement**
@@ -4481,7 +4481,7 @@ Expected: FAIL: `./xlsx` and `./pdf-document` do not exist.
 `apps/api/src/reports/export/xlsx.ts`:
 
 ```ts
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import writeXlsxFile, { type Cell, type Row, type Sheet } from 'write-excel-file/node';
 import { type CellValue, type ReportColumn, type ReportDocument, wallClock } from './report-table';
 
@@ -4542,7 +4542,7 @@ export function toXlsx(doc: ReportDocument): Promise<Buffer> {
 
 ```ts
 import path from 'node:path';
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import pdfmake from 'pdfmake';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { cellText, formatDate, formatInstant, type ReportDocument, type ReportTable } from '../export/report-table';
@@ -4581,7 +4581,7 @@ export function pdfDefinition(doc: ReportDocument): TDocumentDefinitions {
     pageSize: 'A4',
     pageOrientation: 'landscape',
     pageMargins: [28, 28, 28, 36],
-    info: { title: `${doc.title} ${doc.from}_${doc.to}`, creator: 'Taskop' },
+    info: { title: `${doc.title} ${doc.from}_${doc.to}`, creator: 'Edildy' },
     defaultStyle: { font: 'NotoSans', fontSize: 8 },
     styles: {
       tenant: { fontSize: 14, bold: true },
@@ -4614,12 +4614,12 @@ export function toPdf(doc: ReportDocument): Promise<Buffer> {
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint && pnpm --filter @taskop/api test -- xlsx pdf-document export/`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint && pnpm --filter @edildy/api test -- xlsx pdf-document export/`
 Expected: PASS. (If TypeScript reports that `xlsxCell` does not return on every path, add `default: return { type: String, value: String(v) };`.)
 
 - [ ] **Step 7: Check the build ships the fonts**
 
-Run: `pnpm --filter @taskop/api build && ls apps/api/dist/reports/pdf/fonts`
+Run: `pnpm --filter @edildy/api build && ls apps/api/dist/reports/pdf/fonts`
 Expected: `NotoSans-Bold.ttf  NotoSans-Regular.ttf  OFL.txt`.
 
 - [ ] **Step 8: Commit**
@@ -4679,7 +4679,7 @@ describe('report exports (spec §5.4)', () => {
   it('exports runs as CSV with a BOM, Azerbaijani labels and both completion times', async () => {
     const f = await file(w.owner, 'runs', { ...PERIOD, format: 'csv' });
     expect(f.type).toBe('text/csv; charset=utf-8');
-    expect(f.disposition).toBe('attachment; filename="taskop-runs-2026-11-02_2026-11-04.csv"');
+    expect(f.disposition).toBe('attachment; filename="edildy-runs-2026-11-02_2026-11-04.csv"');
     expect([...f.body.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     const rows = csvRows(f.body);
     expect(rows[0]).toEqual([
@@ -4700,7 +4700,7 @@ describe('report exports (spec §5.4)', () => {
   it('exports the full report as one Excel sheet per section with typed cells', async () => {
     const f = await file(w.owner, 'full', { ...PERIOD, format: 'xlsx' });
     expect(f.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    expect(f.disposition).toBe('attachment; filename="taskop-full-2026-11-02_2026-11-04.xlsx"');
+    expect(f.disposition).toBe('attachment; filename="edildy-full-2026-11-02_2026-11-04.xlsx"');
     const sheets = await readXlsxFile(f.body);
     expect(sheets.map((s) => [s.sheet, s.data.length])).toEqual([
       ['Xülasə', 13], ['Gündəlik', 4], ['Obyektlər', 5], ['Əməkdaşlar', 6],
@@ -4719,7 +4719,7 @@ describe('report exports (spec §5.4)', () => {
   it('exports a PDF with the tenant, the period, the filters and Azerbaijani labels', async () => {
     const f = await file(w.owner, 'summary', { ...PERIOD, siteId: w.sites.zoneA1, format: 'pdf' });
     expect(f.type).toBe('application/pdf');
-    expect(f.disposition).toBe('attachment; filename="taskop-summary-2026-11-02_2026-11-04.pdf"');
+    expect(f.disposition).toBe('attachment; filename="edildy-summary-2026-11-02_2026-11-04.pdf"');
     expect(f.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     const text = await pdfText(f.body);
     for (const s of ['Acme MMC', 'Xülasə hesabatı', 'Dövr: 02.11.2026 – 04.11.2026', 'Filtrlər: Obyekt: Zona A1', 'Hazırlanma vaxtı: 04.11.2026 12:00', 'Tamamlanma faizi 57.1', 'Gündəlik']) {
@@ -4792,7 +4792,7 @@ describe('report exports (spec §5.4)', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/api test -- reports-export`
+Run: `pnpm --filter @edildy/api test -- reports-export`
 Expected: FAIL: `GET /api/v1/reports/runs/export` answers 404.
 
 - [ ] **Step 3: Implement the exporter**
@@ -4801,8 +4801,8 @@ Expected: FAIL: `GET /api/v1/reports/runs/export` answers 404.
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { REPORT_CONTENT_TYPES, REPORT_LIMITS, type ReportExportKind, type ReportExportParams, type ReportTaskCounts, reportFileName, type RunBucket } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { REPORT_CONTENT_TYPES, REPORT_LIMITS, type ReportExportKind, type ReportExportParams, type ReportTaskCounts, reportFileName, type RunBucket } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { eq, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -4987,7 +4987,7 @@ import {
   type ReportSummary,
   type ReportTasks,
   type SiteReportRow,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { AppError } from '../common/app-error';
 import { CurrentPrincipal, RequirePermission } from '../common/decorators';
 import type { Principal } from '../common/request';
@@ -5038,7 +5038,7 @@ In `apps/api/src/reports/reports.module.ts`, add `import { ReportExporter } from
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint && pnpm --filter @taskop/api test -- reports-`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint && pnpm --filter @edildy/api test -- reports-`
 Expected: PASS, every `reports-*` file. (The handler returns after `TenantContextInterceptor` commits the transaction with the audit row; Nest then writes the `StreamableFile` with its headers.)
 
 - [ ] **Step 6: Commit**
@@ -5059,7 +5059,7 @@ git commit -m "feat(api): export reports as CSV, Excel and PDF with the row cap 
 **Interfaces:**
 - Consumes: the six endpoints; `seedTenantDefaults`, `siteLabel`, `GLOBAL_TEMPLATE_FIXTURES`; `addDays`, `localDateOf`, `regenerateIds` from contracts.
 - Produces:
-  - `seedReportVolume(url: string): Promise<void>`: tenant `perf` ("Perf MMC", Asia/Baku) with 50 sites (5 branches with 9 zones each), 200 workers (4 per site), owner `perf-owner@taskop.test` and `site_subtree` manager `perf-manager@taskop.test` (password `PerfPassword123`, linked to "Filial 1"), 200 assignments and one occurrence per assignment per day for the last 366 days (73,200 runs; about 80 % completed, 8 % missed, 7 % partial, 5 % cancelled, today's pending), executions for completed and partial runs, problems on about 5 % of executions (a fifth critical) and 2,000 tasks. Idempotent: an existing `perf` tenant is left alone.
+  - `seedReportVolume(url: string): Promise<void>`: tenant `perf` ("Perf MMC", Asia/Baku) with 50 sites (5 branches with 9 zones each), 200 workers (4 per site), owner `perf-owner@edildy.test` and `site_subtree` manager `perf-manager@edildy.test` (password `PerfPassword123`, linked to "Filial 1"), 200 assignments and one occurrence per assignment per day for the last 366 days (73,200 runs; about 80 % completed, 8 % missed, 7 % partial, 5 % cancelled, today's pending), executions for completed and partial runs, problems on about 5 % of executions (a fifth critical) and 2,000 tasks. Idempotent: an existing `perf` tenant is left alone.
   - `test/perf/time-reports.ts`: times every report endpoint for 7-, 31- and 366-day ranges as the owner (`all`) and the manager (`site_subtree`), prints the median of 5 runs per endpoint, and exits 1 when any 366-day median is ≥ 500 ms.
 
 - [ ] **Step 1: Write the seed**
@@ -5068,7 +5068,7 @@ git commit -m "feat(api): export reports as CSV, Excel and PDF with the row cap 
 
 ```ts
 import { hash } from '@node-rs/argon2';
-import { addDays, localDateOf, regenerateIds } from '@taskop/contracts';
+import { addDays, localDateOf, regenerateIds } from '@edildy/contracts';
 import { eq, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { uuidv7 } from 'uuidv7';
@@ -5125,12 +5125,12 @@ export async function seedReportVolume(url: string): Promise<void> {
       const passwordHash = await hash(PASSWORD, ARGON);
       const ownerId = uuidv7();
       await tx.insert(schema.users).values({
-        id: ownerId, tenantId, fullName: 'Perf Sahib', roleId: roleIds.owner, kind: 'staff', email: 'perf-owner@taskop.test',
+        id: ownerId, tenantId, fullName: 'Perf Sahib', roleId: roleIds.owner, kind: 'staff', email: 'perf-owner@edildy.test',
         credentialHash: passwordHash, credentialKind: 'password', status: 'active', emailVerifiedAt: new Date(),
       });
       const managerId = uuidv7();
       await tx.insert(schema.users).values({
-        id: managerId, tenantId, fullName: 'Perf Menecer', roleId: roleIds.manager, kind: 'staff', email: 'perf-manager@taskop.test',
+        id: managerId, tenantId, fullName: 'Perf Menecer', roleId: roleIds.manager, kind: 'staff', email: 'perf-manager@edildy.test',
         credentialHash: passwordHash, credentialKind: 'password', status: 'active', emailVerifiedAt: new Date(), managerId: ownerId,
       });
       await tx.insert(schema.userSites).values({ tenantId, userId: managerId, siteId: branchIds[0]! });
@@ -5216,8 +5216,8 @@ export async function seedReportVolume(url: string): Promise<void> {
     });
     const [{ n }] = (await db.execute<{ n: number }>(sql`select count(*)::int as n from occurrences where tenant_id = ${tenantId}`)).rows as [{ n: number }];
     console.log(`Tenant "perf" created: ${n} occurrences from ${first} to ${today}.`);
-    console.log(`  Owner (all):            perf-owner@taskop.test / ${PASSWORD}`);
-    console.log(`  Manager (site_subtree): perf-manager@taskop.test / ${PASSWORD} (Filial 1 and its zones)`);
+    console.log(`  Owner (all):            perf-owner@edildy.test / ${PASSWORD}`);
+    console.log(`  Manager (site_subtree): perf-manager@edildy.test / ${PASSWORD} (Filial 1 and its zones)`);
   } finally {
     await db.$client.end();
   }
@@ -5245,13 +5245,13 @@ if (process.argv[1]?.endsWith('seed-report-volume.ts')) {
 ```ts
 /**
  * SP7 spec §9 performance check against a running API on the seeded "perf" tenant:
- *   pnpm --filter @taskop/api db:seed-report-volume
- *   pnpm --filter @taskop/api dev                      (another terminal)
- *   pnpm --filter @taskop/api perf:reports [baseUrl]
+ *   pnpm --filter @edildy/api db:seed-report-volume
+ *   pnpm --filter @edildy/api dev                      (another terminal)
+ *   pnpm --filter @edildy/api perf:reports [baseUrl]
  * Prints the median of 5 timed runs (after one warm-up) per endpoint, range and principal; exits 1 when any 366-day
  * median is at or above the 500 ms target.
  */
-import { addDays, localDateOf } from '@taskop/contracts';
+import { addDays, localDateOf } from '@edildy/contracts';
 
 const BASE = process.argv[2] ?? 'http://localhost:3000/api/v1';
 const TARGET_MS = 500;
@@ -5277,8 +5277,8 @@ async function timed(token: string, path: string): Promise<number> {
 async function main(): Promise<void> {
   const today = localDateOf(new Date(), 'Asia/Baku');
   const principals: [string, string][] = [
-    ['all', await login('perf-owner@taskop.test')],
-    ['site_subtree', await login('perf-manager@taskop.test')],
+    ['all', await login('perf-owner@edildy.test')],
+    ['site_subtree', await login('perf-manager@edildy.test')],
   ];
   const rows: { scope: string; days: number; endpoint: string; medianMs: number }[] = [];
   for (const [scope, token] of principals) {
@@ -5317,31 +5317,31 @@ In `apps/api/package.json`, add to `scripts`:
 
 - [ ] **Step 3: Check both scripts compile and lint**
 
-Run: `pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint`
+Run: `pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint`
 Expected: PASS (`test/` is in the API's `tsconfig.json`; `time-reports.ts` is not a `*.test.ts`, so Vitest never runs it).
 
 - [ ] **Step 4: Seed and time**
 
 ```bash
 docker compose up -d
-pnpm --filter @taskop/api db:setup
-pnpm --filter @taskop/api db:seed-report-volume
-pnpm --filter @taskop/api dev
+pnpm --filter @edildy/api db:setup
+pnpm --filter @edildy/api db:seed-report-volume
+pnpm --filter @edildy/api dev
 ```
 
-In another terminal: `pnpm --filter @taskop/api perf:reports`
+In another terminal: `pnpm --filter @edildy/api perf:reports`
 Expected: the seed prints `Tenant "perf" created: 73200 occurrences …`; the timing script prints its table and `Every endpoint is under 500 ms at 366 days.` (exit 0). Keep the printed table: Task 17 records it.
 
 - [ ] **Step 5: Only if an endpoint misses the target**
 
-Find the slow statement: `docker compose exec postgres psql -U taskop_owner taskop -c "alter system set log_min_duration_statement = 300" -c "select pg_reload_conf()"`, re-run `perf:reports`, copy the logged SQL from `docker compose logs postgres`, and run it with `explain (analyze, buffers)` in `psql` after `select set_config('app.tenant_id', '<perf tenant id>', false)`. Add an index only for the plan node that dominates. The likely candidate is the problems aggregation of `runsCte` (a sequential scan of `execution_problems`); then, in `apps/api/src/db/schema.ts`, `executionProblems`' index list gains:
+Find the slow statement: `docker compose exec postgres psql -U edildy_owner edildy -c "alter system set log_min_duration_statement = 300" -c "select pg_reload_conf()"`, re-run `perf:reports`, copy the logged SQL from `docker compose logs postgres`, and run it with `explain (analyze, buffers)` in `psql` after `select set_config('app.tenant_id', '<perf tenant id>', false)`. Add an index only for the plan node that dominates. The likely candidate is the problems aggregation of `runsCte` (a sequential scan of `execution_problems`); then, in `apps/api/src/db/schema.ts`, `executionProblems`' index list gains:
 
 ```ts
     // Report problem counts per run (SP7 spec §9 performance check).
     index('execution_problems_occurrence_idx').on(t.tenantId, t.occurrenceId),
 ```
 
-and `pnpm --filter @taskop/api exec drizzle-kit generate --name reports_perf` writes `0015_reports_perf.sql`. Re-run Steps 4–5 until the target holds, then reset the logging with `alter system reset log_min_duration_statement` and `select pg_reload_conf()`. Add `apps/api/drizzle` and the schema change to the commit below.
+and `pnpm --filter @edildy/api exec drizzle-kit generate --name reports_perf` writes `0015_reports_perf.sql`. Re-run Steps 4–5 until the target holds, then reset the logging with `alter system reset log_min_duration_statement` and `select pg_reload_conf()`. Add `apps/api/drizzle` and the schema change to the commit below.
 
 - [ ] **Step 6: Commit**
 
@@ -5387,34 +5387,34 @@ In `apps/api/test/openapi.test.ts`, append inside `describe('OpenAPI', …)`:
 
 - [ ] **Step 2: Run it**
 
-Run: `pnpm --filter @taskop/api test -- openapi`
+Run: `pnpm --filter @edildy/api test -- openapi`
 Expected: PASS (Tasks 8–15 registered the controller with `@ApiTags('reports')`, `@ApiOkResponse` DTOs and `@ApiProduces`). If the `content` assertion fails because the swagger plugin lists the produced types elsewhere, assert on `res.body.paths['/api/v1/reports/{kind}/export'].get.produces ?? …` as the document shows, never drop the path assertion.
 
 - [ ] **Step 3: Run the full suite**
 
-Run: `pnpm --filter @taskop/contracts test && pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api-client test && pnpm --filter @taskop/api-client build && pnpm --filter @taskop/api typecheck && pnpm --filter @taskop/api lint && pnpm --filter @taskop/api test && pnpm typecheck && pnpm lint`
+Run: `pnpm --filter @edildy/contracts test && pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api-client test && pnpm --filter @edildy/api-client build && pnpm --filter @edildy/api typecheck && pnpm --filter @edildy/api lint && pnpm --filter @edildy/api test && pnpm typecheck && pnpm lint`
 Expected: PASS: every API test file, including the eight new `reports-*` files, the five export unit tests and the extended `roles`, `error.filter`, `permission.guard`, `config` and `openapi` tests; the repo-wide typecheck and lint (web and mobile included: this part only added contract fields and keys).
 
 - [ ] **Step 4: Try it locally**
 
 ```bash
 docker compose up -d
-pnpm --filter @taskop/api db:setup
-pnpm --filter @taskop/api db:seed
-pnpm --filter @taskop/api dev
+pnpm --filter @edildy/api db:setup
+pnpm --filter @edildy/api db:seed
+pnpm --filter @edildy/api dev
 ```
 
 In another terminal:
 
 ```bash
 TOKEN=$(curl -s localhost:3000/api/v1/auth/login/staff -H 'content-type: application/json' \
-  -d '{"email":"manager@demo.taskop.az","password":"DemoPassword123","client":"web"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).accessToken')
+  -d '{"email":"manager@demo.edildy.az","password":"DemoPassword123","client":"web"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).accessToken')
 TODAY=$(node -pe 'new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Baku"}).format(new Date())')
 curl -s "localhost:3000/api/v1/reports/summary?from=2026-01-01&to=$TODAY" -H "Authorization: Bearer $TOKEN"
 curl -s -OJ "localhost:3000/api/v1/reports/full/export?from=2026-01-01&to=$TODAY&format=pdf" -H "Authorization: Bearer $TOKEN"
 ```
 
-Expected: a summary JSON with the demo run (Leyla is a Manager, so she has `reports.view` after the backfill) and a file `taskop-full-2026-01-01_<today>.pdf` in the current directory that opens with Azerbaijani text. Delete the PDF afterwards.
+Expected: a summary JSON with the demo run (Leyla is a Manager, so she has `reports.view` after the backfill) and a file `edildy-full-2026-01-01_<today>.pdf` in the current directory that opens with Azerbaijani text. Delete the PDF afterwards.
 
 - [ ] **Step 5: Record the performance results**
 
@@ -5453,7 +5453,7 @@ git commit -m "test(api): document the report paths and record the report timing
 
 ## Performance results
 
-Measured 2026-10-14 (Task 16, `pnpm --filter @taskop/api perf:reports`) on an Apple M5 laptop with 16 GB RAM, PostgreSQL 18 (`postgres:18-alpine` in Docker), the built API (`node dist/main.js`, production-style, not the watch dev server) and PostgreSQL's default JIT setting (on). Data: the `perf` tenant from `db:seed-report-volume` (50 sites, 200 workers, 200 assignments, 73,200 occurrences over 366 days, 63,544 executions, 3,239 problems, 2,000 tasks). Each cell is the median of 5 requests after one warm-up. The target is 500 ms per endpoint at 366 days; every endpoint met it.
+Measured 2026-10-14 (Task 16, `pnpm --filter @edildy/api perf:reports`) on an Apple M5 laptop with 16 GB RAM, PostgreSQL 18 (`postgres:18-alpine` in Docker), the built API (`node dist/main.js`, production-style, not the watch dev server) and PostgreSQL's default JIT setting (on). Data: the `perf` tenant from `db:seed-report-volume` (50 sites, 200 workers, 200 assignments, 73,200 occurrences over 366 days, 63,544 executions, 3,239 problems, 2,000 tasks). Each cell is the median of 5 requests after one warm-up. The target is 500 ms per endpoint at 366 days; every endpoint met it.
 
 | scope        | days | endpoint  | median ms |
 | ------------ | ---- | --------- | --------- |

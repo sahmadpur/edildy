@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import {
   DEFAULT_TASK_EVIDENCE,
   EVIDENCE_LEVELS,
@@ -12,7 +12,7 @@ import {
   type TaskAssigneeOptions,
   type TaskEvidence,
   type TaskPriority,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

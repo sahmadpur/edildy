@@ -1,4 +1,4 @@
-import type { SystemRoleKey, UserDto } from '@taskop/contracts';
+import type { SystemRoleKey, UserDto } from '@edildy/contracts';
 import { eq, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Executor } from '../db/db.service';

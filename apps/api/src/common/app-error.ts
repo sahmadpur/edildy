@@ -1,4 +1,4 @@
-import { type ContentIssue, ERROR_HTTP_STATUS, type ErrorCode, type Missing } from '@taskop/contracts';
+import { type ContentIssue, ERROR_HTTP_STATUS, type ErrorCode, type Missing } from '@edildy/contracts';
 
 export interface AppErrorDetails {
   issues?: ContentIssue[];

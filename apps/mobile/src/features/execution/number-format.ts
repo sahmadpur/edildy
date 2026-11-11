@@ -1,4 +1,4 @@
-import type { NumberItem } from '@taskop/contracts';
+import type { NumberItem } from '@edildy/contracts';
 
 /** A plain decimal: optional sign, digits, one `.` or `,` separator. No exponents, hex, or grouping. */
 const PLAIN_DECIMAL = /^[+-]?(\d+([.,]\d*)?|[.,]\d+)$/;

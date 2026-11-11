@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Answer, ReworkItem, ReworkRequest } from '@taskop/contracts';
+import type { Answer, ReworkItem, ReworkRequest } from '@edildy/contracts';
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { executionReworkRequests, users } from '../db/schema';

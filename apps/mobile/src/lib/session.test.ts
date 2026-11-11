@@ -1,6 +1,6 @@
 const mockStore = new Map<string, string>();
 jest.mock('./secure-storage', () => ({
-  STORAGE_KEYS: { refreshToken: 'taskop.refreshToken', me: 'taskop.me', orgCode: 'taskop.orgCode' },
+  STORAGE_KEYS: { refreshToken: 'edildy.refreshToken', me: 'edildy.me', orgCode: 'edildy.orgCode' },
   secureStorage: {
     get: jest.fn(async (k: string) => mockStore.get(k) ?? null),
     set: jest.fn(async (k: string, v: string) => void mockStore.set(k, v)),
@@ -32,14 +32,14 @@ describe('mobile session', () => {
     await session.signedIn({ accessToken: 'a', accessTokenExpiresAt: '2026-10-07T10:00:00.000Z', refreshToken: 'r1', me } as never);
     await session.patchUser({ emailNotifications: false }, id);
     expect(session.get()).toMatchObject({ status: 'authenticated', me: { user: { username: 'elvin', emailNotifications: false } } });
-    expect(JSON.parse(mockStore.get('taskop.me')!).user.emailNotifications).toBe(false);
+    expect(JSON.parse(mockStore.get('edildy.me')!).user.emailNotifications).toBe(false);
   });
 
   it('ignores a profile change when nobody is signed in', async () => {
     await session.bootstrap();
     await session.patchUser({ emailNotifications: false }, id);
     expect(session.get()).toEqual({ status: 'anonymous' });
-    expect(mockStore.has('taskop.me')).toBe(false);
+    expect(mockStore.has('edildy.me')).toBe(false);
   });
 
   it("does not hand one user's confirmed preference to the next user who signed in while the request was out", async () => {
@@ -49,7 +49,7 @@ describe('mobile session', () => {
     await session.signedIn({ accessToken: 'b', accessTokenExpiresAt: '2026-10-07T10:00:00.000Z', refreshToken: 'r2', me: next } as never);
     await session.patchUser({ emailNotifications: false }, id);
     expect(session.get()).toMatchObject({ status: 'authenticated', me: { user: { id: other, emailNotifications: true } } });
-    expect(JSON.parse(mockStore.get('taskop.me')!).user).toMatchObject({ id: other, emailNotifications: true });
+    expect(JSON.parse(mockStore.get('edildy.me')!).user).toMatchObject({ id: other, emailNotifications: true });
   });
 
   it('is anonymous without a stored refresh token', async () => {
@@ -59,62 +59,62 @@ describe('mobile session', () => {
   });
 
   it('restores the session through refresh and caches the profile', async () => {
-    mockStore.set('taskop.refreshToken', 'r1');
+    mockStore.set('edildy.refreshToken', 'r1');
     (global.fetch as jest.Mock).mockResolvedValue(json(200, { accessToken: 'a', accessTokenExpiresAt: '2026-10-07T10:00:00.000Z', refreshToken: 'r2', me }));
     await session.bootstrap();
     expect(session.get()).toMatchObject({ status: 'authenticated', offline: false });
-    expect(mockStore.get('taskop.refreshToken')).toBe('r2');
-    expect(JSON.parse(mockStore.get('taskop.me')!).user.username).toBe('elvin');
+    expect(mockStore.get('edildy.refreshToken')).toBe('r2');
+    expect(JSON.parse(mockStore.get('edildy.me')!).user.username).toBe('elvin');
   });
 
   it('restores the cached profile when offline', async () => {
-    mockStore.set('taskop.refreshToken', 'r1');
-    mockStore.set('taskop.me', JSON.stringify(me));
+    mockStore.set('edildy.refreshToken', 'r1');
+    mockStore.set('edildy.me', JSON.stringify(me));
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.bootstrap();
     expect(session.get()).toMatchObject({ status: 'authenticated', offline: true });
-    expect(mockStore.get('taskop.refreshToken')).toBe('r1');
+    expect(mockStore.get('edildy.refreshToken')).toBe('r1');
   });
 
   it('restores a profile cached by the previous app version when offline', async () => {
     // Written before sub-project 6 (no emailNotifications) and before the language preference (no locale). The worker must stay signed in offline.
     const { emailNotifications: _dropped, locale: _noLocale, ...oldUser } = me.user;
-    mockStore.set('taskop.refreshToken', 'r1');
-    mockStore.set('taskop.me', JSON.stringify({ ...me, user: oldUser }));
+    mockStore.set('edildy.refreshToken', 'r1');
+    mockStore.set('edildy.me', JSON.stringify({ ...me, user: oldUser }));
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.bootstrap();
     expect(session.get()).toMatchObject({ status: 'authenticated', offline: true, me: { user: { username: 'elvin', emailNotifications: true, locale: null } } });
   });
 
   it('falls back to the cached profile offline when refresh fails with a 5xx', async () => {
-    mockStore.set('taskop.refreshToken', 'r1');
-    mockStore.set('taskop.me', JSON.stringify(me));
+    mockStore.set('edildy.refreshToken', 'r1');
+    mockStore.set('edildy.me', JSON.stringify(me));
     (global.fetch as jest.Mock).mockResolvedValue(
       json(503, { error: { code: 'INTERNAL', messageKey: 'errors.INTERNAL', fields: null, retryAfterSeconds: null, requestId: null } }),
     );
     await session.bootstrap();
     expect(session.get()).toMatchObject({ status: 'authenticated', offline: true });
-    expect(mockStore.get('taskop.refreshToken')).toBe('r1');
+    expect(mockStore.get('edildy.refreshToken')).toBe('r1');
   });
 
   it('is anonymous (not stuck loading) when the cached profile is corrupt and the network fails', async () => {
-    mockStore.set('taskop.refreshToken', 'r1');
-    mockStore.set('taskop.me', '{not json');
+    mockStore.set('edildy.refreshToken', 'r1');
+    mockStore.set('edildy.me', '{not json');
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.bootstrap();
     expect(session.get()).toEqual({ status: 'anonymous' });
   });
 
   it('clears storage when refresh is rejected', async () => {
-    mockStore.set('taskop.refreshToken', 'r1');
-    mockStore.set('taskop.me', JSON.stringify(me));
+    mockStore.set('edildy.refreshToken', 'r1');
+    mockStore.set('edildy.me', JSON.stringify(me));
     (global.fetch as jest.Mock).mockResolvedValue(
       json(401, { error: { code: 'UNAUTHENTICATED', messageKey: 'errors.UNAUTHENTICATED', fields: null, retryAfterSeconds: null, requestId: null } }),
     );
     await session.bootstrap();
     expect(session.get()).toEqual({ status: 'anonymous' });
-    expect(mockStore.has('taskop.refreshToken')).toBe(false);
-    expect(mockStore.has('taskop.me')).toBe(false);
+    expect(mockStore.has('edildy.refreshToken')).toBe(false);
+    expect(mockStore.has('edildy.me')).toBe(false);
   });
 
   it('signs out locally even when the server is unreachable', async () => {
@@ -122,14 +122,14 @@ describe('mobile session', () => {
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.signOut();
     expect(session.get()).toEqual({ status: 'anonymous' });
-    expect(mockStore.has('taskop.refreshToken')).toBe(false);
+    expect(mockStore.has('edildy.refreshToken')).toBe(false);
   });
 
   it('gives up on a request that never settles after 30 s and goes offline', async () => {
     jest.useFakeTimers();
     try {
-      mockStore.set('taskop.refreshToken', 'r1');
-      mockStore.set('taskop.me', JSON.stringify(me));
+      mockStore.set('edildy.refreshToken', 'r1');
+      mockStore.set('edildy.me', JSON.stringify(me));
       (global.fetch as jest.Mock).mockImplementation(
         (_url: string, init: RequestInit) => new Promise((_resolve, reject) => init.signal?.addEventListener('abort', () => reject(new Error('aborted')))),
       );
@@ -139,7 +139,7 @@ describe('mobile session', () => {
       await jest.advanceTimersByTimeAsync(1);
       await booting;
       expect(session.get()).toMatchObject({ status: 'authenticated', offline: true });
-      expect(mockStore.get('taskop.refreshToken')).toBe('r1');
+      expect(mockStore.get('edildy.refreshToken')).toBe('r1');
     } finally {
       jest.useRealTimers();
     }

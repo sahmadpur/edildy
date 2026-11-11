@@ -1,5 +1,5 @@
 export default {
-  title: 'Taskop platforması',
+  title: 'Edildy platforması',
   login: { title: 'Platforma administratoru', email: 'E-poçt', password: 'Şifrə', submit: 'Daxil ol' },
   tenants: {
     title: 'Təşkilatlar',
@@ -17,7 +17,7 @@ export default {
     confirmSuspend: '«{{name}}» dayandırılsın? Bütün əməkdaşların sessiyaları bağlanacaq.',
   },
   nav: { tenants: 'Təşkilatlar', templates: 'Şablonlar' },
-  workspaceBanner: 'Siz Taskop administratoru kimi «{{name}}» təşkilatında işləyirsiniz.',
+  workspaceBanner: 'Siz Edildy administratoru kimi «{{name}}» təşkilatında işləyirsiniz.',
   backToTenants: 'Təşkilatlara qayıt',
   logout: 'Çıxış',
 } as const;

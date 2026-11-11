@@ -1,4 +1,4 @@
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { executionFixture, occurrenceDetail, summary } from '@/features/executions/fixtures';
@@ -84,7 +84,7 @@ describe('CorrectionsTab', () => {
     expect(timeline[3]).toHaveTextContent('Şərh: Qeyd yazın');
   });
 
-  it('names Taskop support when a platform admin sent the run back', async () => {
+  it('names Edildy support when a platform admin sent the run back', async () => {
     const f = executionFixture();
     mocks.api.executions.get.mockResolvedValue(f.detail());
     mocks.api.corrections.history.mockResolvedValue({
@@ -92,11 +92,11 @@ describe('CorrectionsTab', () => {
       reworkRequests: [reworkRequest({ requestedBy: null, items: [{ itemId: f.note.id, comment: 'Qeydi doldurun' }] })],
     });
     renderWithProviders(<CorrectionsTab occurrence={occurrenceDetail({ execution: summary() })} />);
-    expect(await screen.findByText(/Taskop dəstəyi icranı düzəlişə qaytardı/)).toBeInTheDocument();
+    expect(await screen.findByText(/Edildy dəstəyi icranı düzəlişə qaytardı/)).toBeInTheDocument();
     expect(screen.getByText(/Raund 1/)).toBeInTheDocument();
   });
 
-  it('names Taskop support when a platform admin withdrew the send-back', async () => {
+  it('names Edildy support when a platform admin withdrew the send-back', async () => {
     const f = executionFixture();
     mocks.api.executions.get.mockResolvedValue(f.detail());
     mocks.api.corrections.history.mockResolvedValue({
@@ -104,6 +104,6 @@ describe('CorrectionsTab', () => {
       reworkRequests: [reworkRequest({ withdrawnAt: '2026-11-02T11:00:00.000Z', withdrawnBy: null, items: [{ itemId: f.note.id, comment: 'Qeydi doldurun' }] })],
     });
     renderWithProviders(<CorrectionsTab occurrence={occurrenceDetail({ execution: summary() })} />);
-    expect(await screen.findByText(/Taskop dəstəyi qaytarmanı geri götürdü/)).toBeInTheDocument();
+    expect(await screen.findByText(/Edildy dəstəyi qaytarmanı geri götürdü/)).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { ApiError, type ExecutionsApi, type ProblemReportsApi, type TasksApi } from '@taskop/api-client';
+import { ApiError, type ExecutionsApi, type ProblemReportsApi, type TasksApi } from '@edildy/api-client';
 
 /** The slice of the API client the offline layer uses. `api` from '@/lib/session' satisfies it. */
 export interface SyncApi {

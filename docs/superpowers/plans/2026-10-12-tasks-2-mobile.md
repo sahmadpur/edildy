@@ -1,4 +1,4 @@
-# Taskop Tasks — Part 2: Mobile App — Implementation Plan
+# Edildy Tasks — Part 2: Mobile App — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -25,12 +25,12 @@
 ## Global Constraints
 
 - All Foundation Part 3 and SP4 Part 2 mobile constraints still apply:
-  - All text comes from `@taskop/i18n`. This part adds keys under `az.mobile` only, and uses the existing `az.tasks`, `az.errors`, `az.executions` and `az.mobile` keys.
+  - All text comes from `@edildy/i18n`. This part adds keys under `az.mobile` only, and uses the existing `az.tasks`, `az.errors`, `az.executions` and `az.mobile` keys.
   - Touch targets are at least 44 pt. A network failure never logs the user out.
   - Native modules are never imported by code that Jest loads. Screens that import `@/features/execution/capture` are tested with `jest.mock('@/features/execution/capture', …)`.
   - Inside a `db.transaction` callback only the `tx` handle is used.
-- **The shared packages ship `dist/`.** Before any mobile test or typecheck: `pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build`.
-- **Tests are Jest (`jest-expo`)**, run with `pnpm --filter @taskop/mobile test -- <path>`. RNTL 14's `render`, `fireEvent.*` are awaited.
+- **The shared packages ship `dist/`.** Before any mobile test or typecheck: `pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build`.
+- **Tests are Jest (`jest-expo`)**, run with `pnpm --filter @edildy/mobile test -- <path>`. RNTL 14's `render`, `fireEvent.*` are awaited.
 - **Local database:** forward-only migrations, `PRAGMA user_version`. This part adds exactly one: version **3**. Each migration runs in one transaction with its `user_version` bump.
 - **Command kinds:** `claim`, `media`, `answers`, `complete`, `task.accept`, `task.start`, `task.media`, `task.submit`.
   - The outbox is sent in `seq` order. A failed `claim`, `task.accept` or `task.start` holds back the later commands of its execution or task.
@@ -173,7 +173,7 @@ describe('mobile task translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.mobile.tabs.tasks` is undefined and `az.mobile.tasks` does not exist.
 
 - [ ] **Step 3: Add the strings**
@@ -266,7 +266,7 @@ Add after the `logout` block (before the closing `} as const;`):
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS, including the existing `mobile execution translations` (the five original `sync.kinds` keys are unchanged).
 
 - [ ] **Step 5: Commit**
@@ -286,7 +286,7 @@ git commit -m "feat(i18n): add phone strings for the tasks tab, task screens and
 - Test (updated for the new columns): `apps/mobile/src/offline/db.test.ts`, `outbox.test.ts`, `sync-engine.test.ts`, `sync-pull.test.ts`, `user-scope.test.ts`, `media-queue.test.ts`, `apps/mobile/src/features/execution/execution-screen.test.tsx`
 
 **Interfaces:**
-- Consumes: `TaskMediaRole` from `@taskop/contracts` (Part 1 Task 1).
+- Consumes: `TaskMediaRole` from `@edildy/contracts` (Part 1 Task 1).
 - Produces:
   - `MIGRATIONS[2]` (version 3). Tables `outbox (seq, entity_type, entity_id, kind, ref_id, rev, payload, status, attempts, error_code, error_key, created_at)`, `media (id, owner_type, owner_id, item_id, role, kind, …)`, `media_refusals (media_id, owner_type, owner_id, item_id, error_key, created_at)`, `tasks (id, data, local_status, rev, sync_note, received_at, updated_at)`, `task_drafts (task_id, submission_id, text, media_ids, submitted_at, updated_at)`.
   - `ENTITY_TYPES = ['execution', 'task']`, `type EntityType` (outbox.ts).
@@ -402,7 +402,7 @@ In `apps/mobile/src/offline/db.test.ts`:
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline/migration-v3.test.ts src/offline/db.test.ts`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline/migration-v3.test.ts src/offline/db.test.ts`
 Expected: FAIL. `migrate` stops at version 2, so `no such column: entity_type` and the table list lacks `task_drafts` and `tasks`; `appendCommand` has no `entityType`.
 
 - [ ] **Step 3: Add the migration**
@@ -637,7 +637,7 @@ export async function listCommands(db: Db): Promise<QueueEntry[]> {
 - [ ] **Step 5: Give local media an owner and a role**
 
 In `apps/mobile/src/offline/local-model.ts`:
-- Add `TaskMediaRole` to the `@taskop/contracts` type import, and add `import type { EntityType } from './outbox';`.
+- Add `TaskMediaRole` to the `@edildy/contracts` type import, and add `import type { EntityType } from './outbox';`.
 - In `MediaRow`, replace `execution_id: string;` with:
 
 ```ts
@@ -792,7 +792,7 @@ becomes (the parameter array is unchanged):
 
 - [ ] **Step 8: Run the whole mobile suite and typecheck**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS. Every SP4 suite passes unchanged in behaviour; `grep -rn "execution_id" apps/mobile/src` shows only `claim_execution_id`, the two `INSERT … (execution_id, …)` lines in `migration-v3.test.ts`, and the `SELECT execution_id` assertion there.
 
 - [ ] **Step 9: Commit**
@@ -820,7 +820,7 @@ git commit -m "feat(mobile): local database v3 with entity and owner columns and
 
 - [ ] **Step 1: Add the fixtures**
 
-In `apps/mobile/src/offline/testing/fixtures.ts`, add `type SyncTask` to the `@taskop/contracts` import and append:
+In `apps/mobile/src/offline/testing/fixtures.ts`, add `type SyncTask` to the `@edildy/contracts` import and append:
 
 ```ts
 export const TASK = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e70';
@@ -867,7 +867,7 @@ export const syncTask = (over: Partial<SyncTask> = {}): SyncTask => ({
 
 - [ ] **Step 2: Write the failing tests**
 
-Append to `apps/mobile/src/offline/sync-pull.test.ts` (extend the fixtures import with `syncTask`, `TASK`, `TASK2`, `TEAM`, and import `knownTaskIds` from `./task-records` and `TASK_LIMITS` from `@taskop/contracts`):
+Append to `apps/mobile/src/offline/sync-pull.test.ts` (extend the fixtures import with `syncTask`, `TASK`, `TASK2`, `TEAM`, and import `knownTaskIds` from `./task-records` and `TASK_LIMITS` from `@edildy/contracts`):
 
 ```ts
 describe('tasks in /me/sync', () => {
@@ -975,12 +975,12 @@ describe('pulling tasks', () => {
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline/sync-pull.test.ts src/offline/sync-engine.test.ts`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline/sync-pull.test.ts src/offline/sync-engine.test.ts`
 Expected: FAIL. `./task-records` does not exist; the pull stores no tasks and sends no `knownTaskIds`.
 
 - [ ] **Step 4: Add the task row models**
 
-Append to `apps/mobile/src/offline/local-model.ts` (add `SyncTask` and `TaskStatus` to the `@taskop/contracts` type import):
+Append to `apps/mobile/src/offline/local-model.ts` (add `SyncTask` and `TaskStatus` to the `@edildy/contracts` type import):
 
 ```ts
 export interface TaskRow {
@@ -1053,7 +1053,7 @@ export const toDraft = (r: DraftRow): TaskDraft => ({
 Create `apps/mobile/src/offline/task-records.ts`:
 
 ```ts
-import { type SyncTask, TASK_LIMITS } from '@taskop/contracts';
+import { type SyncTask, TASK_LIMITS } from '@edildy/contracts';
 import type { Db } from './db';
 import { iso } from './local-model';
 
@@ -1195,7 +1195,7 @@ In `apps/mobile/src/offline/testing/fake-api.ts`:
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS, the SP4 pull and engine tests included.
 
 - [ ] **Step 8: Commit**
@@ -1300,7 +1300,7 @@ describe('task commands', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline/sync-engine.test.ts src/offline/clock.test.ts`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline/sync-engine.test.ts src/offline/clock.test.ts`
 Expected: FAIL. `serverTime is not a function`; the engine has no case for the task kinds, so it calls nothing (`methods(h)` is `['pull']`) and acknowledges the commands unsent. (Jest runs through Babel, so the `task.start` kind's type error shows only in `typecheck`.)
 
 - [ ] **Step 3: Add the command kinds, the hold-back and the server clock**
@@ -1342,7 +1342,7 @@ export const serverTime = (deviceIso: string, offsetMs: number): string => new D
 Replace `apps/mobile/src/offline/sync-api.ts`'s import and interface with:
 
 ```ts
-import { ApiError, type ExecutionsApi, type TasksApi } from '@taskop/api-client';
+import { ApiError, type ExecutionsApi, type TasksApi } from '@edildy/api-client';
 
 /** The slice of the API client the offline layer uses. `api` from '@/lib/session' satisfies it. */
 export interface SyncApi {
@@ -1371,7 +1371,7 @@ export async function revertTask(tx: Db, taskId: string, note: string, now: numb
 - [ ] **Step 4: Send the task commands and keep their answers**
 
 In `apps/mobile/src/offline/sync-engine.ts`:
-- Add to the `@taskop/contracts` import: `type SubmissionInput`, `syncTaskSchema`, `type TaskActionCommand`, `type TaskMediaRegisterInput`.
+- Add to the `@edildy/contracts` import: `type SubmissionInput`, `syncTaskSchema`, `type TaskActionCommand`, `type TaskMediaRegisterInput`.
 - Change the clock import to `import { clampOffset, type Clock, measureOffset, readOffset, serverTime } from './clock';` and the task-records import to `import { knownTaskIds, mergeTask } from './task-records';`.
 - Replace `send` with:
 
@@ -1456,7 +1456,7 @@ import type {
   TaskActionCommand,
   TaskDetail,
   TaskMediaRegisterInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { SyncApi } from '../sync-api';
 import { ME, ME_REF, syncResponse, syncTask, VERSION } from './fixtures';
 
@@ -1498,7 +1498,7 @@ const UPLOADED_AT = '2026-11-02T04:30:00.000Z';
 const ticketFor = (b: { id: string; mime: string; bytes: number }): MediaUploadTicket => ({
   mediaId: b.id,
   status: 'pending',
-  uploadUrl: `http://files.test/taskop-media/${b.id}`,
+  uploadUrl: `http://files.test/edildy-media/${b.id}`,
   headers: { 'Content-Type': b.mime, 'Content-Length': String(b.bytes) },
   expiresAt: '2026-11-02T05:00:00.000Z',
 });
@@ -1592,7 +1592,7 @@ export function createFakeApi(): FakeApi {
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS. Server rev 1 → 2 (start) → 3 (submission); the media registration does not change it.
 
 - [ ] **Step 7: Commit**
@@ -1670,7 +1670,7 @@ describe('task media', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline/media-queue.test.ts`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline/media-queue.test.ts`
 Expected: FAIL. The queue calls `registerMedia` (the execution endpoint) for the task medium, and `cleanup()` returns 0.
 
 - [ ] **Step 3: Route by owner**
@@ -1722,7 +1722,7 @@ In `apps/mobile/src/offline/media-queue.ts`:
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS, every SP4 media-queue test included.
 
 - [ ] **Step 5: Commit**
@@ -1754,7 +1754,7 @@ git commit -m "feat(mobile): upload task media through the task endpoints and cl
 Create `apps/mobile/src/offline/task-store.test.ts`:
 
 ```ts
-import { type SyncTask, TASK_LIMITS } from '@taskop/contracts';
+import { type SyncTask, TASK_LIMITS } from '@edildy/contracts';
 import { LiveOnlyError, MediaLimitError } from './execution-store';
 import { canEditDraft, isTeamOffer, TaskStateError } from './task-store';
 import { capturedPhoto, capturedVideo } from './testing/fake-transport';
@@ -1903,7 +1903,7 @@ describe('sync queue with tasks', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline/task-store.test.ts src/features/sync/sync.test.tsx`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline/task-store.test.ts src/features/sync/sync.test.tsx`
 Expected: FAIL. `./task-store` does not exist; `h.tasks` and `services.tasks` are undefined.
 
 - [ ] **Step 3: Write the store**
@@ -1921,7 +1921,7 @@ import {
   type TaskMediaRole,
   type TaskStatus,
   taskTransition,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { Db } from './db';
 import { type CapturedMedia, LiveOnlyError, MediaLimitError, type MediaRefusal, type StoreDeps, type WriteKind } from './execution-store';
 import { type DraftRow, iso, type LocalMedia, type LocalTask, type MediaRow, type TaskDraft, type TaskRow, toDraft, toMedia, toTask } from './local-model';
@@ -2187,7 +2187,7 @@ In `apps/mobile/src/offline/testing/harness.ts`:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline src/features/sync && pnpm --filter @taskop/mobile typecheck`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline src/features/sync && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS. In the offline flow the photo is registered before the submission, then uploaded after the pull; the server copy (`completed`) replaces the draft.
 
 - [ ] **Step 6: Commit**
@@ -2217,8 +2217,8 @@ git commit -m "feat(mobile): task store with accept, start, response media, auto
 Create `apps/mobile/src/offline/task-refusals.test.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
-import type { SyncTask } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { SyncTask } from '@edildy/contracts';
 import { listCommands } from './outbox';
 import { canEditDraft } from './task-store';
 import { capturedPhoto } from './testing/fake-transport';
@@ -2334,7 +2334,7 @@ describe('task refusals', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/offline/task-refusals.test.ts`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/offline/task-refusals.test.ts`
 Expected: FAIL. `h.removedTasks` is undefined; refused task commands are parked as failed (`failed: 1`) and the refused photo stays in the draft.
 
 - [ ] **Step 3: Drop task media and resolve task refusals**
@@ -2487,7 +2487,7 @@ In `apps/mobile/src/offline/offline-provider.tsx`, the `openNativeServices` call
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck`
 Expected: PASS: every SP4 refusal test still passes through `resolveExecutionRefusal`, and the six task refusal tests pass.
 
 - [ ] **Step 6: Commit**
@@ -2506,7 +2506,7 @@ git commit -m "feat(mobile): resolve task refusals: taken or reassigned tasks go
 - Test: `apps/mobile/src/features/home/home-screen.test.tsx`
 
 **Interfaces:**
-- Consumes: `TaskView`, `isTeamOffer`, `isTaskOverdue` (Task 6); `services.tasks.tasks()`; `useLiveQuery`, `useNow`; `formatDateTime` (`@taskop/i18n`); `az.tasks.statuses.*`, `az.tasks.flags.overdue`, `az.mobile.tasks.*`.
+- Consumes: `TaskView`, `isTeamOffer`, `isTaskOverdue` (Task 6); `services.tasks.tasks()`; `useLiveQuery`, `useNow`; `formatDateTime` (`@edildy/i18n`); `az.tasks.statuses.*`, `az.tasks.flags.overdue`, `az.mobile.tasks.*`.
 - Produces:
   - `TASK_GROUP_KEYS = ['team', 'mine', 'inReview', 'done']`, `type TaskGroups = Record<TaskGroupKey, TaskView[]>`, `groupTasks(tasks, now): TaskGroups`, `taskCounts(groups, now): { open: number; overdue: number }`.
   - `Badge({ text, tone? })` and `TaskRow({ task, now, timeZone, onPress })` (testID `task-<id>`).
@@ -2517,7 +2517,7 @@ git commit -m "feat(mobile): resolve task refusals: taken or reassigned tasks go
 Create `apps/mobile/src/features/tasks/group-tasks.test.ts`:
 
 ```ts
-import type { SyncTask, TaskStatus } from '@taskop/contracts';
+import type { SyncTask, TaskStatus } from '@edildy/contracts';
 import type { TaskView } from '@/offline/task-store';
 import { syncTask, T, TASK, TASK2, TASK3, TASK4, TASK5, TEAM } from '@/offline/testing/fixtures';
 import { groupTasks, taskCounts } from './group-tasks';
@@ -2658,7 +2658,7 @@ describe('Home task card', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features/tasks src/features/home`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features/tasks src/features/home`
 Expected: FAIL. `./group-tasks` and `./tasks-screen` do not exist; Home has no `home-tasks` card.
 
 - [ ] **Step 3: Group the tasks**
@@ -2666,7 +2666,7 @@ Expected: FAIL. `./group-tasks` and `./tasks-screen` do not exist; Home has no `
 Create `apps/mobile/src/features/tasks/group-tasks.ts`:
 
 ```ts
-import { isFinalTaskStatus } from '@taskop/contracts';
+import { isFinalTaskStatus } from '@edildy/contracts';
 import { isTaskOverdue, isTeamOffer, type TaskView } from '@/offline/task-store';
 
 export const TASK_GROUP_KEYS = ['team', 'mine', 'inReview', 'done'] as const;
@@ -2707,7 +2707,7 @@ export function taskCounts(groups: TaskGroups, now: number): { open: number; ove
 Create `apps/mobile/src/features/tasks/task-row.tsx`:
 
 ```tsx
-import { formatDateTime } from '@taskop/i18n';
+import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '@/lib/theme';
@@ -2865,7 +2865,7 @@ In `apps/mobile/src/features/home/home-screen.tsx`:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS, the existing Home tests included.
 
 - [ ] **Step 7: Commit**
@@ -2895,7 +2895,7 @@ git commit -m "feat(mobile): Tapşırıqlar tab with spec sections and a Home ta
 Create `apps/mobile/src/features/tasks/task-screen.test.tsx`:
 
 ```tsx
-import type { ProblemDto, SyncTask } from '@taskop/contracts';
+import type { ProblemDto, SyncTask } from '@edildy/contracts';
 import { fireEvent, screen } from '@testing-library/react-native';
 import '@/lib/i18n';
 import { capturedPhoto } from '@/offline/testing/fake-transport';
@@ -2966,7 +2966,7 @@ describe('TaskScreen', () => {
   });
 
   it('shows the reviewer’s comment after a rejection, and the problem the task fixes with its photo when online', async () => {
-    mockProblemUrl.mockResolvedValue({ url: `http://files.test/taskop-media/${PROBLEM_PHOTO}?X-Amz-Signature=x`, expiresAt: T.due });
+    mockProblemUrl.mockResolvedValue({ url: `http://files.test/edildy-media/${PROBLEM_PHOTO}?X-Amz-Signature=x`, expiresAt: T.due });
     const problem: ProblemDto = {
       id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e92', executionId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e50', occurrenceId: OCC, localDate: '2026-11-02',
       siteId: SITE, siteName: 'Bakı filialı 1', checklistId: CHECKLIST, checklistName: 'Açılış yoxlaması', itemId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e93',
@@ -3029,7 +3029,7 @@ describe('TaskScreen', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features/tasks/task-screen.test.tsx`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features/tasks/task-screen.test.tsx`
 Expected: FAIL: `./task-screen` does not exist.
 
 - [ ] **Step 3: Write the header and the remote media strip**
@@ -3067,7 +3067,7 @@ const styles = StyleSheet.create({
 Create `apps/mobile/src/features/tasks/remote-media.tsx`:
 
 ```tsx
-import type { MediaKind, MediaStatus, MediaUrl } from '@taskop/contracts';
+import type { MediaKind, MediaStatus, MediaUrl } from '@edildy/contracts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -3168,8 +3168,8 @@ const styles = StyleSheet.create({
 Create `apps/mobile/src/features/tasks/task-screen.tsx`:
 
 ```tsx
-import { MEDIA_KINDS, type MediaKind, type MediaSource, TASK_LIMITS, taskEvidenceMet } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { MEDIA_KINDS, type MediaKind, type MediaSource, TASK_LIMITS, taskEvidenceMet } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -3442,7 +3442,7 @@ In `apps/mobile/app/(app)/_layout.tsx`, add after `<Tabs.Screen name="execution/
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features/tasks && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features/tasks && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS. In the rejection test the problem photo loads through `tasks.problemMediaUrl(TASK, PROBLEM_PHOTO)` and the pending problem video is drawn without a request; offline the instruction photo shows the waiting text and no request is made.
 
 - [ ] **Step 6: Commit**
@@ -3554,7 +3554,7 @@ describe('CreateTaskScreen', () => {
   });
 
   it("retries a failed create with the same client id and shows the server's field error", async () => {
-    const { ApiError } = jest.requireActual<typeof import('@taskop/api-client')>('@taskop/api-client');
+    const { ApiError } = jest.requireActual<typeof import('@edildy/api-client')>('@edildy/api-client');
     mockCreate
       .mockRejectedValueOnce(new ApiError(0, 'NETWORK', 'errors.NETWORK'))
       .mockRejectedValueOnce(new ApiError(422, 'TASK_ASSIGNEE_INVALID', 'errors.TASK_ASSIGNEE_INVALID', { assignee: 'errors.TASK_ASSIGNEE_INVALID' }));
@@ -3609,7 +3609,7 @@ beforeEach(() => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features/tasks`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features/tasks`
 Expected: FAIL: `./create-task-screen` does not exist; the Tasks tab has no "Yeni tapşırıq" button.
 
 - [ ] **Step 3: Write the screen**
@@ -3617,7 +3617,7 @@ Expected: FAIL: `./create-task-screen` does not exist; the Tasks tab has no "Yen
 Create `apps/mobile/src/features/tasks/create-task-screen.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import {
   DEFAULT_TASK_EVIDENCE,
   EVIDENCE_LEVELS,
@@ -3630,7 +3630,7 @@ import {
   type TaskAssigneeOptions,
   type TaskEvidence,
   type TaskPriority,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -3937,7 +3937,7 @@ In `apps/mobile/src/features/tasks/tasks-screen.tsx`:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features/tasks && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features/tasks && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS. Offline nothing is requested; the retry sends the same id; after a create the instruction photo is a `task.media` command with role `instruction`.
 
 - [ ] **Step 6: Commit**
@@ -3964,7 +3964,7 @@ git commit -m "feat(mobile): create tasks on the phone for tasks.manage holders,
 Create `apps/mobile/src/features/tasks/review-screen.test.tsx`:
 
 ```tsx
-import type { TaskDetail } from '@taskop/contracts';
+import type { TaskDetail } from '@edildy/contracts';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import '@/lib/i18n';
@@ -4014,7 +4014,7 @@ const awaiting = (over: Partial<TaskDetail> = {}): TaskDetail => ({
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
-  mockUrl.mockResolvedValue({ url: `http://files.test/taskop-media/${PHOTO}.jpg?X-Amz-Signature=x`, expiresAt: T.due });
+  mockUrl.mockResolvedValue({ url: `http://files.test/edildy-media/${PHOTO}.jpg?X-Amz-Signature=x`, expiresAt: T.due });
 });
 
 async function opened() {
@@ -4126,7 +4126,7 @@ jest.mock('@/lib/session', () => ({
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features/tasks`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features/tasks`
 Expected: FAIL: `./review-screen` does not exist; the Tasks tab has no `section-review`.
 
 - [ ] **Step 3: Write the section and the screen**
@@ -4134,7 +4134,7 @@ Expected: FAIL: `./review-screen` does not exist; the Tasks tab has no `section-
 Create `apps/mobile/src/features/tasks/review-section.tsx`:
 
 ```tsx
-import type { TaskSummary } from '@taskop/contracts';
+import type { TaskSummary } from '@edildy/contracts';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -4212,9 +4212,9 @@ const styles = StyleSheet.create({
 Create `apps/mobile/src/features/tasks/review-screen.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { TASK_LIMITS, type TaskDetail } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { TASK_LIMITS, type TaskDetail } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -4375,7 +4375,7 @@ In `apps/mobile/src/features/tasks/tasks-screen.tsx`, add `import { ReviewSectio
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run (after building the shared packages): `pnpm --filter @taskop/mobile test -- src/features/tasks && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run (after building the shared packages): `pnpm --filter @edildy/mobile test -- src/features/tasks && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -4399,12 +4399,12 @@ git commit -m "feat(mobile): Yoxlama section and review screen with approve and 
 - [ ] **Step 1: Run every automated check**
 
 ```bash
-pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build
-pnpm --filter @taskop/i18n test
-pnpm --filter @taskop/mobile test
-pnpm --filter @taskop/mobile typecheck
-pnpm --filter @taskop/mobile lint
-pnpm --filter @taskop/mobile exec expo config --type prebuild > /dev/null
+pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build
+pnpm --filter @edildy/i18n test
+pnpm --filter @edildy/mobile test
+pnpm --filter @edildy/mobile typecheck
+pnpm --filter @edildy/mobile lint
+pnpm --filter @edildy/mobile exec expo config --type prebuild > /dev/null
 ```
 
 Expected: all suites pass, none skipped, and Jest reports no open handles. `grep -rn "execution_id" apps/mobile/src` lists only `claim_execution_id` and `migration-v3.test.ts`.
@@ -4417,9 +4417,9 @@ ipconfig getifaddr en0                     # e.g. 192.168.1.20
 # apps/api/.env:    S3_PUBLIC_ENDPOINT=http://192.168.1.20:8333
 # apps/mobile/.env: EXPO_PUBLIC_API_URL=http://192.168.1.20:3000
 pnpm db:setup && pnpm db:seed
-pnpm --filter @taskop/api dev
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
-pnpm --filter @taskop/mobile android -- --device
+pnpm --filter @edildy/api dev
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
+pnpm --filter @edildy/mobile android -- --device
 ```
 
 Expected: both phones install the development build; a seeded worker sees the Tapşırıqlar tab with the demo tasks, and the Home card counts them.
@@ -4435,7 +4435,7 @@ Tick each item in the PR description, with the phone model and OS version:
 5. **Reassigned away while offline.** Phone A starts a task and takes a photo offline; on the web, reassign the task to B. Bring A online. Expected on A: the same alert, the task and its photo gone. Expected on B: the task under Mənim with status Yeni.
 6. **Cancelled while offline.** Start a task offline, write a response, attach a photo, "Tamamla"; cancel it on the web; go online. Expected: the task shows "Ləğv edilib", the note "Server qəbul etmədi: Tapşırığın vəziyyəti dəyişib…", and the response read-only.
 7. **Live-only and evidence rules.** A task with photo "Mütləq" and "Yalnız kamera": only "Foto: Kamera" is offered; "Tamamla" is disabled with "Ən azı bir foto əlavə edin." until a photo is attached.
-8. **Manager creates a task on the phone.** Log in as `manager@demo.taskop.az`. "+ Yeni tapşırıq": title, instructions, "Texniki xidmət", a site, a due date, review on, photo "Mütləq", one instruction photo, "Yarat". Expected: the task appears on the web; a team member's phone shows it under Komanda üçün with the instruction photo (online). In airplane mode the Create screen says "İnternet bağlantısı tələb olunur".
+8. **Manager creates a task on the phone.** Log in as `manager@demo.edildy.az`. "+ Yeni tapşırıq": title, instructions, "Texniki xidmət", a site, a due date, review on, photo "Mütləq", one instruction photo, "Yarat". Expected: the task appears on the web; a team member's phone shows it under Komanda üçün with the instruction photo (online). In airplane mode the Create screen says "İnternet bağlantısı tələb olunur".
 9. **Reviewing on the phone.** After a worker submits a review task, the manager's Tasks tab shows it under Yoxlama. "Geri qaytar" without a comment shows "Geri qaytarmaq üçün şərh yazın."; with a comment the worker's phone shows "Geri qaytarıldı: …" and the task back in Mənim (İcradadır); after the worker submits again, "Təsdiqlə" moves it to Tamamlanıb on the worker's phone.
 10. **Logout with unsynced task work.** Offline, start a task and take a photo, then log out. Expected: the unsynced warning counts the task's commands; after "Sil və çıx", logging in as another worker shows none of it.
 11. **Two tasks in one app session.** As the manager, create a task with "+ Yeni tapşırıq" and let the screen close. Without restarting the app, press "+ Yeni tapşırıq" again. Expected: an empty form with "Yarat" enabled; creating a second task makes a second, different task on the web (not a repeat of the first).

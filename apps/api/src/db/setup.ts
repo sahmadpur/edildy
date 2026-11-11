@@ -24,8 +24,8 @@ export async function setupDatabase(opts: SetupOptions): Promise<void> {
   const client = new pg.Client({ connectionString: opts.ownerUrl });
   await client.connect();
   try {
-    await ensureLoginRole(client, 'taskop_app', opts.appPassword, false);
-    await ensureLoginRole(client, 'taskop_platform', opts.platformPassword, true);
+    await ensureLoginRole(client, 'edildy_app', opts.appPassword, false);
+    await ensureLoginRole(client, 'edildy_platform', opts.platformPassword, true);
   } finally {
     await client.end();
   }

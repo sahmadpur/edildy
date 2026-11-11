@@ -11,7 +11,7 @@ import {
   type Missing,
   type NumberItem,
   ruleMatches,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';

@@ -1,4 +1,4 @@
-import { type ChecklistContent, newItem, newRule, type YesNoItem } from '@taskop/contracts';
+import { type ChecklistContent, newItem, newRule, type YesNoItem } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { treeFixture } from './fixtures';
 import { canMoveTo, containerDepth, findItem, listContainers, moveItem, moveSection, rootItemId, subtreeHeight } from './tree';

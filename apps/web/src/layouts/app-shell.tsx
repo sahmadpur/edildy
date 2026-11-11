@@ -1,4 +1,4 @@
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Building2, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, ShieldCheck, TriangleAlert, Users, X } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
@@ -68,7 +68,7 @@ export function isNavItemActive(item: NavItem, pathname: string): boolean {
 }
 
 /** Which groups the user folded, kept across visits. */
-const COLLAPSED_KEY = 'taskop.nav.collapsed';
+const COLLAPSED_KEY = 'edildy.nav.collapsed';
 function readCollapsed(): Set<string> {
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? '[]');
@@ -162,7 +162,7 @@ export function AppShell() {
         <div className="flex items-center gap-3 px-5 pt-5 pb-4">
           <Mark className="size-8 text-white" />
           <div className="min-w-0">
-            <div className="text-base leading-tight font-semibold tracking-[-0.02em]">Taskop</div>
+            <div className="text-base leading-tight font-semibold tracking-[-0.02em]">Edildy</div>
             <div className="text-on-deep-muted truncate text-xs">{me.tenant.name}</div>
           </div>
           <Button variant="ghost" size="icon" className="text-on-deep ml-auto hover:bg-white/10 hover:text-white lg:hidden" aria-label={t('common.closeMenu')} onClick={() => setOpen(false)}>

@@ -1,4 +1,4 @@
-import type { ProblemDto, SyncTask } from '@taskop/contracts';
+import type { ProblemDto, SyncTask } from '@edildy/contracts';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import '@/lib/i18n';
@@ -107,7 +107,7 @@ describe('TaskScreen', () => {
   });
 
   it('shows the reviewer’s comment after a rejection, and the problem the task fixes with its photo when online', async () => {
-    mockProblemUrl.mockResolvedValue({ url: `http://files.test/taskop-media/${PROBLEM_PHOTO}?X-Amz-Signature=x`, expiresAt: T.due });
+    mockProblemUrl.mockResolvedValue({ url: `http://files.test/edildy-media/${PROBLEM_PHOTO}?X-Amz-Signature=x`, expiresAt: T.due });
     const problem: ProblemDto = {
       id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e92', executionId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e50', occurrenceId: OCC, localDate: '2026-11-02',
       siteId: SITE, siteName: 'Bakı filialı 1', checklistId: CHECKLIST, checklistName: 'Açılış yoxlaması', itemId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e93',

@@ -17,7 +17,7 @@ import {
   type SyncTask,
   type YesNoItem,
   type ProblemReportDto,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { Clock } from '../clock';
 import { uuidv7 } from '../ids';
 

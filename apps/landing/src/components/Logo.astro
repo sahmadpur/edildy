@@ -1,5 +1,5 @@
 ---
-import { MARK_CHECK, MARK_RING, MARK_VIEWBOX } from '@taskop/brand';
+import { MARK_CHECK, MARK_RING, MARK_VIEWBOX } from '@edildy/brand';
 interface Props {
   /** Mark colour; the text follows the parent's colour. */
   mark?: string;
@@ -15,7 +15,7 @@ const { mark = 'var(--tp-primary)', size = 28, wordmark = true, class: className
     <path d={MARK_RING} fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"></path>
     <path d={MARK_CHECK} fill="none" stroke="currentColor" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"></path>
   </svg>
-  {wordmark && <span class="logo-text">Taskop</span>}
+  {wordmark && <span class="logo-text">Edildy</span>}
 </span>
 
 <style>

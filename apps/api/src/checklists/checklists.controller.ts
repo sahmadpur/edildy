@@ -1,6 +1,6 @@
 import { Body, Delete, Get, HttpCode, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import type { ChecklistDetail, ChecklistSummary, ChecklistVersion, ChecklistVersionSummary, ContentSaveResult, Page, TemplateDto } from '@taskop/contracts';
+import type { ChecklistDetail, ChecklistSummary, ChecklistVersion, ChecklistVersionSummary, ContentSaveResult, Page, TemplateDto } from '@edildy/contracts';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { ChecklistsService } from './checklists.service';
 import { TemplatesService } from './templates.service';

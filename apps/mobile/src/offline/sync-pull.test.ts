@@ -1,4 +1,4 @@
-import { TASK_LIMITS } from '@taskop/contracts';
+import { TASK_LIMITS } from '@edildy/contracts';
 import { getMeta } from './db';
 import { appendCommand } from './outbox';
 import { applyPull, knownVersionIds } from './sync-pull';

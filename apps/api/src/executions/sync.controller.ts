@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { SyncResponse } from '@taskop/contracts';
+import type { SyncResponse } from '@edildy/contracts';
 import { CurrentPrincipal } from '../common/decorators';
 import type { Principal } from '../common/request';
 import { SyncQueryDto, SyncResponseDto } from './dto';

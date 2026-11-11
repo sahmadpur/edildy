@@ -1,4 +1,4 @@
-import type { AssignmentDetail, SystemRoleKey } from '@taskop/contracts';
+import type { AssignmentDetail, SystemRoleKey } from '@edildy/contracts';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
 import { sampleContent } from './checklist-fixtures';

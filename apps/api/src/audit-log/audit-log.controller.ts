@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { AuditEntryDto, Page } from '@taskop/contracts';
+import type { AuditEntryDto, Page } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { AuditLogService } from './audit-log.service';
 import { AuditListQueryDto, AuditPageResponse } from './dto';

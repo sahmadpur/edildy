@@ -1,4 +1,4 @@
-import { AUDIT_LIMITS, AUDIT_RESULTS, type AuditResult, type FinishAuditInput, finishAuditInputSchema, reportRecipients } from '@taskop/contracts';
+import { AUDIT_LIMITS, AUDIT_RESULTS, type AuditResult, type FinishAuditInput, finishAuditInputSchema, reportRecipients } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MESSAGE_LIMITS, type MessagePreview, type MessageSummary, type MessageTargetOptions } from '@taskop/contracts';
+import { MESSAGE_LIMITS, type MessagePreview, type MessageSummary, type MessageTargetOptions } from '@edildy/contracts';
 import { and, asc, eq, ilike, inArray, ne, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';

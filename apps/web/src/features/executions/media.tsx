@@ -1,4 +1,4 @@
-import type { ExecutionMediaDto } from '@taskop/contracts';
+import type { ExecutionMediaDto } from '@edildy/contracts';
 import { Play } from 'lucide-react';
 import { createContext, type ReactNode, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

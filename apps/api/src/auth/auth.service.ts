@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import type { LoginResult } from '@taskop/contracts';
+import type { LoginResult } from '@edildy/contracts';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';
@@ -12,7 +12,7 @@ import { DbService } from '../db/db.service';
 import { roles, sessions, tenants, users } from '../db/schema';
 import { MAILER, type Mailer, type MailMessage } from '../mail/mailer';
 import { userLanguage } from '../common/locale';
-import { pickLanguage } from '@taskop/i18n';
+import { pickLanguage } from '@edildy/i18n';
 import { verifyEmailMail } from '../mail/templates';
 import { seedTenantDefaults } from '../tenancy/bootstrap';
 import { hashOpaqueToken, parseOpaqueToken } from './crypto/opaque-token';

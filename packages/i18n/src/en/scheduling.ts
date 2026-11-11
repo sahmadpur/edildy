@@ -211,7 +211,7 @@ export default {
     assignees: 'Assignees',
     history: 'History',
     actorSystem: 'System',
-    actorPlatform: 'Taskop support',
+    actorPlatform: 'Edildy support',
     cancel: 'Cancel run',
     cancelReason: 'Cancellation reason',
     cancelled: 'Run cancelled',

@@ -1,4 +1,4 @@
-import { EXECUTION_LIMITS } from '@taskop/contracts';
+import { EXECUTION_LIMITS } from '@edildy/contracts';
 import { type Db, getMeta } from './db';
 
 export interface Clock {

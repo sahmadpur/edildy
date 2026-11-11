@@ -1,5 +1,5 @@
-import { AUDIT_LIMITS, type AuditResult, type AuditScore, type AuditVerdict, type ProblemSeverity } from '@taskop/contracts';
-import { interpolate, type Language, translationsFor } from '@taskop/i18n';
+import { AUDIT_LIMITS, type AuditResult, type AuditScore, type AuditVerdict, type ProblemSeverity } from '@edildy/contracts';
+import { interpolate, type Language, translationsFor } from '@edildy/i18n';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { formatInstant } from '../../reports/export/report-table';
 import { renderPdf } from '../../reports/pdf/pdf-document';
@@ -132,7 +132,7 @@ export function auditReportDefinition(d: AuditReportData): TDocumentDefinitions 
   return {
     pageSize: 'A4',
     pageMargins: [28, 28, 28, 40],
-    info: { title: `${L.title} ${d.auditId}`, creator: 'Taskop' },
+    info: { title: `${L.title} ${d.auditId}`, creator: 'Edildy' },
     defaultStyle: { font: 'NotoSans', fontSize: 9 },
     styles: {
       tenant: { fontSize: 14, bold: true },

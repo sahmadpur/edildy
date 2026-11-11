@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { NotificationRuleDto } from '@taskop/contracts';
+import type { NotificationRuleDto } from '@edildy/contracts';
 import { and, asc, eq, inArray, ne, or, type SQL, sql } from 'drizzle-orm';
 import { ScopeService } from '../common/scope.service';
 import { DbService } from '../db/db.service';

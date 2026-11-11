@@ -1,4 +1,4 @@
-import { ALL_PERMISSIONS } from '@taskop/contracts';
+import { ALL_PERMISSIONS } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { CredentialService } from '../src/auth/credential.service';

@@ -9,7 +9,7 @@ import {
   type TaskEvidence,
   type TaskPriority,
   type UpdateTaskInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { type AssigneeChoice, dueAtFromLocal, localDueParts, sameChoice } from './labels';
 
 export interface TaskFormValues {

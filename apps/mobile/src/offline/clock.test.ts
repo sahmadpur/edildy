@@ -1,4 +1,4 @@
-import { EXECUTION_LIMITS } from '@taskop/contracts';
+import { EXECUTION_LIMITS } from '@edildy/contracts';
 import { clampOffset, isClockSkewed, isClockTooFarAhead, measureOffset, readOffset, serverTime } from './clock';
 import { setMeta } from './db';
 import { openTestDb } from './testing/node-db';

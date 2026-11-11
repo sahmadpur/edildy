@@ -1,6 +1,6 @@
-import { ApiError } from '@taskop/api-client';
-import type { ChecklistDetail } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import type { ChecklistDetail } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -41,8 +41,8 @@ describe('ChecklistDetailPage', () => {
     expect(rows).toHaveLength(3);
     expect(within(rows[1]!).getByText('v2')).toBeInTheDocument();
     expect(within(rows[1]!).getByText('Elvin')).toBeInTheDocument();
-    expect(within(rows[2]!).getByText('Taskop')).toBeInTheDocument();
-    expect(screen.getByText('Taskop şablonundan yaradılıb')).toBeInTheDocument();
+    expect(within(rows[2]!).getByText('Edildy')).toBeInTheDocument();
+    expect(screen.getByText('Edildy şablonundan yaradılıb')).toBeInTheDocument();
   });
 
   it('starts a draft from the current version when editing', async () => {

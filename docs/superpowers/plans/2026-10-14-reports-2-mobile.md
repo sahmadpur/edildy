@@ -1,4 +1,4 @@
-# Taskop Reports — Part 2: Mobile Team Tab — Implementation Plan
+# Edildy Reports — Part 2: Mobile Team Tab — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -28,10 +28,10 @@
 **Spec:** `docs/superpowers/specs/2026-10-14-reports-design.md`. This plan covers §7, the mobile edge cases of §8 and the mobile tests of §9. The interface source is `docs/superpowers/plans/2026-10-14-reports-1-api.md` → **Interfaces for Parts 2 and 3**. Names from that section are used exactly. This plan invents no endpoint and no field.
 
 **This plan is Part 2 of 3.** It depends on **Part 1 Tasks 1–5** being merged into the feature branch. They deliver:
-- `report-logic.ts` and `reports.ts` in `@taskop/contracts`;
+- `report-logic.ts` and `reports.ts` in `@edildy/contracts`;
 - the `reports.*` permissions and error codes;
 - `az.reports` and `az.errors.REPORT_*`;
-- `createReportsApi` in `@taskop/api-client`.
+- `createReportsApi` in `@edildy/api-client`.
 
 Every Jest test here runs against a mocked `api`. Part 3 (web) is independent of this part.
 
@@ -57,7 +57,7 @@ Every Jest test here runs against a mocked `api`. Part 3 (web) is independent of
 ## Global Constraints
 
 - All Foundation Part 3, SP4 Part 2, SP5 Part 2 and SP6 Part 2 mobile constraints still apply.
-  - All text comes from `@taskop/i18n`. This part adds only `az.mobile.tabs.team` and `az.mobile.team.*`.
+  - All text comes from `@edildy/i18n`. This part adds only `az.mobile.tabs.team` and `az.mobile.team.*`.
   - It reuses Part 1's `az.reports.*` and `az.errors.REPORT_*` keys, plus `az.executions.*`, `az.scheduling.statuses`, `az.scheduling.cancelReasons`, `az.tasks.resolutions`, `az.common.{retry, close}` and `mobile.execution.problemFlagged`.
   - Touch targets are at least 44 pt. A network failure never logs the user out.
 - **Visibility, exactly:** `me.permissions.includes('reports.view') && me.role.dataScope !== 'own'` (`canSeeTeam`). The tab and both Team routes use this rule and no other.
@@ -97,9 +97,9 @@ Every Jest test here runs against a mocked `api`. Part 3 (web) is independent of
 - **The worker flow stays the same.**
   - `src/features/execution/execution-screen.test.tsx` and `finish-screen.test.tsx` are not edited, and they pass after every task.
   - The only edits in `features/execution` are moving `Options` into `parts.tsx`, adding `choiceOptions`, and the new `answer-view.tsx`.
-- **The shared packages ship `dist/`.** Before any mobile test or typecheck, run `pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build`.
+- **The shared packages ship `dist/`.** Before any mobile test or typecheck, run `pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build`.
 - **Tests:**
-  - The mobile tests are Jest (`jest-expo`), run with `pnpm --filter @taskop/mobile test -- <path>`. RNTL 14's `render`, `renderHook`, `rerender`, `fireEvent.*` and `act` are awaited.
+  - The mobile tests are Jest (`jest-expo`), run with `pnpm --filter @edildy/mobile test -- <path>`. RNTL 14's `render`, `renderHook`, `rerender`, `fireEvent.*` and `act` are awaited.
   - Every test that renders `RemoteMediaStrip` mocks `@/features/execution/capture`, which imports the camera.
   - `packages/i18n` tests are Vitest.
 - **Typed routes:** a fresh worktree has no `.expo/types`, so `router.push` takes the loose `Href` type. Do not run `expo start` before Task 8 has added `app/(app)/team/…`. Task 9 starts the dev server, which generates the route types with every route present.
@@ -109,7 +109,7 @@ Every Jest test here runs against a mocked `api`. Part 3 (web) is independent of
 
 1. **The Team tab is a `Tabs.Screen`, hidden with `href: null` when the viewer may not see it, and its routes guard themselves.**
    - `app/(app)/_layout.tsx` is a `Tabs` navigator. Hidden screens such as `task/[id]` and `notifications` are entries with `HIDDEN` options.
-   - A hidden tab can still be reached by URL (`taskop://team`, a notification, a typed route). So `TeamGate` checks `canSeeTeam` again in both route files and renders `<Redirect href="/" />` without access.
+   - A hidden tab can still be reached by URL (`edildy://team`, a notification, a typed route). So `TeamGate` checks `canSeeTeam` again in both route files and renders `<Redirect href="/" />` without access.
    - When a profile refresh removes `reports.view`, the layout re-renders, the tab disappears, and an open Team screen redirects.
 2. **"Today" is the tenant's day, recomputed while the screen stays open.**
    - The period is computed on each render from `services.clock.now()` (through `useNow()`, which ticks every 15 s and on every local change) and `me.tenant.timezone`.
@@ -255,7 +255,7 @@ apps/mobile/
 
 - [ ] **Step 1: Write the failing i18n test**
 
-Append to `packages/i18n/src/i18n.test.ts`. `PERIOD_PRESETS` is already in the `@taskop/contracts` import, added by Part 1 Task 4.
+Append to `packages/i18n/src/i18n.test.ts`. `PERIOD_PRESETS` is already in the `@edildy/contracts` import, added by Part 1 Task 4.
 
 ```ts
 describe('mobile team translations', () => {
@@ -283,7 +283,7 @@ describe('mobile team translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL in `labels the Team tab…`, because `az.mobile.tabs.team` is undefined. `shares the report wording…` passes, because Part 1 Task 4 added `az.reports`.
 
 - [ ] **Step 3: Add the strings**
@@ -316,7 +316,7 @@ and add after the `notifications` block (before the closing `} as const;`):
 
 - [ ] **Step 4: Run the i18n tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS.
 
 - [ ] **Step 5: Write the failing fixture test**
@@ -324,7 +324,7 @@ Expected: PASS.
 `apps/mobile/src/features/team/testing/fixtures.test.ts`:
 
 ```ts
-import { employeeReportRowSchema, executionDetailSchema, meSchema, occurrenceDetailSchema, reportRunPageSchema, reportSummarySchema } from '@taskop/contracts';
+import { employeeReportRowSchema, executionDetailSchema, meSchema, occurrenceDetailSchema, reportRunPageSchema, reportSummarySchema } from '@edildy/contracts';
 import { checklist } from '@/offline/testing/fixtures';
 import { employeeRow, executionDetail, missedOccurrence, occurrenceDetail, reportRun, reportSummary, RUN_CURSOR, runPage, teamMe, unassignedRow } from './fixtures';
 
@@ -350,7 +350,7 @@ describe('team fixtures', () => {
 
 - [ ] **Step 6: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build && pnpm --filter @taskop/mobile test -- src/features/team/testing`
+Run: `pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build && pnpm --filter @edildy/mobile test -- src/features/team/testing`
 Expected: FAIL with `Cannot find module './fixtures'`.
 
 - [ ] **Step 7: Write the fixtures and the render helper**
@@ -373,7 +373,7 @@ import {
   type ReportSummary,
   RUN_COUNT_KEYS,
   type RunCounts,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { type Checklist, CHECKLIST, DEVICE, ME, OCC, SITE, T, TASK, TENANT, VERSION } from '@/offline/testing/fixtures';
 
 export const WORKER_A = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4eb0';
@@ -406,7 +406,7 @@ export function teamMe(o: { id?: string; permissions?: PermissionKey[]; dataScop
       fullName: 'Leyla Məmmədova',
       jobTitle: 'Menecer',
       kind: 'staff',
-      email: 'manager@demo.taskop.az',
+      email: 'manager@demo.edildy.az',
       username: null,
       emailVerified: true,
       credentialKind: 'password',
@@ -633,7 +633,7 @@ export function gate(): { open: () => void; opened: Promise<void> } {
 
 - [ ] **Step 8: Run the fixture test, then the whole mobile suite, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/testing && pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/testing && pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS. The existing suites are unchanged by Part 1, which made no existing contract field required.
 
 - [ ] **Step 9: Commit**
@@ -652,7 +652,7 @@ git commit -m "feat(mobile): Team tab strings, report fixtures and the query tes
 - Test: `apps/mobile/src/features/team/team-rules.test.ts`, `apps/mobile/src/features/team/team-format.test.ts`
 
 **Interfaces:**
-- Consumes (Part 1): `resolvePeriod(preset, today)`, `type Period`, `type PeriodPreset`, `PERIOD_PRESETS`, `RUN_BUCKETS`, `type RunBucket`, `type RunCounts`, `type ReportRun`, `type EmployeeReportRow`. Existing: `localDateOf(instant: Date, tz: string)`, `type Me`, `type LocalDate`, `OCCURRENCE_STATUSES`, `type OccurrenceStatus`, `CANCEL_REASON_CODES`, `intlLocale` from `@taskop/i18n`. Task 1 fixtures.
+- Consumes (Part 1): `resolvePeriod(preset, today)`, `type Period`, `type PeriodPreset`, `PERIOD_PRESETS`, `RUN_BUCKETS`, `type RunBucket`, `type RunCounts`, `type ReportRun`, `type EmployeeReportRow`. Existing: `localDateOf(instant: Date, tz: string)`, `type Me`, `type LocalDate`, `OCCURRENCE_STATUSES`, `type OccurrenceStatus`, `CANCEL_REASON_CODES`, `intlLocale` from `@edildy/i18n`. Task 1 fixtures.
 - Produces:
   - `team-rules.ts`:
     - `canSeeTeam(me: { permissions: Me['permissions']; role: Pick<Me['role'], 'dataScope'> }): boolean`;
@@ -674,7 +674,7 @@ git commit -m "feat(mobile): Team tab strings, report fixtures and the query tes
 `apps/mobile/src/features/team/team-rules.test.ts`:
 
 ```ts
-import { type DataScope, PERIOD_PRESETS, type PermissionKey, RUN_BUCKETS } from '@taskop/contracts';
+import { type DataScope, PERIOD_PRESETS, type PermissionKey, RUN_BUCKETS } from '@edildy/contracts';
 import { OCC, OCC2, OCC3 } from '@/offline/testing/fixtures';
 import { canSeeTeam, CHIP_BUCKETS, employeeChoices, notCompleted, TEAM_CHIPS, TEAM_PERIODS, teamPeriod, uniqueRuns } from './team-rules';
 import { employeeRow, KAMRAN, reportRun, unassignedRow, WORKER_A, WORKER_B } from './testing/fixtures';
@@ -755,7 +755,7 @@ describe('uniqueRuns', () => {
 `apps/mobile/src/features/team/team-format.test.ts`:
 
 ```ts
-import { OCCURRENCE_STATUSES } from '@taskop/contracts';
+import { OCCURRENCE_STATUSES } from '@edildy/contracts';
 import i18n from '@/lib/i18n';
 import { cancelReasonText, formatLocalDay, percentText, receiptDiffers, runPerson, statusTone } from './team-format';
 import { AYNUR, KAMRAN } from './testing/fixtures';
@@ -809,7 +809,7 @@ describe('team formatting', () => {
 
 - [ ] **Step 2: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/team-rules src/features/team/team-format`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/team-rules src/features/team/team-format`
 Expected: FAIL with `Cannot find module './team-rules'` and `Cannot find module './team-format'`.
 
 - [ ] **Step 3: Implement**
@@ -827,7 +827,7 @@ import {
   resolvePeriod,
   type RunBucket,
   type RunCounts,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** Spec §7.1: the Team tab and its routes exist only for reports.view with a data scope wider than `own`. */
 export function canSeeTeam(me: { permissions: Me['permissions']; role: Pick<Me['role'], 'dataScope'> }): boolean {
@@ -886,8 +886,8 @@ export function uniqueRuns(pages: readonly { items: readonly ReportRun[] }[]): R
 `apps/mobile/src/features/team/team-format.ts`:
 
 ```ts
-import { CANCEL_REASON_CODES, type LocalDate, type OccurrenceStatus, type ReportRun } from '@taskop/contracts';
-import { intlLocale } from '@taskop/i18n';
+import { CANCEL_REASON_CODES, type LocalDate, type OccurrenceStatus, type ReportRun } from '@edildy/contracts';
+import { intlLocale } from '@edildy/i18n';
 import type { TFunction } from 'i18next';
 
 /** A server receipt is shown under a device time only when they differ by more than this (decision 11, as on the web). */
@@ -942,7 +942,7 @@ export function cancelReasonText(t: TFunction, reason: string): string {
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/team-rules src/features/team/team-format && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/team-rules src/features/team/team-format && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -975,7 +975,7 @@ git commit -m "feat(mobile): Team tab rules (visibility, tenant-day periods, chi
 `apps/mobile/src/features/team/queries.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -1132,7 +1132,7 @@ describe('team queries', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/queries`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/queries`
 Expected: FAIL with `Cannot find module './queries'`.
 
 - [ ] **Step 3: Implement**
@@ -1140,8 +1140,8 @@ Expected: FAIL with `Cannot find module './queries'`.
 `apps/mobile/src/features/team/queries.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
-import type { LocalDate, ReportFiltersQuery, RunBucket } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { LocalDate, ReportFiltersQuery, RunBucket } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { api, session } from '@/lib/session';
@@ -1225,7 +1225,7 @@ export function useRefreshMeOnForbidden(errors: readonly unknown[]): void {
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/queries && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/queries && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS, and Jest reports no open handles.
 
 - [ ] **Step 5: Commit**
@@ -1258,8 +1258,8 @@ git commit -m "feat(mobile): team report queries, keyed per viewer, online only,
 `apps/mobile/src/features/team/team-screen.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { formatDateTime } from '@edildy/i18n';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import '@/lib/i18n';
 import { CHECKLIST, OCC, OCC2, OCC3, T } from '@/offline/testing/fixtures';
@@ -1506,7 +1506,7 @@ describe('Team screen', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/team-screen`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/team-screen`
 Expected: FAIL with `Cannot find module './team-screen'`.
 
 - [ ] **Step 3: Write the pieces**
@@ -1543,7 +1543,7 @@ const styles = StyleSheet.create({
 `apps/mobile/src/features/team/count-tiles.tsx`:
 
 ```tsx
-import type { ReportSummary } from '@taskop/contracts';
+import type { ReportSummary } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '@/lib/theme';
@@ -1595,8 +1595,8 @@ const styles = StyleSheet.create({
 `apps/mobile/src/features/team/run-row.tsx`:
 
 ```tsx
-import type { ReportRun } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import type { ReportRun } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Badge } from '@/features/tasks/task-row';
@@ -1835,7 +1835,7 @@ const styles = StyleSheet.create({
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS. Only this file's tests are new. If `typecheck` complains about `'/team/run/[id]'`, a stale `.expo/types` folder is present: delete `apps/mobile/.expo/types` (see Global Constraints, typed routes).
 
 - [ ] **Step 6: Commit**
@@ -1868,7 +1868,7 @@ git commit -m "feat(mobile): Team screen with period chips, count tiles, status 
 `apps/mobile/src/features/team/team-list.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import '@/lib/i18n';
 import { CHECKLIST, OCC, OCC2, OCC3, OCC4 } from '@/offline/testing/fixtures';
@@ -2026,7 +2026,7 @@ describe('Team run list', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/team-list`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/team-list`
 Expected: FAIL. `loads the next page…` finds no `run-<OCC3>`, because the list has no `onEndReached`. The refresh, refocus and failed-page tests fail too.
 
 - [ ] **Step 3: Implement**
@@ -2195,7 +2195,7 @@ const styles = StyleSheet.create({
 
 - [ ] **Step 4: Run the Team tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS, both `team-screen.test.tsx` (Task 4) and `team-list.test.tsx`, with no open handles.
 
 - [ ] **Step 5: Commit**
@@ -2322,15 +2322,15 @@ describe('read-only answers', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution/answer-view`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution/answer-view`
 Expected: FAIL with `Cannot find module './answer-view'`.
 
 - [ ] **Step 3: Move `Options` into `parts.tsx` and add `choiceOptions`**
 
-In `apps/mobile/src/features/execution/parts.tsx`, replace the first line (`import type { MediaKind, MediaSource } from '@taskop/contracts';`) with:
+In `apps/mobile/src/features/execution/parts.tsx`, replace the first line (`import type { MediaKind, MediaSource } from '@edildy/contracts';`) with:
 
 ```ts
-import type { Item, MediaKind, MediaSource } from '@taskop/contracts';
+import type { Item, MediaKind, MediaSource } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 ```
 
@@ -2428,7 +2428,7 @@ with:
 
 - [ ] **Step 5: Check that the worker flow did not change**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution src/features/home src/features/sync && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution src/features/home src/features/sync && pnpm --filter @edildy/mobile typecheck`
 Expected: every existing test passes, including `execution-screen.test.tsx` and `finish-screen.test.tsx`, which this task does not edit. `answer-view.test.tsx` still fails (Step 6 writes it).
 
 - [ ] **Step 6: Write the read-only display**
@@ -2447,7 +2447,7 @@ import {
   type MediaUrl,
   visibleItems,
   walkItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { type RemoteMedia, RemoteMediaStrip } from '@/features/tasks/remote-media';
@@ -2572,7 +2572,7 @@ const styles = StyleSheet.create({
 
 - [ ] **Step 7: Run every execution test, the new one included**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/execution src/features/tasks && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/execution src/features/tasks && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS. `answer-view.test.tsx` passes. The worker's `execution-screen.test.tsx` and `finish-screen.test.tsx` pass unedited. `git diff --stat -- apps/mobile/src/features/execution/*.test.tsx` lists only `answer-view.test.tsx`.
 
 - [ ] **Step 8: Commit**
@@ -2604,8 +2604,8 @@ git commit -m "feat(mobile): read-only answer and problem display sharing the wo
 `apps/mobile/src/features/team/run-screen.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { formatDateTime } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { formatDateTime } from '@edildy/i18n';
 import { fireEvent, screen } from '@testing-library/react-native';
 import '@/lib/i18n';
 import { checklist, OCC, T } from '@/offline/testing/fixtures';
@@ -2760,7 +2760,7 @@ describe('Team run screen', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/run-screen`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/run-screen`
 Expected: FAIL with `Cannot find module './run-screen'`.
 
 - [ ] **Step 3: Implement**
@@ -2768,8 +2768,8 @@ Expected: FAIL with `Cannot find module './run-screen'`.
 `apps/mobile/src/features/team/run-screen.tsx`:
 
 ```tsx
-import type { ExecutionSummary, OccurrenceDetail } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import type { ExecutionSummary, OccurrenceDetail } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { FormError, mobileErrorText } from '@/components/form-error';
@@ -2925,7 +2925,7 @@ const styles = StyleSheet.create({
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team src/features/execution && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team src/features/execution && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -3053,7 +3053,7 @@ describe('Team routes', () => {
 
 - [ ] **Step 2: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team/team-routes`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team/team-routes`
 Expected: FAIL with `Cannot find module '../../../app/(app)/team/index'`.
 
 - [ ] **Step 3: Write the gate and the routes**
@@ -3167,7 +3167,7 @@ export default function AppLayout() {
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/team src/features/tasks/routes && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/team src/features/tasks/routes && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -3187,21 +3187,21 @@ git commit -m "feat(mobile): Komanda tab for report viewers, with guarded Team r
 **Interfaces:**
 - Consumes: everything above. Also:
   - a running API with **all of Part 1** merged: Tasks 6–15, and Task 16 for the `perf` tenant;
-  - its seed: `pnpm db:seed` creates the demo tenant `demo` with manager Leyla `manager@demo.taskop.az` / `DemoPassword123` (Manager, `site_subtree`), owner `owner@demo.taskop.az` / `DemoPassword123`, and workers `elvin` and `nigar` with PIN `482915`. It also creates yesterday's partial "Səhər təmizliyi" run by elvin with a rule problem.
-  - Optional: `pnpm --filter @taskop/api db:seed-report-volume` creates the `perf` tenant with the `site_subtree` manager `perf-manager@taskop.test` / `PerfPassword123`.
+  - its seed: `pnpm db:seed` creates the demo tenant `demo` with manager Leyla `manager@demo.edildy.az` / `DemoPassword123` (Manager, `site_subtree`), owner `owner@demo.edildy.az` / `DemoPassword123`, and workers `elvin` and `nigar` with PIN `482915`. It also creates yesterday's partial "Səhər təmizliyi" run by elvin with a rule problem.
+  - Optional: `pnpm --filter @edildy/api db:seed-report-volume` creates the `perf` tenant with the `site_subtree` manager `perf-manager@edildy.test` / `PerfPassword123`.
   - The web app from Part 3 is optional, for comparing numbers. Without it, compare with `curl` on `/api/v1/reports/summary`.
 - Produces: verified development builds on the iOS simulator and on one real phone. The real phone is needed for airplane mode. No push credentials are needed for this part.
 
 - [ ] **Step 1: Run every automated check**
 
 ```bash
-pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build
-pnpm --filter @taskop/i18n test
-pnpm --filter @taskop/mobile test
-pnpm --filter @taskop/mobile typecheck
-pnpm --filter @taskop/mobile lint
-pnpm --filter @taskop/mobile exec expo install --check
-pnpm --filter @taskop/mobile exec expo config --type prebuild > /dev/null
+pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build
+pnpm --filter @edildy/i18n test
+pnpm --filter @edildy/mobile test
+pnpm --filter @edildy/mobile typecheck
+pnpm --filter @edildy/mobile lint
+pnpm --filter @edildy/mobile exec expo install --check
+pnpm --filter @edildy/mobile exec expo config --type prebuild > /dev/null
 grep -rln "api\.reports\." apps/mobile/src apps/mobile/app | grep -v '\.test\.tsx\?$'
 grep -rn "\.db\b\|\.store\.\|\.tasks\." apps/mobile/src/features/team
 git log --format=%s -- apps/mobile/src/features/execution/execution-screen.test.tsx apps/mobile/src/features/execution/finish-screen.test.tsx | head -3
@@ -3222,10 +3222,10 @@ ipconfig getifaddr en0                     # e.g. 192.168.1.20
 # apps/api/.env:    S3_PUBLIC_ENDPOINT=http://192.168.1.20:8333, JOBS_ENABLED=true (occurrences come from the cron)
 # apps/mobile/.env: EXPO_PUBLIC_API_URL=http://192.168.1.20:3000
 pnpm db:setup && pnpm db:seed              # applies 0013_reports and 0014_reports_permissions
-pnpm --filter @taskop/api db:seed-report-volume   # optional: the perf tenant for item 8
-pnpm --filter @taskop/api dev
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
+pnpm --filter @edildy/api db:seed-report-volume   # optional: the perf tenant for item 8
+pnpm --filter @edildy/api dev
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
 ```
 
 Expected: the app installs on the simulator and on the phone. A profile cached before the migration lacks `reports.view` until the app refreshes it, so kill and reopen the app once after `db:setup`.
@@ -3236,8 +3236,8 @@ Tick each item in the PR description, with the phone model and OS version.
 
 1. **Workers never see the tab.**
    - Sign in as `elvin` (org code `demo`, PIN `482915`). Expected: the tabs Əsas, Tapşırıqlar and Profil, with no Komanda.
-   - On the simulator, run `xcrun simctl openurl booted taskop://team`. Expected: the app stays on Əsas.
-   - Run `xcrun simctl openurl booted taskop://team/run/<any occurrence id>`. Expected: Əsas.
+   - On the simulator, run `xcrun simctl openurl booted edildy://team`. Expected: the app stays on Əsas.
+   - Run `xcrun simctl openurl booted edildy://team/run/<any occurrence id>`. Expected: Əsas.
 2. **The manager's tab and today's tiles.**
    - Log out and sign in as Leyla on the Rəhbər tab. Expected: a Komanda tab between Tapşırıqlar and Profil, opening on "Bu gün".
    - Expected: six tiles: Tamamlanıb, Tamamlanmayıb, Gecikib, Yarımçıq, Problemli, Tamamlanma faizi.
@@ -3265,7 +3265,7 @@ Tick each item in the PR description, with the phone model and OS version.
    - Expected: nothing on the screen can be edited, and back returns to the list where it was.
 7. **Read-only unexecuted run.** Open an overdue or missed run. Expected: the header, "İcraçılar" with the assignees (or "Təyin edilməyib"), and "Hələ icra edilməyib". No answers are requested.
 8. **Paging on a big tenant.**
-   - Sign in as `perf-manager@taskop.test` (org `perf`), choose "30 gün" and "Hamısı", and scroll fast to the bottom several times.
+   - Sign in as `perf-manager@edildy.test` (org `perf`), choose "30 gün" and "Hamısı", and scroll fast to the bottom several times.
    - Expected: rows keep coming 50 at a time with a spinner at the bottom, no row appears twice, and scrolling stops at the end.
    - Pull to refresh at the top. Expected: the list restarts at the first page.
 9. **Offline.**
@@ -3277,7 +3277,7 @@ Tick each item in the PR description, with the phone model and OS version.
     - On the web, create a custom role with `reports.view` and the `site_subtree` scope, and give it to a second staff user. Sign in as that user on the phone and open Komanda.
     - On the web, remove `reports.view` from the role. On the phone, pull to refresh.
     - Expected: "Bu əməliyyat üçün icazəniz yoxdur." briefly, then the Komanda tab disappears and the app shows Əsas.
-11. **Another manager on the same phone.** Log out Leyla and sign in as `owner@demo.taskop.az`. Open Komanda. Expected: the owner's numbers (scope `all`). Leyla's tiles never appear, not even for a moment.
+11. **Another manager on the same phone.** Log out Leyla and sign in as `owner@demo.edildy.az`. Open Komanda. Expected: the owner's numbers (scope `all`). Leyla's tiles never appear, not even for a moment.
 12. **The tenant's day, not the phone's.**
     - In iOS Settings → General → Date & Time, turn off "Set Automatically" and pick New York.
     - At a Baku time between 00:00 and 08:00 (still the previous day in New York), open Komanda. Expected: "Bu gün" shows the Baku day's numbers, the same as the web dashboard.

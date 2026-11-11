@@ -1,5 +1,5 @@
 export default {
-  appName: 'Taskop',
+  appName: 'Edildy',
   save: 'Yadda saxla',
   cancel: 'İmtina et',
   create: 'Yarat',

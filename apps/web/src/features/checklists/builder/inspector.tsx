@@ -1,4 +1,4 @@
-import { type ChecklistContent, DATETIME_MODES, EVIDENCE_LEVELS, hasRules, type Item } from '@taskop/contracts';
+import { type ChecklistContent, DATETIME_MODES, EVIDENCE_LEVELS, hasRules, type Item } from '@edildy/contracts';
 import { ArrowDown, ArrowUp, Copy, Trash2, X } from 'lucide-react';
 import { type ReactNode, useId } from 'react';
 import { useTranslation } from 'react-i18next';

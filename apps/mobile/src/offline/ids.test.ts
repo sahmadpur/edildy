@@ -1,4 +1,4 @@
-import { idSchema } from '@taskop/contracts';
+import { idSchema } from '@edildy/contracts';
 import { uuidv7 } from './ids';
 
 const filled = (byte: number) => (n: number) => new Uint8Array(n).fill(byte);

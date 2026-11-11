@@ -119,7 +119,7 @@ describe('CreateTaskScreen', () => {
   });
 
   it("retries a failed create with the same client id and shows the server's field error", async () => {
-    const { ApiError } = jest.requireActual<typeof import('@taskop/api-client')>('@taskop/api-client');
+    const { ApiError } = jest.requireActual<typeof import('@edildy/api-client')>('@edildy/api-client');
     mockCreate
       .mockRejectedValueOnce(new ApiError(0, 'NETWORK', 'errors.NETWORK'))
       .mockRejectedValueOnce(new ApiError(422, 'TASK_ASSIGNEE_INVALID', 'errors.TASK_ASSIGNEE_INVALID', { assignee: 'errors.TASK_ASSIGNEE_INVALID' }));
@@ -154,7 +154,7 @@ describe('CreateTaskScreen', () => {
   });
 
   it('shows the top-level error when the server rejects a field the form does not draw', async () => {
-    const { ApiError } = jest.requireActual<typeof import('@taskop/api-client')>('@taskop/api-client');
+    const { ApiError } = jest.requireActual<typeof import('@edildy/api-client')>('@edildy/api-client');
     mockCreate.mockRejectedValueOnce(new ApiError(422, 'VALIDATION_FAILED', 'errors.VALIDATION_FAILED', { instructions: 'errors.VALIDATION_FAILED' }));
     const t = await createTestServices({ online: true });
     await renderWithServices(t.services, <CreateTaskScreen />);

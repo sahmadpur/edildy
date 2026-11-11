@@ -1,4 +1,4 @@
-import type { Item, MediaKind, MediaSource } from '@taskop/contracts';
+import type { Item, MediaKind, MediaSource } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';

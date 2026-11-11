@@ -12,15 +12,15 @@ BEGIN
 END $$;
 --> statement-breakpoint
 -- Shifts, assignments and occurrences are never deleted; roster and snapshot rows are replaced.
-GRANT SELECT, INSERT, UPDATE ON shifts, assignments, occurrences TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE ON shifts, assignments, occurrences TO edildy_app, edildy_platform;
 --> statement-breakpoint
-GRANT SELECT, INSERT, UPDATE, DELETE ON shift_roster, assignment_assignees, occurrence_assignees TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT, UPDATE, DELETE ON shift_roster, assignment_assignees, occurrence_assignees TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- FR-11.02: status history is append-only.
-GRANT SELECT, INSERT ON occurrence_status_history TO taskop_app, taskop_platform;
+GRANT SELECT, INSERT ON occurrence_status_history TO edildy_app, edildy_platform;
 --> statement-breakpoint
 -- pg-boss keeps its job tables in their own schema, owned by the app account so it can install and upgrade them itself.
-CREATE SCHEMA IF NOT EXISTS pgboss AUTHORIZATION taskop_app;
+CREATE SCHEMA IF NOT EXISTS pgboss AUTHORIZATION edildy_app;
 --> statement-breakpoint
 -- The backfill below must see every tenant's rows (see 0004 for why row_security is switched off).
 SET LOCAL row_security = off;

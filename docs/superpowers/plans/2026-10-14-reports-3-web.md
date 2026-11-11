@@ -1,4 +1,4 @@
-# Taskop Reports — Part 3: Web App — Implementation Plan
+# Edildy Reports — Part 3: Web App — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,14 +16,14 @@
 **Spec:** `docs/superpowers/specs/2026-10-14-reports-design.md` — this plan implements §6, the web parts of §8 and the web and Playwright parts of §9. **Interface source:** `docs/superpowers/plans/2026-10-14-reports-1-api.md`, section *Interfaces for Parts 2 and 3* and its *Spec decisions* (1, 4, 5, 6, 9, 12, 13 in particular); this plan uses only names listed there or already in the repo.
 
 **This plan is Part 3 of 3.**
-- **Before starting:** Part 1 **Tasks 1–5** must be merged into the feature branch: `report-logic.ts` (`resolvePeriod`, `PERIOD_PRESETS`, `reportRangeTooLong`, `emptyRunCounts`, `REPORT_LIMITS`), `reports.ts` (`REPORT_KINDS`, `REPORT_FORMATS`, `RUN_BUCKETS`, the query and response types), the permission keys and error codes, the `az.reports` namespace with `az.nav.reports` and `az.errors.REPORT_*`, and the `@taskop/api-client` methods `reports.*` (including `reports.export` → `ReportFile`) and `ApiError.rows` / `.limit`.
+- **Before starting:** Part 1 **Tasks 1–5** must be merged into the feature branch: `report-logic.ts` (`resolvePeriod`, `PERIOD_PRESETS`, `reportRangeTooLong`, `emptyRunCounts`, `REPORT_LIMITS`), `reports.ts` (`REPORT_KINDS`, `REPORT_FORMATS`, `RUN_BUCKETS`, the query and response types), the permission keys and error codes, the `az.reports` namespace with `az.nav.reports` and `az.errors.REPORT_*`, and the `@edildy/api-client` methods `reports.*` (including `reports.export` → `ReportFile`) and `ApiError.rows` / `.limit`.
 - **Tasks 1–9** need nothing else. They test against a mocked `@/lib/session`.
 - **Task 10 (Playwright)** needs Part 1 **Tasks 6–15** merged: the permission backfill (Task 6), the run-detail access for report viewers (Task 7, so the run drawer opens for `reports.view`), the six endpoints (Tasks 8–11) and the exports (Tasks 13–15). Part 1 Tasks 12, 16 and 17 (scope suite, performance seed, OpenAPI) are not needed.
 - Part 2 (`apps/mobile`) is independent of this part. Both parts append to `packages/i18n/src/i18n.test.ts` (Part 2 adds `az.mobile` keys, this part `az.reports` web keys); the two appends do not touch the same lines.
 
 ## Global Constraints
 
-- The product name is **Taskop**. Azerbaijani (`az`) is the only locale.
+- The product name is **Edildy**. Azerbaijani (`az`) is the only locale.
 - Every visible string is an i18n key. New web strings go into `az.reports` (`packages/i18n/src/az/reports.ts`, Part 1 Task 4's file) as **new keys only**: `range`, `picker`, `tiles`, `chart`, `live`, `attention`, `table` (Task 1). Part 1's keys (`title`, `dashboard`, `trend`, `empty`, `inactive`, `noValue`, `periods`, `filters`, `counts`, `measures`, `buckets`, `tabs`, `columns`, `employees`, `problems`, `tasks`, `export`, `issues`, …), `az.nav.reports` and `az.errors.REPORT_*` are reused, never renamed. Status, severity, source, priority, resolution and flag labels come from `az.scheduling.statuses`, `az.executions.{severities, problemSources, flags, percent}`, `az.tasks.{statuses, priorities, resolutions, flags}`.
 - Install exactly `recharts@^3.10.1` and `react-is@19.2.3` (Task 5). Otherwise use the existing `Badge`, `Button`, `Card`, `Checkbox`, `Dialog`, `DropdownMenu`, `Input`, `Label`, `NativeSelect`, `PageHeader`, `Table`, `Tabs`.
 - **Periods:** `today` (the default, absent from the URL), `yesterday`, `this_week` (Monday → today), `this_month` (the 1st → today), `last_7`, `last_30`, resolved by Part 1's `resolvePeriod(preset, today)` from the **tenant's** today (`useTenantToday()`, i.e. `localDateOf(now, me.tenant.timezone)`), never the browser's; `custom` with `from` and `to` (both inclusive, `to − from ≤ 365`, checked with `reportRangeTooLong`; `from > to` refused). An invalid range shows its reason and sends no request.
@@ -187,7 +187,7 @@ describe('report web translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.reports.range` is `undefined`.
 
 - [ ] **Step 3: Implement**
@@ -231,7 +231,7 @@ In `packages/i18n/src/az/reports.ts`, add these keys at the end of the exported 
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS. The build makes the new keys visible to `apps/web`.
 
 - [ ] **Step 5: Commit**
@@ -250,7 +250,7 @@ git commit -m "feat(i18n): add web strings for the report filters, tiles, dashbo
 - Test: `apps/web/src/features/reports/search.test.ts`
 
 **Interfaces:**
-- Consumes: Part 1: `PERIOD_PRESETS`, `type PeriodPreset`, `resolvePeriod(preset, today)`, `reportRangeTooLong(from, to)`, `REPORT_KINDS`, `type ReportKind`, `RUN_BUCKETS`, `type RunBucket`, `type ReportFilters`; existing: `idSchema`, `localDateSchema`, `dayNumber`, `PROBLEM_SEVERITIES`, `type ProblemSeverity` (all `@taskop/contracts`).
+- Consumes: Part 1: `PERIOD_PRESETS`, `type PeriodPreset`, `resolvePeriod(preset, today)`, `reportRangeTooLong(from, to)`, `REPORT_KINDS`, `type ReportKind`, `RUN_BUCKETS`, `type RunBucket`, `type ReportFilters`; existing: `idSchema`, `localDateSchema`, `dayNumber`, `PROBLEM_SEVERITIES`, `type ProblemSeverity` (all `@edildy/contracts`).
 - Produces:
   - `type PeriodChoice = PeriodPreset | 'custom'`; `PERIOD_CHOICES: readonly PeriodChoice[]`; `DEFAULT_PERIOD: PeriodPreset = 'today'`; `DEFAULT_TAB: ReportKind = 'summary'`; `DEFAULT_BUCKET: RunBucket = 'all'`
   - `interface ReportSearch { period?; from?; to?; siteId?; userId?; checklistId?; inactive?: true }`; `interface ReportsPageSearch extends ReportSearch { tab?: ReportKind; bucket?: RunBucket; severity?: ProblemSeverity }`
@@ -375,7 +375,7 @@ describe('search parts', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/search`
+Run: `pnpm --filter @edildy/web test -- features/reports/search`
 Expected: FAIL: `Failed to resolve import "./search"`.
 
 - [ ] **Step 3: Implement**
@@ -398,7 +398,7 @@ import {
   resolvePeriod,
   RUN_BUCKETS,
   type RunBucket,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** The period picker: Part 1's presets, then the UI's own "custom" (Part 1: "Custom" is not a preset). */
 export type PeriodChoice = PeriodPreset | 'custom';
@@ -517,7 +517,7 @@ export function withPeriod(s: ReportSearch, choice: PeriodChoice, today: string)
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/search && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- features/reports/search && pnpm --filter @edildy/web typecheck`
 Expected: PASS (13 tests).
 
 - [ ] **Step 5: Commit**
@@ -537,7 +537,7 @@ git commit -m "feat(web): add the report URL model and period resolution" -m "Co
 
 **Interfaces:**
 - Consumes:
-  - Part 1: `api.reports.{summary, sites, employees, runs, problems, tasks}`; `ReportFile` and `ApiError.rows` / `.limit` (`@taskop/api-client`); types `ReportFilters`, `ReportExportKind`, `ReportExportQuery`, `ReportFormat`, `RunBucket`, `RunCountKey`, `RunCounts`, `EmployeeReportRow`, `SiteReportRow`, `ReportSummary`, `ReportRun`, `ReportProblem`, `ReportProblems`, `ReportTask`, `ReportTasks`; `emptyRunCounts`
+  - Part 1: `api.reports.{summary, sites, employees, runs, problems, tasks}`; `ReportFile` and `ApiError.rows` / `.limit` (`@edildy/api-client`); types `ReportFilters`, `ReportExportKind`, `ReportExportQuery`, `ReportFormat`, `RunBucket`, `RunCountKey`, `RunCounts`, `EmployeeReportRow`, `SiteReportRow`, `ReportSummary`, `ReportRun`, `ReportProblem`, `ReportProblems`, `ReportTask`, `ReportTasks`; `emptyRunCounts`
   - Task 2: `filterSearch`, `ReportSearch`, `ReportsPageSearch`
   - Existing: `formatPercent` (`features/executions/labels`), `buildTree`, `SiteNode` (`features/sites/tree`), `errorText` (`lib/errors`), `OccurrenceDialog`, `OccurrenceTab` (`features/scheduling/occurrence-dialog`), `TaskDrawer` (`features/tasks/task-drawer`), `problemDto` (`features/tasks/fixtures`), `occurrenceDetail` (`features/executions/fixtures`), `taskDetail` (`features/tasks/fixtures`)
 - Produces:
@@ -565,7 +565,7 @@ import {
   type RunCounts,
   type SiteDto,
   type SiteReportRow,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { problemDto } from '@/features/tasks/fixtures';
 
 /** Test data shared by the report tests. Not imported by application code. */
@@ -782,7 +782,7 @@ export const VIEWER = ['reports.view', 'sites.view', 'checklists.view'] as const
 `apps/web/src/features/reports/labels.test.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { CHECKLISTS, EMPLOYEE_ROWS, IDS, SITE_ROWS, SITES } from './fixtures';
@@ -915,10 +915,10 @@ describe('saveFile', () => {
     });
     const blob = new Blob(['x']);
 
-    saveFile({ blob, filename: 'taskop-runs-2026-11-01_2026-11-30.xlsx' });
+    saveFile({ blob, filename: 'edildy-runs-2026-11-01_2026-11-30.xlsx' });
 
     expect(createObjectURL).toHaveBeenCalledWith(blob);
-    expect(clicked).toEqual([{ href: 'blob:report', download: 'taskop-runs-2026-11-01_2026-11-30.xlsx', attached: true }]);
+    expect(clicked).toEqual([{ href: 'blob:report', download: 'edildy-runs-2026-11-01_2026-11-30.xlsx', attached: true }]);
     expect(document.querySelector('a[download]')).toBeNull();
     expect(revokeObjectURL).not.toHaveBeenCalled();
     vi.advanceTimersByTime(REVOKE_AFTER_MS);
@@ -990,7 +990,7 @@ describe('report drawers', () => {
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/labels features/reports/download features/reports/drawers`
+Run: `pnpm --filter @edildy/web test -- features/reports/labels features/reports/download features/reports/drawers`
 Expected: FAIL: `Failed to resolve import "./labels"` (and `./download`, `./drawers`).
 
 - [ ] **Step 4: Implement the helpers**
@@ -998,7 +998,7 @@ Expected: FAIL: `Failed to resolve import "./labels"` (and `./download`, `./draw
 `apps/web/src/features/reports/labels.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import type {
   ChecklistSummary,
   EmployeeReportRow,
@@ -1010,7 +1010,7 @@ import type {
   RunBucket,
   RunCountKey,
   SiteDto,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { formatPercent } from '@/features/executions/labels';
 import { buildTree, type SiteNode } from '@/features/sites/tree';
@@ -1133,7 +1133,7 @@ export function exportErrorText(t: TFunction, e: unknown): string {
 `apps/web/src/features/reports/download.ts`:
 
 ```ts
-import type { ReportFile } from '@taskop/api-client';
+import type { ReportFile } from '@edildy/api-client';
 
 /** Long enough for the browser to start the download before the URL goes away. */
 export const REVOKE_AFTER_MS = 60_000;
@@ -1158,7 +1158,7 @@ export function saveFile(file: ReportFile): void {
 `apps/web/src/features/reports/queries.ts`:
 
 ```ts
-import type { ChecklistSummary, ProblemSeverity, ReportFilters, RunBucket } from '@taskop/contracts';
+import type { ChecklistSummary, ProblemSeverity, ReportFilters, RunBucket } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 
@@ -1322,7 +1322,7 @@ export function ReportTaskDrawer({ id, onClose }: { id: string; onClose: () => v
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (search, labels, download and drawer tests). The typecheck covers `queries.ts` and `fixtures.ts`.
 
 - [ ] **Step 7: Commit**
@@ -1491,7 +1491,7 @@ describe('ReportFilters', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/report-filters`
+Run: `pnpm --filter @edildy/web test -- features/reports/report-filters`
 Expected: FAIL: `Failed to resolve import "./report-filters"`.
 
 - [ ] **Step 3: Implement**
@@ -1624,7 +1624,7 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/report-filters && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports/report-filters && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (6 tests).
 
 - [ ] **Step 5: Commit**
@@ -1660,7 +1660,7 @@ git commit -m "feat(web): add the report filter bar with period, pickers and sho
 - [ ] **Step 1: Add the chart library**
 
 ```bash
-pnpm --filter @taskop/web add recharts@^3.10.1 react-is@19.2.3
+pnpm --filter @edildy/web add recharts@^3.10.1 react-is@19.2.3
 ```
 
 Check `apps/web/package.json`: `"recharts": "^3.10.1"` and `"react-is": "19.2.3"` under `dependencies` (decision 15: `react-is` is recharts' peer, pinned like `react`). `pnpm install` reports no unmet peer dependency for `recharts`.
@@ -1856,7 +1856,7 @@ and append to the `describe('AppShell')` block:
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/count-tiles features/reports/trend-chart features/reports/reports-page layouts/app-shell`
+Run: `pnpm --filter @edildy/web test -- features/reports/count-tiles features/reports/trend-chart features/reports/reports-page layouts/app-shell`
 Expected: FAIL: `Failed to resolve import "./count-tiles"` (and `./trend-chart`, `./reports-page`); the app-shell test finds no "Hesabatlar" link.
 
 - [ ] **Step 4: Implement the tiles and the trend**
@@ -1864,8 +1864,8 @@ Expected: FAIL: `Failed to resolve import "./count-tiles"` (and `./trend-chart`,
 `apps/web/src/features/reports/count-tiles.tsx`:
 
 ```tsx
-import type { ReportSummary } from '@taskop/contracts';
-import { intlLocale } from '@taskop/i18n';
+import type { ReportSummary } from '@edildy/contracts';
+import { intlLocale } from '@edildy/i18n';
 import { Link } from '@tanstack/react-router';
 import { Info } from 'lucide-react';
 import { useId } from 'react';
@@ -1932,8 +1932,8 @@ export function CountTiles({ summary, search, keys }: { summary: ReportSummary; 
 `apps/web/src/features/reports/trend-chart.tsx`:
 
 ```tsx
-import type { ReportTrendDay } from '@taskop/contracts';
-import { intlLocale } from '@taskop/i18n';
+import type { ReportTrendDay } from '@edildy/contracts';
+import { intlLocale } from '@edildy/i18n';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -2028,7 +2028,7 @@ export function TrendChart({ trend }: { trend: readonly ReportTrendDay[] }) {
 `apps/web/src/features/reports/summary-view.tsx`:
 
 ```tsx
-import type { ReportFilters, ReportSummary } from '@taskop/contracts';
+import type { ReportFilters, ReportSummary } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { errorText } from '@/lib/errors';
 import { CountTiles } from './count-tiles';
@@ -2063,7 +2063,7 @@ export function SummaryTab({ search, filters }: { search: ReportSearch; filters:
 `apps/web/src/features/reports/reports-page.tsx`:
 
 ```tsx
-import { REPORT_KINDS, type ReportFilters as Filters, type ReportKind } from '@taskop/contracts';
+import { REPORT_KINDS, type ReportFilters as Filters, type ReportKind } from '@edildy/contracts';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/page-header';
@@ -2153,7 +2153,7 @@ In `apps/web/src/layouts/app-shell.tsx`:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports layouts/app-shell && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports layouts/app-shell && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS. jsdom gives `ResponsiveContainer` a zero size, so recharts may log a size warning in the trend tests; the hidden table is what they check.
 
 - [ ] **Step 7: Commit**
@@ -2188,7 +2188,7 @@ git commit -m "feat(web): add count tiles, the trend chart and the reports page 
 `apps/web/src/features/reports/dashboard-page.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -2420,7 +2420,7 @@ describe('HomePage', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/dashboard-page features/home`
+Run: `pnpm --filter @edildy/web test -- features/reports/dashboard-page features/home`
 Expected: FAIL: `Failed to resolve import "./dashboard-page"`; the home page test finds no "İdarə paneli" heading.
 
 - [ ] **Step 3: Implement the attention panel**
@@ -2428,7 +2428,7 @@ Expected: FAIL: `Failed to resolve import "./dashboard-page"`; the home page tes
 `apps/web/src/features/reports/attention-panel.tsx`:
 
 ```tsx
-import type { ReportFilters, ReportRun } from '@taskop/contracts';
+import type { ReportFilters, ReportRun } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -2629,7 +2629,7 @@ They run in Task 10, once Part 1's endpoints are merged.
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports features/home && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports features/home && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -2807,7 +2807,7 @@ Append to the `describe('ReportsPage')` block of `apps/web/src/features/reports/
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/sites-tab features/reports/employees-tab features/reports/reports-page`
+Run: `pnpm --filter @edildy/web test -- features/reports/sites-tab features/reports/employees-tab features/reports/reports-page`
 Expected: FAIL: `Failed to resolve import "./sites-tab"` (and `./employees-tab`); the page tests find no "Zona A1" button.
 
 - [ ] **Step 3: Implement the sortable table**
@@ -2837,7 +2837,7 @@ export function SortableHead({ label, dir, onSort, numeric }: { label: string; d
 `apps/web/src/features/reports/comparison-table.tsx`:
 
 ```tsx
-import type { RunCounts } from '@taskop/contracts';
+import type { RunCounts } from '@edildy/contracts';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
@@ -2912,7 +2912,7 @@ export function ComparisonTable<T extends ComparisonRow>({
 `apps/web/src/features/reports/sites-tab.tsx`:
 
 ```tsx
-import type { ReportFilters } from '@taskop/contracts';
+import type { ReportFilters } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { errorText } from '@/lib/errors';
@@ -2950,7 +2950,7 @@ export function SitesTab({ filters, onDrill }: { filters: ReportFilters; onDrill
 `apps/web/src/features/reports/employees-tab.tsx`:
 
 ```tsx
-import type { EmployeeReportRow, ReportFilters } from '@taskop/contracts';
+import type { EmployeeReportRow, ReportFilters } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { errorText } from '@/lib/errors';
@@ -3023,7 +3023,7 @@ function TabBody({ kind, search, filters, go }: { kind: ReportKind; search: Repo
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -3311,7 +3311,7 @@ Append to the `describe('ReportsPage')` block of `apps/web/src/features/reports/
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/runs-tab features/reports/problems-tab features/reports/tasks-tab features/reports/reports-page`
+Run: `pnpm --filter @edildy/web test -- features/reports/runs-tab features/reports/problems-tab features/reports/tasks-tab features/reports/reports-page`
 Expected: FAIL: `Failed to resolve import "./runs-tab"` (and `./problems-tab`, `./tasks-tab`); the page test finds no runs.
 
 - [ ] **Step 3: Implement the shared pieces**
@@ -3370,7 +3370,7 @@ export function StatList({ label, items }: { label: string; items: readonly { la
 `apps/web/src/features/reports/runs-tab.tsx`:
 
 ```tsx
-import { type ReportFilters, type ReportRun, RUN_BUCKETS, type RunBucket } from '@taskop/contracts';
+import { type ReportFilters, type ReportRun, RUN_BUCKETS, type RunBucket } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -3475,7 +3475,7 @@ export function RunsTab({ filters, bucket, onBucket }: { filters: ReportFilters;
 `apps/web/src/features/reports/problems-tab.tsx`:
 
 ```tsx
-import { PROBLEM_SEVERITIES, type ProblemSeverity, type ReportFilters } from '@taskop/contracts';
+import { PROBLEM_SEVERITIES, type ProblemSeverity, type ReportFilters } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -3584,7 +3584,7 @@ export function ProblemsTab({ filters, severity, onSeverity }: { filters: Report
 `apps/web/src/features/reports/tasks-tab.tsx`:
 
 ```tsx
-import { type ReportFilters, TASK_STATUSES } from '@taskop/contracts';
+import { type ReportFilters, TASK_STATUSES } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -3705,7 +3705,7 @@ and add `import type { ReactNode } from 'react';` at the top.
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -3733,7 +3733,7 @@ git commit -m "feat(web): add the runs, problems and tasks reports with paging a
 `apps/web/src/features/reports/export-menu.test.tsx`:
 
 ```tsx
-import { ApiError, type ReportFile } from '@taskop/api-client';
+import { ApiError, type ReportFile } from '@edildy/api-client';
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
@@ -3756,7 +3756,7 @@ vi.mock('@/lib/session', () => ({
 vi.mock('./download', () => ({ saveFile: mocks.saveFile }));
 
 const FILTERS = { from: '2026-11-01', to: '2026-11-30', siteId: IDS.zoneA };
-const FILE: ReportFile = { blob: new Blob(['x']), filename: 'taskop-runs-2026-11-01_2026-11-30.xlsx' };
+const FILE: ReportFile = { blob: new Blob(['x']), filename: 'edildy-runs-2026-11-01_2026-11-30.xlsx' };
 
 function renderMenu(props: Partial<ComponentProps<typeof ExportMenu>> = {}) {
   renderWithProviders(
@@ -3861,7 +3861,7 @@ and append to the `describe('ReportsPage')` block:
   it('exports the open tab with the bucket from the URL', async () => {
     mocks.me.current = meWith([...VIEWER, 'reports.export']);
     mocks.api.reports.runs.mockResolvedValue(page([reportRun()]));
-    mocks.api.reports.export.mockResolvedValue({ blob: new Blob(['x']), filename: 'taskop-runs-2026-11-04_2026-11-04.csv' });
+    mocks.api.reports.export.mockResolvedValue({ blob: new Blob(['x']), filename: 'edildy-runs-2026-11-04_2026-11-04.csv' });
     renderWithRouter(<ReportsPage today={TODAY} />, '/reports?tab=runs');
     await screen.findByRole('button', { name: 'Açılış yoxlaması' });
     await userEvent.click(screen.getByRole('button', { name: 'İxrac et' }));
@@ -3881,7 +3881,7 @@ and append to the `describe('ReportsPage')` block:
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/reports/export-menu features/reports/reports-page`
+Run: `pnpm --filter @edildy/web test -- features/reports/export-menu features/reports/reports-page`
 Expected: FAIL: `Failed to resolve import "./export-menu"`; the page test finds no "İxrac et" button.
 
 - [ ] **Step 3: Implement**
@@ -3889,7 +3889,7 @@ Expected: FAIL: `Failed to resolve import "./export-menu"`; the page test finds 
 `apps/web/src/features/reports/export-menu.tsx`:
 
 ```tsx
-import { type ProblemSeverity, REPORT_FORMATS, type ReportExportKind, type ReportFilters, type ReportFormat, type ReportKind, type RunBucket } from '@taskop/contracts';
+import { type ProblemSeverity, REPORT_FORMATS, type ReportExportKind, type ReportFilters, type ReportFormat, type ReportKind, type RunBucket } from '@edildy/contracts';
 import { Download, LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -3984,7 +3984,7 @@ In `apps/web/src/features/reports/reports-page.tsx`, import `ExportMenu` from `.
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -4006,7 +4006,7 @@ git commit -m "feat(web): add the report export menu for the open table and the 
   - `POST /auth/signup`, `GET /site-types`, `POST /sites`, `GET /roles`, `POST /users/workers`, `GET /templates`, `POST /checklists`, `GET /checklists/:id/draft`, `POST /checklists/:id/publish`, `POST /assignments`
   - the phone (stood in for by the API): `POST /auth/login/worker`, `GET /me/sync`, `POST /executions`, `POST /executions/:id/media`, `PUT /executions/:id/answers`, `POST /executions/:id/complete` (the same run as `executions.spec.ts`: 87.5 %, one normal rule problem and one critical manual problem)
   - `GET /reports/summary` (to wait for the status sweep), `GET /reports/runs/export` (through the web)
-  - `addDays` from `@taskop/contracts`
+  - `addDays` from `@edildy/contracts`
 - **Environment:** the API runs its cron jobs (`JOBS_CRON=true`, the default; the CI e2e job does not override it), so the never-started run turns overdue within a minute. No upload happens (the photo stays `pending`, as in `executions.spec.ts`), so no SeaweedFS is needed. The global template "Gündəlik təmizlik yoxlaması" must exist (`pnpm db:seed`).
 
 - [ ] **Step 1: Write the end-to-end test**
@@ -4016,7 +4016,7 @@ git commit -m "feat(web): add the report export menu for the open table and the 
 ```ts
 import { readFile } from 'node:fs/promises';
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import { addDays, type ChecklistContent, type ReportSummary, type SyncResponse } from '@taskop/contracts';
+import { addDays, type ChecklistContent, type ReportSummary, type SyncResponse } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 
 /** The tenant's local date (new tenants are in Asia/Baku, which has no DST). */
@@ -4040,7 +4040,7 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   const email = `rep-${suffix}@example.az`;
   const password = 'e2e owner password';
 
-  // Tenant, site, worker and a published checklist from a Taskop template.
+  // Tenant, site, worker and a published checklist from a Edildy template.
   const signup = await request.post('/api/v1/auth/signup', {
     data: { orgName: 'E2E Hesabat MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
   });
@@ -4166,7 +4166,7 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   const downloading = page.waitForEvent('download');
   await page.getByRole('group', { name: 'Bu cədvəl' }).getByRole('menuitem', { name: 'Excel' }).click();
   const download = await downloading;
-  expect(download.suggestedFilename()).toBe(`taskop-runs-${addDays(today, -6)}_${today}.xlsx`);
+  expect(download.suggestedFilename()).toBe(`edildy-runs-${addDays(today, -6)}_${today}.xlsx`);
   // An .xlsx file is a ZIP archive.
   const bytes = await readFile(await download.path());
   expect(bytes.subarray(0, 2).toString('latin1')).toBe('PK');
@@ -4179,9 +4179,9 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
 Prerequisites: Part 1 Tasks 6–15 merged; a disposable database: `docker compose up -d` (Postgres; CI uses its `postgres:18-alpine` service instead); `apps/api/.env` filled in from `apps/api/.env.example` (with `JOBS_CRON=true`); `pnpm db:setup && pnpm db:seed` done (the migrations include `0013_reports` and `0014_reports_permissions`).
 
 ```bash
-pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api-client build
-pnpm --filter @taskop/api build
-pnpm --filter @taskop/web e2e -- reports foundation checklists
+pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api-client build
+pnpm --filter @edildy/api build
+pnpm --filter @edildy/web e2e -- reports foundation checklists
 ```
 
 Expected: PASS for all three specs. `foundation.spec.ts` and `checklists.spec.ts` find the "İdarə paneli" heading after signup (Task 6).
@@ -4191,9 +4191,9 @@ If the poll times out with `overdue: 0` and `pending` runs, the API runs without
 - [ ] **Step 3: Run every check**
 
 ```bash
-pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint && pnpm --filter @taskop/web test && pnpm --filter @taskop/web build
+pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint && pnpm --filter @edildy/web test && pnpm --filter @edildy/web build
 pnpm typecheck && pnpm lint && pnpm test
-pnpm --filter @taskop/web e2e
+pnpm --filter @edildy/web e2e
 ```
 
 Expected: all green. The `executions`, `notifications`, `scheduling` and `tasks` end-to-end specs still pass (the member in `notifications.spec.ts` is a worker without `reports.view`, so it still lands on the welcome page).

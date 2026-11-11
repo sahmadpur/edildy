@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { TaskDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { TaskDetail } from '@edildy/contracts';
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
@@ -21,7 +21,7 @@ vi.mock('@/lib/session', () => ({
   useMe: () => ({ user: { id: 'mgr' }, permissions: ['tasks.view', 'tasks.manage'], tenant: { timezone: 'Asia/Baku', locale: 'az' } }),
 }));
 
-const signed = { url: 'http://files.test/taskop-media/t/a/k/t1/m.jpg?sig=1', expiresAt: '2026-11-02T04:25:00.000Z' };
+const signed = { url: 'http://files.test/edildy-media/t/a/k/t1/m.jpg?sig=1', expiresAt: '2026-11-02T04:25:00.000Z' };
 
 /** A problem task in review: one instruction photo, a rejected first answer, a second one with a pending photo. */
 const inReview = (): TaskDetail =>

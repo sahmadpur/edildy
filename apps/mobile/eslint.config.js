@@ -1,4 +1,4 @@
-import base from '@taskop/config/eslint';
+import base from '@edildy/config/eslint';
 export default [
   ...base,
   { ignores: ['metro.config.js', '.expo/**', 'ios/**', 'android/**'] },

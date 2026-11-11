@@ -1,4 +1,4 @@
-import { type AuditActor, type AuditDto, type AuditItemVerdict, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@taskop/contracts';
+import { type AuditActor, type AuditDto, type AuditItemVerdict, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@edildy/contracts';
 import type { audits } from '../db/schema';
 
 export type AuditRow = typeof audits.$inferSelect;

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { ExecutionSummary } from '@taskop/contracts';
+import type { ExecutionSummary } from '@edildy/contracts';
 import { asc, eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { executions, users } from '../db/schema';

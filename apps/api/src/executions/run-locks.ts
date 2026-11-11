@@ -1,4 +1,4 @@
-import { canCorrect } from '@taskop/contracts';
+import { canCorrect } from '@edildy/contracts';
 import { and, eq, type SQL } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';

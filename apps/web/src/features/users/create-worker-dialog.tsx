@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createWorkerInputSchema, type UserWithSecret } from '@taskop/contracts';
+import { createWorkerInputSchema, type UserWithSecret } from '@edildy/contracts';
 import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';

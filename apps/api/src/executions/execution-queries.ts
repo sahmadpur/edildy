@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { ExecutionCorrections, ExecutionDetail, ScoreResult } from '@taskop/contracts';
+import type { ExecutionCorrections, ExecutionDetail, ScoreResult } from '@edildy/contracts';
 import { asc, eq, getTableColumns } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';

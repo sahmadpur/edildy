@@ -1,4 +1,4 @@
-import { FINAL_TASK_STATUSES, type ProblemDto, type ProblemMediaRef, type ProblemResolution, problemResolutionOf, walkItems } from '@taskop/contracts';
+import { FINAL_TASK_STATUSES, type ProblemDto, type ProblemMediaRef, type ProblemResolution, problemResolutionOf, walkItems } from '@edildy/contracts';
 import { and, eq, getTableColumns, inArray, isNotNull, isNull, notInArray, type SQL } from 'drizzle-orm';
 import { storedContent } from '../checklists/content';
 import type { Executor } from '../db/db.service';

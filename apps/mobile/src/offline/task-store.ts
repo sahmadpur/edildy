@@ -8,7 +8,7 @@ import {
   type TaskMediaRole,
   type TaskStatus,
   taskTransition,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { Db } from './db';
 import { type CapturedMedia, LiveOnlyError, MediaLimitError, type MediaRefusal, type StoreDeps, type WriteKind } from './execution-store';
 import { type DraftRow, iso, type LocalMedia, type LocalTask, type MediaRow, type TaskDraft, type TaskRow, toDraft, toMedia, toTask } from './local-model';

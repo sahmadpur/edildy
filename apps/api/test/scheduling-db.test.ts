@@ -98,7 +98,7 @@ describe('scheduling tables', () => {
 
   it('gives the app account its own pgboss schema', async () => {
     const r = await ownerQuery<{ owner: string }>("select nspowner::regrole::text as owner from pg_namespace where nspname = 'pgboss'");
-    expect(r.rows[0]?.owner).toBe('taskop_app');
+    expect(r.rows[0]?.owner).toBe('edildy_app');
   });
 
   it('backfills the new keys for existing Admin roles', async () => {

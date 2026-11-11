@@ -1,5 +1,5 @@
-import type { AuditDetail } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { AuditDetail } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,7 +21,7 @@ vi.mock('@/lib/session', () => ({
 }));
 vi.mock('@/features/reports/download', () => ({ saveFile: mocks.saveFile }));
 
-const FILE = { blob: new Blob(['%PDF-1.7']), filename: 'taskop-audit-acilis-2026-11-02.pdf' };
+const FILE = { blob: new Blob(['%PDF-1.7']), filename: 'edildy-audit-acilis-2026-11-02.pdf' };
 
 /** A failed audit finished at 15:00 Baku, its report in `reportStatus`. */
 function finished(over: Partial<AuditDetail> = {}): AuditDetail {

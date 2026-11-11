@@ -1,5 +1,5 @@
-import type { Answers, ClaimRef, ClaimRejectionReason, ExecutionState, MediaKind, MediaSource, OccurrenceStatus, ReworkRequest, SyncTask, TaskMediaRole, TaskStatus } from '@taskop/contracts';
-import type { ProblemReportDto } from '@taskop/contracts';
+import type { Answers, ClaimRef, ClaimRejectionReason, ExecutionState, MediaKind, MediaSource, OccurrenceStatus, ReworkRequest, SyncTask, TaskMediaRole, TaskStatus } from '@edildy/contracts';
+import type { ProblemReportDto } from '@edildy/contracts';
 import type { EntityType } from './outbox';
 
 export const iso = (ms: number): string => new Date(ms).toISOString();

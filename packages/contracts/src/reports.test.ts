@@ -43,9 +43,9 @@ describe('report catalogue', () => {
     expect(REPORT_ISSUE_CODES).toEqual(['reports.issues.toBeforeFrom', 'reports.issues.fullNotCsv']);
   });
 
-  it('names files taskop-<kind>-<from>_<to>.<ext> and types them', () => {
-    expect(reportFileName('runs', '2026-11-01', '2026-11-30', 'csv')).toBe('taskop-runs-2026-11-01_2026-11-30.csv');
-    expect(reportFileName('full', '2026-11-01', '2026-11-30', 'xlsx')).toBe('taskop-full-2026-11-01_2026-11-30.xlsx');
+  it('names files edildy-<kind>-<from>_<to>.<ext> and types them', () => {
+    expect(reportFileName('runs', '2026-11-01', '2026-11-30', 'csv')).toBe('edildy-runs-2026-11-01_2026-11-30.csv');
+    expect(reportFileName('full', '2026-11-01', '2026-11-30', 'xlsx')).toBe('edildy-full-2026-11-01_2026-11-30.xlsx');
     expect(REPORT_CONTENT_TYPES).toEqual({
       csv: 'text/csv; charset=utf-8',
       xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

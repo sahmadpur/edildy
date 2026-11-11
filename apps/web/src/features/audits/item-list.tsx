@@ -1,4 +1,4 @@
-import type { AuditVerdict, ChecklistContent, VisibleItem } from '@taskop/contracts';
+import type { AuditVerdict, ChecklistContent, VisibleItem } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { NotificationTargetKind, NotificationType, PushData } from '@taskop/contracts';
-import { type Language, pickLanguage } from '@taskop/i18n';
+import type { NotificationTargetKind, NotificationType, PushData } from '@edildy/contracts';
+import { type Language, pickLanguage } from '@edildy/i18n';
 import { and, count, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { tenantLanguage } from '../common/locale';

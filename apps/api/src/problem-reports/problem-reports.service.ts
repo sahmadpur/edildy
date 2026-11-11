@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { ProblemReportDto } from '@taskop/contracts';
+import type { ProblemReportDto } from '@edildy/contracts';
 import { and, eq, ne } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

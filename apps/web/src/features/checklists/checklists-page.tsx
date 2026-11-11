@@ -1,5 +1,5 @@
-import { type ChecklistStatus, TEMPLATE_CATEGORIES, toListParam } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { type ChecklistStatus, TEMPLATE_CATEGORIES, toListParam } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultiSelectFilter } from '@/components/multi-select-filter';

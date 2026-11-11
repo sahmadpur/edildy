@@ -10,7 +10,7 @@ import {
   RULE_TYPES,
   type RuleType,
   type SystemRoleKey,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** Test data shared by the notification tests. Not imported by application code. */
 export const AT = '2026-11-02T04:00:00.000Z';

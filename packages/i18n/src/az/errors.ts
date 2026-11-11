@@ -4,7 +4,7 @@ export default {
   INVALID_CREDENTIALS: 'Giriş məlumatları yanlışdır.',
   ACCOUNT_LOCKED: 'Hesab müvəqqəti bloklanıb. {{minutes}} dəqiqədən sonra yenidən cəhd edin.',
   RATE_LIMITED: 'Çox sayda cəhd edildi. {{minutes}} dəqiqədən sonra yenidən cəhd edin.',
-  TENANT_SUSPENDED: 'Təşkilatın hesabı dayandırılıb. Taskop dəstəyi ilə əlaqə saxlayın.',
+  TENANT_SUSPENDED: 'Təşkilatın hesabı dayandırılıb. Edildy dəstəyi ilə əlaqə saxlayın.',
   FORBIDDEN: 'Bu əməliyyat üçün icazəniz yoxdur.',
   NOT_FOUND: 'Məlumat tapılmadı.',
   REFERENCE_NOT_FOUND: 'Seçilmiş element tapılmadı və ya aktiv deyil.',

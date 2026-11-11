@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type AuditBrief, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@taskop/contracts';
+import { type AuditBrief, type AuditScore, isAuditPaused, type OccurrenceStatus } from '@edildy/contracts';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { auditItemVerdicts, audits, checklists } from '../db/schema';

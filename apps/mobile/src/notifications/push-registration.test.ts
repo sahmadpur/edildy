@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { blockPushRegistration, clearAppBadge, endPushSignOut, PUSH_RETRY_DELAYS_MS, registerPush, startPushRegistration, unregisterPush } from './push-registration';
 import { fakeAppState, fakePush, fakePushApi, fakeTokens, PROJECT_ID, PUSH_TOKEN } from './testing/fakes';
 

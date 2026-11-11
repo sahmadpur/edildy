@@ -1,4 +1,4 @@
-import type { AuditBrief, ExecutionState, OccurrenceStatus, PermissionKey } from '@taskop/contracts';
+import type { AuditBrief, ExecutionState, OccurrenceStatus, PermissionKey } from '@edildy/contracts';
 import { NO_ACTIONS, type RunActions, runActions } from './run-actions';
 import { auditBrief } from './testing/fixtures';
 

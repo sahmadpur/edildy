@@ -1,4 +1,4 @@
-# Taskop — Sub-project 8: Audit and Corrections — Design Spec
+# Edildy — Sub-project 8: Audit and Corrections — Design Spec
 
 - **Date:** 2026-10-15
 - **Status:** Draft for review
@@ -140,7 +140,7 @@ The migrations are `0015_audit_corrections.sql` (schema) and `0016_audit_correct
 
 ### 4.2 New tables
 
-**`execution_corrections`** (append-only: `taskop_app` gets `INSERT, SELECT`):
+**`execution_corrections`** (append-only: `edildy_app` gets `INSERT, SELECT`):
 
 | Column | Notes |
 |---|---|
@@ -169,7 +169,7 @@ There is one row per item that actually changed; an unchanged submitted value wr
 | `resubmitted_at` | null while open |
 | `withdrawn_at`, `withdrawn_by_user_id` | null unless the manager withdrew the send-back |
 
-`taskop_app` gets `INSERT, SELECT, UPDATE(resubmitted_at, withdrawn_at, withdrawn_by_user_id)`. A request is **open** while both `resubmitted_at` and `withdrawn_at` are null.
+`edildy_app` gets `INSERT, SELECT, UPDATE(resubmitted_at, withdrawn_at, withdrawn_by_user_id)`. A request is **open** while both `resubmitted_at` and `withdrawn_at` are null.
 
 **`audits`:**
 
@@ -393,7 +393,7 @@ All of these need a connection. With no connection, the buttons are disabled and
 - **API (Vitest on a real Postgres):**
   - Every transition in §3.1, including the system move to `audit_pending` on completion, and each refusal code in §6.5.
   - Scope: users out of scope get 404 for every new endpoint. Worker, Auditor and Manager permission matrix.
-  - Snapshot written exactly once, with the trigger rejecting later changes. `UPDATE` and `DELETE` on `execution_corrections` fail for `taskop_app`.
+  - Snapshot written exactly once, with the trigger rejecting later changes. `UPDATE` and `DELETE` on `execution_corrections` fail for `edildy_app`.
   - Recalculation: score changes; a problem is cleared rather than deleted; a problem with a task keeps the task; a new problem is inserted; manual problems are untouched; reports totals reflect the corrected score.
   - Rework: guard, media on flagged items, resubmit idempotency, correction rows with comments as reasons, verdicts reset on changed items, paused audit refuses finish, send-back cancel.
   - `/me/sync` includes `rework` runs with their requests.

@@ -1,4 +1,4 @@
-# Taskop — Sub-project 5: Tasks — Design Spec
+# Edildy — Sub-project 5: Tasks — Design Spec
 
 - **Date:** 2026-10-12
 - **Status:** Draft for review
@@ -124,7 +124,7 @@ Migrations `0009_tasks.sql` (tables, enums) and `0010_tasks_security.sql` (RLS `
 
 **`execution_problems`**: unchanged. Its resolution is derived from the linked task: no task → `none`; task not final → `open`; `completed` → `resolved`; `cancelled` → `cancelled`.
 
-Grants for `taskop_app`: `SELECT, INSERT, UPDATE` on `tasks`, `task_submissions`, `task_media`; `SELECT, INSERT` on `task_status_history`; `DELETE` on `task_media` only (cleanup job).
+Grants for `edildy_app`: `SELECT, INSERT, UPDATE` on `tasks`, `task_submissions`, `task_media`; `SELECT, INSERT` on `task_status_history`; `DELETE` on `task_media` only (cleanup job).
 
 ## 6. API (`apps/api/src/tasks/`)
 

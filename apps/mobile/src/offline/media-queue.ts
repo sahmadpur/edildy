@@ -1,4 +1,4 @@
-import type { MediaUploadTicket } from '@taskop/contracts';
+import type { MediaUploadTicket } from '@edildy/contracts';
 import type { ChangeFeed } from './change-feed';
 import { clampOffset, type Clock, readOffset, serverTime } from './clock';
 import type { Db } from './db';

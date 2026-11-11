@@ -1,14 +1,14 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { type Client, clientSchema } from '@taskop/contracts';
+import { type Client, clientSchema } from '@edildy/contracts';
 import { importPKCS8, importSPKI, jwtVerify, SignJWT, type CryptoKey } from 'jose';
 import { z } from 'zod';
 import { APP_CONFIG, type AppConfig } from '../../config/config';
 
 export const ACCESS_TOKEN_TTL_MS = 15 * 60_000;
 export const PLATFORM_TOKEN_TTL_MS = 8 * 60 * 60_000;
-const ISSUER = 'taskop';
-const APP_AUDIENCE = 'taskop-app';
-const PLATFORM_AUDIENCE = 'taskop-platform';
+const ISSUER = 'edildy';
+const APP_AUDIENCE = 'edildy-app';
+const PLATFORM_AUDIENCE = 'edildy-platform';
 
 export interface AccessClaims {
   sub: string;

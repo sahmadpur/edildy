@@ -1,4 +1,4 @@
-import { type Answer, EXECUTION_LIMITS, type Item } from '@taskop/contracts';
+import { type Answer, EXECUTION_LIMITS, type Item } from '@edildy/contracts';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';

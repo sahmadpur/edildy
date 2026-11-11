@@ -1,4 +1,4 @@
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

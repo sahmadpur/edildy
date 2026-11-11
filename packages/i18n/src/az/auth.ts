@@ -1,6 +1,6 @@
 export default {
   login: {
-    title: 'Taskop-a daxil olun',
+    title: 'Edildy-yə daxil olun',
     email: 'E-poçt',
     password: 'Şifrə',
     submit: 'Daxil ol',

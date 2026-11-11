@@ -202,5 +202,5 @@ export const REPORT_CONTENT_TYPES: Record<ReportFormat, string> = {
   pdf: 'application/pdf',
 };
 
-/** The download's name (spec §5.4): `taskop-<kind>-<from>_<to>.<ext>`. */
-export const reportFileName = (kind: ReportExportKind, from: string, to: string, format: ReportFormat): string => `taskop-${kind}-${from}_${to}.${format}`;
+/** The download's name (spec §5.4): `edildy-<kind>-<from>_<to>.<ext>`. */
+export const reportFileName = (kind: ReportExportKind, from: string, to: string, format: ReportFormat): string => `edildy-${kind}-${from}_${to}.${format}`;

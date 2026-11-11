@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import type { TFunction } from 'i18next';
 import { StyleSheet, Text } from 'react-native';
 import { colors, font, type } from '@/lib/theme';

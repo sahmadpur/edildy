@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { NotificationType } from '@taskop/contracts';
+import type { NotificationType } from '@edildy/contracts';
 import { Clock } from '../common/clock';
 import { sanitiseForLog } from '../common/error.filter';
 import { DbService, type Executor } from '../db/db.service';

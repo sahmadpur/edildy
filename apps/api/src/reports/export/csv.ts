@@ -1,4 +1,4 @@
-import type { Language } from '@taskop/i18n';
+import type { Language } from '@edildy/i18n';
 import { cellText, type ReportDocument, type ReportTable } from './report-table';
 
 const BOM = '\uFEFF';

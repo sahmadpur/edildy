@@ -19,7 +19,7 @@ export function configureApp(app: INestApplication, config: AppConfig): void {
   app.setGlobalPrefix('api/v1');
   const document = SwaggerModule.createDocument(
     app,
-    new DocumentBuilder().setTitle('Taskop API').setVersion('1.0').addBearerAuth().build(),
+    new DocumentBuilder().setTitle('Edildy API').setVersion('1.0').addBearerAuth().build(),
   );
   SwaggerModule.setup('api/docs', app, cleanupOpenApiDoc(document));
 }

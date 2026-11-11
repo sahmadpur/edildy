@@ -1,4 +1,4 @@
-import type { SyncResponse } from '@taskop/contracts';
+import type { SyncResponse } from '@edildy/contracts';
 import type { Db } from '../db';
 import { createOfflineServices, type OfflineServices } from '../services';
 import type { ClaimRejection } from '../sync-engine';

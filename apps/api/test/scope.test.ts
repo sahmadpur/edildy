@@ -1,4 +1,4 @@
-import type { DataScope } from '@taskop/contracts';
+import type { DataScope } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';

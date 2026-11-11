@@ -1,5 +1,5 @@
-import { type OccurrenceDto, OCCURRENCE_STATUSES } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { type OccurrenceDto, OCCURRENCE_STATUSES } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -33,7 +33,7 @@ describe('password reset', () => {
     await ownerQuery('update users set locale = $2 where id = $1', [s.ownerId, 'en']);
     await t.http().post('/api/v1/auth/password/forgot').send({ email: s.email });
     await vi.waitFor(() => t.mailer.tokenFor(s.email));
-    expect(t.mailer.lastTo(s.email)?.subject).toBe('Taskop — password reset');
+    expect(t.mailer.lastTo(s.email)?.subject).toBe('Edildy — password reset');
     expect(t.mailer.lastTo(s.email)?.text).toContain('Open the link to set a new password');
   });
 

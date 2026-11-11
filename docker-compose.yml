@@ -2,13 +2,13 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      POSTGRES_DB: taskop
-      POSTGRES_USER: taskop_owner
+      POSTGRES_DB: edildy
+      POSTGRES_USER: edildy_owner
       POSTGRES_PASSWORD: owner_dev_password
     ports: ['5432:5432']
     volumes: ['pgdata:/var/lib/postgresql']
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U taskop_owner -d taskop']
+      test: ['CMD-SHELL', 'pg_isready -U edildy_owner -d edildy']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -28,8 +28,8 @@ services:
     depends_on: [seaweedfs]
     restart: on-failure
     environment:
-      AWS_ACCESS_KEY_ID: taskop
-      AWS_SECRET_ACCESS_KEY: taskop_dev_password
+      AWS_ACCESS_KEY_ID: edildy
+      AWS_SECRET_ACCESS_KEY: edildy_dev_password
       AWS_DEFAULT_REGION: us-east-1
     volumes:
       - ./docker/seaweedfs/cors.json:/etc/seaweedfs/cors.json:ro
@@ -37,9 +37,9 @@ services:
       - sh
       - -c
       - >-
-        (aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket taskop-media
-        || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket taskop-media)
-        && aws --endpoint-url http://seaweedfs:8333 s3api put-bucket-cors --bucket taskop-media --cors-configuration file:///etc/seaweedfs/cors.json
+        (aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket edildy-media
+        || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket edildy-media)
+        && aws --endpoint-url http://seaweedfs:8333 s3api put-bucket-cors --bucket edildy-media --cors-configuration file:///etc/seaweedfs/cors.json
 volumes:
   pgdata: {}
   seaweedfsdata: {}

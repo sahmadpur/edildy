@@ -1,4 +1,4 @@
-import { type AuditBrief, canCorrect, canSendBack, canStartAudit, canWithdrawSendBack, type ExecutionState, type Me, type OccurrenceStatus } from '@taskop/contracts';
+import { type AuditBrief, canCorrect, canSendBack, canStartAudit, canWithdrawSendBack, type ExecutionState, type Me, type OccurrenceStatus } from '@edildy/contracts';
 
 /** What the Team tab's run screen offers (spec §8.2). */
 export interface RunActions {

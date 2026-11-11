@@ -1,6 +1,6 @@
 export default {
   meta: {
-    title: 'Taskop — checklists for field teams',
+    title: 'Edildy — checklists for field teams',
     description: 'Workers run checklists on the phone, even offline; managers schedule, read the reports, audit and send work back.',
   },
   nav: { features: 'Features', how: 'How it works', mobile: 'Mobile app', faq: 'Questions', login: 'Log in', signup: 'Register your organisation', menu: 'Menu', language: 'Language', skip: 'Skip to content' },
@@ -35,7 +35,7 @@ export default {
   },
   features: {
     title: 'Make the daily routine visible',
-    lead: 'Taskop joins the two sides of the work: the phone on site and the screen in the office.',
+    lead: 'Edildy joins the two sides of the work: the phone on site and the screen in the office.',
     checklists: { title: 'Checklists and scheduling', body: 'Sections, questions, follow-ups and rules. Assign to a site, a shift or a person; repeat daily, weekly or monthly.' },
     offline: { title: 'Offline mobile execution', body: 'The phone works without a connection: answers, photos and videos are kept on the device and sent as soon as it is back. Evidence comes straight from the camera.' },
     problems: { title: 'Problems and tasks', body: 'An answer that breaks a rule becomes a problem; a problem becomes a task that goes to an assignee, gets reviewed and is closed.' },
@@ -69,10 +69,10 @@ export default {
   },
   footer: {
     contact: 'Contact',
-    email: 'hello@taskop.app',
+    email: 'hello@edildy.com',
     privacy: 'Privacy policy',
     terms: 'Terms of use',
-    copyright: '© {{year}} Taskop',
+    copyright: '© {{year}} Edildy',
   },
   legal: {
     privacyTitle: 'Privacy policy',

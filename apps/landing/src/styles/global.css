@@ -1,7 +1,7 @@
-/* Taskop landing page. Colours and radii come from @taskop/brand; everything else is here. One family, IBM Plex Sans. */
+/* Edildy landing page. Colours and radii come from @edildy/brand; everything else is here. One family, IBM Plex Sans. */
 @import '@fontsource-variable/ibm-plex-sans';
-@import '@taskop/brand/tokens.css';
-@import '@taskop/brand/tokens-system.css';
+@import '@edildy/brand/tokens.css';
+@import '@edildy/brand/tokens-system.css';
 
 *,
 *::before,

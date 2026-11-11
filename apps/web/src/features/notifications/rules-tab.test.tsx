@@ -1,6 +1,6 @@
-import { ApiError } from '@taskop/api-client';
-import type { RuleType } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import type { RuleType } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { QueryClient } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

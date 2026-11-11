@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { AuditDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { AuditDetail } from '@edildy/contracts';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';

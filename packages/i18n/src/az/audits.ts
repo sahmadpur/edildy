@@ -81,7 +81,7 @@ export default {
   /** The report e-mail (plain text, the PDF attached). */
   email: {
     subject: 'Audit hesabatı: {{checklist}} — {{site}}, {{date}}',
-    body: 'Salam!\n\n{{checklist}} — {{site}} ({{date}}) icrasının auditi tamamlandı.\nNəticə: {{result}}.\nAuditor: {{auditor}}.\n\nPDF hesabat məktuba əlavə olunub.\n\nTaskop',
+    body: 'Salam!\n\n{{checklist}} — {{site}} ({{date}}) icrasının auditi tamamlandı.\nNəticə: {{result}}.\nAuditor: {{auditor}}.\n\nPDF hesabat məktuba əlavə olunub.\n\nEdildy',
   },
   web,
 } as const;

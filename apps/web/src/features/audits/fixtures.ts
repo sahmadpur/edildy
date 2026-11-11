@@ -1,5 +1,5 @@
-import { ApiError, type ClientErrorCode } from '@taskop/api-client';
-import { type AuditDetail, type AuditDto, type AuditItemVerdict, type AuditQueueRow, type AuditVerdict, visibleItems } from '@taskop/contracts';
+import { ApiError, type ClientErrorCode } from '@edildy/api-client';
+import { type AuditDetail, type AuditDto, type AuditItemVerdict, type AuditQueueRow, type AuditVerdict, visibleItems } from '@edildy/contracts';
 import { executionFixture, occurrenceDto } from '@/features/executions/fixtures';
 
 /** Test data shared by the audit tests. Not imported by application code. */

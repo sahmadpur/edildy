@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { computeScore, deriveProblems, type Missing, requirements, walkItems } from '@taskop/contracts';
+import { computeScore, deriveProblems, type Missing, requirements, walkItems } from '@edildy/contracts';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

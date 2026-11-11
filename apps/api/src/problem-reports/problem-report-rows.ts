@@ -1,4 +1,4 @@
-import { type ProblemReportDto, problemReportState, type ProblemReportStateFilter } from '@taskop/contracts';
+import { type ProblemReportDto, problemReportState, type ProblemReportStateFilter } from '@edildy/contracts';
 import { and, asc, eq, getTableColumns, inArray, isNotNull, isNull, ne, or, type SQL, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { Executor } from '../db/db.service';

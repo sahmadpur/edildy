@@ -1,4 +1,4 @@
-import type { ReportSummary } from '@taskop/contracts';
+import type { ReportSummary } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, spacing } from '@/lib/theme';

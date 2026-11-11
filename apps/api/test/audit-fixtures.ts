@@ -1,4 +1,4 @@
-import type { Answers } from '@taskop/contracts';
+import type { Answers } from '@edildy/contracts';
 import { expect } from 'vitest';
 import type { TestApp } from './app';
 import { claimOk, completeExecution, type ExecutionWorld, executionWorld, fullAnswers, occurrenceOn, registerPhoto, type TestWorker } from './execution-fixtures';

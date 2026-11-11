@@ -1,4 +1,4 @@
-import type { ChecklistSummary, ProblemSeverity, ReportFiltersQuery as ReportFilters, RunAuditState, RunBucket } from '@taskop/contracts';
+import type { ChecklistSummary, ProblemSeverity, ReportFiltersQuery as ReportFilters, RunAuditState, RunBucket } from '@edildy/contracts';
 import { queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/session';
 

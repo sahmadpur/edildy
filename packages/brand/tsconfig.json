@@ -1,1 +1,1 @@
-{ "extends": "@taskop/config/tsconfig.lib.json" }
+{ "extends": "@edildy/config/tsconfig.lib.json" }

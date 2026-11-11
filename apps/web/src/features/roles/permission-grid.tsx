@@ -1,4 +1,4 @@
-import type { PermissionCatalog, PermissionKey } from '@taskop/contracts';
+import type { PermissionCatalog, PermissionKey } from '@edildy/contracts';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/components/ui/checkbox';

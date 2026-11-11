@@ -1,4 +1,4 @@
-# Taskop — Sub-project 7: Dashboards, Reports and Export — Design Spec
+# Edildy — Sub-project 7: Dashboards, Reports and Export — Design Spec
 
 - **Date:** 2026-10-14
 - **Status:** Draft for review
@@ -194,7 +194,7 @@ These need `reports.view` **and** `reports.export`.
 
 Behaviour:
 
-- **Streaming:** the response has `Content-Type` and `Content-Disposition: attachment; filename="taskop-<kind>-<from>_<to>.<ext>"`.
+- **Streaming:** the response has `Content-Type` and `Content-Disposition: attachment; filename="edildy-<kind>-<from>_<to>.<ext>"`.
   - CSV is UTF-8 with a BOM so Excel opens Azerbaijani letters correctly, comma-separated, RFC 4180 quoting.
   - Formula injection is neutralised: cells starting with `=`, `+`, `-`, `@` are prefixed with `'`.
 - **Language and dates:** headings, status labels and the PDF header are in Azerbaijani, via `packages/i18n`, the only locale today. The PDF header shows the tenant name, period, filters applied and generation time.

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { ExecutionBrief, OccurrenceDto } from '@taskop/contracts';
+import type { ExecutionBrief, OccurrenceDto } from '@edildy/contracts';
 import { and, asc, eq, getTableColumns, gt, inArray, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { DbService } from '../db/db.service';

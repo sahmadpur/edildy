@@ -1,6 +1,6 @@
 import { applyDecorators, Controller, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { PermissionKey } from '@taskop/contracts';
+import type { PermissionKey } from '@edildy/contracts';
 import { Public, RequireAnyPermission, RequirePermission } from '../common/decorators';
 import { PlatformGuard } from '../platform/platform.guard';
 import { PlatformTenantInterceptor } from './platform-tenant.interceptor';

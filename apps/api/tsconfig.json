@@ -1,5 +1,5 @@
 {
-  "extends": "@taskop/config/tsconfig.base.json",
+  "extends": "@edildy/config/tsconfig.base.json",
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",

@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import type { Db } from './db';
 import { ExecutionLockedError } from './execution-store';
 import { appendCommand, type CommandKind, listCommands, outboxCounts } from './outbox';

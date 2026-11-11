@@ -1,4 +1,4 @@
-import { TASK_STATUSES, type TaskStatus } from '@taskop/contracts';
+import { TASK_STATUSES, type TaskStatus } from '@edildy/contracts';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

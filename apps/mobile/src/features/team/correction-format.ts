@@ -1,4 +1,4 @@
-import type { Answer, Item } from '@taskop/contracts';
+import type { Answer, Item } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { answerText } from '@/features/execution/answer-view';
 import { choiceOptions } from '@/features/execution/parts';

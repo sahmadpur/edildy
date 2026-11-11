@@ -1,7 +1,7 @@
 import { closestCenter, DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { type ChecklistContent, hasRules, type Item, type Section } from '@taskop/contracts';
+import { type ChecklistContent, hasRules, type Item, type Section } from '@edildy/contracts';
 import { GripVertical, MoveVertical } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';

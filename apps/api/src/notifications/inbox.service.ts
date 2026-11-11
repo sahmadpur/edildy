@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { NotificationItem, NotificationTargetKind, NotificationType, Page, Preferences } from '@taskop/contracts';
-import { isLanguage } from '@taskop/i18n';
+import type { NotificationItem, NotificationTargetKind, NotificationType, Page, Preferences } from '@edildy/contracts';
+import { isLanguage } from '@edildy/i18n';
 import { and, eq, inArray, isNull, ne, or, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { Clock } from '../common/clock';

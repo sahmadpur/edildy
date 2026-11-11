@@ -1,4 +1,4 @@
-import type { NotificationsApi } from '@taskop/api-client';
+import type { NotificationsApi } from '@edildy/api-client';
 import type { AppStatePort } from '@/offline/sync-triggers';
 import type { PushPort, PushTokenStore } from './ports';
 import { settleWithin } from './settle-within';

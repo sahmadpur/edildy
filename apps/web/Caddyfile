@@ -1,4 +1,4 @@
-# Caddy inside the taskop-web image: serves the Vite build in /srv on port 80.
+# Caddy inside the edildy-web image: serves the Vite build in /srv on port 80.
 # TLS, the host name and /api are the edge proxy's job (deploy/Caddyfile), which forwards the rest here.
 {
 	admin off

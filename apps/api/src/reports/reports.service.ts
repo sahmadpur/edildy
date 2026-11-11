@@ -12,7 +12,7 @@ import {
   type ReportTasks,
   type ReportTasksParams,
   type SiteReportRow,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { pgErrorOf } from '../common/pg-errors';

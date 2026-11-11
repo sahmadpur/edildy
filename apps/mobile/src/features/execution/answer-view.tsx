@@ -9,7 +9,7 @@ import {
   type MediaUrl,
   visibleItems,
   walkItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { type RemoteMedia, RemoteMediaStrip } from '@/features/tasks/remote-media';

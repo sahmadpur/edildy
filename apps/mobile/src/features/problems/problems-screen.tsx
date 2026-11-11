@@ -1,4 +1,4 @@
-import type { ProblemReportDto } from '@taskop/contracts';
+import type { ProblemReportDto } from '@edildy/contracts';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';

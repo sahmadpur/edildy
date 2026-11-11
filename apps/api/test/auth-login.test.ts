@@ -159,7 +159,7 @@ describe('refresh', () => {
     const res = await t.http().post('/api/v1/auth/refresh').set('Cookie', cookie).send({});
     expect(res.status).toBe(200);
     expect(res.body.refreshToken).toBeNull();
-    expect(String(res.headers['set-cookie'])).toContain('taskop_rt=');
+    expect(String(res.headers['set-cookie'])).toContain('edildy_rt=');
   });
 
   it('fails for deactivated users and expired sessions', async () => {

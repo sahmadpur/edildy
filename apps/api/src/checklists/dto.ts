@@ -20,7 +20,7 @@ import {
   updateChecklistInputSchema,
   updateGlobalTemplateInputSchema,
   updateTemplateInputSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class ChecklistListQueryDto extends createZodDto(checklistListQuerySchema) {}

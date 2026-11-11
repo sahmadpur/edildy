@@ -1,4 +1,4 @@
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { CHECKLISTS, completedRun, EMPLOYEE_ROWS, IDS, reportRun, SITE_ROWS, SITES } from './fixtures';

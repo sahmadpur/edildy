@@ -1,4 +1,4 @@
-import type { OccurrenceDto } from '@taskop/contracts';
+import type { OccurrenceDto } from '@edildy/contracts';
 import { groupOccurrences } from '@/features/checklists/group-occurrences';
 import { colors } from '@/lib/theme';
 import type { OccurrenceView } from '@/offline/execution-store';

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { forgotPasswordInputSchema } from '@taskop/contracts';
+import { forgotPasswordInputSchema } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';

@@ -1,5 +1,5 @@
-import { MEDIA_KINDS, type MediaKind, type MediaSource, TASK_LIMITS, taskEvidenceMet } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import { MEDIA_KINDS, type MediaKind, type MediaSource, TASK_LIMITS, taskEvidenceMet } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';

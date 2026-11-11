@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type Answers, type ChecklistContent, computeScore, type ExecutionProgress, progress, type ScoreResult } from '@taskop/contracts';
+import { type Answers, type ChecklistContent, computeScore, type ExecutionProgress, progress, type ScoreResult } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { DbService } from '../db/db.service';
 import { executions } from '../db/schema';

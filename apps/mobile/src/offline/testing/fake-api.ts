@@ -19,7 +19,7 @@ import type {
   TaskActionCommand,
   TaskDetail,
   TaskMediaRegisterInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { SyncApi } from '../sync-api';
 import { ME, ME_REF, syncReport, syncResponse, syncTask, VERSION } from './fixtures';
 
@@ -65,7 +65,7 @@ const UPLOADED_AT = '2026-11-02T04:30:00.000Z';
 const ticketFor = (b: { id: string; mime: string; bytes: number }): MediaUploadTicket => ({
   mediaId: b.id,
   status: 'pending',
-  uploadUrl: `http://files.test/taskop-media/${b.id}`,
+  uploadUrl: `http://files.test/edildy-media/${b.id}`,
   headers: { 'Content-Type': b.mime, 'Content-Length': String(b.bytes) },
   expiresAt: '2026-11-02T05:00:00.000Z',
 });

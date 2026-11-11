@@ -8,7 +8,7 @@ jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 
 describe('ChangeSecretScreen', () => {
   it('shows the weak-PIN field error', async () => {
-    const { ApiError } = jest.requireActual('@taskop/api-client');
+    const { ApiError } = jest.requireActual('@edildy/api-client');
     mockChangeCredential.mockRejectedValue(new ApiError(400, 'VALIDATION_FAILED', 'errors.VALIDATION_FAILED', { newSecret: 'errors.validation.pinWeak' }));
     await render(<ChangeSecretScreen onDone={jest.fn()} />);
     await fireEvent.changeText(screen.getByLabelText('Cari PIN/şifrə'), '730184');

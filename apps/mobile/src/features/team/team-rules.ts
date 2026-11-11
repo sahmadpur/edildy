@@ -8,7 +8,7 @@ import {
   resolvePeriod,
   type RunBucket,
   type RunCounts,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** Spec §7.1: the Team tab and its routes exist only for reports.view with a data scope wider than `own`. */
 export function canSeeTeam(me: { permissions: Me['permissions']; role: Pick<Me['role'], 'dataScope'> }): boolean {

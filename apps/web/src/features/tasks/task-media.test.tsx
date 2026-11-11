@@ -8,7 +8,7 @@ import { ProblemMediaStrip, TaskMediaStrip } from './task-media';
 const mocks = vi.hoisted(() => ({ api: { media: { url: vi.fn() }, taskMedia: { url: vi.fn() }, tasks: { problemMediaUrl: vi.fn() } } }));
 vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
-const signed = (path: string) => ({ url: `http://files.test/taskop-media/${path}?sig=1`, expiresAt: '2026-11-02T04:25:00.000Z' });
+const signed = (path: string) => ({ url: `http://files.test/edildy-media/${path}?sig=1`, expiresAt: '2026-11-02T04:25:00.000Z' });
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -22,7 +22,7 @@ describe('task media', () => {
     expect(screen.getByRole('img', { name: 'Foto hələ yüklənməyib' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Bax: Foto' }));
     const lightbox = await screen.findByRole('dialog', { name: 'Foto' });
-    expect(await within(lightbox).findByRole('img', { name: 'Foto' })).toHaveAttribute('src', 'http://files.test/taskop-media/t/a/k/t1/tm1.jpg?sig=1');
+    expect(await within(lightbox).findByRole('img', { name: 'Foto' })).toHaveAttribute('src', 'http://files.test/edildy-media/t/a/k/t1/tm1.jpg?sig=1');
     expect(lightbox).toHaveTextContent('Nigar Səfərli');
     // The thumbnail and the lightbox share one cached URL.
     expect(mocks.api.taskMedia.url).toHaveBeenCalledTimes(1);
@@ -47,7 +47,7 @@ describe('task media', () => {
     expect(screen.getByRole('img', { name: 'Foto hələ yüklənməyib' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Bax: Foto' }));
     const lightbox = await screen.findByRole('dialog', { name: 'Foto' });
-    expect(await within(lightbox).findByRole('img', { name: 'Foto' })).toHaveAttribute('src', 'http://files.test/taskop-media/t/a/e/x1/pm1?sig=1');
+    expect(await within(lightbox).findByRole('img', { name: 'Foto' })).toHaveAttribute('src', 'http://files.test/edildy-media/t/a/e/x1/pm1?sig=1');
     // Only the uploaded photo is signed (thumbnail and lightbox share it); the video waits for a click, the pending photo is never signed.
     expect(mocks.api.tasks.problemMediaUrl.mock.calls).toEqual([['t1', 'pm1']]);
     expect(mocks.api.media.url).not.toHaveBeenCalled();

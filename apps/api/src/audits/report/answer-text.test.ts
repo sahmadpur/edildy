@@ -1,4 +1,4 @@
-import { type Item, newItem, type NumberItem, type SingleChoiceItem, type YesNoItem } from '@taskop/contracts';
+import { type Item, newItem, type NumberItem, type SingleChoiceItem, type YesNoItem } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { answerLine as line, answerText as text } from './answer-text';
 

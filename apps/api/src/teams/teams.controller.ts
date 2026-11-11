@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { TeamDto } from '@taskop/contracts';
+import type { TeamDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import { CreateTeamDto, SetTeamMembersDto, TeamResponse, UpdateTeamDto } from './dto';

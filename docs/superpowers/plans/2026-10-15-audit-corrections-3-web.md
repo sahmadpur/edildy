@@ -1,4 +1,4 @@
-# Taskop Audit and Corrections — Part 3: Web — Implementation Plan
+# Edildy Audit and Corrections — Part 3: Web — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -42,9 +42,9 @@ It ends with the two spec §10 Playwright flows on a disposable Postgres.
 
 ## Global Constraints
 
-- The product name is **Taskop**. Azerbaijani (`az`) is the only locale. Every visible string is an i18n key.
+- The product name is **Edildy**. Azerbaijani (`az`) is the only locale. Every visible string is an i18n key.
 - **New web strings** go only under `az.audits.web.*` (`packages/i18n/src/az/audits-web.ts`) and `az.corrections.web.*` (`packages/i18n/src/az/corrections-web.ts`), exactly as written in Task 1. Part 1's keys (`az.audits.*`, `az.corrections.*`, `az.nav.audits`, `az.errors.*`, `az.notifications.*`, `az.scheduling.statuses.correction_required`, `az.executions.states.rework`) are reused and never renamed.
-- **Tests never hard-code a Part 1 string.** They read it from `az` (`import { az } from '@taskop/i18n'`), or format it with `i18n.t` from `@/lib/i18n`. Strings this part adds, and strings already in the repo, are written out.
+- **Tests never hard-code a Part 1 string.** They read it from `az` (`import { az } from '@edildy/i18n'`), or format it with `i18n.t` from `@/lib/i18n`. Strings this part adds, and strings already in the repo, are written out.
 - **Which runs** (Part 1 Global Constraints): correct and send back only when `canCorrect` / `canSendBack` allow it (`completed` or `audit_pending`, state `completed`). Withdraw only when `canWithdrawSendBack` allows it. Start an audit only when `canStartAudit(run, false)` allows it and the run has no audit, or only a cancelled one. Never show an action the rule refuses.
 - **Limits** come from `AUDIT_LIMITS`:
   - checklist report e-mails ≤ 10 (`reportEmails`); finish extras ≤ 20 minus the checklist's addresses (`recipients`);
@@ -61,7 +61,7 @@ It ends with the two spec §10 Playwright flows on a disposable Postgres.
 
 Part 1's final *Interfaces for Parts 2 and 3* settles what the first draft of this plan had to assume:
 - **Fixtures.** Part 1 Task 2 adds the new defaulted fields to the web fixtures (`executions/fixtures.ts`, `executions/answers-view.test.tsx`, `executions/problems-page.test.tsx`, `tasks/fixtures.ts`, `reports/fixtures.ts`, `checklists/checklist-detail-page.test.tsx`, `checklists/checklists-page.test.tsx`, `notifications/fixtures.ts`). Task 1 Step 6 only checks this, and adds a field only where one is still missing.
-- **`Score`** is exported from `@taskop/contracts`.
+- **`Score`** is exported from `@edildy/contracts`.
 - **Media still uploading at finish** is `422 MEDIA_NOT_FOUND_IN_STORAGE` (Part 1 decision 29); there is no `MEDIA_PENDING` code.
 - **Notification targets** of the three new types are `targetKind: 'occurrence'`, with the occurrence id and its local date (pinned in Part 1 Task 16).
 - **The report's file name** is `auditReportFileName(checklistName, occurrence localDate)` in `Content-Disposition` (pinned in Part 1 Task 15).
@@ -116,7 +116,7 @@ What remains:
     - Any other refusal stays in the reason dialog with its `az.errors` message. That includes `MEDIA_NOT_CORRECTABLE` with `fields['changes.<i>.answer.photos']`, which this editor cannot cause, because it sends the item's media unchanged.
 12. **Send back.** One checkbox per visible item, a required comment per checked item, and an optional due date (`datetime-local` on the tenant's clock, never in the past). Withdraw asks for confirmation.
 13. **Rework banner.** While a request is open (`detail.rework`), every reader of the run sees the round, who sent it back and when, the due date, and the flagged items with their comments. A corrected run shows "Düzəliş edilib" beside its state.
-    - `requestedBy` is `null` when a platform admin sent the run back; the banner and the timeline then say "Taskop dəstəyi", the existing `scheduling.schedule.actorPlatform` wording.
+    - `requestedBy` is `null` when a platform admin sent the run back; the banner and the timeline then say "Edildy dəstəyi", the existing `scheduling.schedule.actorPlatform` wording.
 14. **Run dialog tabs:** Ümumi, İcra, Audit, Düzəlişlər, in that order. `/schedule?tab=` accepts the two new values.
     - The Audit tab shows the audit's status, result, score and paused state, with a link to the audit for `audits.perform` or `reports.view` holders. Otherwise it shows "Start audit" when the rules allow it.
     - `ExecutionDetail.audit` is the non-cancelled audit, else the latest cancelled one. A cancelled one counts as no audit.
@@ -302,7 +302,7 @@ describe('audit and correction web translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: FAIL: `Cannot read properties of undefined (reading 'page')` (`az.audits.web` is `undefined`).
 
 - [ ] **Step 3: Add the audit web strings**
@@ -496,12 +496,12 @@ and, as the last key of the exported object (just before the closing `} as const
   web,
 ```
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS. The build makes the keys visible to `apps/web`.
 
 - [ ] **Step 6: Check that the web fixtures have the new contract shapes**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/api-client build && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/api-client build && pnpm --filter @edildy/web typecheck`
 
 Expected: PASS, because Part 1 Task 2 already added the defaulted fields to the web fixtures; then go on to Step 7. Only if the typecheck names one of the files below, add the missing field it names, exactly as shown, and leave the fields that are already there alone:
 
@@ -546,7 +546,7 @@ and in its `detail()` builder, after `problems,` add:
 
 `apps/web/src/features/notifications/fixtures.ts`: in `ruleDto()`, after `leadMinutes: d.leadMinutes,` add `resultFilter: d.resultFilter,`.
 
-Run: `pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web test`
+Run: `pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web test`
 Expected: PASS. No test changes behaviour: every new field has its neutral value.
 
 The `reworkRequest()` builder that Tasks 7 and 10 use is this part's own (`features/corrections/fixtures.ts`, Task 7). It includes Part 1's `answersBefore` and allows `requestedBy: null`.
@@ -571,8 +571,8 @@ git commit -m "feat(i18n): add the web strings for audits and corrections, and a
 
 **Interfaces:**
 - Consumes:
-  - Part 1 (`@taskop/contracts`): `AUDIT_LIMITS`, `AUDIT_QUEUES`, `AUDIT_RESULTS`, types `AuditActor`, `AuditDetail`, `AuditDto`, `AuditItemVerdict`, `AuditQueue`, `AuditQueueQuery`, `AuditQueueRow`, `AuditResult`, `AuditVerdict`, `RunAuditState`.
-  - Part 1 (`@taskop/api-client`): `api.audits.{list, get, start}`, `ApiError.auditId`.
+  - Part 1 (`@edildy/contracts`): `AUDIT_LIMITS`, `AUDIT_QUEUES`, `AUDIT_RESULTS`, types `AuditActor`, `AuditDetail`, `AuditDto`, `AuditItemVerdict`, `AuditQueue`, `AuditQueueQuery`, `AuditQueueRow`, `AuditResult`, `AuditVerdict`, `RunAuditState`.
+  - Part 1 (`@edildy/api-client`): `api.audits.{list, get, start}`, `ApiError.auditId`.
   - Existing: `visibleItems`, `type VisibleItem`, `dayNumber`, `idSchema`, `localDateSchema`; `Variant` (`features/scheduling/labels`); `executionFixture`, `occurrenceDto` (`features/executions/fixtures`).
 - Produces:
   - `features/audits/labels.ts`:
@@ -601,8 +601,8 @@ git commit -m "feat(i18n): add the web strings for audits and corrections, and a
 `apps/web/src/features/audits/fixtures.ts`:
 
 ```ts
-import { ApiError, type ClientErrorCode } from '@taskop/api-client';
-import { type AuditDetail, type AuditDto, type AuditItemVerdict, type AuditQueueRow, type AuditVerdict, visibleItems } from '@taskop/contracts';
+import { ApiError, type ClientErrorCode } from '@edildy/api-client';
+import { type AuditDetail, type AuditDto, type AuditItemVerdict, type AuditQueueRow, type AuditVerdict, visibleItems } from '@edildy/contracts';
 import { executionFixture, occurrenceDto } from '@/features/executions/fixtures';
 
 /** Test data shared by the audit tests. Not imported by application code. */
@@ -808,9 +808,9 @@ describe('audit items', () => {
     expect(upsertVerdict(list, verdict('i1', 'rejected', 'Çirkli'))).toEqual([list[1], verdict('i1', 'rejected', 'Çirkli')]);
   });
 
-  it('names people, and Taskop support for a platform admin', () => {
+  it('names people, and Edildy support for a platform admin', () => {
     expect(actorName(t, { kind: 'user', name: 'Rəşad Kazımov' })).toBe('Rəşad Kazımov');
-    expect(actorName(t, { kind: 'platform', name: null })).toBe('Taskop dəstəyi');
+    expect(actorName(t, { kind: 'platform', name: null })).toBe('Edildy dəstəyi');
     expect(actorName(t, null)).toBe('—');
   });
 });
@@ -857,7 +857,7 @@ In `apps/web/src/features/executions/labels.test.ts`, after `expect(executionSta
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/audits features/scheduling/labels features/executions/labels`
+Run: `pnpm --filter @edildy/web test -- features/audits features/scheduling/labels features/executions/labels`
 Expected: FAIL: `Failed to resolve import "./labels"` and `"./queries"` in `features/audits`; `occurrenceVariant('correction_required')` is `'default'`; `executionStateVariant('rework')` is `'outline'`.
 
 - [ ] **Step 4: Implement the helpers**
@@ -882,7 +882,7 @@ import {
   type RunAuditState,
   type VisibleItem,
   visibleItems,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import type { Variant } from '@/features/scheduling/labels';
 
@@ -975,7 +975,7 @@ export function stepItem(order: readonly string[], current: string | null, step:
   return order[Math.min(order.length - 1, Math.max(0, i + step))]!;
 }
 
-/** An auditor or a correction's actor: the person, or Taskop support for a platform admin. */
+/** An auditor or a correction's actor: the person, or Edildy support for a platform admin. */
 export const actorName = (t: TFunction, a: { kind: 'user' | 'platform'; name: string | null } | null): string =>
   a === null ? '—' : a.kind === 'platform' ? t('scheduling.schedule.actorPlatform') : (a.name ?? '—');
 
@@ -987,8 +987,8 @@ export const upsertVerdict = (list: readonly AuditItemVerdict[], v: AuditItemVer
 `apps/web/src/features/audits/queries.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
-import type { AuditDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { AuditDetail } from '@edildy/contracts';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/session';
@@ -1096,7 +1096,7 @@ export const executionStateVariant = (s: ExecutionState): Variant =>
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/audits features/scheduling/labels features/executions/labels && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- features/audits features/scheduling/labels features/executions/labels && pnpm --filter @edildy/web typecheck`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -1223,7 +1223,7 @@ describe('EmailListInput', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- components/email-list-input`
+Run: `pnpm --filter @edildy/web test -- components/email-list-input`
 Expected: FAIL: `Failed to resolve import "./email-list-input"`.
 
 - [ ] **Step 3: Implement**
@@ -1363,7 +1363,7 @@ export function EmailListInput(props: {
 
 - [ ] **Step 4: Run the test and check it passes**
 
-Run: `pnpm --filter @taskop/web test -- components/email-list-input`
+Run: `pnpm --filter @edildy/web test -- components/email-list-input`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -1401,7 +1401,7 @@ git commit -m "feat(web): add an e-mail list input for report addresses" -m "Co-
 `apps/web/src/features/audits/audit-screen.test.tsx`:
 
 ```tsx
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1639,7 +1639,7 @@ describe('AuditScreen', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/audits/audit-screen`
+Run: `pnpm --filter @edildy/web test -- features/audits/audit-screen`
 Expected: FAIL: `Failed to resolve import "./audit-screen"`.
 
 - [ ] **Step 3: Implement the item list**
@@ -1647,7 +1647,7 @@ Expected: FAIL: `Failed to resolve import "./audit-screen"`.
 `apps/web/src/features/audits/item-list.tsx`:
 
 ```tsx
-import type { AuditVerdict, ChecklistContent, VisibleItem } from '@taskop/contracts';
+import type { AuditVerdict, ChecklistContent, VisibleItem } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -1716,7 +1716,7 @@ export function ItemList(props: {
 `apps/web/src/features/audits/item-panel.tsx`:
 
 ```tsx
-import { AUDIT_LIMITS, type AuditDetail, type AuditItemVerdict, type AuditVerdict, type ExecutionMediaDto, type Item } from '@taskop/contracts';
+import { AUDIT_LIMITS, type AuditDetail, type AuditItemVerdict, type AuditVerdict, type ExecutionMediaDto, type Item } from '@edildy/contracts';
 import { type RefObject, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -1854,8 +1854,8 @@ export function ItemPanel(props: {
 `apps/web/src/features/audits/audit-screen.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { type AuditDetail, type AuditVerdict, missingVerdicts } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { type AuditDetail, type AuditVerdict, missingVerdicts } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
@@ -2058,7 +2058,7 @@ and in `appLayout.addChildren([...])`, after `tasksRoute,`:
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/audits/audit-screen && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/audits/audit-screen && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS. `react-hooks` accepts the `useEffectEvent` handler with an empty dependency list.
 
 - [ ] **Step 8: Commit**
@@ -2093,7 +2093,7 @@ git commit -m "feat(web): add the audit screen with per-item verdicts and keyboa
 `apps/web/src/features/audits/audit-actions.test.tsx`:
 
 ```tsx
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -2250,8 +2250,8 @@ describe('finishing an audit', () => {
 `apps/web/src/features/audits/report-panel.test.tsx`:
 
 ```tsx
-import type { AuditDetail } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { AuditDetail } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -2273,7 +2273,7 @@ vi.mock('@/lib/session', () => ({
 }));
 vi.mock('@/features/reports/download', () => ({ saveFile: mocks.saveFile }));
 
-const FILE = { blob: new Blob(['%PDF-1.7']), filename: 'taskop-audit-acilis-2026-11-02.pdf' };
+const FILE = { blob: new Blob(['%PDF-1.7']), filename: 'edildy-audit-acilis-2026-11-02.pdf' };
 
 /** A failed audit finished at 15:00 Baku, its report in `reportStatus`. */
 function finished(over: Partial<AuditDetail> = {}): AuditDetail {
@@ -2399,7 +2399,7 @@ describe('the audit report', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/audits/audit-actions features/audits/report-panel`
+Run: `pnpm --filter @edildy/web test -- features/audits/audit-actions features/audits/report-panel`
 Expected: FAIL: no button named `az.audits.actions.finish`, and no region named "Audit hesabatı".
 
 - [ ] **Step 3: Implement the finish and cancel dialogs**
@@ -2407,8 +2407,8 @@ Expected: FAIL: no button named `az.audits.actions.finish`, and no region named 
 `apps/web/src/features/audits/audit-actions.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, AUDIT_RESULTS, type AuditDetail, type AuditResult, type FinishAuditInput } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, AUDIT_RESULTS, type AuditDetail, type AuditResult, type FinishAuditInput } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2571,8 +2571,8 @@ function CancelAuditDialog({ audit, onClose }: { audit: AuditDetail; onClose: ()
 `apps/web/src/features/audits/report-panel.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, type AuditDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, type AuditDetail } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
 import { useState } from 'react';
@@ -2771,7 +2771,7 @@ Right after the `{audit.paused && (…)}` block, add:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/audits && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/audits && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS, the Task 4 tests included.
 
 - [ ] **Step 7: Commit**
@@ -2806,7 +2806,7 @@ git commit -m "feat(web): finish and cancel audits, and download, resend or retr
 `apps/web/src/features/audits/audits-page.test.tsx`:
 
 ```tsx
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -2960,7 +2960,7 @@ and add this test after `shows Hesabatlar to holders of reports.view`:
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/audits/audits-page layouts/app-shell`
+Run: `pnpm --filter @edildy/web test -- features/audits/audits-page layouts/app-shell`
 Expected: FAIL: `Failed to resolve import "./audits-page"`, and no "Auditlər" link.
 
 - [ ] **Step 3: Add `useStartAudit`**
@@ -2995,7 +2995,7 @@ export function useStartAudit() {
 `apps/web/src/features/audits/audits-page.tsx`:
 
 ```tsx
-import { AUDIT_QUEUES, AUDIT_RESULTS, type AuditQueue, type AuditQueueRow } from '@taskop/contracts';
+import { AUDIT_QUEUES, AUDIT_RESULTS, type AuditQueue, type AuditQueueRow } from '@edildy/contracts';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -3238,7 +3238,7 @@ In `apps/web/src/layouts/app-shell.tsx`:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/audits layouts/app-shell && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/audits layouts/app-shell && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -3260,7 +3260,7 @@ git commit -m "feat(web): add the audit queue page with filters and Start audit"
 **Interfaces:**
 - Consumes:
   - Part 1: `api.corrections.history`, `canStartAudit`, types `AuditBrief`, `Correction`, `ExecutionCorrections`, `ReworkRequest` (`requestedBy: UserRef | null`, `answersBefore`), `Score`.
-  - Existing: `scheduling.schedule.actorPlatform` ("Taskop dəstəyi") for a platform admin.
+  - Existing: `scheduling.schedule.actorPlatform` ("Edildy dəstəyi") for a platform admin.
   - Part 1 strings: `az.audits.{audit, noAudit, paused, score, statuses, results, actions.{start, open}}`, `az.corrections.{title, original, current, kinds, round, dueAt, noCorrections, emptyAnswer}`.
   - Task 2: `useStartAudit` (Task 6), `resultVariant`, `actorName`, `auditDto`, `AUDIT_IDS`.
   - Existing: `useExecution` (`features/executions/queries`), `answerValue`, `formatPercent` (`features/executions/labels`), `walkItems`, `executionFixture`, `occurrenceDetail`, `summary` (`features/executions/fixtures`).
@@ -3280,7 +3280,7 @@ git commit -m "feat(web): add the audit queue page with filters and Start audit"
 `apps/web/src/features/corrections/fixtures.ts`:
 
 ```ts
-import type { Correction, ExecutionCorrections, ReworkRequest } from '@taskop/contracts';
+import type { Correction, ExecutionCorrections, ReworkRequest } from '@edildy/contracts';
 
 /** Test data shared by the correction tests. Not imported by application code. */
 export const MANAGER = { id: 'mgr', fullName: 'Leyla Quliyeva' };
@@ -3371,7 +3371,7 @@ describe('correctionTimeline', () => {
 `apps/web/src/features/corrections/corrections-tab.test.tsx`:
 
 ```tsx
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { executionFixture, occurrenceDetail, summary } from '@/features/executions/fixtures';
@@ -3457,7 +3457,7 @@ describe('CorrectionsTab', () => {
     expect(timeline[3]).toHaveTextContent('Şərh: Qeyd yazın');
   });
 
-  it('names Taskop support when a platform admin sent the run back', async () => {
+  it('names Edildy support when a platform admin sent the run back', async () => {
     const f = executionFixture();
     mocks.api.executions.get.mockResolvedValue(f.detail());
     mocks.api.corrections.history.mockResolvedValue({
@@ -3465,7 +3465,7 @@ describe('CorrectionsTab', () => {
       reworkRequests: [reworkRequest({ requestedBy: null, items: [{ itemId: f.note.id, comment: 'Qeydi doldurun' }] })],
     });
     renderWithProviders(<CorrectionsTab occurrence={occurrenceDetail({ execution: summary() })} />);
-    expect(await screen.findByText(/Taskop dəstəyi icranı düzəlişə qaytardı/)).toBeInTheDocument();
+    expect(await screen.findByText(/Edildy dəstəyi icranı düzəlişə qaytardı/)).toBeInTheDocument();
     expect(screen.getByText(/Raund 1/)).toBeInTheDocument();
   });
 });
@@ -3474,8 +3474,8 @@ describe('CorrectionsTab', () => {
 `apps/web/src/features/audits/run-audit-tab.test.tsx`:
 
 ```tsx
-import type { AuditBrief, OccurrenceStatus } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { AuditBrief, OccurrenceStatus } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -3563,7 +3563,7 @@ describe('RunAuditTab', () => {
 `apps/web/src/features/scheduling/occurrence-dialog.test.tsx`:
 
 ```tsx
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { occurrenceDetail } from '@/features/executions/fixtures';
@@ -3606,7 +3606,7 @@ with:
 
 - [ ] **Step 3: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections features/audits/run-audit-tab features/scheduling`
+Run: `pnpm --filter @edildy/web test -- features/corrections features/audits/run-audit-tab features/scheduling`
 Expected: FAIL: `Failed to resolve import "./labels"`, `"./corrections-tab"` and `"./run-audit-tab"`; the dialog has two tabs; `scheduleSearch` drops `tab: 'audit'`.
 
 - [ ] **Step 4: Implement the correction helpers and queries**
@@ -3614,7 +3614,7 @@ Expected: FAIL: `Failed to resolve import "./labels"`, `"./corrections-tab"` and
 `apps/web/src/features/corrections/labels.ts`:
 
 ```ts
-import type { Answer, Correction, ExecutionCorrections, Item, ReworkRequest, Score } from '@taskop/contracts';
+import type { Answer, Correction, ExecutionCorrections, Item, ReworkRequest, Score } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import { answerValue, formatPercent } from '@/features/executions/labels';
 
@@ -3675,7 +3675,7 @@ export const useCorrections = (executionId: string) => useQuery({ queryKey: corr
 `apps/web/src/features/corrections/corrections-tab.tsx`:
 
 ```tsx
-import { type Item, type OccurrenceDetail, walkItems } from '@taskop/contracts';
+import { type Item, type OccurrenceDetail, walkItems } from '@edildy/contracts';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -3830,7 +3830,7 @@ Each timeline entry carries `data-kind`, so tests can tell the entry types apart
 `apps/web/src/features/audits/run-audit-tab.tsx`:
 
 ```tsx
-import { canStartAudit, type OccurrenceDetail } from '@taskop/contracts';
+import { canStartAudit, type OccurrenceDetail } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -3962,7 +3962,7 @@ Also update its doc comment's example to `/schedule?date=YYYY-MM-DD&occurrence=<
 
 - [ ] **Step 8: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections features/audits features/scheduling features/reports && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/corrections features/audits features/scheduling features/reports && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS. The report drawers' tests still find "İcra" selected; the new tabs mount only when opened.
 
 - [ ] **Step 9: Commit**
@@ -4041,7 +4041,7 @@ describe('the correction payload', () => {
 `apps/web/src/features/corrections/answer-editor.test.tsx`:
 
 ```tsx
-import { type Answer, type DateTimeItem, type Item, type MultiChoiceItem, newItem } from '@taskop/contracts';
+import { type Answer, type DateTimeItem, type Item, type MultiChoiceItem, newItem } from '@edildy/contracts';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -4143,12 +4143,12 @@ describe('AnswerEditor', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections`
+Run: `pnpm --filter @edildy/web test -- features/corrections`
 Expected: FAIL: `isoToLocalInput` (and the other new helpers) are not exported; `Failed to resolve import "./answer-editor"`.
 
 - [ ] **Step 3: Add the helpers**
 
-In `apps/web/src/features/corrections/labels.ts`, replace the `@taskop/contracts` import with:
+In `apps/web/src/features/corrections/labels.ts`, replace the `@edildy/contracts` import with:
 
 ```ts
 import {
@@ -4163,7 +4163,7 @@ import {
   type Score,
   tzOffsetMinutes,
   zonedTimeToUtc,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 ```
 
 and append:
@@ -4208,7 +4208,7 @@ export const correctionChanges = (before: Answers, after: Answers): CorrectionCh
 `apps/web/src/features/corrections/answer-editor.tsx`:
 
 ```tsx
-import { type Answer, EXECUTION_LIMITS, type Item } from '@taskop/contracts';
+import { type Answer, EXECUTION_LIMITS, type Item } from '@edildy/contracts';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -4309,7 +4309,7 @@ export function AnswerEditor({ item, answer, onChange }: { item: Item; answer: A
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/corrections && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -4344,8 +4344,8 @@ git commit -m "feat(web): add values-only answer editors for corrections" -m "Co
 `apps/web/src/features/corrections/correct-answers.test.tsx`:
 
 ```tsx
-import type { ExecutionDetail, OccurrenceStatus } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { ExecutionDetail, OccurrenceStatus } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -4522,7 +4522,7 @@ vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { time
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections/correct-answers features/executions/execution-tab`
+Run: `pnpm --filter @edildy/web test -- features/corrections/correct-answers features/executions/execution-tab`
 Expected: FAIL: no button named `az.corrections.actions.correct`.
 
 - [ ] **Step 3: Implement the edit mode**
@@ -4530,8 +4530,8 @@ Expected: FAIL: no button named `az.corrections.actions.correct`.
 `apps/web/src/features/corrections/correct-answers.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { type Answer, type Answers, AUDIT_LIMITS, type ExecutionDetail, type Missing, requirements, visibleItems } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { type Answer, type Answers, AUDIT_LIMITS, type ExecutionDetail, type Missing, requirements, visibleItems } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -4692,7 +4692,7 @@ function ReasonDialog({ busy, error, onSubmit, onClose }: { busy: boolean; error
 `apps/web/src/features/corrections/run-actions.tsx`:
 
 ```tsx
-import { canCorrect, type ExecutionDetail, type OccurrenceStatus } from '@taskop/contracts';
+import { canCorrect, type ExecutionDetail, type OccurrenceStatus } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useCan } from '@/lib/session';
@@ -4718,7 +4718,7 @@ In `apps/web/src/features/executions/execution-tab.tsx`:
 - change the type import to:
 
 ```ts
-import type { ExecutionDetail, ExecutionSummary, OccurrenceDetail, OccurrenceStatus } from '@taskop/contracts';
+import type { ExecutionDetail, ExecutionSummary, OccurrenceDetail, OccurrenceStatus } from '@edildy/contracts';
 ```
 
 - add the imports:
@@ -4769,7 +4769,7 @@ function CountedExecution({ summary, status }: { summary: ExecutionSummary; stat
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections features/executions features/reports features/scheduling && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/corrections features/executions features/reports features/scheduling && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS. The other suites that open the run drawer mock `useCan`. In the report suites the user lacks `executions.correct`. The schedule suite answers `true`, so a "Correct answers" button appears on its completed run, and no existing assertion counts buttons there.
 
 - [ ] **Step 7: Commit**
@@ -4807,8 +4807,8 @@ git commit -m "feat(web): correct a completed run's answers with a reason" -m "C
 `apps/web/src/features/corrections/send-back-dialog.test.tsx`:
 
 ```tsx
-import type { ExecutionDetail, OccurrenceStatus } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { ExecutionDetail, OccurrenceStatus } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -4919,11 +4919,11 @@ describe('Send back', () => {
     expect(mocks.api.corrections.withdraw).toHaveBeenCalledWith('x1');
   });
 
-  it('names Taskop support when a platform admin sent the run back', async () => {
+  it('names Edildy support when a platform admin sent the run back', async () => {
     const f = executionFixture();
     mocks.api.executions.get.mockResolvedValue(f.detail({ state: 'rework', reworkRound: 1, rework: reworkRequest({ requestedBy: null, items: [{ itemId: f.note.id, comment: 'Qeydi doldurun' }] }) }));
     renderWithProviders(<ExecutionTab occurrence={occurrenceDetail({ status: 'correction_required', execution: summary({ state: 'rework' }) })} />);
-    expect(await screen.findByText(/^Taskop dəstəyi · /)).toBeInTheDocument();
+    expect(await screen.findByText(/^Edildy dəstəyi · /)).toBeInTheDocument();
   });
 
   it('shows the banner without actions to someone who cannot correct', async () => {
@@ -4939,7 +4939,7 @@ describe('Send back', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections/send-back-dialog`
+Run: `pnpm --filter @edildy/web test -- features/corrections/send-back-dialog`
 Expected: FAIL: no button named `az.corrections.actions.sendBack`.
 
 - [ ] **Step 3: Implement the dialog**
@@ -4947,8 +4947,8 @@ Expected: FAIL: no button named `az.corrections.actions.sendBack`.
 `apps/web/src/features/corrections/send-back-dialog.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, type ExecutionDetail, type SendBackInput, visibleItems } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, type ExecutionDetail, type SendBackInput, visibleItems } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5065,7 +5065,7 @@ export function SendBackDialog({ detail, onClose }: { detail: ExecutionDetail; o
 `apps/web/src/features/corrections/rework-banner.tsx`:
 
 ```tsx
-import { type ExecutionDetail, walkItems } from '@taskop/contracts';
+import { type ExecutionDetail, walkItems } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useFormatDateTime } from '@/lib/format';
@@ -5103,7 +5103,7 @@ export function ReworkBanner({ detail }: { detail: ExecutionDetail }) {
 Replace `apps/web/src/features/corrections/run-actions.tsx` with:
 
 ```tsx
-import { canCorrect, canSendBack, canWithdrawSendBack, type ExecutionDetail, type OccurrenceStatus } from '@taskop/contracts';
+import { canCorrect, canSendBack, canWithdrawSendBack, type ExecutionDetail, type OccurrenceStatus } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -5179,7 +5179,7 @@ and in `CountedExecution`, right after `<SummaryView summary={summary} detail={d
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/corrections features/executions && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/corrections features/executions && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -5210,8 +5210,8 @@ git commit -m "feat(web): send a run back to the worker, withdraw it, and show t
 In `apps/web/src/features/checklists/checklist-detail-page.test.tsx`, add these imports:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
-import { az } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { az } from '@edildy/i18n';
 ```
 
 and append inside `describe('ChecklistDetailPage', …)`:
@@ -5278,7 +5278,7 @@ and append inside `describe('ChecklistDetailPage', …)`:
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/checklists/checklist-detail-page`
+Run: `pnpm --filter @edildy/web test -- features/checklists/checklist-detail-page`
 Expected: FAIL: no region named "Audit".
 
 - [ ] **Step 3: Implement the section**
@@ -5286,8 +5286,8 @@ Expected: FAIL: no region named "Audit".
 `apps/web/src/features/checklists/audit-settings.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { AUDIT_LIMITS, type ChecklistDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { AUDIT_LIMITS, type ChecklistDetail } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmailListInput } from '@/components/email-list-input';
@@ -5390,7 +5390,7 @@ and directly before `<h2 className="text-lg font-semibold">{t('checklists.detail
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/checklists && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/checklists && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS. The version-history test still finds three table rows; the section has no table.
 
 - [ ] **Step 6: Commit**
@@ -5441,7 +5441,7 @@ In `apps/web/src/features/reports/labels.test.ts`, inside the test that checks `
     expect(exportQuery('full', FILTERS, 'xlsx', { auditState: 'passed' })).toEqual({ ...FILTERS, format: 'xlsx' });
 ```
 
-In `apps/web/src/features/reports/runs-tab.test.tsx`, add `import { az } from '@taskop/i18n';` to the imports and these tests inside `describe('RunsTab', …)`:
+In `apps/web/src/features/reports/runs-tab.test.tsx`, add `import { az } from '@edildy/i18n';` to the imports and these tests inside `describe('RunsTab', …)`:
 
 ```tsx
   it('shows each run’s audit state and marks a corrected score', async () => {
@@ -5488,7 +5488,7 @@ In `apps/web/src/features/reports/export-menu.test.tsx`, add inside `describe('E
   });
 ```
 
-In `apps/web/src/features/reports/reports-page.test.tsx`, add `import { az } from '@taskop/i18n';` to the imports and this test inside `describe('ReportsPage', …)`:
+In `apps/web/src/features/reports/reports-page.test.tsx`, add `import { az } from '@edildy/i18n';` to the imports and this test inside `describe('ReportsPage', …)`:
 
 ```tsx
   it('keeps the runs table’s audit state in the URL', async () => {
@@ -5503,13 +5503,13 @@ In `apps/web/src/features/reports/reports-page.test.tsx`, add `import { az } fro
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/reports`
+Run: `pnpm --filter @edildy/web test -- features/reports`
 Expected: FAIL: `auditState` is dropped by `reportsPageSearch` and by `exportQuery`; no Audit column; no audit-state select.
 
 - [ ] **Step 3: Carry the audit state in the URL**
 
 In `apps/web/src/features/reports/search.ts`:
-- add `RUN_AUDIT_STATES,` and `type RunAuditState,` to the `@taskop/contracts` import;
+- add `RUN_AUDIT_STATES,` and `type RunAuditState,` to the `@edildy/contracts` import;
 - in `ReportsPageSearch`, after `severity?: ProblemSeverity;` add:
 
 ```ts
@@ -5538,7 +5538,7 @@ export const pageExtras = (s: ReportsPageSearch): Pick<ReportsPageSearch, 'tab' 
 - [ ] **Step 4: Query and export with it**
 
 In `apps/web/src/features/reports/queries.ts`:
-- add `type RunAuditState,` to the `@taskop/contracts` import;
+- add `type RunAuditState,` to the `@edildy/contracts` import;
 - replace the `runs` key with:
 
 ```ts
@@ -5559,7 +5559,7 @@ export const useReportRuns = (filters: ReportFilters, bucket: RunBucket, auditSt
 ```
 
 In `apps/web/src/features/reports/labels.ts`:
-- add `type RunAuditState,` to the `@taskop/contracts` import;
+- add `type RunAuditState,` to the `@edildy/contracts` import;
 - replace `exportQuery` with:
 
 ```ts
@@ -5581,7 +5581,7 @@ export function exportQuery(
 ```
 
 In `apps/web/src/features/reports/export-menu.tsx`:
-- add `type RunAuditState,` to the `@taskop/contracts` import;
+- add `type RunAuditState,` to the `@edildy/contracts` import;
 - replace the component's signature with:
 
 ```tsx
@@ -5608,7 +5608,7 @@ In `apps/web/src/features/reports/runs-tab.tsx`:
 - replace the first import with:
 
 ```ts
-import { type ReportFilters, RUN_AUDIT_STATES, RUN_BUCKETS, type RunAuditState, type RunBucket } from '@taskop/contracts';
+import { type ReportFilters, RUN_AUDIT_STATES, RUN_BUCKETS, type RunAuditState, type RunBucket } from '@edildy/contracts';
 ```
 
 - add the imports:
@@ -5720,7 +5720,7 @@ In `apps/web/src/features/reports/reports-page.tsx`:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/reports && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/reports && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS. The earlier runs tests still see `{ ...FILTERS, bucket }` with no `auditState`, because it is only sent when set.
 
 - [ ] **Step 7: Commit**
@@ -5748,7 +5748,7 @@ git commit -m "feat(web): show and filter the audit state of runs in reports, an
 
 - [ ] **Step 1: Write the failing tests**
 
-In `apps/web/src/features/executions/problems-page.test.tsx`, add `import { az } from '@taskop/i18n';` to the imports and this test inside the first `describe('ProblemsPage', …)`:
+In `apps/web/src/features/executions/problems-page.test.tsx`, add `import { az } from '@edildy/i18n';` to the imports and this test inside the first `describe('ProblemsPage', …)`:
 
 ```tsx
   it('hides problems a correction cleared unless asked, and marks them', async () => {
@@ -5770,7 +5770,7 @@ In `apps/web/src/features/executions/problems-page.test.tsx`, add `import { az }
   });
 ```
 
-In `apps/web/src/features/executions/answers-view.test.tsx`, add `import { az } from '@taskop/i18n';` to the imports and this test inside `describe('AnswersView', …)`:
+In `apps/web/src/features/executions/answers-view.test.tsx`, add `import { az } from '@edildy/i18n';` to the imports and this test inside `describe('AnswersView', …)`:
 
 ```tsx
   it('shows a problem a correction cleared, muted, without colouring its item', () => {
@@ -5788,7 +5788,7 @@ In `apps/web/src/features/executions/answers-view.test.tsx`, add `import { az } 
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/executions/problems-page features/executions/answers-view`
+Run: `pnpm --filter @edildy/web test -- features/executions/problems-page features/executions/answers-view`
 Expected: FAIL: no checkbox named "Aradan qaldırılanları göstər"; the item is still `data-problem="critical"`.
 
 - [ ] **Step 3: Implement the problems page toggle**
@@ -5866,7 +5866,7 @@ In `apps/web/src/features/executions/answers-view.tsx`, in `AnswerRow`:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/executions && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/executions && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
@@ -5958,13 +5958,13 @@ In `apps/web/src/features/notifications/labels.test.ts`, add inside `describe('n
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications`
+Run: `pnpm --filter @edildy/web test -- features/notifications`
 Expected: FAIL: the rule bodies lack `resultFilter`; there is one combobox; the audit notifications have no `tab`.
 
 - [ ] **Step 3: Carry the result filter in the rule form**
 
 In `apps/web/src/features/notifications/rules-form.ts`:
-- add `type AuditResultFilter,` to the `@taskop/contracts` import;
+- add `type AuditResultFilter,` to the `@edildy/contracts` import;
 - in `RuleDraft`, after `leadMinutes: LeadMinutes | null;` add:
 
 ```ts
@@ -5984,7 +5984,7 @@ In `apps/web/src/features/notifications/rules-form.ts`:
 - [ ] **Step 4: Show it in the rules table**
 
 In `apps/web/src/features/notifications/rules-tab.tsx`:
-- add `AUDIT_RESULT_FILTERS,` and `type AuditResultFilter,` to the `@taskop/contracts` import;
+- add `AUDIT_RESULT_FILTERS,` and `type AuditResultFilter,` to the `@edildy/contracts` import;
 - in the header row, after the lead-time `TableHead`, add:
 
 ```tsx
@@ -6020,7 +6020,7 @@ In `apps/web/src/features/notifications/labels.ts`:
 - replace the first import with:
 
 ```ts
-import { DELIVERY_STATUSES, type DeliveryCounts, isProblemType, type NotificationItem, type NotificationType } from '@taskop/contracts';
+import { DELIVERY_STATUSES, type DeliveryCounts, isProblemType, type NotificationItem, type NotificationType } from '@edildy/contracts';
 import type { OccurrenceTab } from '@/features/scheduling/occurrence-dialog';
 ```
 
@@ -6054,7 +6054,7 @@ const RUN_TABS: Partial<Record<NotificationType, OccurrenceTab>> = {
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/notifications && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS.
 
 - [ ] **Step 7: Commit**
@@ -6082,10 +6082,10 @@ git commit -m "feat(web): add the audit result filter to notification rules and 
     - in rework: `GET /me/sync` (`rework`, `reworkRound`), `PUT /executions/:id/answers`, `POST /executions/:id/resubmit`.
   - **Through the web:** `PATCH /checklists/:id`, `GET /audits`, `POST /executions/:id/audits`, `GET /audits/:id`, `PUT /audits/:id/items/:itemId`, `POST /audits/:id/finish`, `GET /audits/:id/report.pdf`, `POST /executions/:id/send-back`, `GET /executions/:id/corrections`.
   - **The report job:** it builds the PDF, stores it in SeaweedFS and mails it through SMTP (Mailpit).
-  - **Imports:** `auditReportFileName`, `SyncResponse`, `ChecklistContent`, `Item` and `MediaUploadTicket` from `@taskop/contracts`; `az` from `@taskop/i18n`; `uuidv7`.
+  - **Imports:** `auditReportFileName`, `SyncResponse`, `ChecklistContent`, `Item` and `MediaUploadTicket` from `@edildy/contracts`; `az` from `@edildy/i18n`; `uuidv7`.
 - **Environment:**
   - Postgres with `pnpm db:setup && pnpm db:seed` (the global template "Gündəlik təmizlik yoxlaması" must exist).
-  - SeaweedFS on `:8333` with the `taskop-media` bucket, and Mailpit on `:1025`/`:8025`. Locally both come from `docker compose up -d`; CI starts them in Step 2.
+  - SeaweedFS on `:8333` with the `edildy-media` bucket, and Mailpit on `:1025`/`:8025`. Locally both come from `docker compose up -d`; CI starts them in Step 2.
   - The API's pg-boss workers on (`JOBS_ENABLED=true`, the default).
 - **Decision 19:**
   - The owner holds every permission (`ALL_PERMISSIONS`), so the owner is both the auditor and the manager.
@@ -6098,8 +6098,8 @@ git commit -m "feat(web): add the audit result filter to notification rules and 
 ```ts
 import { readFile } from 'node:fs/promises';
 import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
-import { auditReportFileName, type ChecklistContent, type Item, type MediaUploadTicket, type SyncResponse } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { auditReportFileName, type ChecklistContent, type Item, type MediaUploadTicket, type SyncResponse } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { uuidv7 } from 'uuidv7';
 
 const MAILPIT = process.env.MAILPIT_URL ?? 'http://localhost:8025';
@@ -6133,7 +6133,7 @@ interface Tenant {
   yesterday: string;
 }
 
-/** A tenant with a site, a worker and a published checklist from a Taskop template, assigned once for yesterday. */
+/** A tenant with a site, a worker and a published checklist from a Edildy template, assigned once for yesterday. */
 async function setupTenant(request: APIRequestContext, checklistName: string): Promise<Tenant> {
   const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const orgCode = `e2e-aud-${suffix}`;
@@ -6433,8 +6433,8 @@ In `.github/workflows/ci.yml`, in the `e2e` job:
       # SeaweedFS and Mailpit run as containers (step below): the audit report is stored there and mailed (SP8).
       S3_ENDPOINT: http://localhost:8333
       S3_PUBLIC_ENDPOINT: http://localhost:8333
-      S3_ACCESS_KEY: taskop
-      S3_SECRET_KEY: taskop_dev_password
+      S3_ACCESS_KEY: edildy
+      S3_SECRET_KEY: edildy_dev_password
 ```
 
 - add this step right after `- run: pnpm build`:
@@ -6442,18 +6442,18 @@ In `.github/workflows/ci.yml`, in the `e2e` job:
 ```yaml
       - name: Start object storage and the mail catcher
         env:
-          AWS_ACCESS_KEY_ID: taskop
-          AWS_SECRET_ACCESS_KEY: taskop_dev_password
+          AWS_ACCESS_KEY_ID: edildy
+          AWS_SECRET_ACCESS_KEY: edildy_dev_password
           AWS_DEFAULT_REGION: us-east-1
         run: |
           docker run -d --name seaweedfs -p 8333:8333 -v "$PWD/docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro" chrislusf/seaweedfs:latest server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
           docker run -d --name mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit:latest
           for i in $(seq 1 30); do
-            aws --endpoint-url http://localhost:8333 s3api head-bucket --bucket taskop-media 2>/dev/null && break
-            aws --endpoint-url http://localhost:8333 s3api create-bucket --bucket taskop-media 2>/dev/null && break
+            aws --endpoint-url http://localhost:8333 s3api head-bucket --bucket edildy-media 2>/dev/null && break
+            aws --endpoint-url http://localhost:8333 s3api create-bucket --bucket edildy-media 2>/dev/null && break
             sleep 2
           done
-          aws --endpoint-url http://localhost:8333 s3api head-bucket --bucket taskop-media
+          aws --endpoint-url http://localhost:8333 s3api head-bucket --bucket edildy-media
 ```
 
 The credentials are the ones `docker/seaweedfs/s3.json` defines for local development. `SMTP_URL: smtp://localhost:1025` is already set for the job, so the API mails into Mailpit.
@@ -6467,9 +6467,9 @@ Prerequisites:
 - `pnpm db:setup && pnpm db:seed` done, so the migrations include `0015` and `0016`.
 
 ```bash
-pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api-client build
-pnpm --filter @taskop/api build
-pnpm --filter @taskop/web e2e -- audits
+pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api-client build
+pnpm --filter @edildy/api build
+pnpm --filter @edildy/web e2e -- audits
 ```
 
 Expected: PASS for both tests.
@@ -6482,9 +6482,9 @@ If it fails, check these first; do not add sleeps:
 - [ ] **Step 4: Run every check**
 
 ```bash
-pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint && pnpm --filter @taskop/web test && pnpm --filter @taskop/web build
+pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint && pnpm --filter @edildy/web test && pnpm --filter @edildy/web build
 pnpm typecheck && pnpm lint && pnpm test
-pnpm --filter @taskop/web e2e
+pnpm --filter @edildy/web e2e
 ```
 
 Expected: all green. The earlier e2e specs still pass:

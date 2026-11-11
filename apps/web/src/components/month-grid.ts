@@ -1,4 +1,4 @@
-import { addDays, isoWeekday, type LocalDate } from '@taskop/contracts';
+import { addDays, isoWeekday, type LocalDate } from '@edildy/contracts';
 
 /** 'YYYY-MM' of a local date. */
 export const monthOf = (date: LocalDate): string => date.slice(0, 7);

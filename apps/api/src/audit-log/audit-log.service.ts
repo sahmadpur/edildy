@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AuditEntryDto, Page } from '@taskop/contracts';
+import type { AuditEntryDto, Page } from '@edildy/contracts';
 import { and, desc, eq, gte, inArray, lt, lte, type SQL } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { DbService } from '../db/db.service';

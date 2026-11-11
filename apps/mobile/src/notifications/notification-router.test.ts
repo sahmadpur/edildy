@@ -1,4 +1,4 @@
-import { NOTIFICATION_TYPES } from '@taskop/contracts';
+import { NOTIFICATION_TYPES } from '@edildy/contracts';
 import { ME, OCC, OCC2, OCC3, occurrence, OTHER, pushData, REPORT, reworkSync, REWORK_EXECUTION, syncResponse, syncTask, TASK, TASK2, versionOf } from '@/offline/testing/fixtures';
 import { createTestServices } from '@/offline/testing/test-services';
 import { createRouteContext, HOME, INBOX, type RouteContext, routeForPush, routeForTarget, startTapRouting, TEAM_RUN_TYPES } from './notification-router';

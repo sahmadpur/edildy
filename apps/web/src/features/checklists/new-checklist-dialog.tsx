@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES, type CreateChecklistInput, type TemplateCategory, type TemplateSummary } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type CreateChecklistInput, type TemplateCategory, type TemplateSummary } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

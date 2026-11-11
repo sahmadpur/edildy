@@ -6,7 +6,7 @@ import {
   type NotificationRuleDto,
   type RuleType,
   type UpdateNotificationRuleInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** A rule row while it is being edited. */
 export interface RuleDraft {

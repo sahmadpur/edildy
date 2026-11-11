@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { AuditResult, OccurrenceStatus, ProblemSeverity } from '@taskop/contracts';
+import type { AuditResult, OccurrenceStatus, ProblemSeverity } from '@edildy/contracts';
 
 /** Payload of every task.* event (SP5 spec §6.5). SP6 listens for notifications; SP5 has no listeners. */
 export interface TaskEvent {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Page, ProblemReportDto, ReportSite } from '@taskop/contracts';
+import type { Page, ProblemReportDto, ReportSite } from '@edildy/contracts';
 import { and, asc, desc, eq, inArray, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { inSiteSubtrees } from '../common/sql';

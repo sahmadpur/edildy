@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApiClient, ApiError, createPlatformApi, createTaskopApi, memoryTokenStore, parseContentDispositionFilename, type TokenStore } from './index.js';
+import { ApiClient, ApiError, createPlatformApi, createEdildyApi, memoryTokenStore, parseContentDispositionFilename, type TokenStore } from './index.js';
 
 const id = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f';
 const me = {
@@ -31,7 +31,7 @@ describe('ApiClient', () => {
     const store = memoryTokenStore();
     await store.save({ accessToken: 'a1', refreshToken: null });
     const { api, fetchMock } = setup(() => json(200, me), 'web', store);
-    const result = await createTaskopApi(api).me();
+    const result = await createEdildyApi(api).me();
     expect(result.tenant.orgCode).toBe('acme');
     expect((fetchMock.mock.calls[0]![1].headers as Record<string, string>).Authorization).toBe('Bearer a1');
   });
@@ -46,14 +46,14 @@ describe('ApiClient', () => {
       const auth = (init.headers as Record<string, string>).Authorization;
       return auth === 'Bearer fresh' ? json(200, me) : err(401, 'UNAUTHENTICATED');
     });
-    const typed = createTaskopApi(api);
+    const typed = createEdildyApi(api);
     await Promise.all([typed.me(), typed.me(), typed.me()]);
     expect(refreshes).toBe(1);
   });
 
   it('does not refresh on INVALID_CREDENTIALS', async () => {
     const { api, fetchMock, onSessionExpired } = setup(() => err(401, 'INVALID_CREDENTIALS'));
-    await expect(createTaskopApi(api).auth.changeCredential({ currentSecret: 'x', newSecret: 'y' })).rejects.toMatchObject({
+    await expect(createEdildyApi(api).auth.changeCredential({ currentSecret: 'x', newSecret: 'y' })).rejects.toMatchObject({
       code: 'INVALID_CREDENTIALS',
       status: 401,
     });
@@ -65,7 +65,7 @@ describe('ApiClient', () => {
     const store = memoryTokenStore();
     await store.save({ accessToken: 'old', refreshToken: null });
     const { api, onSessionExpired } = setup(() => err(401, 'UNAUTHENTICATED'), 'web', store);
-    await expect(createTaskopApi(api).me()).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
+    await expect(createEdildyApi(api).me()).rejects.toMatchObject({ code: 'UNAUTHENTICATED' });
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
     expect(store.getAccessToken()).toBeNull();
   });
@@ -99,8 +99,8 @@ describe('ApiClient', () => {
     const { api } = setup(() => {
       throw new TypeError('Failed to fetch');
     }, 'mobile', store);
-    await expect(createTaskopApi(api).me()).rejects.toBeInstanceOf(ApiError);
-    await expect(createTaskopApi(api).me()).rejects.toMatchObject({ code: 'NETWORK', messageKey: 'errors.NETWORK' });
+    await expect(createEdildyApi(api).me()).rejects.toBeInstanceOf(ApiError);
+    await expect(createEdildyApi(api).me()).rejects.toMatchObject({ code: 'NETWORK', messageKey: 'errors.NETWORK' });
     expect(store.getAccessToken()).toBe('a');
   });
 
@@ -116,7 +116,7 @@ describe('ApiClient', () => {
       try {
         const fetchMock = vi.fn(hanging);
         const api = new ApiClient({ baseUrl: '/api/v1', client: 'mobile', tokenStore: memoryTokenStore(), fetch: fetchMock as unknown as typeof fetch, timeoutMs: 30_000 });
-        const pending = createTaskopApi(api).me();
+        const pending = createEdildyApi(api).me();
         const outcome = expect(pending).rejects.toMatchObject({ code: 'NETWORK', messageKey: 'errors.NETWORK', status: 0 });
         await vi.advanceTimersByTimeAsync(29_999);
         expect(fetchMock.mock.calls[0]![1].signal?.aborted).toBe(false);
@@ -136,7 +136,7 @@ describe('ApiClient', () => {
           baseUrl: '/api/v1', client: 'mobile', tokenStore: memoryTokenStore(), timeoutMs: 1_000,
           fetch: (async () => new Response(body, { status: 200 })) as unknown as typeof fetch,
         });
-        const outcome = expect(createTaskopApi(api).me()).rejects.toMatchObject({ code: 'NETWORK' });
+        const outcome = expect(createEdildyApi(api).me()).rejects.toMatchObject({ code: 'NETWORK' });
         await vi.advanceTimersByTimeAsync(1_000);
         await outcome;
       } finally {
@@ -146,27 +146,27 @@ describe('ApiClient', () => {
 
     it('sends no abort signal and never times out without the option (web)', async () => {
       const { api, fetchMock } = setup(() => json(200, me));
-      await createTaskopApi(api).me();
+      await createEdildyApi(api).me();
       expect(fetchMock.mock.calls[0]![1].signal).toBeUndefined();
     });
   });
 
   it('serialises query parameters and skips empty ones', async () => {
     const { api, fetchMock } = setup(() => json(200, { items: [], nextCursor: null }));
-    await createTaskopApi(api).users.list({ q: 'elvin', status: undefined, limit: 20 });
+    await createEdildyApi(api).users.list({ q: 'elvin', status: undefined, limit: 20 });
     expect(fetchMock.mock.calls[0]![0]).toBe('/api/v1/users?q=elvin&limit=20');
   });
 
   it('returns undefined for 204 responses', async () => {
     const { api } = setup(() => new Response(null, { status: 204 }));
-    await expect(createTaskopApi(api).auth.logout()).resolves.toBeUndefined();
+    await expect(createEdildyApi(api).auth.logout()).resolves.toBeUndefined();
   });
 
   it('keeps the session when refresh fails transiently (503)', async () => {
     const store = memoryTokenStore();
     await store.save({ accessToken: 'old', refreshToken: null });
     const { api, onSessionExpired } = setup((url) => (url.endsWith('/auth/refresh') ? err(503, 'INTERNAL') : err(401, 'UNAUTHENTICATED')), 'web', store);
-    await expect(createTaskopApi(api).me()).rejects.toMatchObject({ status: 503 });
+    await expect(createEdildyApi(api).me()).rejects.toMatchObject({ status: 503 });
     expect(store.getAccessToken()).toBe('old');
     expect(onSessionExpired).not.toHaveBeenCalled();
   });
@@ -179,7 +179,7 @@ describe('ApiClient', () => {
 
   it('turns a malformed success body into an INTERNAL ApiError', async () => {
     const { api } = setup(() => new Response('<html>', { status: 200 }));
-    await expect(createTaskopApi(api).me()).rejects.toMatchObject({ code: 'INTERNAL', messageKey: 'errors.INTERNAL' });
+    await expect(createEdildyApi(api).me()).rejects.toMatchObject({ code: 'INTERNAL', messageKey: 'errors.INTERNAL' });
   });
 });
 
@@ -191,19 +191,19 @@ describe('checklist endpoints', () => {
     const { api } = setup(() =>
       json(422, { error: { code: 'CHECKLIST_INVALID_CONTENT', messageKey: 'errors.CHECKLIST_INVALID_CONTENT', fields: null, retryAfterSeconds: null, requestId: 'r', issues } }),
     );
-    const e = await createTaskopApi(api).checklists.publish(cid, { revision: 1 }).catch((x: unknown) => x);
+    const e = await createEdildyApi(api).checklists.publish(cid, { revision: 1 }).catch((x: unknown) => x);
     expect(e).toBeInstanceOf(ApiError);
     expect((e as ApiError).issues).toEqual(issues);
     const { api: api2 } = setup(() =>
       json(409, { error: { code: 'CHECKLIST_DRAFT_CONFLICT', messageKey: 'x', fields: null, retryAfterSeconds: null, requestId: null, currentRevision: 7 } }),
     );
-    const e2 = (await createTaskopApi(api2).checklists.saveDraft(cid, { content: {}, revision: 1 }).catch((x: unknown) => x)) as ApiError;
+    const e2 = (await createEdildyApi(api2).checklists.saveDraft(cid, { content: {}, revision: 1 }).catch((x: unknown) => x)) as ApiError;
     expect([e2.code, e2.currentRevision, e2.issues]).toEqual(['CHECKLIST_DRAFT_CONFLICT', 7, null]);
   });
 
   it('builds tenant and platform-in-tenant paths', async () => {
     const { api, fetchMock } = setup(() => json(200, { revision: 2, issues: [] }));
-    await createTaskopApi(api).checklists.saveDraft(cid, { content: {}, revision: 1 });
+    await createEdildyApi(api).checklists.saveDraft(cid, { content: {}, revision: 1 });
     await createPlatformApi(api).inTenant(cid).checklists.saveDraft(cid, { content: {}, revision: 1 });
     await createPlatformApi(api).inTenant(cid).templates.saveContent(cid, { content: {}, revision: 1 });
     expect(fetchMock.mock.calls.map((c) => `${c[1].method} ${c[0]}`)).toEqual([
@@ -215,7 +215,7 @@ describe('checklist endpoints', () => {
 
   it('discards a draft with DELETE and no body', async () => {
     const { api, fetchMock } = setup(() => new Response(null, { status: 204 }));
-    await expect(createTaskopApi(api).checklists.discardDraft(cid)).resolves.toBeUndefined();
+    await expect(createEdildyApi(api).checklists.discardDraft(cid)).resolves.toBeUndefined();
     expect(fetchMock.mock.calls[0]![1]).toMatchObject({ method: 'DELETE', body: undefined });
   });
 });
@@ -233,7 +233,7 @@ describe('scheduling endpoints', () => {
       urls.push(`${init.method} ${url}`);
       return json(200, { items: [], nextCursor: null });
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     await t.occurrences.list({ from: '2026-11-02', to: '2026-11-08', status: 'pending,overdue', siteId: id });
     await t.occurrences.mine({ from: '2026-11-02', to: '2026-11-08' });
     await t.assignments.list({ status: 'active' });
@@ -248,7 +248,7 @@ describe('scheduling endpoints', () => {
     const { api } = await authed(() =>
       json(422, { error: { code: 'ASSIGNEE_NOT_AT_SITE', messageKey: 'errors.ASSIGNEE_NOT_AT_SITE', fields: null, retryAfterSeconds: null, requestId: 'r1', userIds: [id] } }),
     );
-    const call = createTaskopApi(api).assignments.preview({
+    const call = createEdildyApi(api).assignments.preview({
       siteId: id,
       schedule: { kind: 'once', date: '2026-11-05' },
       timing: { mode: 'fixed', startTime: '08:00', dueAfterMinutes: 60, graceMinutes: 0 },
@@ -328,7 +328,7 @@ describe('execution endpoints', () => {
       if (url.endsWith(`/executions/${id}`)) return json(200, detail);
       return json(200, { executionId: id, state: 'rejected', reason: 'ALREADY_CLAIMED', claim: { executionId: id, executorUserId: id, executorName: 'Murad' }, checklistVersionId: id, startedAt: '2026-11-02T04:00:00.000Z', clockSuspect: false });
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     const now = '2026-11-02T04:00:00.000Z';
     await t.sync.pull([id, id]);
     await t.sync.pull();
@@ -360,7 +360,7 @@ describe('execution endpoints', () => {
       json(422, { error: { code: 'REQUIREMENTS_UNMET', messageKey: 'errors.REQUIREMENTS_UNMET', fields: null, retryAfterSeconds: null, requestId: 'r1', missing: [{ itemId: id, kind: 'photo' }] } }),
     );
     const now = '2026-11-02T04:00:00.000Z';
-    await expect(createTaskopApi(api).executions.complete(id, { rev: 1, answers: {}, completedAt: now, deviceTime: now, clientOffsetMs: 0 })).rejects.toMatchObject({
+    await expect(createEdildyApi(api).executions.complete(id, { rev: 1, answers: {}, completedAt: now, deviceTime: now, clientOffsetMs: 0 })).rejects.toMatchObject({
       code: 'REQUIREMENTS_UNMET',
       missing: [{ itemId: id, kind: 'photo' }],
     });
@@ -395,7 +395,7 @@ describe('task endpoints', () => {
       if (init.method === 'GET' && url.includes('/tasks?')) return json(200, { items: [], nextCursor: null });
       return json(init.method === 'POST' && url.endsWith('/tasks') ? 201 : 200, detail);
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     expect((await t.sync.pull([id], [id, id])).removedTaskIds).toEqual([id]);
     await t.tasks.list({ status: 'new,in_progress', awaitingMyReview: 'true' });
     await t.tasks.get(id);
@@ -432,7 +432,7 @@ describe('task endpoints', () => {
 
   it('exposes TASK_ALREADY_TAKEN as an ApiError', async () => {
     const { api } = await authed(() => err(409, 'TASK_ALREADY_TAKEN'));
-    await expect(createTaskopApi(api).tasks.accept(id, { at: now })).rejects.toMatchObject({ status: 409, code: 'TASK_ALREADY_TAKEN' });
+    await expect(createEdildyApi(api).tasks.accept(id, { at: now })).rejects.toMatchObject({ status: 409, code: 'TASK_ALREADY_TAKEN' });
   });
 });
 
@@ -460,7 +460,7 @@ describe('problem report endpoints (2026-11-06 design)', () => {
       if (init.method === 'GET' && url.includes('/problem-reports?')) return json(200, { items: [report], nextCursor: null });
       return json(init.method === 'POST' && url.endsWith('/problem-reports') ? 201 : 200, report);
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     const pulled = await t.sync.pull([id], [], [id, id]);
     expect(pulled.removedProblemReportIds).toEqual([id]);
     expect(pulled.reportSites).toEqual([{ id, name: 'Filial 1' }]);
@@ -521,7 +521,7 @@ describe('notification endpoints', () => {
       if (url.includes('/notifications/messages?')) return json(200, { items: [summary], nextCursor: null });
       return json(200, { ...summary, targets: { users: [], teams: [], sites: [] }, recipients: [] });
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     expect((await t.notifications.list({ limit: 10, unread: 'true' })).items[0]!.type).toBe('manual');
     expect(await t.notifications.unreadCount()).toEqual({ count: 2 });
     await t.notifications.markRead(id);
@@ -564,7 +564,7 @@ describe('notification endpoints', () => {
       if (init.method === 'POST' && url.endsWith('/notifications/messages')) return json(201, summary);
       return json(200, { ...rule, type: 'not.a.type' });
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     await expect(t.notifications.unreadCount()).rejects.toBeDefined();
     await expect(t.notificationRules.reset('task.assigned')).rejects.toBeDefined();
     expect((await t.messages.options({})).users[0]!.fullName).toBe('Nigar');
@@ -573,7 +573,7 @@ describe('notification endpoints', () => {
 
   it('resolves the 204 endpoints to undefined', async () => {
     const { api } = await authed(() => new Response(null, { status: 204 }));
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     expect(await t.notifications.markRead(id)).toBeUndefined();
     expect(await t.notifications.markAllRead()).toBeUndefined();
     expect(await t.pushDevices.register({ expoToken: token, platform: 'android' })).toBeUndefined();
@@ -584,7 +584,7 @@ describe('notification endpoints', () => {
     const { api } = await authed(() =>
       json(400, { error: { code: 'VALIDATION_FAILED', messageKey: 'errors.VALIDATION_FAILED', fields: { userIds: 'notifications.issues.tooManyRecipients' }, retryAfterSeconds: null, requestId: 'r1' } }),
     );
-    await expect(createTaskopApi(api).messages.send({ title: 'a', body: 'b', siteIds: [id] })).rejects.toMatchObject({
+    await expect(createEdildyApi(api).messages.send({ title: 'a', body: 'b', siteIds: [id] })).rejects.toMatchObject({
       status: 400,
       code: 'VALIDATION_FAILED',
       fields: { userIds: 'notifications.issues.tooManyRecipients' },
@@ -610,7 +610,7 @@ describe('report endpoints', () => {
   const csvFile = () =>
     new Response(new Uint8Array([0xef, 0xbb, 0xbf, 0x61]), {
       status: 200,
-      headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="taskop-runs-2026-11-02_2026-11-04.csv"' },
+      headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="edildy-runs-2026-11-02_2026-11-04.csv"' },
     });
 
   it('builds every path and query string and parses each response', async () => {
@@ -623,7 +623,7 @@ describe('report endpoints', () => {
       if (url.includes('/reports/problems')) return json(200, problems);
       return json(200, tasks);
     });
-    const r = createTaskopApi(api).reports;
+    const r = createEdildyApi(api).reports;
     expect(await r.summary({ ...range, siteId: id })).toEqual(summary);
     expect(await r.sites(range)).toEqual([]);
     expect(await r.employees({ ...range, userId: id })).toEqual([]);
@@ -646,15 +646,15 @@ describe('report endpoints', () => {
       seen.push([url, (init.headers as Record<string, string>).Accept!]);
       return csvFile();
     });
-    const file = await createTaskopApi(api).reports.export('runs', { ...range, format: 'csv', bucket: 'missed' });
-    expect(file.filename).toBe('taskop-runs-2026-11-02_2026-11-04.csv');
+    const file = await createEdildyApi(api).reports.export('runs', { ...range, format: 'csv', bucket: 'missed' });
+    expect(file.filename).toBe('edildy-runs-2026-11-02_2026-11-04.csv');
     expect(new Uint8Array(await file.blob.arrayBuffer())).toEqual(new Uint8Array([0xef, 0xbb, 0xbf, 0x61]));
     expect(seen).toEqual([['/api/v1/reports/runs/export?from=2026-11-02&to=2026-11-04&format=csv&bucket=missed', '*/*']]);
   });
 
   it('falls back to the contract file name without Content-Disposition', async () => {
     const { api } = await authed(() => new Response('x', { status: 200 }));
-    expect((await createTaskopApi(api).reports.export('full', { ...range, format: 'pdf' })).filename).toBe('taskop-full-2026-11-02_2026-11-04.pdf');
+    expect((await createEdildyApi(api).reports.export('full', { ...range, format: 'pdf' })).filename).toBe('edildy-full-2026-11-02_2026-11-04.pdf');
   });
 
   it('refreshes and retries a download on UNAUTHENTICATED', async () => {
@@ -662,14 +662,14 @@ describe('report endpoints', () => {
       if (url.endsWith('/auth/refresh')) return json(200, loginResult('fresh'));
       return (init.headers as Record<string, string>).Authorization === 'Bearer fresh' ? csvFile() : err(401, 'UNAUTHENTICATED');
     });
-    expect((await api.download('/reports/runs/export', { query: { ...range, format: 'csv' } })).filename).toBe('taskop-runs-2026-11-02_2026-11-04.csv');
+    expect((await api.download('/reports/runs/export', { query: { ...range, format: 'csv' } })).filename).toBe('edildy-runs-2026-11-02_2026-11-04.csv');
   });
 
   it('exposes rows and limit on REPORT_TOO_LARGE', async () => {
     const { api } = await authed(() =>
       json(422, { error: { code: 'REPORT_TOO_LARGE', messageKey: 'errors.REPORT_TOO_LARGE', fields: null, retryAfterSeconds: null, requestId: 'r1', rows: 12000, limit: 10000 } }),
     );
-    await expect(createTaskopApi(api).reports.export('runs', { ...range, format: 'xlsx' })).rejects.toMatchObject({ status: 422, code: 'REPORT_TOO_LARGE', rows: 12000, limit: 10000 });
+    await expect(createEdildyApi(api).reports.export('runs', { ...range, format: 'xlsx' })).rejects.toMatchObject({ status: 422, code: 'REPORT_TOO_LARGE', rows: 12000, limit: 10000 });
   });
 
   it('reads RFC 6266 file names', () => {
@@ -713,7 +713,7 @@ describe('audit and correction endpoints', () => {
       if (url.endsWith('/resubmit')) return json(200, resubmitted);
       return json(200, audit);
     });
-    const t = createTaskopApi(api);
+    const t = createEdildyApi(api);
     expect(await t.audits.list({ queue: 'waiting', siteId: id })).toEqual({ items: [], nextCursor: null });
     expect(await t.audits.start(id)).toEqual(audit);
     expect(await t.audits.setVerdict(id, id, { verdict: 'approved' })).toEqual(verdict);
@@ -744,18 +744,18 @@ describe('audit and correction endpoints', () => {
 
   it('gets the audit detail through its schema', async () => {
     const { api } = await authed(() => json(200, { ...audit, verdicts: 'not a list' }));
-    await expect(createTaskopApi(api).audits.get(id)).rejects.toMatchObject({ code: 'INTERNAL' });
+    await expect(createEdildyApi(api).audits.get(id)).rejects.toMatchObject({ code: 'INTERNAL' });
   });
 
   it('downloads the PDF, named by Content-Disposition or audit-<id>.pdf', async () => {
-    const pdf = () => new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="taskop-audit-acilis-2026-11-02.pdf"' } });
+    const pdf = () => new Response(new Uint8Array([0x25, 0x50, 0x44, 0x46]), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="edildy-audit-acilis-2026-11-02.pdf"' } });
     const seen: string[] = [];
     const { api } = await authed((url) => {
       seen.push(url);
       return seen.length === 1 ? pdf() : new Response('x', { status: 200 });
     });
-    const a = createTaskopApi(api).audits;
-    expect((await a.downloadReport(id)).filename).toBe('taskop-audit-acilis-2026-11-02.pdf');
+    const a = createEdildyApi(api).audits;
+    expect((await a.downloadReport(id)).filename).toBe('edildy-audit-acilis-2026-11-02.pdf');
     expect((await a.downloadReport(id)).filename).toBe(`audit-${id}.pdf`);
     expect(seen).toEqual([`/api/v1/audits/${id}/report.pdf`, `/api/v1/audits/${id}/report.pdf`]);
   });
@@ -763,8 +763,8 @@ describe('audit and correction endpoints', () => {
   it('exposes the existing audit id and the items without a verdict', async () => {
     const errorOf = (code: string, extra: object) => json(409, { error: { code, messageKey: `errors.${code}`, fields: null, retryAfterSeconds: null, requestId: 'r1', ...extra } });
     const exists = await authed(() => errorOf('AUDIT_EXISTS', { auditId: id }));
-    await expect(createTaskopApi(exists.api).audits.start(id)).rejects.toMatchObject({ code: 'AUDIT_EXISTS', auditId: id, itemIds: null });
+    await expect(createEdildyApi(exists.api).audits.start(id)).rejects.toMatchObject({ code: 'AUDIT_EXISTS', auditId: id, itemIds: null });
     const incomplete = await authed(() => errorOf('AUDIT_INCOMPLETE', { itemIds: [id] }));
-    await expect(createTaskopApi(incomplete.api).audits.finish(id, { result: 'passed' })).rejects.toMatchObject({ code: 'AUDIT_INCOMPLETE', itemIds: [id], auditId: null });
+    await expect(createEdildyApi(incomplete.api).audits.finish(id, { result: 'passed' })).rejects.toMatchObject({ code: 'AUDIT_INCOMPLETE', itemIds: [id], auditId: null });
   });
 });

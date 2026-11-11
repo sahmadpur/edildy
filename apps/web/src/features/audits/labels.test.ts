@@ -104,9 +104,9 @@ describe('audit items', () => {
     expect(upsertVerdict(list, verdict('i1', 'rejected', 'Çirkli'))).toEqual([list[1], verdict('i1', 'rejected', 'Çirkli')]);
   });
 
-  it('names people, and Taskop support for a platform admin', () => {
+  it('names people, and Edildy support for a platform admin', () => {
     expect(actorName(t, { kind: 'user', name: 'Rəşad Kazımov' })).toBe('Rəşad Kazımov');
-    expect(actorName(t, { kind: 'platform', name: null })).toBe('Taskop dəstəyi');
+    expect(actorName(t, { kind: 'platform', name: null })).toBe('Edildy dəstəyi');
     expect(actorName(t, null)).toBe('—');
   });
 });

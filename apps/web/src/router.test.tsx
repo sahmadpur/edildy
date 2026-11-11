@@ -1,4 +1,4 @@
-import type { PlatformLoginResult } from '@taskop/contracts';
+import type { PlatformLoginResult } from '@edildy/contracts';
 import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router';
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,7 +7,7 @@ import { renderWithProviders } from '@/test/render';
 import { routeTree } from './router';
 
 const TENANT = '11111111-1111-4111-8111-111111111111';
-const admin = { id: 'a1', email: 'a@taskop.az', fullName: 'Admin' } as PlatformLoginResult['admin'];
+const admin = { id: 'a1', email: 'a@edildy.az', fullName: 'Admin' } as PlatformLoginResult['admin'];
 
 function renderAt(path: string) {
   const router = createRouter({ routeTree, history: createMemoryHistory({ initialEntries: [path] }) });

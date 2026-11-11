@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { toListParam } from '@taskop/contracts';
+import { toListParam } from '@edildy/contracts';
 import { type FilterOption, MultiSelectFilter } from '@/components/multi-select-filter';
 import { NativeSelect } from '@/components/native-select';
 import { Checkbox } from '@/components/ui/checkbox';

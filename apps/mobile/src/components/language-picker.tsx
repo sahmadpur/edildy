@@ -1,4 +1,4 @@
-import { type Language, LANGUAGE_FLAGS, LANGUAGE_NAMES, LANGUAGES } from '@taskop/i18n';
+import { type Language, LANGUAGE_FLAGS, LANGUAGE_NAMES, LANGUAGES } from '@edildy/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

@@ -12,7 +12,7 @@ import {
   type OccurrenceDetail,
   type OccurrenceDto,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** Test data shared by the execution tests. Not imported by application code. */
 export const U1 = { id: 'u1', fullName: 'Aysel Məmmədova' };

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { ProblemDto } from '@taskop/contracts';
+import type { ProblemDto } from '@edildy/contracts';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';

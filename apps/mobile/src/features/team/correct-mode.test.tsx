@@ -1,5 +1,5 @@
-import { ApiError } from '@taskop/api-client';
-import type { ExecutionDetail } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import type { ExecutionDetail } from '@edildy/contracts';
 import { fireEvent, screen, within } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import i18n from '@/lib/i18n';

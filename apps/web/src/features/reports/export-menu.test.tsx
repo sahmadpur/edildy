@@ -1,4 +1,4 @@
-import { ApiError, type ReportFile } from '@taskop/api-client';
+import { ApiError, type ReportFile } from '@edildy/api-client';
 import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
@@ -21,7 +21,7 @@ vi.mock('@/lib/session', () => ({
 vi.mock('./download', () => ({ saveFile: mocks.saveFile }));
 
 const FILTERS = { from: '2026-11-01', to: '2026-11-30', siteId: IDS.zoneA };
-const FILE: ReportFile = { blob: new Blob(['x']), filename: 'taskop-runs-2026-11-01_2026-11-30.xlsx' };
+const FILE: ReportFile = { blob: new Blob(['x']), filename: 'edildy-runs-2026-11-01_2026-11-30.xlsx' };
 
 function renderMenu(props: Partial<ComponentProps<typeof ExportMenu>> = {}) {
   renderWithProviders(

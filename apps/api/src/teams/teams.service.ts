@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { TeamDto } from '@taskop/contracts';
+import type { TeamDto } from '@edildy/contracts';
 import { asc, eq, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { assertIdsExist } from '../common/ids-exist';

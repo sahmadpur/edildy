@@ -1,4 +1,4 @@
-import { type Answers, newItem } from '@taskop/contracts';
+import { type Answers, newItem } from '@edildy/contracts';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestApp, type TestApp } from './app';

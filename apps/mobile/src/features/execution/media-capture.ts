@@ -1,4 +1,4 @@
-import { MEDIA_LIMITS } from '@taskop/contracts';
+import { MEDIA_LIMITS } from '@edildy/contracts';
 
 /** Spec §1: photos are resized on the phone to a 1600 px long edge. Null when already small enough. */
 export function photoResize(width: number, height: number): { width: number } | { height: number } | null {

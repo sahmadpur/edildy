@@ -1,4 +1,4 @@
-import type { UserDto } from '@taskop/contracts';
+import type { UserDto } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';

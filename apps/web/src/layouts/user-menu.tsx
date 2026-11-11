@@ -1,4 +1,4 @@
-import type { Me } from '@taskop/contracts';
+import type { Me } from '@edildy/contracts';
 import { Bell, ChevronDown, Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';

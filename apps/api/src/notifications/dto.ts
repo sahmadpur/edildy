@@ -15,7 +15,7 @@ import {
   unreadCountSchema,
   updateNotificationRuleSchema,
   updatePreferencesSchema,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
 export class UpdateNotificationRuleDto extends createZodDto(updateNotificationRuleSchema) {}

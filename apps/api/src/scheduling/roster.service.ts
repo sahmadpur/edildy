@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { addDays, dayNumber, type RosterCopyResult, type RosterDto, type RosterRow } from '@taskop/contracts';
+import { addDays, dayNumber, type RosterCopyResult, type RosterDto, type RosterRow } from '@edildy/contracts';
 import { and, asc, between, eq, inArray } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { DomainEvents } from '../common/domain-events';

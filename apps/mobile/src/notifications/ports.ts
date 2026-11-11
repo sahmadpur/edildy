@@ -1,4 +1,4 @@
-import type { PushPlatform } from '@taskop/contracts';
+import type { PushPlatform } from '@edildy/contracts';
 
 /** Expo push sends every message with channelId 'default' (Part 1); the phone creates the channel. */
 export const PUSH_CHANNEL_ID = 'default';

@@ -68,7 +68,7 @@ describe('scheduling data scope', () => {
   });
 
   it('gives platform admins the whole tenant', async () => {
-    const email = `${uniq('admin')}@taskop.az`;
+    const email = `${uniq('admin')}@edildy.az`;
     await ownerQuery("insert into platform_admins (id, email, credential_hash, full_name) values (gen_random_uuid(), $1, $2, 'Support')", [
       email,
       await hash('platform password 1', { memoryCost: 1024, timeCost: 1, parallelism: 1 }),

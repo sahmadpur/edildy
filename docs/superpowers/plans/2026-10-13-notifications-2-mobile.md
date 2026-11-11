@@ -1,4 +1,4 @@
-# Taskop Notifications — Part 2: Mobile App — Implementation Plan
+# Edildy Notifications — Part 2: Mobile App — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -21,7 +21,7 @@
 ## Global Constraints
 
 - All Foundation Part 3, SP4 Part 2 and SP5 Part 2 mobile constraints still apply:
-  - All text comes from `@taskop/i18n`. This part adds keys under `az.mobile.notifications` only. It also uses Part 1's `az.notifications.{title, markAllRead, empty}`, plus `az.common.retry` and `az.errors.*`.
+  - All text comes from `@edildy/i18n`. This part adds keys under `az.mobile.notifications` only. It also uses Part 1's `az.notifications.{title, markAllRead, empty}`, plus `az.common.retry` and `az.errors.*`.
   - Touch targets are at least 44 pt. A network failure never logs the user out.
   - Inside a `db.transaction` callback, only the `tx` handle is used.
 - **Native modules stay out of the code Jest loads:**
@@ -29,12 +29,12 @@
   - Its own test, `native.test.ts`, mocks those three modules explicitly.
   - Every other test that renders code importing `@/notifications/native` mocks it with `jest.mock('@/notifications/native', …)`, built from `@/notifications/testing/fakes`.
   - Code that imports `@/offline/native/ports` is tested with that module mocked.
-- **The shared packages ship `dist/`.** Before any mobile test or typecheck, run `pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build`.
+- **The shared packages ship `dist/`.** Before any mobile test or typecheck, run `pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build`.
 - **Tests:**
-  - The mobile tests are Jest (`jest-expo`), run with `pnpm --filter @taskop/mobile test -- <path>`. RNTL 14's `render`, `fireEvent.*` and `act` are awaited.
+  - The mobile tests are Jest (`jest-expo`), run with `pnpm --filter @edildy/mobile test -- <path>`. RNTL 14's `render`, `fireEvent.*` and `act` are awaited.
   - `packages/i18n` tests are Vitest.
 - **Dependencies:**
-  - Add `expo-notifications` and `expo-device` only through `pnpm --filter @taskop/mobile exec expo install …`. Expo SDK 57 pins `expo-notifications` to `~57.0.22` and `expo-device` to `~57.0.2` (`expo/bundledNativeModules.json`).
+  - Add `expo-notifications` and `expo-device` only through `pnpm --filter @edildy/mobile exec expo install …`. Expo SDK 57 pins `expo-notifications` to `~57.0.22` and `expo-device` to `~57.0.2` (`expo/bundledNativeModules.json`).
   - `expo-dev-client` is **not** added (decision 11).
 - **Exact values:**
   - Android channel id `'default'`, exported as `PUSH_CHANNEL_ID`, with importance `AndroidImportance.HIGH` and sound `'default'`. The config plugin's `defaultChannel` is `'default'`.
@@ -44,9 +44,9 @@
   - Logout gives the push device removal, including a registration still running, at most **3,000 ms** in total (`PUSH_REMOVE_TIMEOUT_MS`).
   - The Home bell shows the count, and `99+` above 99.
   - The inbox route is `/notifications`, file `app/(app)/notifications.tsx`. It is a hidden `Tabs` screen (`HIDDEN`), like every other pushed screen in this app.
-  - The registered Expo token is kept in SecureStore under `taskop.pushToken` (`STORAGE_KEYS.pushToken`).
+  - The registered Expo token is kept in SecureStore under `edildy.pushToken` (`STORAGE_KEYS.pushToken`).
   - The unread count is kept in the local `meta` table under `unreadNotifications`. No local database migration: `meta` is a key-value table.
-  - EAS profiles are `development`, `preview` and `production`. `preview` and `production` set `EXPO_PUBLIC_API_URL=https://admin.taskop.app`. `production` has `autoIncrement: true`. The CLI has `appVersionSource: "remote"`.
+  - EAS profiles are `development`, `preview` and `production`. `preview` and `production` set `EXPO_PUBLIC_API_URL=https://admin.edildy.com`. `production` has `autoIncrement: true`. The CLI has `appVersionSource: "remote"`.
 - **Permission:** push permission is requested only while the OS reports it `undetermined`. A denial is respected and never asked again. The user turns push on in the OS settings, which Profile opens.
 - **Logs** carry messages only, never push tokens, request bodies or notification text.
 - **Typed routes:** a fresh worktree has no `.expo/types`, so `router.push` takes the loose `Href` type. Do not run `expo start` until Task 7 has added `app/(app)/notifications.tsx`. Task 9 starts the dev server, which generates the route types with every route present.
@@ -77,7 +77,7 @@
    - It stops trying once the outcome is `registered`, `simulator` or `noProject`.
    - It keeps trying after `denied` or `failed` without ever prompting again. A user who allows push in the OS settings is therefore registered as soon as they come back, without a restart. This covers the spec's "retried at the next start" and more.
    - Amended 2026-10-16: a `failed` attempt is also tried again while the app stays in the foreground, after 5 s, 30 s and 2 min (`PUSH_RETRY_DELAYS_MS`); after that only the next foreground tries again, which starts the delays over. Leaving the foreground, a sign-out block and stopping the controller cancel a pending retry. An Android phone whose first Expo token fetch failed right after sign-in had stayed unregistered until it was restarted. A successful registration logs `[push] Registered this device`.
-7. **The registered token is kept in SecureStore** (`taskop.pushToken`) after a successful `PUT /me/push-devices`.
+7. **The registered token is kept in SecureStore** (`edildy.pushToken`) after a successful `PUT /me/push-devices`.
    - Logout removes the device with that stored token, so it works even when the app started offline and never fetched a token in this session.
    - The removal first waits for a registration still running, so that registration cannot re-register a signed-out phone.
    - The 3 s budget covers both waits. The stored token is forgotten in every case.
@@ -215,7 +215,7 @@ describe('mobile notification translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n test`
 Expected: FAIL, because `az.mobile.notifications` is undefined. The second test passes, since Part 1 Task 3 added `az.notifications`.
 
 - [ ] **Step 3: Add the strings**
@@ -225,7 +225,7 @@ In `packages/i18n/src/az/mobile.ts`, add after the `logout` block (before the cl
 ```ts
   notifications: {
     bell: 'Bildirişlər, {{count}} oxunmamış',
-    channel: 'Taskop bildirişləri',
+    channel: 'Edildy bildirişləri',
     unread: 'Oxunmamış',
     online: 'Bildirişlərə baxmaq üçün internet bağlantısı tələb olunur.',
     profile: {
@@ -242,18 +242,18 @@ In `packages/i18n/src/az/mobile.ts`, add after the `logout` block (before the cl
 
 - [ ] **Step 4: Run the i18n tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: PASS.
 
 - [ ] **Step 5: See the mobile suite fail on Part 1's contracts**
 
-Run: `pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build && pnpm --filter @taskop/mobile typecheck`
+Run: `pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build && pnpm --filter @edildy/mobile typecheck`
 
 Expected: FAIL with `Property 'unreadNotifications' is missing in type …` at `src/offline/testing/fixtures.ts` (`syncResponse`). Part 1 Task 2 added the field to `syncResponseSchema`; the mobile fixture predates it.
 
 - [ ] **Step 6: Update the fixtures**
 
-In `apps/mobile/src/offline/testing/fixtures.ts`, change the import from `@taskop/contracts` to also import `type NotificationItem` and `type PushData` (keep the existing names, alphabetical):
+In `apps/mobile/src/offline/testing/fixtures.ts`, change the import from `@edildy/contracts` to also import `type NotificationItem` and `type PushData` (keep the existing names, alphabetical):
 
 ```ts
 import {
@@ -273,7 +273,7 @@ import {
   type SyncResponse,
   type SyncTask,
   type YesNoItem,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 ```
 
 Replace the `syncResponse` fixture with:
@@ -340,8 +340,8 @@ Add inside `describe('mobile session', …)`, after `restores the cached profile
   it('restores a profile cached by the previous app version when offline', async () => {
     // Written before sub-project 6: no emailNotifications. The worker must stay signed in offline.
     const { emailNotifications: _dropped, ...oldUser } = me.user;
-    mockStore.set('taskop.refreshToken', 'r1');
-    mockStore.set('taskop.me', JSON.stringify({ ...me, user: oldUser }));
+    mockStore.set('edildy.refreshToken', 'r1');
+    mockStore.set('edildy.me', JSON.stringify({ ...me, user: oldUser }));
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.bootstrap();
     expect(session.get()).toMatchObject({ status: 'authenticated', offline: true, me: { user: { username: 'elvin', emailNotifications: true } } });
@@ -350,7 +350,7 @@ Add inside `describe('mobile session', …)`, after `restores the cached profile
 
 - [ ] **Step 8: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/lib/session.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/lib/session.test.ts`
 Expected: FAIL in `restores a profile cached by the previous app version when offline`. It receives `{ status: 'anonymous' }`, because `meSchema` refuses the old profile.
 
 - [ ] **Step 9: Default the field when reading the cache**
@@ -380,7 +380,7 @@ async function loadCachedMe(): Promise<Me | null> {
 
 - [ ] **Step 10: Run the whole mobile suite, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS, with the session tests included. The refresh tests now send a `me` that satisfies Part 1's `meSchema`.
 
 - [ ] **Step 11: Commit**
@@ -407,12 +407,12 @@ git commit -m "feat(mobile): notification strings, and the app on the sub-projec
   - `ports.ts`: `PUSH_CHANNEL_ID = 'default'`, `type PushPermission = 'granted' | 'denied' | 'undetermined'`, `interface PushPort`, `interface PushTokenStore`, `interface TapResponse { identifier: string; data: unknown }`, `interface NotificationEvents`, all exactly as in Step 7.
   - `push-data.ts`: `readPushData(raw: unknown): PushData | null`; `foregroundBehavior(raw: unknown, signedInUserId: string | null): ForegroundBehavior`.
   - `native.ts`: `nativePush: PushPort`, `pushTokenStore: PushTokenStore`, `notificationEvents: NotificationEvents`, `configureNotifications(currentUserId: () => string | null): void`, `setAppBadge(count: number): void`, `openSettings(): Promise<void>`, `readProjectId(c): string | null`, `toPermission(s): PushPermission`.
-  - `STORAGE_KEYS.pushToken = 'taskop.pushToken'`.
+  - `STORAGE_KEYS.pushToken = 'edildy.pushToken'`.
   - `app.config.ts`: `googleServicesFile(env?, exists?): string | undefined`, `withGoogleServices(config, file): ExpoConfig`, and the default export.
 
 - [ ] **Step 1: Install the two modules at the versions Expo SDK 57 expects**
 
-Run: `pnpm --filter @taskop/mobile exec expo install expo-notifications expo-device`
+Run: `pnpm --filter @edildy/mobile exec expo install expo-notifications expo-device`
 Expected: `apps/mobile/package.json` gains `"expo-device": "~57.0.2"` and `"expo-notifications": "~57.0.22"`, and the lockfile updates.
 
 If `expo install` added a bare `"expo-notifications"` string to `app.json` → `plugins`, delete that string. Step 5 adds the configured entry, and only one entry may exist.
@@ -435,10 +435,10 @@ Add inside `describe('native configuration', …)`:
     for (const m of ['expo-notifications', 'expo-device']) expect(Object.keys(pkg.dependencies)).toContain(m);
   });
 
-  it('builds development, preview and production with EAS, the latter two against admin.taskop.app', () => {
+  it('builds development, preview and production with EAS, the latter two against admin.edildy.com', () => {
     expect(Object.keys(eas.build)).toEqual(['development', 'preview', 'production']);
-    expect(eas.build.preview.env.EXPO_PUBLIC_API_URL).toBe('https://admin.taskop.app');
-    expect(eas.build.production.env.EXPO_PUBLIC_API_URL).toBe('https://admin.taskop.app');
+    expect(eas.build.preview.env.EXPO_PUBLIC_API_URL).toBe('https://admin.edildy.com');
+    expect(eas.build.production.env.EXPO_PUBLIC_API_URL).toBe('https://admin.edildy.com');
     expect(eas.build.production.autoIncrement).toBe(true);
     // The development build loads JS from Metro on the Mac, with the local API from apps/mobile/.env.
     expect('env' in eas.build.development).toBe(false);
@@ -449,10 +449,10 @@ Add inside `describe('native configuration', …)`:
     expect(googleServicesFile({ GOOGLE_SERVICES_JSON: '/eas/files/google-services.json' }, () => false)).toBe('/eas/files/google-services.json');
     expect(googleServicesFile({}, () => true)).toBe('./google-services.json');
     expect(googleServicesFile({}, () => false)).toBeUndefined();
-    const base = { name: 'Taskop', slug: 'taskop', android: { package: 'az.taskop.app' } };
+    const base = { name: 'Edildy', slug: 'taskop', android: { package: 'az.taskop.app' } };
     expect(withGoogleServices(base, './google-services.json').android).toEqual({ package: 'az.taskop.app', googleServicesFile: './google-services.json' });
     expect(withGoogleServices(base, undefined).android).toEqual({ package: 'az.taskop.app' });
-    expect(withGoogleServices(base, undefined).name).toBe('Taskop');
+    expect(withGoogleServices(base, undefined).name).toBe('Edildy');
   });
 ```
 
@@ -481,7 +481,7 @@ describe('push data', () => {
     expect(foregroundBehavior(pushData(), ME)).toEqual(SHOWN);
     expect(foregroundBehavior(pushData({ userId: OTHER }), ME)).toEqual(HIDDEN);
     expect(foregroundBehavior(pushData(), null)).toEqual(HIDDEN);
-    // Not a Taskop push (an Expo test message): shown while someone is signed in, never to an anonymous app.
+    // Not a Edildy push (an Expo test message): shown while someone is signed in, never to an anonymous app.
     expect(foregroundBehavior({ note: 'Expo push tool' }, ME)).toEqual(SHOWN);
     expect(foregroundBehavior({ note: 'Expo push tool' }, null)).toEqual(HIDDEN);
   });
@@ -515,7 +515,7 @@ jest.mock('expo-constants', () => ({
 jest.mock('@/lib/secure-storage', () => {
   const store = new Map<string, string>();
   return {
-    STORAGE_KEYS: { pushToken: 'taskop.pushToken' },
+    STORAGE_KEYS: { pushToken: 'edildy.pushToken' },
     secureStorage: {
       get: async (k: string) => store.get(k) ?? null,
       set: async (k: string, v: string) => void store.set(k, v),
@@ -557,7 +557,7 @@ describe('native push port', () => {
     expect((await handler.handleNotification(note(pushData({ userId: OTHER })))).shouldShowBanner).toBe(false);
     current = null;
     expect((await handler.handleNotification(note(pushData()))).shouldShowList).toBe(false);
-    expect(N.setNotificationChannelAsync).toHaveBeenCalledWith('default', { name: 'Taskop bildirişləri', importance: 6, sound: 'default' });
+    expect(N.setNotificationChannelAsync).toHaveBeenCalledWith('default', { name: 'Edildy bildirişləri', importance: 6, sound: 'default' });
   });
 
   it('creates no channel on iOS', async () => {
@@ -628,7 +628,7 @@ describe('native push port', () => {
 
 - [ ] **Step 4: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/app-config.test.ts src/notifications`
+Run: `pnpm --filter @edildy/mobile test -- src/app-config.test.ts src/notifications`
 Expected: FAIL: cannot find module `../eas.json`, `../app.config`, `./push-data` and `./native`.
 
 - [ ] **Step 5: Configure the plugin, Android's Firebase file and EAS**
@@ -685,11 +685,11 @@ Create `apps/mobile/eas.json`:
     "preview": {
       "distribution": "internal",
       "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_API_URL": "https://admin.taskop.app" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://admin.edildy.com" }
     },
     "production": {
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_API_URL": "https://admin.taskop.app" }
+      "env": { "EXPO_PUBLIC_API_URL": "https://admin.edildy.com" }
     }
   },
   "submit": { "production": {} }
@@ -707,11 +707,11 @@ In `apps/mobile/src/lib/secure-storage.ts`, replace `STORAGE_KEYS` with:
 
 ```ts
 export const STORAGE_KEYS = {
-  refreshToken: 'taskop.refreshToken',
-  me: 'taskop.me',
-  orgCode: 'taskop.orgCode',
+  refreshToken: 'edildy.refreshToken',
+  me: 'edildy.me',
+  orgCode: 'edildy.orgCode',
   /** The Expo push token this phone registered last (decision 7). */
-  pushToken: 'taskop.pushToken',
+  pushToken: 'edildy.pushToken',
 } as const;
 ```
 
@@ -720,9 +720,9 @@ export const STORAGE_KEYS = {
 Create `apps/mobile/src/notifications/push-data.ts`:
 
 ```ts
-import { type PushData, pushDataSchema } from '@taskop/contracts';
+import { type PushData, pushDataSchema } from '@edildy/contracts';
 
-/** The `data` of a Taskop push (Part 1 `PushData`), or null for anything else. */
+/** The `data` of a Edildy push (Part 1 `PushData`), or null for anything else. */
 export function readPushData(raw: unknown): PushData | null {
   const parsed = pushDataSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
@@ -738,7 +738,7 @@ export interface ForegroundBehavior {
 
 /**
  * Spec §7.1 (banner, sound and list in the foreground), limited by decision 5: a push for another user (a shared phone
- * whose last logout failed offline) or for an anonymous app is not shown. Data that is not a Taskop push is shown while signed in.
+ * whose last logout failed offline) or for an anonymous app is not shown. Data that is not a Edildy push is shown while signed in.
  */
 export function foregroundBehavior(raw: unknown, signedInUserId: string | null): ForegroundBehavior {
   const data = readPushData(raw);
@@ -752,7 +752,7 @@ export function foregroundBehavior(raw: unknown, signedInUserId: string | null):
 Create `apps/mobile/src/notifications/ports.ts`:
 
 ```ts
-import type { PushPlatform } from '@taskop/contracts';
+import type { PushPlatform } from '@edildy/contracts';
 
 /** Expo push sends every message with channelId 'default' (Part 1); the phone creates the channel. */
 export const PUSH_CHANNEL_ID = 'default';
@@ -916,7 +916,7 @@ configureNotifications(() => {
 
 - [ ] **Step 10: Run the tests, typecheck, lint and the config check**
 
-Run: `pnpm --filter @taskop/mobile test -- src/app-config.test.ts src/notifications && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint && pnpm --filter @taskop/mobile exec expo install --check && pnpm --filter @taskop/mobile exec expo config --type prebuild > /dev/null`
+Run: `pnpm --filter @edildy/mobile test -- src/app-config.test.ts src/notifications && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint && pnpm --filter @edildy/mobile exec expo install --check && pnpm --filter @edildy/mobile exec expo config --type prebuild > /dev/null`
 Expected: the tests PASS and typecheck and lint are clean. `expo install --check` reports that dependencies are up to date. `expo config` exits 0, because the plugin resolves its icon.
 
 - [ ] **Step 11: Commit**
@@ -951,7 +951,7 @@ git commit -m "feat(mobile): expo-notifications setup, EAS profiles, Android cha
 Create `apps/mobile/src/offline/unread.test.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { applyPull } from './sync-pull';
 import { syncResponse, T } from './testing/fixtures';
 import { openTestDb } from './testing/node-db';
@@ -1001,7 +1001,7 @@ describe('unread notifications', () => {
 
 - [ ] **Step 2: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline/unread.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/offline/unread.test.ts`
 Expected: FAIL: cannot find module `./unread`.
 
 - [ ] **Step 3: Store the count with each pull**
@@ -1133,7 +1133,7 @@ In `apps/mobile/src/offline/testing/test-services.ts`:
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/offline && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/offline && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS. The existing services tests still expect `meta` to hold only `userId` after a pull that A's logout interrupted. That holds because `mergePull` runs inside `ownedTransaction`.
 
 - [ ] **Step 6: Commit**
@@ -1171,7 +1171,7 @@ git commit -m "feat(mobile): keep the unread notification count from each sync a
 Create `apps/mobile/src/notifications/testing/fakes.ts`:
 
 ```ts
-import type { PushPlatform, RegisterPushDeviceInput } from '@taskop/contracts';
+import type { PushPlatform, RegisterPushDeviceInput } from '@edildy/contracts';
 import type { AppStatePort } from '@/offline/sync-triggers';
 import type { PushPermission, PushPort, PushTokenStore } from '../ports';
 
@@ -1242,7 +1242,7 @@ export function fakeAppState(): AppStatePort & { emit(active: boolean): void; re
 Create `apps/mobile/src/notifications/push-registration.test.ts`:
 
 ```ts
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { registerPush, startPushRegistration } from './push-registration';
 import { fakeAppState, fakePush, fakePushApi, fakeTokens, PROJECT_ID, PUSH_TOKEN } from './testing/fakes';
 
@@ -1395,7 +1395,7 @@ describe('startPushRegistration', () => {
 
 - [ ] **Step 3: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications/push-registration.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications/push-registration.test.ts`
 Expected: FAIL: cannot find module `./push-registration`.
 
 - [ ] **Step 4: Write the registration**
@@ -1403,7 +1403,7 @@ Expected: FAIL: cannot find module `./push-registration`.
 Create `apps/mobile/src/notifications/push-registration.ts`:
 
 ```ts
-import type { NotificationsApi } from '@taskop/api-client';
+import type { NotificationsApi } from '@edildy/api-client';
 import type { AppStatePort } from '@/offline/sync-triggers';
 import type { PushPort, PushTokenStore } from './ports';
 
@@ -1483,7 +1483,7 @@ export function startPushRegistration(deps: PushDeps & { appState: AppStatePort 
 
 - [ ] **Step 5: Run the registration tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications/push-registration.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications/push-registration.test.ts`
 Expected: PASS.
 
 - [ ] **Step 6: Write the failing bridge test**
@@ -1524,7 +1524,7 @@ describe('NotificationsBridge', () => {
 
 - [ ] **Step 7: Run it and check it fails**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications/notifications-bridge.test.tsx`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications/notifications-bridge.test.tsx`
 Expected: FAIL: cannot find module `./notifications-bridge`.
 
 - [ ] **Step 8: Write the bridge and mount it**
@@ -1567,7 +1567,7 @@ with
 
 - [ ] **Step 9: Run the tests, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 10: Commit**
@@ -1689,7 +1689,7 @@ describe('unregisterPush', () => {
 
 - [ ] **Step 2: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications`
 Expected: FAIL: cannot find module `./settle-within`, and `unregisterPush` is not exported.
 
 - [ ] **Step 3: Write `settleWithin` and `unregisterPush`**
@@ -1745,7 +1745,7 @@ export async function unregisterPush({ push, tokens, api }: PushDeps, timeoutMs 
 
 - [ ] **Step 4: Run them and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications`
 Expected: PASS.
 
 - [ ] **Step 5: Write the failing Profile tests**
@@ -1848,7 +1848,7 @@ Add inside `describe('logout', …)`:
 
 - [ ] **Step 6: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/profile/profile-screen.test.tsx`
+Run: `pnpm --filter @edildy/mobile test -- src/features/profile/profile-screen.test.tsx`
 Expected: FAIL in `removes this phone's push device before signing out…`: `mockRemove` is never called. The earlier tests still pass.
 
 - [ ] **Step 7: Remove the device in the logout flow**
@@ -1881,7 +1881,7 @@ In `apps/mobile/src/features/profile/profile-screen.tsx`:
 
 - [ ] **Step 8: Run the tests, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/profile src/notifications && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features/profile src/notifications && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 9: Commit**
@@ -2127,7 +2127,7 @@ describe('startTapRouting', () => {
 
 - [ ] **Step 3: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications/notification-router.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications/notification-router.test.ts`
 Expected: FAIL: cannot find module `./notification-router`.
 
 - [ ] **Step 4: Write the router**
@@ -2135,7 +2135,7 @@ Expected: FAIL: cannot find module `./notification-router`.
 Create `apps/mobile/src/notifications/notification-router.ts`:
 
 ```ts
-import type { NotificationTargetKind } from '@taskop/contracts';
+import type { NotificationTargetKind } from '@edildy/contracts';
 import type { OfflineServices } from '@/offline/services';
 import type { NotificationEvents, TapResponse } from './ports';
 import { readPushData } from './push-data';
@@ -2200,7 +2200,7 @@ export async function routeForTarget(target: NotificationTarget, ctx: RouteConte
   return ctx.canManageTasks() ? { pathname: '/review/[id]', params: { id, n: ctx.nonce() } } : INBOX;
 }
 
-/** A push meant for someone else, or data that is not a Taskop push, opens the inbox only. */
+/** A push meant for someone else, or data that is not a Edildy push, opens the inbox only. */
 export async function routeForPush(raw: unknown, ctx: RouteContext): Promise<NotificationRoute> {
   const data = readPushData(raw);
   if (data === null || data.userId !== ctx.userId) return INBOX;
@@ -2252,7 +2252,7 @@ export function startTapRouting(o: { events: NotificationEvents; ctx: RouteConte
 
 - [ ] **Step 5: Run the router tests and check they pass**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications/notification-router.test.ts`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications/notification-router.test.ts`
 Expected: PASS.
 
 - [ ] **Step 6: Write the failing bridge tests**
@@ -2337,7 +2337,7 @@ describe('NotificationsBridge', () => {
 
 - [ ] **Step 7: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications/notifications-bridge.test.tsx`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications/notifications-bridge.test.tsx`
 Expected: FAIL in the three new tests: the bridge does not route taps yet.
 
 - [ ] **Step 8: Route taps from the bridge**
@@ -2379,7 +2379,7 @@ export function NotificationsBridge() {
 
 - [ ] **Step 9: Run the tests, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test -- src/notifications && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/notifications && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 10: Commit**
@@ -2447,7 +2447,7 @@ describe('Home bell', () => {
 Create `apps/mobile/src/features/notifications/inbox-screen.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import '@/lib/i18n';
@@ -2611,7 +2611,7 @@ describe('Bildirişlər inbox', () => {
 
 - [ ] **Step 3: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features/notifications`
+Run: `pnpm --filter @edildy/mobile test -- src/features/notifications`
 Expected: FAIL: cannot find modules `./notification-bell` and `./inbox-screen`.
 
 - [ ] **Step 4: Write the bell**
@@ -2660,8 +2660,8 @@ const styles = StyleSheet.create({
 Create `apps/mobile/src/features/notifications/inbox-screen.tsx`:
 
 ```tsx
-import type { NotificationItem } from '@taskop/contracts';
-import { formatDateTime } from '@taskop/i18n';
+import type { NotificationItem } from '@edildy/contracts';
+import { formatDateTime } from '@edildy/i18n';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2945,7 +2945,7 @@ And add inside `describe('My checklists', …)`:
 
 - [ ] **Step 7: Run the tests, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test -- src/features && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/features && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -2983,14 +2983,14 @@ In `apps/mobile/src/lib/session.test.ts`, add inside `describe('mobile session',
     await session.signedIn({ accessToken: 'a', accessTokenExpiresAt: '2026-10-07T10:00:00.000Z', refreshToken: 'r1', me } as never);
     await session.patchUser({ emailNotifications: false });
     expect(session.get()).toMatchObject({ status: 'authenticated', me: { user: { username: 'elvin', emailNotifications: false } } });
-    expect(JSON.parse(mockStore.get('taskop.me')!).user.emailNotifications).toBe(false);
+    expect(JSON.parse(mockStore.get('edildy.me')!).user.emailNotifications).toBe(false);
   });
 
   it('ignores a profile change when nobody is signed in', async () => {
     await session.bootstrap();
     await session.patchUser({ emailNotifications: false });
     expect(session.get()).toEqual({ status: 'anonymous' });
-    expect(mockStore.has('taskop.me')).toBe(false);
+    expect(mockStore.has('edildy.me')).toBe(false);
   });
 ```
 
@@ -2999,7 +2999,7 @@ In `apps/mobile/src/lib/session.test.ts`, add inside `describe('mobile session',
 In `apps/mobile/src/features/profile/profile-screen.test.tsx`, replace everything from the first line through the end of the `beforeEach(…)` block (as written in Task 5) with:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { Alert, type AlertButton, AppState } from 'react-native';
 import '@/lib/i18n';
@@ -3076,7 +3076,7 @@ describe('notification settings', () => {
   });
 
   it('puts the switch back and shows the error when saving fails', async () => {
-    mockUser = { ...mockUser, email: 'aysel@demo.taskop.az' };
+    mockUser = { ...mockUser, email: 'aysel@demo.edildy.az' };
     mockUpdate.mockRejectedValue(new ApiError(500, 'INTERNAL', 'errors.INTERNAL'));
     const t = await createTestServices({ online: true });
     await renderWithServices(t.services, <ProfileScreen />);
@@ -3120,7 +3120,7 @@ describe('notification settings', () => {
 
 - [ ] **Step 3: Run them and check they fail**
 
-Run: `pnpm --filter @taskop/mobile test -- src/lib/session.test.ts src/features/profile`
+Run: `pnpm --filter @edildy/mobile test -- src/lib/session.test.ts src/features/profile`
 Expected: FAIL: `session.patchUser is not a function`; no switch named "E-poçt bildirişləri"; no text "Bağlıdır". The logout tests still pass.
 
 - [ ] **Step 4: Add `patchUser` to the session**
@@ -3359,7 +3359,7 @@ const styles = StyleSheet.create({
 
 - [ ] **Step 7: Run the tests, typecheck and lint**
 
-Run: `pnpm --filter @taskop/mobile test -- src/lib src/features/profile src/notifications && pnpm --filter @taskop/mobile typecheck && pnpm --filter @taskop/mobile lint`
+Run: `pnpm --filter @edildy/mobile test -- src/lib src/features/profile src/notifications && pnpm --filter @edildy/mobile typecheck && pnpm --filter @edildy/mobile lint`
 Expected: PASS.
 
 - [ ] **Step 8: Commit**
@@ -3378,20 +3378,20 @@ git commit -m "feat(mobile): email notification switch and push permission state
 
 **Interfaces:**
 - Consumes: everything above. Also:
-  - a running API with all of Part 1 merged (`JOBS_ENABLED=true`, `NOTIFICATIONS_PUSH_ENABLED=true`) and its seed (`pnpm db:seed`: manager `manager@demo.taskop.az` / `DemoPassword123`, workers `elvin` and `nigar` at org code `demo` with PIN `482915`);
+  - a running API with all of Part 1 merged (`JOBS_ENABLED=true`, `NOTIFICATIONS_PUSH_ENABLED=true`) and its seed (`pnpm db:seed`: manager `manager@demo.edildy.az` / `DemoPassword123`, workers `elvin` and `nigar` at org code `demo` with PIN `482915`);
   - the web app from Part 3 for sending messages and changing rules. Without Part 3, use the API endpoints directly.
 - Produces: verified development builds on a real iPhone and a real Android phone.
 
 - [ ] **Step 1: Run every automated check**
 
 ```bash
-pnpm --filter @taskop/contracts --filter @taskop/i18n --filter @taskop/api-client build
-pnpm --filter @taskop/i18n test
-pnpm --filter @taskop/mobile test
-pnpm --filter @taskop/mobile typecheck
-pnpm --filter @taskop/mobile lint
-pnpm --filter @taskop/mobile exec expo install --check
-pnpm --filter @taskop/mobile exec expo config --type prebuild > /dev/null
+pnpm --filter @edildy/contracts --filter @edildy/i18n --filter @edildy/api-client build
+pnpm --filter @edildy/i18n test
+pnpm --filter @edildy/mobile test
+pnpm --filter @edildy/mobile typecheck
+pnpm --filter @edildy/mobile lint
+pnpm --filter @edildy/mobile exec expo install --check
+pnpm --filter @edildy/mobile exec expo config --type prebuild > /dev/null
 grep -rln "from 'expo-notifications'\|from 'expo-device'" apps/mobile/src apps/mobile/app
 ```
 
@@ -3402,7 +3402,7 @@ Expected: all suites pass with none skipped, and Jest reports no open handles. `
 1. **EAS project:**
    - In `apps/mobile`, run `npx eas-cli@latest login` and then `npx eas-cli@latest init`.
    - `app.config.ts` exists, so `eas init` prints the project id instead of writing it. Add it to `apps/mobile/app.json` under `expo`: `"owner": "<your Expo account>"` and `"extra": { "eas": { "projectId": "<id>" } }`.
-   - Check: `pnpm --filter @taskop/mobile exec expo config --type public | grep projectId` prints the id.
+   - Check: `pnpm --filter @edildy/mobile exec expo config --type public | grep projectId` prints the id.
    - Commit it: `git add apps/mobile/app.json && git commit -m "chore(mobile): EAS project id" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"`.
 2. **APNs:**
    - In the Apple Developer account, go to Certificates, IDs & Profiles → Keys, and create a key with Apple Push Notifications service (APNs). Download the `.p8` file and never commit it (`*.p8` is gitignored).
@@ -3423,10 +3423,10 @@ ipconfig getifaddr en0                     # e.g. 192.168.1.20
 # apps/api/.env:    S3_PUBLIC_ENDPOINT=http://192.168.1.20:8333
 # apps/mobile/.env: EXPO_PUBLIC_API_URL=http://192.168.1.20:3000
 pnpm db:setup && pnpm db:seed
-pnpm --filter @taskop/api dev
-pnpm --filter @taskop/mobile exec expo prebuild --clean
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios -- --device
-pnpm --filter @taskop/mobile android -- --device
+pnpm --filter @edildy/api dev
+pnpm --filter @edildy/mobile exec expo prebuild --clean
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios -- --device
+pnpm --filter @edildy/mobile android -- --device
 ```
 
 Expected: both phones install the development build. `expo prebuild --clean` regenerates `ios/` and `android/` with the notifications plugin, the `aps-environment` entitlement and the Firebase file.
@@ -3448,7 +3448,7 @@ Tick each item in the PR description, with the phone model and OS version.
 4. **Tap from a closed app: task.**
    - Kill the app, assign another task on the web, and tap the notification. Expected: the task screen of that task.
 5. **Manager's notices.**
-   - Sign in as `manager@demo.taskop.az` on the second phone.
+   - Sign in as `manager@demo.edildy.az` on the second phone.
    - Let `elvin` record a critical problem. Expected: a push on the manager's phone; tapping it opens the inbox, since the occurrence is not on the manager's phone.
    - Expected also: an email in Mailpit (`http://localhost:8025`) for the manager.
    - Let `elvin` submit a review task the manager created. Expected: tapping the push opens the Yoxlama screen with Təsdiqlə and Geri qaytar.
@@ -3473,7 +3473,7 @@ Tick each item in the PR description, with the phone model and OS version.
     - The web user menu's "Bildiriş ayarları" shows the switch off.
     - In airplane mode, expected: the switch is disabled with "Dəyişmək üçün internet bağlantısı tələb olunur.".
 11. **Simulator.**
-    - Run `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @taskop/mobile ios` on a simulator. Expected: no prompt, no error, and Profile shows "Bu cihazda dəstəklənmir".
+    - Run `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer pnpm --filter @edildy/mobile ios` on a simulator. Expected: no prompt, no error, and Profile shows "Bu cihazda dəstəklənmir".
 
 - [ ] **Step 5: Record and finish**
 

@@ -1,4 +1,4 @@
-import { countItems, hasRules, validateForPublish, walkItems } from '@taskop/contracts';
+import { countItems, hasRules, validateForPublish, walkItems } from '@edildy/contracts';
 import { describe, expect, it } from 'vitest';
 import { GLOBAL_TEMPLATE_FIXTURES } from '../src/db/scripts/seed-templates';
 

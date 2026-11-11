@@ -1,4 +1,4 @@
-import { TEMPLATE_CATEGORIES, type TemplateSummary, toListParam } from '@taskop/contracts';
+import { TEMPLATE_CATEGORIES, type TemplateSummary, toListParam } from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
@@ -33,7 +33,7 @@ export function TemplatePicker({ value, onPick }: { value: TemplateSummary | nul
           >
             <span className="font-medium">{tpl.name}</span>
             <span className="text-muted-foreground block text-xs">
-              {tpl.source === 'global' ? t('checklists.templates.taskop') : t('checklists.templates.ours')} · {categoryLabel(t, tpl.category)} ·{' '}
+              {tpl.source === 'global' ? t('checklists.templates.edildy') : t('checklists.templates.ours')} · {categoryLabel(t, tpl.category)} ·{' '}
               {t('checklists.templates.items', { count: tpl.itemCount })}
             </span>
           </button>

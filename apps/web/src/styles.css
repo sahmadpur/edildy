@@ -2,12 +2,12 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/ibm-plex-sans';
-@import '@taskop/brand/tokens.css';
+@import '@edildy/brand/tokens.css';
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * The shadcn names the components use, mapped onto Taskop's brand tokens (--tp-*, packages/brand/tokens.css).
+ * The shadcn names the components use, mapped onto Edildy's brand tokens (--tp-*, packages/brand/tokens.css).
  * Light and dark are both defined there, so nothing below changes per scheme except the chart series.
  */
 @theme inline {

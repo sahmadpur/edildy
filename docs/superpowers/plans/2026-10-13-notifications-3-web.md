@@ -1,4 +1,4 @@
-# Taskop Notifications — Part 3: Web App — Implementation Plan
+# Edildy Notifications — Part 3: Web App — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -16,14 +16,14 @@
 **Spec:** `docs/superpowers/specs/2026-10-13-notifications-design.md` — this plan implements §8 and the web and Playwright parts of §9. **Interface source:** `docs/superpowers/plans/2026-10-13-notifications-1-api.md`, section *Interfaces for Parts 2 and 3*; this plan uses only names listed there or already in the repo.
 
 **This plan is Part 3 of 3.**
-- **Before starting:** Part 1 **Tasks 1–4** must be merged into the feature branch: the contracts in `packages/contracts/src/notifications.ts` (and the `sync`, `auth`, `permissions`, `audit` changes), the `az.notifications` namespace with `az.nav.notifications` / `az.nav.messages`, and the `@taskop/api-client` methods `notifications.*`, `preferences.update`, `notificationRules.*`, `messages.*`.
+- **Before starting:** Part 1 **Tasks 1–4** must be merged into the feature branch: the contracts in `packages/contracts/src/notifications.ts` (and the `sync`, `auth`, `permissions`, `audit` changes), the `az.notifications` namespace with `az.nav.notifications` / `az.nav.messages`, and the `@edildy/api-client` methods `notifications.*`, `preferences.update`, `notificationRules.*`, `messages.*`.
 - **Tasks 1–8** need nothing else. They test against a mocked `@/lib/session`.
 - **Task 9 (Playwright)** needs **all of Part 1** merged (migrations `0011`/`0012`, the outbox, the fan-out and deliver workers, the endpoints) and an API running with jobs on (`JOBS_ENABLED=true`, the default).
 - Part 2 (`apps/mobile`) is independent of this part.
 
 ## Global Constraints
 
-- The product name is **Taskop**. Azerbaijani (`az`) is the only locale.
+- The product name is **Edildy**. Azerbaijani (`az`) is the only locale.
 - Every visible string is an i18n key. New web strings go into `az.notifications` (`packages/i18n/src/az/notifications.ts`, Part 1 Task 3's file) as **new keys only**: `bell`, `inbox`, `rules`, `messages`, `preferences`. Part 1's keys (`types`, `groups`, `audiences`, `channels`, `deliveryStatuses`, `issues`, `leadMinutes`, `title`, `markAllRead`, `empty`), `az.nav.notifications` and `az.nav.messages` are reused, never renamed. The Settings tab "Təşkilat" is `settings.org.title`; the tab "Bildirişlər" is `notifications.title`.
 - Install nothing. Two UI primitives are added as files on the existing `radix-ui` dependency: `src/components/ui/popover.tsx` (Task 4) and `src/components/ui/switch.tsx` (Task 5). Otherwise use the existing `Badge`, `Button`, `Card`, `Checkbox`, `CheckboxList`, `Dialog`, `DropdownMenu`, `Input`, `Label`, `NativeSelect`, `PageHeader`, `FormError`, `Table`, `Tabs`, `Textarea`.
 - **Unread count:** `api.notifications.unreadCount()` under the key `['notifications', 'unread-count']`, `refetchInterval: 30_000`, `refetchOnWindowFocus: true`, `staleTime: 0` (the app's defaults, 30 s stale and no focus refetch, are overridden for this query only).
@@ -165,7 +165,7 @@ describe('notification web translations', () => {
 
 - [ ] **Step 2: Run the test and check it fails**
 
-Run: `pnpm --filter @taskop/i18n test`
+Run: `pnpm --filter @edildy/i18n test`
 Expected: FAIL: `az.notifications.bell` is `undefined`.
 
 - [ ] **Step 3: Implement**
@@ -243,7 +243,7 @@ In `packages/i18n/src/az/notifications.ts`, add these keys at the end of the exp
 
 - [ ] **Step 4: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/i18n test && pnpm --filter @taskop/i18n build`
+Run: `pnpm --filter @edildy/i18n test && pnpm --filter @edildy/i18n build`
 Expected: PASS. The build makes the new keys visible to `apps/web`.
 
 - [ ] **Step 5: Commit**
@@ -275,7 +275,7 @@ git commit -m "feat(i18n): add web strings for the bell, inbox, rules tab, messa
 `apps/web/src/features/notifications/labels.test.ts`:
 
 ```ts
-import { az } from '@taskop/i18n';
+import { az } from '@edildy/i18n';
 import { describe, expect, it } from 'vitest';
 import i18n from '@/lib/i18n';
 import { counts, notificationItem } from './fixtures';
@@ -328,7 +328,7 @@ describe('deliverySummary', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/labels`
+Run: `pnpm --filter @edildy/web test -- features/notifications/labels`
 Expected: FAIL: `Failed to resolve import "./fixtures"`.
 
 - [ ] **Step 3: Implement the helpers**
@@ -336,7 +336,7 @@ Expected: FAIL: `Failed to resolve import "./fixtures"`.
 `apps/web/src/features/notifications/labels.ts`:
 
 ```ts
-import { DELIVERY_STATUSES, type DeliveryCounts, isProblemType, type NotificationItem } from '@taskop/contracts';
+import { DELIVERY_STATUSES, type DeliveryCounts, isProblemType, type NotificationItem } from '@edildy/contracts';
 import type { TFunction } from 'i18next';
 import type { ScheduleSearch } from '@/features/scheduling/routes';
 import type { TasksSearch } from '@/features/tasks/routes';
@@ -486,7 +486,7 @@ import {
   RULE_TYPES,
   type RuleType,
   type SystemRoleKey,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** Test data shared by the notification tests. Not imported by application code. */
 export const AT = '2026-11-02T04:00:00.000Z';
@@ -621,7 +621,7 @@ export const targetOptions = (over: Partial<MessageTargetOptions> = {}): Message
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/labels && pnpm --filter @taskop/web typecheck`
+Run: `pnpm --filter @edildy/web test -- features/notifications/labels && pnpm --filter @edildy/web typecheck`
 Expected: PASS (4 tests). The typecheck covers `queries.ts` and `fixtures.ts`.
 
 - [ ] **Step 7: Commit**
@@ -732,7 +732,7 @@ describe('NotificationsPage', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/notifications-page`
+Run: `pnpm --filter @edildy/web test -- features/notifications/notifications-page`
 Expected: FAIL: `Failed to resolve import "./notifications-page"`.
 
 - [ ] **Step 3: Implement opening a notification and the row**
@@ -740,7 +740,7 @@ Expected: FAIL: `Failed to resolve import "./notifications-page"`.
 `apps/web/src/features/notifications/open-notification.ts`:
 
 ```ts
-import type { NotificationItem } from '@taskop/contracts';
+import type { NotificationItem } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';
@@ -779,7 +779,7 @@ export function useOpenNotification() {
 `apps/web/src/features/notifications/notification-row.tsx`:
 
 ```tsx
-import type { NotificationItem } from '@taskop/contracts';
+import type { NotificationItem } from '@edildy/contracts';
 import { useTranslation } from 'react-i18next';
 import { useFormatDateTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -899,7 +899,7 @@ const notificationsRoute = createRoute({ getParentRoute: () => appLayout, path: 
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/notifications && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (4 page tests, 4 label tests); `router.test.tsx` still passes.
 
 - [ ] **Step 7: Commit**
@@ -930,7 +930,7 @@ git commit -m "feat(web): add the notifications inbox page, its route and openin
 `apps/web/src/features/notifications/notification-bell.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -1068,7 +1068,7 @@ In `apps/web/src/layouts/app-shell.test.tsx`:
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/notification-bell layouts/app-shell`
+Run: `pnpm --filter @edildy/web test -- features/notifications/notification-bell layouts/app-shell`
 Expected: FAIL: `Failed to resolve import "./notification-bell"`; the new app-shell test finds no bell.
 
 - [ ] **Step 3: Add the popover primitive**
@@ -1227,7 +1227,7 @@ import { NotificationBell } from '@/features/notifications/notification-bell';
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS: the whole web suite, including 6 bell tests and 5 app-shell tests.
 
 - [ ] **Step 7: Commit**
@@ -1304,9 +1304,9 @@ describe('rule form', () => {
 `apps/web/src/features/notifications/rules-tab.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import type { RuleType } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import type { RuleType } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1486,7 +1486,7 @@ describe('SettingsPage', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/rules features/settings`
+Run: `pnpm --filter @edildy/web test -- features/notifications/rules features/settings`
 Expected: FAIL: `Failed to resolve import "./rules-form"` and `"./rules-tab"`; the settings test finds no tablist.
 
 - [ ] **Step 3: Add the switch primitive**
@@ -1536,7 +1536,7 @@ import {
   type NotificationRuleDto,
   type RuleType,
   type UpdateNotificationRuleInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 
 /** A rule row while it is being edited. */
 export interface RuleDraft {
@@ -1593,7 +1593,7 @@ export const sameDraft = (a: RuleDraft, b: RuleDraft): boolean =>
 `apps/web/src/features/notifications/rules-tab.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import {
   LEAD_MINUTES,
   type LeadMinutes,
@@ -1602,7 +1602,7 @@ import {
   type NotificationRuleDto,
   type RoleDto,
   type UpdateNotificationRuleInput,
-} from '@taskop/contracts';
+} from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useState } from 'react';
@@ -1889,7 +1889,7 @@ export function SettingsPage() {
 
 - [ ] **Step 7: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications features/settings && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/notifications features/settings && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (2 rule-form tests, 5 rules-tab tests, 2 settings tests, and the earlier notification tests).
 
 - [ ] **Step 8: Commit**
@@ -2047,7 +2047,7 @@ describe('TargetPicker', () => {
 `apps/web/src/features/notifications/compose-message.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { QueryClient } from '@tanstack/react-query';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -2138,7 +2138,7 @@ describe('ComposeMessage', () => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/message-form features/notifications/target-picker features/notifications/compose-message`
+Run: `pnpm --filter @edildy/web test -- features/notifications/message-form features/notifications/target-picker features/notifications/compose-message`
 Expected: FAIL: `Failed to resolve import "./message-form"`, `"./target-picker"`, `"./compose-message"`.
 
 - [ ] **Step 3: Implement the form helpers**
@@ -2146,7 +2146,7 @@ Expected: FAIL: `Failed to resolve import "./message-form"`, `"./target-picker"`
 `apps/web/src/features/notifications/message-form.ts`:
 
 ```ts
-import { MESSAGE_LIMITS, type SendMessageInput } from '@taskop/contracts';
+import { MESSAGE_LIMITS, type SendMessageInput } from '@edildy/contracts';
 
 /** A picked target; the name is only for the chips. */
 export interface TargetRef {
@@ -2209,7 +2209,7 @@ export const previewVerdict = (recipientCount: number): PreviewVerdict =>
 `apps/web/src/features/notifications/target-picker.tsx`:
 
 ```tsx
-import { MESSAGE_LIMITS } from '@taskop/contracts';
+import { MESSAGE_LIMITS } from '@edildy/contracts';
 import { X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2431,8 +2431,8 @@ export function TargetPicker({ value, onChange }: Props) {
 `apps/web/src/features/notifications/compose-message.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { MESSAGE_LIMITS, type SendMessageInput } from '@taskop/contracts';
+import { ApiError } from '@edildy/api-client';
+import { MESSAGE_LIMITS, type SendMessageInput } from '@edildy/contracts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -2572,7 +2572,7 @@ export function ComposeMessage() {
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test -- features/notifications && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS (3 message-form tests, 3 picker tests, 3 compose tests, and the earlier notification tests).
 
 - [ ] **Step 7: Commit**
@@ -2607,8 +2607,8 @@ git commit -m "feat(web): compose manual messages with a people/teams/sites pick
 `apps/web/src/features/notifications/messages-page.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
-import { az } from '@taskop/i18n';
+import { ApiError } from '@edildy/api-client';
+import { az } from '@edildy/i18n';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -2709,7 +2709,7 @@ and in `shows only the menu items the user may open`, add after the `Tapşırıq
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/messages-page layouts/app-shell`
+Run: `pnpm --filter @edildy/web test -- features/notifications/messages-page layouts/app-shell`
 Expected: FAIL: `Failed to resolve import "./messages-page"`; the app-shell test finds no "Mesajlar" link.
 
 - [ ] **Step 3: Implement the history and the detail**
@@ -2717,7 +2717,7 @@ Expected: FAIL: `Failed to resolve import "./messages-page"`; the app-shell test
 `apps/web/src/features/notifications/message-history.tsx`:
 
 ```tsx
-import type { DeliveryChannel, MessageDetail, MessageSummary } from '@taskop/contracts';
+import type { DeliveryChannel, MessageDetail, MessageSummary } from '@edildy/contracts';
 import { Link } from '@tanstack/react-router';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
@@ -2960,7 +2960,7 @@ In `apps/web/src/layouts/app-shell.tsx`:
 
 - [ ] **Step 6: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS: the whole web suite, including 3 messages-page tests and 6 app-shell tests.
 
 - [ ] **Step 7: Commit**
@@ -2990,7 +2990,7 @@ git commit -m "feat(web): add the Mesajlar page with message history, per-recipi
 `apps/web/src/features/notifications/preferences-dialog.test.tsx`:
 
 ```tsx
-import { ApiError } from '@taskop/api-client';
+import { ApiError } from '@edildy/api-client';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -3075,7 +3075,7 @@ beforeEach(() => {
 
 - [ ] **Step 2: Run the tests and check they fail**
 
-Run: `pnpm --filter @taskop/web test -- features/notifications/preferences-dialog layouts/app-shell`
+Run: `pnpm --filter @edildy/web test -- features/notifications/preferences-dialog layouts/app-shell`
 Expected: FAIL: `Failed to resolve import "./preferences-dialog"`; the app-shell test finds no menu item.
 
 - [ ] **Step 3: Implement the dialog**
@@ -3150,7 +3150,7 @@ function EmailSwitch() {
 `apps/web/src/layouts/user-menu.tsx`:
 
 ```tsx
-import type { Me } from '@taskop/contracts';
+import type { Me } from '@edildy/contracts';
 import { Bell, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -3212,7 +3212,7 @@ import { UserMenu } from './user-menu';
 
 - [ ] **Step 5: Run the tests and check they pass**
 
-Run: `pnpm --filter @taskop/web test && pnpm --filter @taskop/web typecheck && pnpm --filter @taskop/web lint`
+Run: `pnpm --filter @edildy/web test && pnpm --filter @edildy/web typecheck && pnpm --filter @edildy/web lint`
 Expected: PASS: the whole web suite, including 2 preferences tests and 7 app-shell tests.
 
 - [ ] **Step 6: Commit**
@@ -3233,7 +3233,7 @@ git commit -m "feat(web): add the user menu with the e-mail notification prefere
 - Consumes the whole of this part and all of Part 1:
   - `POST /auth/signup`, `GET /roles`, `POST /teams`, `POST /users/workers` (with `teamIds`), `POST /tasks` (team assignee), `GET /notification-rules`, `POST /auth/login/worker` (`client: 'mobile'` for the API checks, `client: 'web'` for the browser session, decision 16), `GET /me/notifications`, `GET /me/notifications/unread-count`
   - the web: Settings → "Bildirişlər" tab, "Mesajlar" (compose, confirm, history, detail), the bell and its popover, `/notifications`
-  - `az.notifications.types['task.assigned']`, `az.notifications.channels.email` from `@taskop/i18n` (Part 1's texts, decision 18)
+  - `az.notifications.types['task.assigned']`, `az.notifications.channels.email` from `@edildy/i18n` (Part 1's texts, decision 18)
 - **Environment:** the API must run its job workers (`JOBS_ENABLED=true`: the default in `apps/api/src/config/config.ts` and in `apps/api/.env.example`; the CI e2e job does not override it). Fan-out is asynchronous, so the test waits with `expect.poll` (≤ 15 s), never with sleeps. No other setting is needed: the member registers no push device and has no e-mail address, so no Expo request or SMTP delivery is made (`NOTIFICATIONS_PUSH_ENABLED` and `SMTP_URL` stay as they are).
 
 - [ ] **Step 1: Write the end-to-end test**
@@ -3242,8 +3242,8 @@ git commit -m "feat(web): add the user menu with the e-mail notification prefere
 
 ```ts
 import { type APIRequestContext, expect, test } from '@playwright/test';
-import type { NotificationItem, NotificationRuleDto } from '@taskop/contracts';
-import { az } from '@taskop/i18n';
+import type { NotificationItem, NotificationRuleDto } from '@edildy/contracts';
+import { az } from '@edildy/i18n';
 import { uuidv7 } from 'uuidv7';
 
 function apiAs(request: APIRequestContext, accessToken: string) {
@@ -3336,7 +3336,7 @@ test('an admin changes the task.assigned rule and messages a team; the member se
   await expect(recipient).toContainText('Cihaz yoxdur');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Çıxış' }).click();
-  await expect(page.getByRole('heading', { name: 'Taskop-a daxil olun' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Edildy-yə daxil olun' })).toBeVisible();
 
   // The member on the web (decision 16): a worker session with the web client's refresh cookie.
   const web = await page.request.post('/api/v1/auth/login/worker', {
@@ -3374,9 +3374,9 @@ test('an admin changes the task.assigned rule and messages a team; the member se
 Prerequisites: all of Part 1 merged; `docker compose up -d` (Postgres, SeaweedFS, Mailpit); `apps/api/.env` filled in from `apps/api/.env.example` (with `JOBS_ENABLED=true`); `pnpm db:setup && pnpm db:seed` done (the migrations include `0011_notifications` and `0012_notifications_security`).
 
 ```bash
-pnpm --filter @taskop/contracts build && pnpm --filter @taskop/i18n build && pnpm --filter @taskop/api-client build
-pnpm --filter @taskop/api build
-pnpm --filter @taskop/web e2e -- notifications foundation
+pnpm --filter @edildy/contracts build && pnpm --filter @edildy/i18n build && pnpm --filter @edildy/api-client build
+pnpm --filter @edildy/api build
+pnpm --filter @edildy/web e2e -- notifications foundation
 ```
 
 Expected: PASS for both specs. `foundation.spec.ts` still finds the "Çıxış" button next to the new user menu.
@@ -3387,7 +3387,7 @@ If the poll times out at 0, the API is running without job workers: check `JOBS_
 
 ```bash
 pnpm typecheck && pnpm lint && pnpm test
-pnpm --filter @taskop/web e2e
+pnpm --filter @edildy/web e2e
 ```
 
 Expected: all green. The `foundation`, `checklists`, `scheduling`, `executions` and `tasks` end-to-end tests still pass.

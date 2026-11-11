@@ -1,4 +1,4 @@
-import type { Answers } from '@taskop/contracts';
+import type { Answers } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';

@@ -1,9 +1,9 @@
 {
-  "name": "@taskop/landing",
+  "name": "@edildy/landing",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The public site at taskop.app: what Taskop is, for whom, and the way into the platform.",
+  "description": "The public site at edildy.com: what Edildy is, for whom, and the way into the platform.",
   "scripts": {
     "dev": "astro dev --port 5180",
     "build": "astro build",
@@ -15,13 +15,13 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",
-    "@taskop/brand": "workspace:*",
-    "@taskop/i18n": "workspace:*",
+    "@edildy/brand": "workspace:*",
+    "@edildy/i18n": "workspace:*",
     "astro": "^7.4.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
-    "@taskop/config": "workspace:*",
+    "@edildy/config": "workspace:*",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
     "typescript": "~6.0.3",

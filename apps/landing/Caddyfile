@@ -1,5 +1,5 @@
-# Caddy inside the taskop-landing image: serves the Astro build in /srv on port 80.
-# TLS and the host names are the edge proxy's job (deploy/Caddyfile), which forwards taskop.app here.
+# Caddy inside the edildy-landing image: serves the Astro build in /srv on port 80.
+# TLS and the host names are the edge proxy's job (deploy/Caddyfile), which forwards edildy.com here.
 {
 	admin off
 	auto_https off
