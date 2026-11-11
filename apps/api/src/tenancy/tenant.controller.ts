@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { TenantDto } from '@edildy/contracts';
+import type { TenantDto, TenantSubscriptionDto } from '@edildy/contracts';
 import { RequirePermission } from '../common/decorators';
-import { TenantResponse, UpdateTenantDto } from './dto';
+import { TenantResponse, TenantSubscriptionResponse, UpdateTenantDto } from './dto';
 import { TenantService } from './tenant.service';
 
 @ApiTags('tenant')
@@ -15,6 +15,13 @@ export class TenantController {
   @ApiOkResponse({ type: TenantResponse })
   get(): Promise<TenantDto> {
     return this.tenant.get();
+  }
+
+  @Get('subscription')
+  @RequirePermission('tenant.manage')
+  @ApiOkResponse({ type: TenantSubscriptionResponse })
+  subscription(): Promise<TenantSubscriptionDto> {
+    return this.tenant.subscription();
   }
 
   @Patch()

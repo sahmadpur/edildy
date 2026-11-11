@@ -8,7 +8,9 @@ import { ShiftsPage } from './shifts-page';
 const mocks = vi.hoisted(() => ({
   api: { shifts: { list: vi.fn(), create: vi.fn(), update: vi.fn() }, sites: { list: vi.fn() } },
 }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useCan: () => true }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useCan: () => true }));
 
 const shift = (over: Partial<ShiftDto> = {}): ShiftDto => ({
   id: 's1', name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }], siteId: null, siteName: null, active: true, ...over,

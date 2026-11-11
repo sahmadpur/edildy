@@ -13,10 +13,17 @@ export const NO_ACTIONS: RunActions = { audit: null, correct: false, sendBack: f
 
 /**
  * Each action needs its permission and the audit-logic rule the API applies (Part 1 "What the UI may offer"). A run
- * without a counted execution offers nothing. An audit that was cancelled counts as none.
+ * without a counted execution offers nothing, and so does a plan without audits (BR-01: the API refuses audits and
+ * corrections). An audit that was cancelled counts as none.
  */
-export function runActions(permissions: Me['permissions'], status: OccurrenceStatus, executionState: ExecutionState | null, audit: AuditBrief | null): RunActions {
-  if (executionState === null) return NO_ACTIONS;
+export function runActions(
+  permissions: Me['permissions'],
+  status: OccurrenceStatus,
+  executionState: ExecutionState | null,
+  audit: AuditBrief | null,
+  auditsInPlan: boolean,
+): RunActions {
+  if (executionState === null || !auditsInPlan) return NO_ACTIONS;
   const run = { status, executionState };
   const auditor = permissions.includes('audits.perform');
   const corrector = permissions.includes('executions.correct');

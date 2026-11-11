@@ -6,6 +6,7 @@ import { AppError } from '../common/app-error';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
 import { sites, siteTypes } from '../db/schema';
+import { assertWithinLimit } from './subscription';
 import type { CreateSiteDto, MoveSiteDto, UpdateSiteDto } from './dto';
 
 export const siteLabel = (id: string): string => id.replaceAll('-', '');
@@ -43,6 +44,8 @@ export class SitesService {
     await this.lockTree();
     await this.requireActiveType(input.typeId);
     const parent = input.parentId ? await this.find(input.parentId, 'REFERENCE_NOT_FOUND') : null;
+    // A top-level site is a branch: the plan caps them (BR-01.05).
+    if (!parent) await assertWithinLimit(this.db.tx(), tenantId, 'branches');
     const id = uuidv7();
     const [row] = await this.db
       .tx()
@@ -65,6 +68,7 @@ export class SitesService {
   async update(id: string, input: UpdateSiteDto): Promise<SiteDto> {
     const existing = await this.find(id, 'NOT_FOUND');
     if (input.typeId && input.typeId !== existing.typeId) await this.requireActiveType(input.typeId);
+    if (input.active === true && !existing.active && existing.parentId === null) await assertWithinLimit(this.db.tx(), existing.tenantId, 'branches');
     const [row] = await this.db
       .tx()
       .update(sites)
@@ -82,6 +86,7 @@ export class SitesService {
     const node = await this.find(id, 'NOT_FOUND');
     const parent = input.parentId ? await this.find(input.parentId, 'REFERENCE_NOT_FOUND') : null;
     if (parent && isSameOrDescendant(parent.path, node.path)) throw new AppError('SITE_CYCLE');
+    if (!parent && node.parentId !== null && node.active) await assertWithinLimit(tx, node.tenantId, 'branches');
     const oldPath = node.path;
     const newPath = parent ? `${parent.path}.${siteLabel(node.id)}` : siteLabel(node.id);
     const [row] = await tx

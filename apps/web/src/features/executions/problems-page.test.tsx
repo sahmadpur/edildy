@@ -20,6 +20,8 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useCan: (...keys: string[]) => keys.every((k) => k !== 'tasks.manage' || mocks.canManageTasks.current),
   useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }),

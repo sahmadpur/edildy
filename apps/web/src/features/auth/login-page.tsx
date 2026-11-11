@@ -22,9 +22,9 @@ export function LoginPage() {
         </Link>
         <span>
           {t('auth.login.noAccount')}{' '}
-          <Link to="/signup" className="underline">
-            {t('auth.login.signupLink')}
-          </Link>
+          <a href="mailto:hello@edildy.com" className="underline">
+            {t('auth.login.contactLink')}
+          </a>
         </span>
         <span>{t('auth.login.workersHint')}</span>
       </div>

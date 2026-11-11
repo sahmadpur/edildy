@@ -5,7 +5,11 @@ import { expect } from 'vitest';
 import { PasswordHasher } from '../src/auth/crypto/password-hasher';
 import { OneTimeTokenService } from '../src/auth/one-time-token.service';
 import { DbService } from '../src/db/db.service';
-import { roles, users } from '../src/db/schema';
+import { roles, tenants, users } from '../src/db/schema';
+import { AuthService } from '../src/auth/auth.service';
+import { verifyEmailMail } from '../src/mail/templates';
+import { seedTenantDefaults } from '../src/tenancy/bootstrap';
+import { uuidv7 } from 'uuidv7';
 import type { TestApp } from './app';
 import { ownerQuery } from './owner-db';
 
@@ -22,29 +26,38 @@ export interface SignedUpTenant {
   me: Me;
 }
 
+/**
+ * A new organisation with an active, e-mail-unverified Owner, signed in (what self-registration used to do; organisations
+ * are now created by Edildy staff). The verify e-mail is sent as before, so `t.mailer.tokenFor(email)` finds it.
+ * The plan defaults to XL (everything on, no limits) so feature tests are unaffected; pass `plan` etc. to change it.
+ */
 export async function signupTenant(t: TestApp, overrides: Record<string, unknown> = {}): Promise<SignedUpTenant> {
-  const orgCode = uniq('org');
-  const body = {
-    orgName: 'Acme MMC',
-    orgCode,
-    fullName: 'Elvin Əhmədov',
-    email: `${orgCode}@example.az`,
-    password: 'owner password 1',
-    client: 'mobile',
-    ...overrides,
-  };
-  const res = await t.http().post('/api/v1/auth/signup').send(body);
-  expect(res.status, JSON.stringify(res.body)).toBe(201);
-  const result = res.body as LoginResult;
-  return {
-    orgCode: String(body.orgCode),
-    email: String(body.email).toLowerCase(),
-    password: String(body.password),
-    tenantId: result.me.tenant.id,
-    ownerId: result.me.user.id,
-    accessToken: result.accessToken,
-    me: result.me,
-  };
+  const orgCode = String(overrides.orgCode ?? uniq('org'));
+  const email = String(overrides.email ?? `${orgCode}@example.az`).toLowerCase();
+  const password = String(overrides.password ?? 'owner password 1');
+  const fullName = String(overrides.fullName ?? 'Elvin Əhmədov');
+  const client = String(overrides.client ?? 'mobile');
+  const db = t.app.get(DbService);
+  const tenantId = uuidv7();
+  const ownerId = uuidv7();
+  const credentialHash = await t.app.get(PasswordHasher).hash(password);
+  const token = await db.withTenant(tenantId, null, async (tx) => {
+    await tx.insert(tenants).values({
+      id: tenantId,
+      name: String(overrides.orgName ?? 'Acme MMC'),
+      orgCode,
+      plan: (overrides.plan as 'basic' | 'pro' | 'enterprise' | 'xl' | undefined) ?? 'xl',
+      planEndsOn: (overrides.planEndsOn as string | null | undefined) ?? null,
+      branchLimit: (overrides.branchLimit as number | undefined) ?? 100,
+      extraFeatures: (overrides.extraFeatures as string[] | undefined) ?? [],
+    });
+    const roleIds = await seedTenantDefaults(tx, tenantId);
+    await tx.insert(users).values({ id: ownerId, tenantId, fullName, roleId: roleIds.owner, kind: 'staff', email, credentialHash, credentialKind: 'password', status: 'active' });
+    return t.app.get(OneTimeTokenService).create({ tenantId, userId: ownerId, purpose: 'email_verify' });
+  });
+  await t.app.get(AuthService).sendMail(verifyEmailMail({ to: email, fullName, webUrl: 'http://localhost:5173', token, locale: 'az' }));
+  const result = await loginStaff(t, email, password, client);
+  return { orgCode, email, password, tenantId, ownerId, accessToken: result.accessToken, me: result.me };
 }
 
 export interface DirectUserOptions {

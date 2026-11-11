@@ -16,8 +16,8 @@ export class RolesController {
   @Get('permissions')
   @RequirePermission('roles.view')
   @ApiOkResponse({ type: PermissionCatalogResponse })
-  catalog(): PermissionCatalog {
-    return this.roles.catalog();
+  catalog(@CurrentPrincipal() p: Principal): PermissionCatalog {
+    return this.roles.catalog(p.subscription.features);
   }
 
   @Get('roles')

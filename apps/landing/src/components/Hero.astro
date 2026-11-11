@@ -7,6 +7,7 @@ interface Props {
 }
 const { lang } = Astro.props;
 const t = strings(lang).hero;
+const contactEmail = strings(lang).footer.email;
 ---
 
 <section class="hero">
@@ -16,7 +17,7 @@ const t = strings(lang).hero;
       <p class="lead">{t.lead}</p>
       <div class="cta">
         <a class="btn btn-primary" href={platformUrl('login')} data-testid="hero-login">{t.login}</a>
-        <a class="btn btn-outline" href={platformUrl('signup')} data-testid="hero-signup">{t.signup}</a>
+        <a class="btn btn-outline" href={`mailto:${contactEmail}`} data-testid="hero-contact">{t.contact}</a>
       </div>
       <p class="audience">{t.audience}</p>
     </div>

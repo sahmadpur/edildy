@@ -9,6 +9,14 @@ export const ErrorCode = {
   ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
   RATE_LIMITED: 'RATE_LIMITED',
   TENANT_SUSPENDED: 'TENANT_SUSPENDED',
+  /** The organisation's plan does not include this feature (BR-01.03). */
+  FEATURE_NOT_IN_PLAN: 'FEATURE_NOT_IN_PLAN',
+  /** The subscription ended more than the grace period ago: the organisation is read-only. */
+  SUBSCRIPTION_EXPIRED: 'SUBSCRIPTION_EXPIRED',
+  /** Plan limits (BR-01.04/05); the body carries `limit`. */
+  STAFF_LIMIT_REACHED: 'STAFF_LIMIT_REACHED',
+  WORKER_LIMIT_REACHED: 'WORKER_LIMIT_REACHED',
+  BRANCH_LIMIT_REACHED: 'BRANCH_LIMIT_REACHED',
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   REFERENCE_NOT_FOUND: 'REFERENCE_NOT_FOUND',
@@ -90,6 +98,11 @@ export const ERROR_HTTP_STATUS: Record<ErrorCode, number> = {
   ACCOUNT_LOCKED: 429,
   RATE_LIMITED: 429,
   TENANT_SUSPENDED: 403,
+  FEATURE_NOT_IN_PLAN: 403,
+  SUBSCRIPTION_EXPIRED: 403,
+  STAFF_LIMIT_REACHED: 409,
+  WORKER_LIMIT_REACHED: 409,
+  BRANCH_LIMIT_REACHED: 409,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   REFERENCE_NOT_FOUND: 422,
@@ -177,7 +190,7 @@ export const errorBodySchema = z.object({
     userIds: z.array(z.string()).optional(),
     /** REQUIREMENTS_UNMET: what still blocks completion. */
     missing: z.array(missingSchema).optional(),
-    /** REPORT_TOO_LARGE: the rows the export would have and the cap. */
+    /** REPORT_TOO_LARGE: the rows the export would have and the cap; *_LIMIT_REACHED: the plan's cap. */
     rows: z.number().int().optional(),
     limit: z.number().int().optional(),
     /** AUDIT_EXISTS: the run's existing audit. */

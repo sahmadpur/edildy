@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PERMISSION_GROUPS, type PermissionCatalog, type PermissionKey, type RoleDto } from '@edildy/contracts';
+import { type FeatureKey, PERMISSION_GROUPS, type PermissionCatalog, type PermissionKey, permissionsOffered, type RoleDto } from '@edildy/contracts';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import type { Principal } from '../common/request';
@@ -30,8 +30,9 @@ export class RolesService {
     private readonly audit: AuditService,
   ) {}
 
-  catalog(): PermissionCatalog {
-    return PERMISSION_GROUPS.map((g) => ({ group: g.group, keys: [...g.keys] }));
+  /** The permission groups to offer, without the keys of features the organisation's plan lacks (empty groups dropped). */
+  catalog(features: readonly FeatureKey[]): PermissionCatalog {
+    return PERMISSION_GROUPS.map((g) => ({ group: g.group, keys: permissionsOffered(g.keys, features) })).filter((g) => g.keys.length > 0);
   }
 
   async list(): Promise<RoleDto[]> {

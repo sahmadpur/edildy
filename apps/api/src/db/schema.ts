@@ -25,6 +25,8 @@ import { uuidv7 } from 'uuidv7';
 import { citext, ltree } from './column-types';
 
 export const tenantStatus = pgEnum('tenant_status', ['active', 'suspended']);
+export const subscriptionPlan = pgEnum('subscription_plan', ['basic', 'pro', 'enterprise', 'xl']);
+export const subscriptionPeriod = pgEnum('subscription_period', ['monthly', 'quarterly', 'half_year', 'yearly']);
 export const userKind = pgEnum('user_kind', ['worker', 'staff']);
 export const userStatus = pgEnum('user_status', ['active', 'deactivated', 'invited']);
 export const credentialKind = pgEnum('credential_kind', ['password', 'pin']);
@@ -49,6 +51,20 @@ export const tenants = pgTable('tenants', {
   timezone: text('timezone').notNull().default('Asia/Baku'),
   locale: text('locale').notNull().default('az'),
   status: tenantStatus('status').notNull().default('active'),
+  // Subscription (BR-01): set by Edildy staff in the platform admin; the catalogue is PLAN_CATALOGUE in contracts.
+  plan: subscriptionPlan('plan').notNull().default('xl'),
+  planPeriod: subscriptionPeriod('plan_period').notNull().default('yearly'),
+  planStartsOn: date('plan_starts_on', { mode: 'string' }).notNull().default(sql`current_date`),
+  /** Last day of the subscription (inclusive); null = no end date. */
+  planEndsOn: date('plan_ends_on', { mode: 'string' }),
+  /** Contracted branches = active top-level sites allowed. */
+  branchLimit: integer('branch_limit').notNull().default(1),
+  /** Add-on feature keys on top of the plan. */
+  extraFeatures: text('extra_features').array().notNull().default(sql`'{}'::text[]`),
+  staffLimitOverride: integer('staff_limit_override'),
+  workerLimitOverride: integer('worker_limit_override'),
+  /** The end date and warning step last e-mailed to the owners (`<ends_on>:<days>`), so each warning goes once. */
+  expiryNotice: text('expiry_notice'),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

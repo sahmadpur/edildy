@@ -3,13 +3,13 @@ export default {
     title: 'Edildy — checklists for field teams',
     description: 'Workers run checklists on the phone, even offline; managers schedule, read the reports, audit and send work back.',
   },
-  nav: { features: 'Features', how: 'How it works', mobile: 'Mobile app', faq: 'Questions', login: 'Log in', signup: 'Register your organisation', menu: 'Menu', language: 'Language', skip: 'Skip to content' },
+  nav: { features: 'Features', how: 'How it works', mobile: 'Mobile app', faq: 'Questions', login: 'Log in', menu: 'Menu', language: 'Language', skip: 'Skip to content' },
   hero: {
     title: 'Checklists, tasks and audits for field teams',
     lead: 'Workers run checklists on the phone and prove the work with photos and video, with or without a connection. Managers schedule, see results as they land, audit and send work back.',
     audience: 'For cleaning companies, warehouses, retail chains and facility service teams.',
     login: 'Log in',
-    signup: 'Register your organisation',
+    contact: 'Contact us to join',
   },
   phone: {
     checklist: 'Daily cleaning check',

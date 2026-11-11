@@ -25,7 +25,7 @@ import { ReportsTab } from '@/features/problem-reports/reports-tab';
 import type { ProblemsSearch } from '@/features/problem-reports/routes';
 import { TaskDialog } from '@/features/tasks/task-dialog';
 import { errorText } from '@/lib/errors';
-import { useCan } from '@/lib/session';
+import { useCan, useFeature } from '@/lib/session';
 import { defaultProblemRange, problemRangeError, severityVariant } from './labels';
 import { type ProblemFilters, useChecklistOptions, useProblems } from './queries';
 import { LoadingState, EmptyState } from '@/components/states';
@@ -39,7 +39,9 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
   const formatDateTime = useFormatDateTime();
   const tenantToday = useTenantToday();
   const today = fixedToday ?? tenantToday;
-  const canManageTasks = useCan('tasks.manage');
+  // A problem becomes a task only on plans with tasks (BR-01.03).
+  const hasTasks = useFeature('tasks');
+  const canManageTasks = useCan('tasks.manage') && hasTasks;
   const navigate = useNavigate();
   // Controlled: a notification link while the page is open changes only the search, and the tab must follow it
   // (state adjusted during render on a prop change, the React-sanctioned pattern).

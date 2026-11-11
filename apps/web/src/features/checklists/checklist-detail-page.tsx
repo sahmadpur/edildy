@@ -19,6 +19,7 @@ import { NewChecklistDialog } from './new-checklist-dialog';
 import { useChecklist } from './queries';
 import { useWorkspace, WsLink } from './workspace';
 import { useLocale } from '@/lib/i18n';
+import { useFeatureOrStaff } from '@/lib/session';
 import { LoadingState } from '@/components/states';
 
 export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
@@ -27,6 +28,8 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
   const ws = useWorkspace();
   const qc = useQueryClient();
   const detail = useChecklist(checklistId);
+  // "Requires audit" only means something on plans with audits (BR-01.03); Edildy staff always see it.
+  const hasAudits = useFeatureOrStaff('audits');
   const [dialog, setDialog] = useState<null | 'details' | 'copy' | { saveAsTemplate: ChecklistVersionSummary }>(null);
   const refresh = () => qc.invalidateQueries({ queryKey: [ws.scope, 'checklists'] });
   const act = async (fn: () => Promise<unknown>) => {
@@ -169,16 +172,18 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
 
       {/* The audit settings come last: they are set once and rarely looked at again (feedback 2026-11-07). */}
       {/* Keyed by the stored values, so the section starts from the server's state again after a save. */}
-      <AuditSettings
-        key={`${c.requiresAudit}|${c.auditReportEmails.join(',')}`}
-        checklist={c}
-        editable={editable}
-        onSave={async (v) => {
-          await ws.checklists.update(checklistId, v);
-          await refresh();
-          toast.success(t('common.saved'));
-        }}
-      />
+      {hasAudits && (
+        <AuditSettings
+          key={`${c.requiresAudit}|${c.auditReportEmails.join(',')}`}
+          checklist={c}
+          editable={editable}
+          onSave={async (v) => {
+            await ws.checklists.update(checklistId, v);
+            await refresh();
+            toast.success(t('common.saved'));
+          }}
+        />
+      )}
 
       {dialog === 'details' && (
         <DetailsDialog

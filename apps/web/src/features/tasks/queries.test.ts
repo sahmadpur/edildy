@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { taskDetail } from './fixtures';
 import { storeTask, taskKeys } from './queries';
 
-vi.mock('@/lib/session', () => ({ api: {} }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: {} }));
 
 describe('storeTask', () => {
   it("is not overwritten by a refetch that was already on its way (it answers with the task before the command)", async () => {

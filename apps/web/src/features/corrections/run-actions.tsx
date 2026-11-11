@@ -7,14 +7,15 @@ import { ConfirmButton } from '@/components/confirm-button';
 import { Button } from '@/components/ui/button';
 import { refreshRunViews } from '@/features/executions/queries';
 import { errorText } from '@/lib/errors';
-import { api, useCan } from '@/lib/session';
+import { api, useCan, useFeatureOrStaff } from '@/lib/session';
 import { SendBackDialog } from './send-back-dialog';
 
 /** The run's correction actions for executions.correct holders, each only where Part 1's rules allow it. */
 export function RunActions({ status, detail, onCorrect }: { status: OccurrenceStatus; detail: ExecutionDetail; onCorrect: () => void }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const can = useCan('executions.correct');
+  const hasAudits = useFeatureOrStaff('audits');
+  const can = useCan('executions.correct') && hasAudits;
   const [sending, setSending] = useState(false);
   const run = { status, executionState: detail.state };
   const correctable = canCorrect(run);

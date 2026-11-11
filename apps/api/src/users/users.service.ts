@@ -19,6 +19,7 @@ import { DomainEvents } from '../common/domain-events';
 import { assertNoEscalation, assertNoScopeEscalation } from '../roles/roles.service';
 import type { CreateWorkerDto, InviteStaffDto, ResetCredentialDto, UpdateUserDto, UserListQueryDto } from './dto';
 import { selectUsers, toUserDto } from './user-mapper';
+import { assertWithinLimit } from '../tenancy/subscription';
 
 @Injectable()
 export class UsersService {
@@ -60,6 +61,7 @@ export class UsersService {
 
   async createWorker(p: Principal, input: CreateWorkerDto): Promise<UserWithSecret> {
     const managerId = await this.prepareCreate(p, input.roleId, input.managerId ?? null, input.siteIds, input.teamIds);
+    await assertWithinLimit(this.db.tx(), p.tenantId, 'workers');
     const generatedSecret = input.secret ? null : input.credentialKind === 'pin' ? generatePin() : generatePassword();
     const secret = input.secret ?? generatedSecret!;
     const id = uuidv7();
@@ -90,6 +92,7 @@ export class UsersService {
   async inviteStaff(p: Principal, input: InviteStaffDto): Promise<UserDto> {
     if (!p.emailVerified) throw new AppError('EMAIL_NOT_VERIFIED');
     const managerId = await this.prepareCreate(p, input.roleId, input.managerId ?? null, input.siteIds, input.teamIds);
+    await assertWithinLimit(this.db.tx(), p.tenantId, 'staff');
     const id = uuidv7();
     await this.db
       .tx()
@@ -167,6 +170,7 @@ export class UsersService {
     if (before.status !== 'deactivated') return before;
     const [role] = await this.db.tx().select({ active: roles.active }).from(roles).where(eq(roles.id, before.role.id));
     if (!role?.active) throw new AppError('REFERENCE_NOT_FOUND');
+    await assertWithinLimit(this.db.tx(), p.tenantId, before.kind === 'staff' ? 'staff' : 'workers');
     const status = before.credentialKind === null ? 'invited' : 'active';
     await this.db
       .tx()

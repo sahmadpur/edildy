@@ -6,6 +6,7 @@ import type { Principal } from '../common/request';
 import { DbService } from '../db/db.service';
 import { roles, tenants, users } from '../db/schema';
 import { loadRolePermissions } from '../roles/permission-resolver';
+import { subscriptionColumns, subscriptionOf } from '../tenancy/subscription';
 import type { AccessClaims } from './crypto/token.service';
 
 const NO_PERMISSIONS: ReadonlySet<PermissionKey> = new Set();
@@ -29,6 +30,7 @@ export class PrincipalLoader {
           dataScope: roles.dataScope,
           roleActive: roles.active,
           tenantStatus: tenants.status,
+          ...subscriptionColumns,
         })
         .from(users)
         .innerJoin(roles, eq(roles.id, users.roleId))
@@ -55,6 +57,7 @@ export class PrincipalLoader {
         dataScope: row.roleActive ? row.dataScope : 'own',
         permissions,
         emailVerified: row.emailVerifiedAt !== null,
+        subscription: subscriptionOf(row),
       };
     });
   }

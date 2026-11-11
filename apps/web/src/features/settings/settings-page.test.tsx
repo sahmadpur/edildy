@@ -7,9 +7,12 @@ import { SettingsPage } from './settings-page';
 
 const mocks = vi.hoisted(() => ({
   permissions: { current: [] as string[] },
-  api: { tenant: { get: vi.fn() }, notificationRules: { list: vi.fn() }, roles: { list: vi.fn(), catalog: vi.fn() } },
+  features: { current: ['notifications'] as string[] },
+  api: { tenant: { get: vi.fn(), subscription: vi.fn() }, notificationRules: { list: vi.fn() }, roles: { list: vi.fn(), catalog: vi.fn() } },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: (f: string) => mocks.features.current.includes(f),
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useCan: (...keys: string[]) => keys.every((k) => mocks.permissions.current.includes(k)),
   session: { setMe: vi.fn() },
@@ -30,11 +33,22 @@ beforeEach(() => {
   });
   mocks.api.notificationRules.list.mockResolvedValue(allRules());
   mocks.api.roles.list.mockResolvedValue(roleList());
+  mocks.features.current = ['notifications'];
+  mocks.api.tenant.subscription.mockResolvedValue({
+    plan: 'pro',
+    state: 'active',
+    endsOn: '2027-11-10',
+    features: ['notifications', 'usage_log', 'tasks'],
+    limits: { staff: 20, workers: 50, branches: 2 },
+    period: 'yearly',
+    startsOn: '2026-11-11',
+    usage: { staff: 20, workers: 7, branches: 1 },
+  });
 });
 
 describe('SettingsPage', () => {
-  it('without notifications.manage keeps the page as it was, without tabs', async () => {
-    mocks.permissions.current = ['tenant.manage'];
+  it('without tenant.manage or notifications.manage keeps the page as it was, without tabs', async () => {
+    mocks.permissions.current = [];
     renderWithRouter(<SettingsPage />, '/settings');
     expect(await screen.findByLabelText('Təşkilatın adı')).toHaveValue('Acme');
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
@@ -59,6 +73,26 @@ describe('SettingsPage', () => {
     expect(await screen.findByRole('tab', { name: 'Əməkdaş rolları' })).toHaveAttribute('aria-selected', 'true');
     await waitFor(() => expect(mocks.api.roles.list).toHaveBeenCalled());
     expect(screen.getByRole('tab', { name: 'Təşkilat' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Bildirişlər' })).not.toBeInTheDocument();
+  });
+
+  it('shows the plan, its limits against usage and the included features on the Abunəlik tab (tenant.manage)', async () => {
+    mocks.permissions.current = ['tenant.manage'];
+    renderWithRouter(<SettingsPage tab="subscription" />, '/settings?tab=subscription');
+    expect(await screen.findByText('Paket: Pro')).toBeInTheDocument();
+    expect(screen.getByText('Aktiv')).toBeInTheDocument();
+    expect(screen.getByText('20 / 20')).toHaveClass('text-status-bad-text');
+    expect(screen.getByText('7 / 50')).toBeInTheDocument();
+    const included = screen.getByRole('list', { name: 'Paketə daxildir' });
+    expect(included).toHaveTextContent('Tapşırıqlar');
+    expect(included).toHaveTextContent('Audit(Paketə daxil deyil)');
+  });
+
+  it('hides the Bildirişlər tab when the plan has no notifications', async () => {
+    mocks.permissions.current = ['tenant.manage', 'notifications.manage'];
+    mocks.features.current = [];
+    renderWithRouter(<SettingsPage />, '/settings');
+    expect(await screen.findByRole('tab', { name: 'Abunəlik' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Bildirişlər' })).not.toBeInTheDocument();
   });
 });

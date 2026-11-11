@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { createOrg } from './org';
 import { type APIRequestContext, expect, type Page, test } from '@playwright/test';
 import { auditReportFileName, type ChecklistContent, type Item, type MediaUploadTicket, type SyncResponse } from '@edildy/contracts';
 import { az } from '@edildy/i18n';
@@ -41,11 +42,8 @@ async function setupTenant(request: APIRequestContext, checklistName: string): P
   const orgCode = `e2e-aud-${suffix}`;
   const email = `aud-${suffix}@example.az`;
   const password = 'e2e owner password';
-  const signup = await request.post('/api/v1/auth/signup', {
-    data: { orgName: 'E2E Audit MMC', orgCode, fullName: 'Leyla Quliyeva', email, password, client: 'mobile' },
-  });
-  expect(signup.ok(), await signup.text()).toBeTruthy();
-  const owner = apiAs(request, ((await signup.json()) as { accessToken: string }).accessToken);
+  const signup = await createOrg(request, { name: 'E2E Audit MMC', orgCode, fullName: 'Leyla Quliyeva', email, password });
+  const owner = apiAs(request, signup.accessToken);
   const types = await owner<Array<{ id: string; name: string }>>('GET', '/site-types');
   const site = await owner<{ id: string }>('POST', '/sites', { parentId: null, typeId: types.find((x) => x.name === 'Filial')!.id, name: 'Anbar №1' });
   const roles = await owner<Array<{ id: string; systemKey: string | null }>>('GET', '/roles');

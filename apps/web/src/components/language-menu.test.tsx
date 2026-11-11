@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   state: { current: { status: 'anonymous' } as { status: string; me?: unknown } },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: { preferences: { update: mocks.update } },
   session: { get: () => mocks.state.current, setMe: mocks.setMe },
 }));

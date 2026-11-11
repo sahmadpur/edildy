@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   api: { executions: { get: vi.fn() }, media: { url: vi.fn() }, corrections: { correct: vi.fn(), sendBack: vi.fn(), withdraw: vi.fn() } },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }),
   useCan: (...keys: string[]) => keys.every((k) => mocks.permissions.current.includes(k)),

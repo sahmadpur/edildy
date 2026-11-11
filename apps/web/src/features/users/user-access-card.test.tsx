@@ -7,6 +7,8 @@ import { renderWithProviders } from '@/test/render';
 const resetCredential = vi.fn();
 const deactivate = vi.fn();
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: { users: { resetCredential: (...a: unknown[]) => resetCredential(...a), deactivate: (...a: unknown[]) => deactivate(...a), reactivate: vi.fn() } },
 }));
 const { UserAccessCard } = await import('./user-access-card');

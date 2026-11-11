@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { TabBar } from '@/components/tab-bar';
-import { canSeeTeam } from '@/features/team/team-rules';
+import { teamVisible } from '@/features/team/team-rules';
+import { hasFeature } from '@/lib/features';
 import { useSession } from '@/lib/session';
 import { NotificationsBridge } from '@/notifications/notifications-bridge';
 import { OfflineProvider } from '@/offline/offline-provider';
@@ -15,14 +16,16 @@ export default function AppLayout() {
   const s = useSession();
   if (s.status !== 'authenticated') return null;
   // SP7 spec §7.1: only for reports.view with a scope wider than own. The routes check it again (TeamGate).
-  const team = canSeeTeam(s.me);
+  const team = teamVisible(s.me);
+  // BR-01: a tab whose feature the plan lacks is hidden; its routes send a deep link Home (FeatureGate, TeamGate).
+  const off = (on: boolean) => (on ? {} : { href: null });
   return (
     <OfflineProvider userId={s.me.user.id} timeZone={s.me.tenant.timezone}>
       <NotificationsBridge />
       {/* Home is the default and sits raised in the middle of the bar (TabBar). */}
       <Tabs initialRouteName="index" backBehavior="history" tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false }}>
-        <Tabs.Screen name="tasks" options={{ title: t('mobile.tabs.tasks'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'clipboard' : 'clipboard-outline'} color={color} size={size} /> }} />
-        <Tabs.Screen name="problems/index" options={{ title: t('mobile.tabs.problems'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'warning' : 'warning-outline'} color={color} size={size} /> }} />
+        <Tabs.Screen name="tasks" options={{ title: t('mobile.tabs.tasks'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'clipboard' : 'clipboard-outline'} color={color} size={size} />, ...off(hasFeature(s.me, 'tasks')) }} />
+        <Tabs.Screen name="problems/index" options={{ title: t('mobile.tabs.problems'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'warning' : 'warning-outline'} color={color} size={size} />, ...off(hasFeature(s.me, 'problems')) }} />
         <Tabs.Screen name="index" options={{ title: t('mobile.tabs.home'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} /> }} />
         {/* Cədvəl (feedback 2026-11-08): my own runs as a calendar, right of Home. */}
         <Tabs.Screen name="calendar" options={{ title: t('mobile.tabs.calendar'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'calendar' : 'calendar-outline'} color={color} size={size} /> }} />
@@ -31,7 +34,7 @@ export default function AppLayout() {
           options={{
             title: t('mobile.tabs.team'),
             tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'people' : 'people-outline'} color={color} size={size} />,
-            ...(team ? {} : { href: null }),
+            ...off(team),
           }}
         />
         <Tabs.Screen name="profile" options={{ title: t('mobile.tabs.profile'), tabBarIcon: ({ color, size, focused }) => <Ionicons name={focused ? 'person' : 'person-outline'} color={color} size={size} /> }} />

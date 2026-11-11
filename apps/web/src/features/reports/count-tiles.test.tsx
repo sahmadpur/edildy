@@ -6,7 +6,9 @@ import { CountTiles } from './count-tiles';
 import { IDS, reportSummary } from './fixtures';
 import { DASHBOARD_TILES, SUMMARY_TILES } from './labels';
 
-vi.mock('@/lib/session', () => ({ useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 /** The path and the query of a tile's link. */
 function target(name: string) {

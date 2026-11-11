@@ -17,4 +17,13 @@ export default {
     open: 'Açmaq üçün: {{link}}',
     footer: 'Bu e-poçtları profil ayarlarında söndürə bilərsiniz.',
   },
+  /** Subscription end (BR-01.07): to the organisation's owners, in the organisation's language. */
+  subscriptionEnding: {
+    subject: 'Edildy — «{{org}}» abunəliyi {{date}} tarixində bitir',
+    body: 'Salam, {{name}}!\n\n«{{org}}» təşkilatının Edildy abunəliyi {{date}} tarixində bitir. Qalan gün: {{days}}.\n\nAbunəliyi uzatmaq üçün bizə yazın: hello@edildy.com. Bitdikdən {{grace}} gün sonra təşkilat yalnız baxış rejiminə keçir: məlumatlar qalır, amma yeni iş görmək olmur.',
+  },
+  subscriptionEnded: {
+    subject: 'Edildy — «{{org}}» abunəliyi bitib',
+    body: 'Salam, {{name}}!\n\n«{{org}}» təşkilatının Edildy abunəliyi {{date}} tarixində bitib. {{graceEnd}} tarixinədək hər şey işləyir, sonra təşkilat yalnız baxış rejiminə keçir.\n\nAbunəliyi uzatmaq üçün bizə yazın: hello@edildy.com.',
+  },
 } as const;

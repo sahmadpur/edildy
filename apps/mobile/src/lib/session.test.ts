@@ -1,3 +1,5 @@
+import { subscription, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
+
 const mockStore = new Map<string, string>();
 jest.mock('./secure-storage', () => ({
   STORAGE_KEYS: { refreshToken: 'edildy.refreshToken', me: 'edildy.me', orgCode: 'edildy.orgCode' },
@@ -13,7 +15,7 @@ const me = {
   user: { id, fullName: 'Elvin Məmmədov', jobTitle: null, kind: 'worker', email: null, username: 'elvin', emailVerified: false, credentialKind: 'pin', emailNotifications: true, locale: null },
   role: { id, name: 'Worker', systemKey: 'worker', dataScope: 'own' },
   permissions: [],
-  tenant: { id, name: 'Acme', orgCode: 'acme', timezone: 'Asia/Baku', locale: 'az' },
+  tenant: { id, name: 'Acme', orgCode: 'acme', timezone: 'Asia/Baku', locale: 'az', subscription: XL_SUBSCRIPTION },
 };
 const json = (status: number, body: unknown) => ({ ok: status < 300, status, json: async () => body, clone() { return this; } }) as unknown as Response;
 
@@ -77,13 +79,28 @@ describe('mobile session', () => {
   });
 
   it('restores a profile cached by the previous app version when offline', async () => {
-    // Written before sub-project 6 (no emailNotifications) and before the language preference (no locale). The worker must stay signed in offline.
+    // Written before sub-project 6 (no emailNotifications), before the language preference (no locale) and before plans
+    // (no subscription). The worker must stay signed in offline.
     const { emailNotifications: _dropped, locale: _noLocale, ...oldUser } = me.user;
+    const { subscription: _noPlan, ...oldTenant } = me.tenant;
     mockStore.set('edildy.refreshToken', 'r1');
-    mockStore.set('edildy.me', JSON.stringify({ ...me, user: oldUser }));
+    mockStore.set('edildy.me', JSON.stringify({ ...me, user: oldUser, tenant: oldTenant }));
     (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
     await session.bootstrap();
-    expect(session.get()).toMatchObject({ status: 'authenticated', offline: true, me: { user: { username: 'elvin', emailNotifications: true, locale: null } } });
+    expect(session.get()).toMatchObject({
+      status: 'authenticated',
+      offline: true,
+      me: { user: { username: 'elvin', emailNotifications: true, locale: null }, tenant: { name: 'Acme', subscription: XL_SUBSCRIPTION } },
+    });
+  });
+
+  it('keeps the cached plan of a profile that has one', async () => {
+    const basic = subscription({ plan: 'basic', features: [], state: 'grace', endsOn: '2026-11-08' });
+    mockStore.set('edildy.refreshToken', 'r1');
+    mockStore.set('edildy.me', JSON.stringify({ ...me, tenant: { ...me.tenant, subscription: basic } }));
+    (global.fetch as jest.Mock).mockRejectedValue(new TypeError('Network request failed'));
+    await session.bootstrap();
+    expect(session.get()).toMatchObject({ status: 'authenticated', offline: true, me: { tenant: { subscription: basic } } });
   });
 
   it('falls back to the cached profile offline when refresh fails with a 5xx', async () => {

@@ -1,4 +1,4 @@
-import type { NotificationTargetKind } from '@edildy/contracts';
+import type { FeatureKey, NotificationTargetKind } from '@edildy/contracts';
 import type { OfflineServices } from '@/offline/services';
 import type { NotificationEvents, TapResponse } from './ports';
 import { readPushData } from './push-data';
@@ -45,6 +45,23 @@ export interface RouteContext {
   nonce(): string;
   /** Marks the tapped notification read in the inbox (Nov 2026 feedback point 15); absent in tests that do not care. */
   markRead?(notificationId: string): Promise<void>;
+  /** Whether the plan holds the feature (BR-01); absent means every feature is on. */
+  hasFeature?(key: FeatureKey): boolean;
+}
+
+/** The plan feature each screen needs (BR-01); a route not listed is core. */
+const ROUTE_FEATURE: Partial<Record<NotificationRoute['pathname'], FeatureKey>> = {
+  '/notifications': 'notifications',
+  '/task/[id]': 'tasks',
+  '/review/[id]': 'tasks',
+  '/problems/[id]': 'problems',
+  '/team/run/[id]': 'reports',
+};
+
+/** A screen of a feature the plan lacks (a push sent before a plan change) opens Home instead. */
+export function allowedRoute(route: NotificationRoute, ctx: Pick<RouteContext, 'hasFeature'>): NotificationRoute {
+  const feature = ROUTE_FEATURE[route.pathname];
+  return feature === undefined || !ctx.hasFeature || ctx.hasFeature(feature) ? route : HOME;
 }
 
 export function createRouteContext(
@@ -52,9 +69,11 @@ export function createRouteContext(
   canManageTasks: () => boolean,
   canSeeTeam: () => boolean = () => false,
   markRead?: (notificationId: string) => Promise<void>,
+  hasFeature?: (key: FeatureKey) => boolean,
 ): RouteContext {
   return {
     ...(markRead ? { markRead } : {}),
+    ...(hasFeature ? { hasFeature } : {}),
     userId: services.userId,
     canManageTasks,
     canSeeTeam,
@@ -70,8 +89,12 @@ export function createRouteContext(
   };
 }
 
-/** Spec §7.3 with decisions 2–4. Used for pushes and for inbox rows. */
+/** Spec §7.3 with decisions 2–4, then the plan's features. Used for pushes and for inbox rows. */
 export async function routeForTarget(target: NotificationTarget, ctx: RouteContext): Promise<NotificationRoute> {
+  return allowedRoute(await targetRoute(target, ctx), ctx);
+}
+
+async function targetRoute(target: NotificationTarget, ctx: RouteContext): Promise<NotificationRoute> {
   if (target.targetKind === 'none' || target.targetId === null) return INBOX;
   const id = target.targetId;
   await settleWithin(ctx.sync(), SYNC_WAIT_MS);
@@ -93,7 +116,7 @@ export async function routeForTarget(target: NotificationTarget, ctx: RouteConte
 /** A push meant for someone else, or data that is not a Edildy push, opens the inbox only. */
 export async function routeForPush(raw: unknown, ctx: RouteContext): Promise<NotificationRoute> {
   const data = readPushData(raw);
-  if (data === null || data.userId !== ctx.userId) return INBOX;
+  if (data === null || data.userId !== ctx.userId) return allowedRoute(INBOX, ctx);
   return routeForTarget(data, ctx);
 }
 
@@ -128,7 +151,7 @@ export function startTapRouting(o: { events: NotificationEvents; ctx: RouteConte
       },
       (e: unknown) => {
         console.error('[push] Could not open a notification; showing the inbox', message(e));
-        if (!stopped) o.navigate(INBOX);
+        if (!stopped) o.navigate(allowedRoute(INBOX, o.ctx));
       },
     );
   };

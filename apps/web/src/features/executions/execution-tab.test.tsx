@@ -7,7 +7,9 @@ import { ExecutionTab } from './execution-tab';
 import { executionFixture, occurrenceDetail, summary, U2 } from './fixtures';
 
 const mocks = vi.hoisted(() => ({ api: { executions: { get: vi.fn() }, media: { url: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }), useCan: () => false }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }), useCan: () => false }));
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });

@@ -13,6 +13,7 @@ import { RunsTab } from './runs-tab';
 import { cleanSearch, DEFAULT_BUCKET, DEFAULT_TAB, filterSearch, pageExtras, type ReportsPageSearch, reportsPageSearch, resolveReportFilters } from './search';
 import { SitesTab } from './sites-tab';
 import { SummaryTab } from './summary-view';
+import { useFeature } from '@/lib/session';
 import { TasksTab } from './tasks-tab';
 
 type Go = (next: ReportsPageSearch, replace?: boolean) => void;
@@ -27,7 +28,12 @@ export function ReportsPage({ today: fixedToday }: { today?: string }) {
   const tenantToday = useTenantToday();
   const today = fixedToday ?? tenantToday;
   const search = reportsPageSearch(useSearch({ strict: false }) as Record<string, unknown>);
-  const tab = search.tab ?? DEFAULT_TAB;
+  // Plan features (BR-01.03): export is XL's data feature; the problems and tasks tabs need those features.
+  const canExport = useFeature('data_export');
+  const hasProblems = useFeature('problems');
+  const hasTasks = useFeature('tasks');
+  const kinds = REPORT_KINDS.filter((k) => (k === 'problems' ? hasProblems : k === 'tasks' ? hasTasks : true));
+  const tab = search.tab && kinds.includes(search.tab) ? search.tab : DEFAULT_TAB;
   const resolved = resolveReportFilters(search, today);
   const filters = resolved.ok ? resolved.filters : null;
   // Filter edits replace the history entry; tabs, chips and drill-downs push one (decision 3).
@@ -38,25 +44,27 @@ export function ReportsPage({ today: fixedToday }: { today?: string }) {
       <PageHeader
         title={t('reports.title')} description={t('pages.reports')}
         actions={
-          <ExportMenu
-            kind={tab}
-            filters={filters}
-            bucket={tab === 'runs' ? (search.bucket ?? DEFAULT_BUCKET) : undefined}
-            severity={tab === 'problems' ? search.severity : undefined}
-            auditState={tab === 'runs' ? search.auditState : undefined}
-          />
+          canExport && (
+            <ExportMenu
+              kind={tab}
+              filters={filters}
+              bucket={tab === 'runs' ? (search.bucket ?? DEFAULT_BUCKET) : undefined}
+              severity={tab === 'problems' ? search.severity : undefined}
+              auditState={tab === 'runs' ? search.auditState : undefined}
+            />
+          )
         }
       />
       <ReportFilters value={filterSearch(search)} today={today} onChange={(next) => go({ ...next, ...pageExtras(search) }, true)} />
       <Tabs value={tab} onValueChange={(v) => go({ ...search, tab: v as ReportKind })}>
         <TabsList>
-          {REPORT_KINDS.map((k) => (
+          {kinds.map((k) => (
             <TabsTrigger key={k} value={k}>
               {t(`reports.tabs.${k}`)}
             </TabsTrigger>
           ))}
         </TabsList>
-        {REPORT_KINDS.map((k) => (
+        {kinds.map((k) => (
           <TabsContent key={k} value={k} className="pt-2">
             {filters && <TabBody kind={k} search={search} filters={filters} go={go} />}
           </TabsContent>

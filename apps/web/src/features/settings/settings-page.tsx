@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NotificationRulesTab } from '@/features/notifications/rules-tab';
 import { RolesPanel } from '@/features/roles/roles-page';
-import { api, useCan } from '@/lib/session';
+import { SubscriptionTab } from '@/features/subscription/subscription-tab';
+import { api, useCan, useFeature } from '@/lib/session';
 import { ChangePasswordForm } from './change-password-form';
 import { OrgSettingsForm } from './org-settings-form';
 
-export const SETTINGS_TABS = ['org', 'notifications', 'roles'] as const;
+export const SETTINGS_TABS = ['org', 'subscription', 'notifications', 'roles'] as const;
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 export const settingsSearch = (s: Record<string, unknown>): { tab?: SettingsTab } =>
   SETTINGS_TABS.includes(s.tab as SettingsTab) ? { tab: s.tab as SettingsTab } : {};
@@ -21,11 +22,14 @@ export function SettingsPage({ tab }: { tab?: SettingsTab } = {}) {
   const { t } = useTranslation();
   const canEdit = useCan('tenant.manage');
   // Spec §8: the "Bildirişlər" tab is for notifications.manage; without it there is one section and no tab bar.
-  const canManageNotifications = useCan('notifications.manage');
+  const hasNotifications = useFeature('notifications');
+  const canManageNotifications = useCan('notifications.manage') && hasNotifications;
   // Əməkdaş rolları moved here from its own page (feedback 2026-11-11, item 16).
   const canSeeRoles = useCan('roles.view');
   const navigate = useNavigate();
-  const tabs = SETTINGS_TABS.filter((k) => k === 'org' || (k === 'notifications' ? canManageNotifications : canSeeRoles));
+  // Abunəlik: the plan, for the people who manage the organisation (BR-01).
+  const show: Record<SettingsTab, boolean> = { org: true, subscription: canEdit, notifications: canManageNotifications, roles: canSeeRoles };
+  const tabs = SETTINGS_TABS.filter((k) => show[k]);
   // The tab the user clicked, while the URL still shows the `?tab=` it was clicked on; once the URL follows (or a link
   // brings another tab), the URL wins.
   const [picked, setPicked] = useState<{ on: SettingsTab | undefined; tab: SettingsTab } | null>(null);
@@ -66,10 +70,16 @@ export function SettingsPage({ tab }: { tab?: SettingsTab } = {}) {
         <Tabs value={current} onValueChange={select}>
           <TabsList>
             <TabsTrigger value="org">{t('settings.org.title')}</TabsTrigger>
+            {canEdit && <TabsTrigger value="subscription">{t('subscription.title')}</TabsTrigger>}
             {canManageNotifications && <TabsTrigger value="notifications">{t('notifications.title')}</TabsTrigger>}
             {canSeeRoles && <TabsTrigger value="roles">{t('roles.title')}</TabsTrigger>}
           </TabsList>
           <TabsContent value="org">{organisation}</TabsContent>
+          {canEdit && (
+            <TabsContent value="subscription">
+              <SubscriptionTab />
+            </TabsContent>
+          )}
           {canManageNotifications && (
             <TabsContent value="notifications">
               <NotificationRulesTab />

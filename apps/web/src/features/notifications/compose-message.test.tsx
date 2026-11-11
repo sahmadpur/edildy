@@ -9,7 +9,9 @@ import { ComposeMessage } from './compose-message';
 import { messageSummary, targetOptions } from './fixtures';
 
 const mocks = vi.hoisted(() => ({ api: { messages: { options: vi.fn(), preview: vi.fn(), send: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api }));
 
 async function fill({ title = '  Sabah iclas var ', body = ' Saat 10:00-da ofisdə. ' } = {}) {
   await userEvent.click(screen.getByRole('combobox', { name: 'Alıcılar' }));

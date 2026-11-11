@@ -19,8 +19,9 @@ import {
   type ReworkRequest,
   RUN_COUNT_KEYS,
   type RunCounts,
+  type Subscription,
 } from '@edildy/contracts';
-import { type Checklist, CHECKLIST, DEVICE, ME, OCC, SITE, T, TASK, TENANT, VERSION } from '@/offline/testing/fixtures';
+import { type Checklist, CHECKLIST, DEVICE, ME, OCC, SITE, T, TASK, TENANT, VERSION, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 
 export const WORKER_A = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4eb0';
 export const WORKER_B = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4eb1';
@@ -45,7 +46,7 @@ export const KAMRAN = { id: WORKER_B, fullName: 'Kamran Əliyev' };
 export const RUN_T = { completed: '2026-11-02T05:30:00.000Z', received: '2026-11-02T09:00:00.000Z' } as const;
 
 /** Leyla, a site_subtree Manager with the report keys: the viewer of the Team tab. */
-export function teamMe(o: { id?: string; permissions?: PermissionKey[]; dataScope?: DataScope; timezone?: string } = {}): Me {
+export function teamMe(o: { id?: string; permissions?: PermissionKey[]; dataScope?: DataScope; timezone?: string; subscription?: Subscription } = {}): Me {
   return {
     user: {
       id: o.id ?? ME,
@@ -60,7 +61,7 @@ export function teamMe(o: { id?: string; permissions?: PermissionKey[]; dataScop
     },
     role: { id: ROLE, name: 'Manager', systemKey: 'manager', dataScope: o.dataScope ?? 'site_subtree' },
     permissions: o.permissions ?? ['assignments.view', 'reports.view', 'reports.export'],
-    tenant: { id: TENANT, name: 'Demo MMC', orgCode: 'demo', timezone: o.timezone ?? 'Asia/Baku', locale: 'az' },
+    tenant: { id: TENANT, name: 'Demo MMC', orgCode: 'demo', timezone: o.timezone ?? 'Asia/Baku', locale: 'az', subscription: o.subscription ?? XL_SUBSCRIPTION },
   };
 }
 

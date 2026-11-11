@@ -1,4 +1,4 @@
-import type { NotificationItem } from '@edildy/contracts';
+import type { FeatureKey, NotificationItem } from '@edildy/contracts';
 import { formatDateTime } from '@edildy/i18n';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FormError, mobileErrorText } from '@/components/form-error';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScreenHeader } from '@/features/tasks/screen-header';
-import { canSeeTeam } from '@/features/team/team-rules';
+import { teamVisible } from '@/features/team/team-rules';
 import { api, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
 import { createRouteContext, INBOX, routeForTarget } from '@/notifications/notification-router';
@@ -44,7 +44,9 @@ export function InboxScreen() {
   const canManageTasks = useRef(false);
   canManageTasks.current = session.status === 'authenticated' && session.me.permissions.includes('tasks.manage');
   const seesTeam = useRef(false);
-  seesTeam.current = session.status === 'authenticated' && canSeeTeam(session.me);
+  seesTeam.current = session.status === 'authenticated' && teamVisible(session.me);
+  const features = useRef<readonly FeatureKey[]>([]);
+  features.current = session.status === 'authenticated' ? session.me.tenant.subscription.features : [];
   const nowIso = () => new Date(services.clock.now()).toISOString();
 
   /** Decision 14: the bell and the badge follow the server's count at once, not at the next sync. */
@@ -142,7 +144,7 @@ export function InboxScreen() {
           (e: unknown) => console.warn('[notifications] Could not mark a notification read', message(e)),
         );
       }
-      const route = await routeForTarget(item, createRouteContext(services, () => canManageTasks.current, () => seesTeam.current));
+      const route = await routeForTarget(item, createRouteContext(services, () => canManageTasks.current, () => seesTeam.current, undefined, (k) => features.current.includes(k)));
       // Syncing can take up to 5 s: the worker may have left the screen (or the app) meanwhile.
       if (focused.current && route.pathname !== INBOX.pathname) router.push(route);
     } catch (e) {

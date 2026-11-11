@@ -9,7 +9,9 @@ import { type MessageTargets, NO_TARGETS } from './message-form';
 import { TargetPicker } from './target-picker';
 
 const mocks = vi.hoisted(() => ({ api: { messages: { options: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api }));
 
 function Harness({ onChange }: { onChange: (v: MessageTargets) => void }) {
   const [value, setValue] = useState<MessageTargets>(NO_TARGETS);

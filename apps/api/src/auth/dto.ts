@@ -8,12 +8,10 @@ import {
   meSchema,
   refreshInputSchema,
   resetPasswordInputSchema,
-  signupInputSchema,
   verifyEmailInputSchema,
 } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
-export class SignupDto extends createZodDto(signupInputSchema) {}
 export class LoginStaffDto extends createZodDto(loginStaffInputSchema) {}
 export class LoginWorkerDto extends createZodDto(loginWorkerInputSchema) {}
 export class RefreshDto extends createZodDto(refreshInputSchema) {}

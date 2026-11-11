@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   api: { roster: { get: vi.fn(), put: vi.fn(), copy: vi.fn() }, sites: { list: vi.fn() } },
 }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useCan: () => true,
   useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }),

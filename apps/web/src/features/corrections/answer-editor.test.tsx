@@ -6,7 +6,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { executionFixture } from '@/features/executions/fixtures';
 import { AnswerEditor } from './answer-editor';
 
-vi.mock('@/lib/session', () => ({ useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 function Harness({ item, initial, onAnswer = () => undefined }: { item: Item; initial?: Answer; onAnswer?: (a: Answer | undefined) => void }) {
   const [answer, setAnswer] = useState<Answer | undefined>(initial);

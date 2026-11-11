@@ -7,7 +7,9 @@ import { CorrectionsTab } from './corrections-tab';
 import { correction, noCorrections, reworkRequest } from './fixtures';
 
 const mocks = vi.hoisted(() => ({ api: { executions: { get: vi.fn() }, corrections: { history: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 beforeEach(() => {
   vi.resetAllMocks();

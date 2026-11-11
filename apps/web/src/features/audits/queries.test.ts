@@ -3,7 +3,9 @@ import { apiError, AUDIT_IDS, auditDto } from './fixtures';
 import { startOrOpenAudit } from './queries';
 
 const mocks = vi.hoisted(() => ({ api: { audits: { start: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api }));
 
 describe('startOrOpenAudit', () => {
   it('returns the new audit, or the one another auditor started first', async () => {

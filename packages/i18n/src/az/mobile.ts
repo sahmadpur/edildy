@@ -46,6 +46,12 @@ export default {
       subtitle: 'Arxiv · {{date}}',
     },
     offline: 'Oflayn rejim — internet bərpa olunanda məlumatlar yenilənəcək.',
+    /** BR-01: the organisation's subscription, from the profile (so offline too). */
+    subscription: {
+      expiredTitle: 'Abunəlik bitib',
+      expiredBody: 'Məlumatlara baxmaq olar, amma yeni yoxlamaya başlamaq və dəyişiklik etmək olmur. Təşkilatınızın rəhbərinə müraciət edin.',
+      grace: 'Abunəlik {{date}} tarixində bitib. {{graceEnd}} tarixindən sonra tətbiq yalnız baxış rejimində işləyəcək.',
+    },
   },
   profile: {
     title: 'Profil',

@@ -6,7 +6,9 @@ import { fixedSizeCharts } from './chart-test-setup';
 import { reportSummary, TODAY } from './fixtures';
 import { TrendChart } from './trend-chart';
 
-vi.mock('@/lib/session', () => ({ useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 vi.mock('recharts', async (original) => fixedSizeCharts(await original<object>()));
 
 describe('TrendChart', () => {

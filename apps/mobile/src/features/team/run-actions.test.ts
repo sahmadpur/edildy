@@ -22,6 +22,12 @@ describe('runActions (spec §8.2, Part 1 "What the UI may offer")', () => {
     ['an auditor cannot correct', AUDITOR, 'completed', 'completed', null, { ...NO_ACTIONS, audit: 'start' }],
     ['a manager cannot audit', MANAGER, 'completed', 'completed', null, { ...NO_ACTIONS, correct: true, sendBack: true }],
   ])('%s', (_name, permissions, status, state, audit, expected) => {
-    expect(runActions(permissions, status, state, audit)).toEqual(expected);
+    expect(runActions(permissions, status, state, audit, true)).toEqual(expected);
+  });
+
+  it('offers nothing on a plan without audits (BR-01): the API refuses audits and corrections', () => {
+    expect(runActions(BOTH, 'completed', 'completed', null, false)).toEqual(NO_ACTIONS);
+    expect(runActions(BOTH, 'audit_pending', 'completed', auditBrief(), false)).toEqual(NO_ACTIONS);
+    expect(runActions(BOTH, 'correction_required', 'rework', auditBrief({ paused: true }), false)).toEqual(NO_ACTIONS);
   });
 });

@@ -8,7 +8,9 @@ import { AnswersView } from './answers-view';
 import { executionFixture } from './fixtures';
 
 const mocks = vi.hoisted(() => ({ api: { media: { url: vi.fn() } } }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useMe: () => ({ tenant: { timezone: 'Asia/Baku', locale: 'az' } }) }));
 
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });

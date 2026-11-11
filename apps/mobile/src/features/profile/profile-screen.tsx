@@ -7,6 +7,7 @@ import { LanguagePicker } from '@/components/language-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { TabHeader } from '@/components/tab-header';
+import { hasFeature } from '@/lib/features';
 import { api, session, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
 import { nativePush, openSettings, pushTokenStore } from '@/notifications/native';
@@ -148,34 +149,37 @@ export function ProfileScreen() {
         ))}
       </View>
 
-      <View style={styles.group}>
-        <Text style={styles.heading}>{t('notifications.title')}</Text>
-        <View style={[styles.row, styles.first]}>
-          <Text style={styles.label}>{t('mobile.notifications.profile.email')}</Text>
-          <Switch
-            accessibilityLabel={t('mobile.notifications.profile.email')}
-            value={pending ?? me.user.emailNotifications}
-            disabled={!online || isSaving}
-            trackColor={{ true: colors.primary, false: colors.border }}
-            onValueChange={(next) => void changeEmail(next)}
-          />
-        </View>
-        {me.user.email ? null : <Text style={styles.hint}>{t('mobile.notifications.profile.noEmail')}</Text>}
-        {online ? null : <Text style={styles.hint}>{t('mobile.notifications.profile.online')}</Text>}
-        <FormError message={emailError} />
-        <View style={styles.row}>
-          <Text style={styles.label}>{t('mobile.notifications.profile.push')}</Text>
-          <Text testID="push-permission" style={styles.value}>
-            {permission ? t(`mobile.notifications.profile.pushStates.${permission}`) : '—'}
-          </Text>
-        </View>
-        {permission === 'denied' ? (
-          <View style={styles.denied}>
-            <Text style={styles.hint}>{t('mobile.notifications.profile.deniedHint')}</Text>
-            <PrimaryButton variant="outline" title={t('mobile.notifications.profile.openSettings')} onPress={() => void openSettings()} />
+      {/* The plan sends no notifications without the feature (BR-01), so there is nothing to set. */}
+      {hasFeature(me, 'notifications') ? (
+        <View style={styles.group}>
+          <Text style={styles.heading}>{t('notifications.title')}</Text>
+          <View style={[styles.row, styles.first]}>
+            <Text style={styles.label}>{t('mobile.notifications.profile.email')}</Text>
+            <Switch
+              accessibilityLabel={t('mobile.notifications.profile.email')}
+              value={pending ?? me.user.emailNotifications}
+              disabled={!online || isSaving}
+              trackColor={{ true: colors.primary, false: colors.border }}
+              onValueChange={(next) => void changeEmail(next)}
+            />
           </View>
-        ) : null}
-      </View>
+          {me.user.email ? null : <Text style={styles.hint}>{t('mobile.notifications.profile.noEmail')}</Text>}
+          {online ? null : <Text style={styles.hint}>{t('mobile.notifications.profile.online')}</Text>}
+          <FormError message={emailError} />
+          <View style={styles.row}>
+            <Text style={styles.label}>{t('mobile.notifications.profile.push')}</Text>
+            <Text testID="push-permission" style={styles.value}>
+              {permission ? t(`mobile.notifications.profile.pushStates.${permission}`) : '—'}
+            </Text>
+          </View>
+          {permission === 'denied' ? (
+            <View style={styles.denied}>
+              <Text style={styles.hint}>{t('mobile.notifications.profile.deniedHint')}</Text>
+              <PrimaryButton variant="outline" title={t('mobile.notifications.profile.openSettings')} onPress={() => void openSettings()} />
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
       <View style={styles.actions}>
         <PrimaryButton variant="outline" title={t('mobile.profile.changeSecret')} onPress={() => router.push('/change-secret')} />

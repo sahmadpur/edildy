@@ -1,6 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 import '@/lib/i18n';
-import { REPORT, REPORT2, SITE, syncReport, syncResponse, versionOf } from '@/offline/testing/fixtures';
+import { REPORT, REPORT2, SITE, syncReport, syncResponse, versionOf, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { ProblemsScreen } from './problems-screen';
@@ -10,7 +10,7 @@ jest.mock('expo-router', () => ({
   router: { push: (...a: unknown[]) => mockPush(...a) },
   useFocusEffect: (effect: () => void | (() => void)) => jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]),
 }));
-let mockMe = { permissions: [] as string[], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' } };
+let mockMe = { permissions: [] as string[], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' }, tenant: { subscription: XL_SUBSCRIPTION } };
 const mockList = jest.fn();
 jest.mock('@/lib/session', () => ({
   useSession: () => ({ status: 'authenticated', offline: false, me: mockMe }),
@@ -22,7 +22,7 @@ const input = { siteId: SITE, siteName: 'Bakı filialı 1', reporterName: 'Aysel
 
 beforeEach(() => {
   mockPush.mockClear();
-  mockMe = { permissions: [], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' } };
+  mockMe = { permissions: [], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' }, tenant: { subscription: XL_SUBSCRIPTION } };
   mockList.mockReset();
   mockList.mockResolvedValue({ items: [], nextCursor: null });
 });
@@ -55,7 +55,7 @@ describe('Problemlər', () => {
   });
 
   it('a manager sees Mənim | Hamısı, and Hamısı lists the scope from the API with the active filter', async () => {
-    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' } };
+    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' }, tenant: { subscription: XL_SUBSCRIPTION } };
     mockList.mockResolvedValue({ items: [syncReport({ id: REPORT2, text: 'Başqasının problemi', reporter: { id: 'u2', fullName: 'Fərid' } })], nextCursor: null });
     const t = await createTestServices({ online: true });
     await t.seed();

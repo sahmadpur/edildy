@@ -2,15 +2,16 @@ import { fireEvent, screen, within } from '@testing-library/react-native';
 import type { OccurrenceDto } from '@edildy/contracts';
 import { formatLocalDate } from '@edildy/i18n';
 import { renderTeam } from '@/features/team/testing/render';
-import { OCC, OCC2, OCC3, occurrence, OTHER, OTHER_EXECUTION, syncResponse, versionOf } from '@/offline/testing/fixtures';
+import { OCC, OCC2, OCC3, occurrence, OTHER, OTHER_EXECUTION, syncResponse, versionOf, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { createTestServices, type TestServices } from '@/offline/testing/test-services';
 import { CalendarScreen } from './calendar-screen';
 
+const mockTenant = { subscription: XL_SUBSCRIPTION };
 const mockPush = jest.fn();
 const mockMine = jest.fn();
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a) } }));
 jest.mock('@/lib/session', () => ({
-  useSession: () => ({ status: 'authenticated', offline: false, me: { user: { fullName: 'Aysel Əliyeva' } } }),
+  useSession: () => ({ status: 'authenticated', offline: false, me: { user: { fullName: 'Aysel Əliyeva' }, tenant: mockTenant } }),
   api: { occurrences: { mine: (...a: unknown[]) => mockMine(...a) } },
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));

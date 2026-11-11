@@ -1,10 +1,19 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Page, PlatformLoginResult, PlatformTenantDto } from '@edildy/contracts';
+import type { Page, PlatformLoginResult, PlatformTenantDetail, PlatformTenantDto } from '@edildy/contracts';
 import { Public } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { AppRequest } from '../common/request';
-import { PlatformLoginDto, PlatformLoginResponse, PlatformTenantListQueryDto, PlatformTenantPageResponse, PlatformTenantResponse } from './dto';
+import {
+  CreateTenantDto,
+  PlatformLoginDto,
+  PlatformLoginResponse,
+  PlatformTenantDetailResponse,
+  PlatformTenantListQueryDto,
+  PlatformTenantPageResponse,
+  PlatformTenantResponse,
+  SubscriptionInputDto,
+} from './dto';
 import { PlatformGuard } from './platform.guard';
 import { PlatformService } from './platform.service';
 
@@ -34,6 +43,24 @@ export class PlatformTenantsController {
   @ApiOkResponse({ type: PlatformTenantPageResponse })
   list(@Query() q: PlatformTenantListQueryDto): Promise<Page<PlatformTenantDto>> {
     return this.platform.listTenants(q);
+  }
+
+  @Post()
+  @ApiOkResponse({ type: PlatformTenantDetailResponse })
+  create(@Req() req: AppRequest, @Body() body: CreateTenantDto): Promise<PlatformTenantDetail> {
+    return this.platform.createTenant(req.platformAdminId!, body);
+  }
+
+  @Get(':id')
+  @ApiOkResponse({ type: PlatformTenantDetailResponse })
+  get(@Param('id', ParseIdPipe) id: string): Promise<PlatformTenantDetail> {
+    return this.platform.getTenant(id);
+  }
+
+  @Put(':id/subscription')
+  @ApiOkResponse({ type: PlatformTenantDetailResponse })
+  setSubscription(@Req() req: AppRequest, @Param('id', ParseIdPipe) id: string, @Body() body: SubscriptionInputDto): Promise<PlatformTenantDetail> {
+    return this.platform.setSubscription(req.platformAdminId!, id, body);
   }
 
   @Post(':id/suspend')

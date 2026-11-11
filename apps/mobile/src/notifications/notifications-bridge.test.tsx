@@ -1,5 +1,6 @@
 import '@/lib/i18n';
-import { ME, OCC, occurrence, OTHER, pushData, syncResponse, versionOf } from '@/offline/testing/fixtures';
+import type { Subscription } from '@edildy/contracts';
+import { ME, OCC, occurrence, OTHER, pushData, subscription, syncResponse, versionOf, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { NotificationsBridge } from './notifications-bridge';
@@ -7,10 +8,11 @@ import { type FakeEvents, PUSH_TOKEN } from './testing/fakes';
 
 const mockRegister = jest.fn();
 const mockPush = jest.fn();
+let mockSubscription: Subscription = XL_SUBSCRIPTION;
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a) } }));
 jest.mock('@/lib/session', () => ({
   api: { pushDevices: { register: (...a: unknown[]) => mockRegister(...a), remove: jest.fn() } },
-  useSession: () => ({ status: 'authenticated', offline: false, me: { permissions: [] } }),
+  useSession: () => ({ status: 'authenticated', offline: false, me: { permissions: [], role: { dataScope: 'own' }, tenant: { subscription: mockSubscription } } }),
 }));
 jest.mock('@/notifications/native', () => {
   const { fakeEvents, fakePush, fakeTokens } = jest.requireActual<typeof import('./testing/fakes')>('./testing/fakes');
@@ -23,6 +25,7 @@ beforeEach(() => {
   mockRegister.mockReset();
   mockRegister.mockResolvedValue(undefined);
   mockPush.mockReset();
+  mockSubscription = XL_SUBSCRIPTION;
   native.notificationEvents.last = null;
   native.notificationEvents.cleared = 0;
 });
@@ -70,4 +73,28 @@ describe('NotificationsBridge', () => {
     native.notificationEvents.receive(pushData());
     await eventually(async () => expect(pulls()).toBe(before + 1));
   });
+
+  describe('without notifications in the plan (BR-01)', () => {
+    beforeEach(() => {
+      mockSubscription = subscription({ without: ['notifications'] });
+    });
+
+    it('does not register this phone for push', async () => {
+      const t = await createTestServices();
+      await renderWithServices(t.services, <NotificationsBridge />);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(mockRegister).not.toHaveBeenCalled();
+    });
+
+    it('still opens a checklist from an older push, and Home for what would have opened the inbox', async () => {
+      const t = await startedOnPhone();
+      await renderWithServices(t.services, <NotificationsBridge />);
+      native.notificationEvents.tap({ identifier: 'n-1', data: pushData() });
+      await eventually(async () => expect(mockPush).toHaveBeenCalledWith({ pathname: '/execution/[id]', params: { id: OCC } }));
+      native.notificationEvents.tap({ identifier: 'n-other', data: pushData({ userId: OTHER }) });
+      await eventually(async () => expect(mockPush).toHaveBeenLastCalledWith({ pathname: '/' }));
+      expect(mockPush).not.toHaveBeenCalledWith({ pathname: '/notifications' });
+    });
+  });
+
 });

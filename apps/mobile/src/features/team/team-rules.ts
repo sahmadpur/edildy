@@ -9,10 +9,16 @@ import {
   type RunBucket,
   type RunCounts,
 } from '@edildy/contracts';
+import { hasFeature } from '@/lib/features';
 
 /** Spec §7.1: the Team tab and its routes exist only for reports.view with a data scope wider than `own`. */
 export function canSeeTeam(me: { permissions: Me['permissions']; role: Pick<Me['role'], 'dataScope'> }): boolean {
   return me.permissions.includes('reports.view') && me.role.dataScope !== 'own';
+}
+
+/** `canSeeTeam` on a plan with reports (BR-01): the Team tab is part of that feature (its employee picker reads /reports/employees, which the API refuses without it). */
+export function teamVisible(me: Parameters<typeof canSeeTeam>[0] & Parameters<typeof hasFeature>[0]): boolean {
+  return canSeeTeam(me) && hasFeature(me, 'reports');
 }
 
 /** The header's period chips (spec §7.1: Bu gün / 7 gün / 30 gün), as Part 1 presets. */

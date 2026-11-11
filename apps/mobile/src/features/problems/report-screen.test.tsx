@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import '@/lib/i18n';
 import { capturedPhoto } from '@/offline/testing/fake-transport';
-import { REPORT, SITE, syncReport } from '@/offline/testing/fixtures';
+import { REPORT, SITE, subscription, syncReport, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices } from '@/offline/testing/test-services';
 import { ReportScreen } from './report-screen';
@@ -10,7 +10,7 @@ import { ReportScreen } from './report-screen';
 const mockPush = jest.fn();
 const mockBack = jest.fn();
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a), back: () => mockBack() } }));
-let mockMe = { permissions: [] as string[], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' } };
+let mockMe = { permissions: [] as string[], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' }, tenant: { subscription: XL_SUBSCRIPTION } };
 const mockGet = jest.fn();
 const mockClose = jest.fn();
 const mockUrl = jest.fn();
@@ -28,7 +28,7 @@ const input = { siteId: SITE, siteName: 'Bakı filialı 1', reporterName: 'Aysel
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockMe = { permissions: [], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' } };
+  mockMe = { permissions: [], role: { dataScope: 'own' }, user: { id: 'me', fullName: 'Aysel Əliyeva' }, tenant: { subscription: XL_SUBSCRIPTION } };
   mockUrl.mockResolvedValue({ url: 'http://files.test/x', expiresAt: '2026-11-02T05:00:00.000Z' });
 });
 
@@ -52,7 +52,7 @@ describe('ReportScreen', () => {
   });
 
   it('a manager sees no actions on their own report while the server has not accepted it', async () => {
-    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' } };
+    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' }, tenant: { subscription: XL_SUBSCRIPTION } };
     const t = await createTestServices({ online: true });
     await t.seed();
     t.net.online = false; // the create stays queued
@@ -77,7 +77,7 @@ describe('ReportScreen', () => {
   });
 
   it('a manager online sees Tapşırıq yarat and Bağla on a remote open report, and closing posts the comment', async () => {
-    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' } };
+    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' }, tenant: { subscription: XL_SUBSCRIPTION } };
     mockGet.mockResolvedValue(syncReport({ id: REPORT, reporter: { id: 'u2', fullName: 'Fərid' }, media: [{ id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e90', kind: 'photo', status: 'uploaded' }] }));
     mockClose.mockResolvedValue(syncReport({ id: REPORT, state: 'closed', closedAt: '2026-11-02T05:00:00.000Z', closedBy: { id: 'me', fullName: 'Rəşad' }, closeComment: 'Yerində düzəldildi' }));
     const t = await createTestServices({ online: true });
@@ -94,6 +94,18 @@ describe('ReportScreen', () => {
     await eventually(async () => expect(mockClose).toHaveBeenCalledWith(REPORT, { comment: 'Yerində düzəldildi' }));
     expect(await screen.findByText('Rəşad bağladı: Yerində düzəldildi')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Bağla' })).toBeNull();
+  });
+
+  it('a manager on a plan without tasks can close a report but not make or open a task from it (BR-01)', async () => {
+    mockMe = { permissions: ['assignments.view', 'tasks.manage'], role: { dataScope: 'site_subtree' }, user: { id: 'me', fullName: 'Rəşad' }, tenant: { subscription: subscription({ without: ['tasks'] }) } };
+    mockGet.mockResolvedValue(syncReport({ id: REPORT, reporter: { id: 'u2', fullName: 'Fərid' }, taskId: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e91', taskStatus: 'new' }));
+    const t = await createTestServices({ online: true });
+    await t.seed();
+    await renderWithServices(t.services, <ReportScreen id={REPORT} remote />);
+    expect(await screen.findByText('Fərid')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Bağla' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Tapşırıq yarat' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Tapşırıq' })).toBeNull();
   });
 
   it('a worker opening a remote report that is not theirs sees the not-found text when the API refuses', async () => {

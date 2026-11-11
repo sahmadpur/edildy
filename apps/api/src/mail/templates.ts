@@ -1,4 +1,4 @@
-import { AUDIT_REPORT_CONTENT_TYPE, type AuditResult } from '@edildy/contracts';
+import { AUDIT_REPORT_CONTENT_TYPE, type AuditResult, SUBSCRIPTION_GRACE_DAYS } from '@edildy/contracts';
 import { interpolate, type Language, translationsFor } from '@edildy/i18n';
 import type { MailMessage } from './mailer';
 
@@ -55,4 +55,14 @@ export function auditReportMail(p: {
     text: interpolate(T.email.body, vars),
     attachments: [{ filename: p.filename, content: p.pdf, contentType: AUDIT_REPORT_CONTENT_TYPE }],
   };
+}
+
+const dmy = (d: string) => d.split('-').reverse().join('.');
+
+/** BR-01.07: the subscription ends in `days` days (a warning step), or ended on `endsOn` (`days` < 0). */
+export function subscriptionMail(p: { to: string; fullName: string; orgName: string; endsOn: string; graceEnd: string; days: number; locale: Language }): MailMessage {
+  const T = translationsFor(p.locale).mail;
+  const t = p.days >= 0 ? T.subscriptionEnding : T.subscriptionEnded;
+  const vars = { name: p.fullName, org: p.orgName, date: dmy(p.endsOn), days: String(p.days), grace: String(SUBSCRIPTION_GRACE_DAYS), graceEnd: dmy(p.graceEnd) };
+  return { to: p.to, subject: interpolate(t.subject, { ...vars, org: oneLine(p.orgName) }), text: interpolate(t.body, vars) };
 }

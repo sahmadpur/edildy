@@ -10,6 +10,7 @@ import { PrimaryButton } from '@/components/primary-button';
 import { Screen } from '@/components/screen';
 import { ReadOnlyAnswers, ReadOnlyProblems } from '@/features/execution/answer-view';
 import { ScreenHeader } from '@/features/tasks/screen-header';
+import { hasFeature } from '@/lib/features';
 import { api, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
 import { useOffline } from '@/offline/context';
@@ -50,13 +51,15 @@ export function TeamRunScreen({ occurrenceId }: { occurrenceId: string }) {
   const execution = occurrence.data?.execution ?? null;
   const detail = useTeamExecution(viewerId, execution?.id ?? null, live);
   const d = detail.data;
-  const corrections = useTeamCorrections(viewerId, d && (d.corrected || d.reworkRound > 0) ? d.id : null, live);
+  const auditsOn = me !== null && hasFeature(me, 'audits');
+  // The correction history is an audits endpoint (BR-01): without the feature it is not asked for.
+  const corrections = useTeamCorrections(viewerId, auditsOn && d && (d.corrected || d.reworkRound > 0) ? d.id : null, live);
   const command = useRunCommand(viewerId);
   const [mode, setMode] = useState<RunMode>(null);
   useRefreshMeOnForbidden([occurrence.error, detail.error, corrections.error]);
 
   const o = occurrence.data;
-  const actions = me && o && d ? runActions(me.permissions, o.status, d.state, d.audit) : NO_ACTIONS;
+  const actions = me && o && d ? runActions(me.permissions, o.status, d.state, d.audit, auditsOn) : NO_ACTIONS;
   // A mode the run no longer allows (a refusal refreshed it) closes; the audit panel is not gated, it follows its own audit.
   const modeAllowed = mode === null || mode.kind === 'audit' || (mode.kind === 'correct' ? actions.correct : actions.sendBack);
   const staleMode = mode !== null && o !== undefined && d !== undefined && !modeAllowed;

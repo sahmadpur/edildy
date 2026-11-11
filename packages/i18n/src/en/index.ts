@@ -20,9 +20,10 @@ import roles from './roles.js';
 import scheduling from './scheduling.js';
 import settings from './settings.js';
 import sites from './sites.js';
+import subscription from './subscription.js';
 import tasks from './tasks.js';
 import teams from './teams.js';
 import users from './users.js';
 
 // Mirrors az/index.ts: every namespace with the same keys (checked by `satisfies` here and by i18n.test.ts at runtime).
-export const en = { common, errors, executions, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, pages, platform, reports, roles, scheduling, settings, sites, tasks, teams, users } satisfies Shape<Translations>;
+export const en = { common, errors, executions, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, pages, platform, reports, roles, scheduling, settings, sites, subscription, tasks, teams, users } satisfies Shape<Translations>;

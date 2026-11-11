@@ -19,7 +19,6 @@ const configSchema = z.object({
   ARGON2_ITERATIONS: z.coerce.number().int().min(1).default(2),
   RL_LOGIN_IP_PER_MIN: z.coerce.number().int().min(1).default(20),
   RL_LOGIN_ACCOUNT_PER_MIN: z.coerce.number().int().min(1).default(10),
-  RL_SIGNUP_IP_PER_HOUR: z.coerce.number().int().min(1).default(10),
   RL_FORGOT_IP_PER_HOUR: z.coerce.number().int().min(1).default(10),
   /** Start pg-boss workers (spec §5). Tests turn it off and call OccurrenceJobs directly. */
   JOBS_ENABLED: z.stringbool().default(true),

@@ -15,7 +15,7 @@ export const isLanguage = (value: string | undefined): value is Language => (LAN
 export const localePath = (lang: Language, path = ''): string => (lang === 'az' ? `/${path}` : `/${lang}/${path}`);
 
 /** Where Login and Sign up go: the platform web app, from PLATFORM_URL. */
-export const platformUrl = (path: 'login' | 'signup'): string => `${PLATFORM_URL.replace(/\/$/, '')}/${path}`;
+export const platformUrl = (path: 'login'): string => `${PLATFORM_URL.replace(/\/$/, '')}/${path}`;
 
 export const siteUrl = 'https://edildy.com';
 export const absolute = (path: string): string => `${siteUrl}${path}`;

@@ -11,7 +11,9 @@ const mocks = vi.hoisted(() => ({
     users: { list: vi.fn() },
   },
 }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useCan: () => true }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useCan: () => true }));
 
 const team = (over: Partial<TeamDto> = {}): TeamDto =>
   ({

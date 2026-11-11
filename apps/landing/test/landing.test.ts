@@ -41,7 +41,9 @@ describe('landing page', () => {
     const html = await render('az');
     expect(html).toContain('href="https://platform.example.test/login" data-testid="login"');
     expect(html).toContain('href="https://platform.example.test/login" data-testid="hero-login"');
-    expect(html).toContain('href="https://platform.example.test/signup" data-testid="hero-signup"');
+    // No self-registration: the second hero button writes to Edildy.
+    expect(html).toContain('href="mailto:hello@edildy.com" data-testid="hero-contact"');
+    expect(html).not.toContain('/signup');
   });
 
   it('renders the placeholder legal pages', async () => {

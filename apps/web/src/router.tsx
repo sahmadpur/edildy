@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import type { FeatureKey } from '@edildy/contracts';
 import { createRootRoute, createRoute, createRouter, Outlet, redirect } from '@tanstack/react-router';
 import {
   ChecklistDetailRoute,
@@ -19,7 +20,6 @@ import { AcceptInvitePage } from '@/features/auth/accept-invite-page';
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';
 import { LoginPage } from '@/features/auth/login-page';
 import { ResetPasswordPage } from '@/features/auth/reset-password-page';
-import { SignupPage } from '@/features/auth/signup-page';
 import { VerifyEmailPage } from '@/features/auth/verify-email-page';
 import { PlatformLoginPage } from '@/features/platform/platform-login-page';
 import { platformSession } from '@/features/platform/platform-session';
@@ -45,7 +45,7 @@ import { PeopleTabs } from '@/features/users/people-tabs';
 import { UsersPage } from '@/features/users/users-page';
 import { AppShell } from '@/layouts/app-shell';
 import { AuthLayout } from '@/layouts/auth-layout';
-import { session } from '@/lib/session';
+import { session, sessionHasFeature } from '@/lib/session';
 
 const tokenSearch = (s: Record<string, unknown>): { token?: string } =>
   typeof s.token === 'string' ? { token: s.token } : {};
@@ -60,6 +60,11 @@ export const authLayout = createRoute({
     if (session.get().status === 'authenticated') throw redirect({ to: '/' });
   },
 });
+
+/** A page of a feature the organisation's plan lacks (BR-01.03) sends the user home. */
+const requireFeature = (feature: FeatureKey) => () => {
+  if (!sessionHasFeature(feature)) throw redirect({ to: '/' });
+};
 
 export const appLayout = createRoute({
   getParentRoute: () => rootRoute,
@@ -78,7 +83,6 @@ const loginRoute = createRoute({
   validateSearch: (s: Record<string, unknown>): { redirect?: string } =>
     typeof s.redirect === 'string' ? { redirect: s.redirect } : {},
 });
-const signupRoute = createRoute({ getParentRoute: () => authLayout, path: '/signup', component: SignupPage });
 const forgotRoute = createRoute({
   getParentRoute: () => authLayout,
   path: '/forgot-password',
@@ -127,17 +131,17 @@ const scheduleRoute = createRoute({
     throw redirect({ to: '/calendar', search });
   },
 });
-const problemsRoute = createRoute({ getParentRoute: () => appLayout, path: '/problems', component: ProblemsRoute, validateSearch: problemsSearch });
+const problemsRoute = createRoute({ getParentRoute: () => appLayout, path: '/problems', beforeLoad: requireFeature('problems'), component: ProblemsRoute, validateSearch: problemsSearch });
 function ProblemsRoute() {
   const search = problemsRoute.useSearch();
   return <ProblemsPage tab={search.tab} report={search.report} />;
 }
-const tasksRoute = createRoute({ getParentRoute: () => appLayout, path: '/tasks', component: TasksPage, validateSearch: tasksSearch });
-const auditsRoute = createRoute({ getParentRoute: () => appLayout, path: '/audits', component: AuditsPage, validateSearch: auditsSearch });
-const auditScreenRoute = createRoute({ getParentRoute: () => appLayout, path: '/audits/$auditId', component: AuditRoute });
-const notificationsRoute = createRoute({ getParentRoute: () => appLayout, path: '/notifications', component: NotificationsPage });
-const messagesRoute = createRoute({ getParentRoute: () => appLayout, path: '/messages', component: MessagesPage, validateSearch: messagesSearch });
-const reportsRoute = createRoute({ getParentRoute: () => appLayout, path: '/reports', component: () => <ReportsPage />, validateSearch: reportsPageSearch });
+const tasksRoute = createRoute({ getParentRoute: () => appLayout, path: '/tasks', beforeLoad: requireFeature('tasks'), component: TasksPage, validateSearch: tasksSearch });
+const auditsRoute = createRoute({ getParentRoute: () => appLayout, path: '/audits', beforeLoad: requireFeature('audits'), component: AuditsPage, validateSearch: auditsSearch });
+const auditScreenRoute = createRoute({ getParentRoute: () => appLayout, path: '/audits/$auditId', beforeLoad: requireFeature('audits'), component: AuditRoute });
+const notificationsRoute = createRoute({ getParentRoute: () => appLayout, path: '/notifications', beforeLoad: requireFeature('notifications'), component: NotificationsPage });
+const messagesRoute = createRoute({ getParentRoute: () => appLayout, path: '/messages', beforeLoad: requireFeature('notifications'), component: MessagesPage, validateSearch: messagesSearch });
+const reportsRoute = createRoute({ getParentRoute: () => appLayout, path: '/reports', beforeLoad: requireFeature('reports'), component: () => <ReportsPage />, validateSearch: reportsPageSearch });
 
 const assignmentsRoute = createRoute({ getParentRoute: () => appLayout, path: '/assignments', component: AssignmentsRoute });
 const newAssignmentRoute = createRoute({
@@ -165,7 +169,7 @@ const rolesRoute = createRoute({
   },
 });
 
-const auditRoute = createRoute({ getParentRoute: () => appLayout, path: '/audit', component: AuditPage });
+const auditRoute = createRoute({ getParentRoute: () => appLayout, path: '/audit', beforeLoad: requireFeature('usage_log'), component: AuditPage });
 const checklistsWs = createRoute({
   getParentRoute: () => appLayout,
   id: 'checklists-ws',
@@ -247,7 +251,7 @@ const platformTenantChildren = [
 ];
 
 export const routeTree = rootRoute.addChildren([
-  authLayout.addChildren([loginRoute, signupRoute, forgotRoute, resetRoute, acceptInviteRoute]),
+  authLayout.addChildren([loginRoute, forgotRoute, resetRoute, acceptInviteRoute]),
   verifyEmailRoute,
   platformLoginRoute,
   platformLayout.addChildren([

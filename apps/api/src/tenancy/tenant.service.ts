@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import type { TenantDto } from '@edildy/contracts';
+import type { TenantDto, TenantSubscriptionDto } from '@edildy/contracts';
 import { eq } from 'drizzle-orm';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
 import { tenants } from '../db/schema';
 import type { UpdateTenantDto } from './dto';
+import { subscriptionOf, usageOf } from './subscription';
 
 export function toTenantDto(t: typeof tenants.$inferSelect): TenantDto {
   return {
@@ -43,5 +44,13 @@ export class TenantService {
     const after = toTenantDto(row!);
     await this.audit.record({ action: 'tenant.updated', entityType: 'tenant', entityId: tenantId, before, after });
     return after;
+  }
+
+  /** The organisation's own view of its plan (Settings → Subscription): what it includes and how much is used. */
+  async subscription(): Promise<TenantSubscriptionDto> {
+    const { tenantId } = this.db.context();
+    const tx = this.db.tx();
+    const [row] = await tx.select().from(tenants).where(eq(tenants.id, tenantId));
+    return { ...subscriptionOf(row!), period: row!.planPeriod, startsOn: row!.planStartsOn, usage: await usageOf(tx) };
   }
 }

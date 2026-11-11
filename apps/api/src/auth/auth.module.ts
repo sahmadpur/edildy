@@ -14,6 +14,7 @@ import { PermissionGuard } from './permission.guard';
 import { PrincipalLoader } from './principal-loader';
 import { RateLimitService } from './rate-limit.service';
 import { SessionService } from './session.service';
+import { SubscriptionGuard } from './subscription.guard';
 
 @Module({
   controllers: [AuthController, MeController],
@@ -30,6 +31,7 @@ import { SessionService } from './session.service';
     PrincipalLoader,
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: PermissionGuard },
+    { provide: APP_GUARD, useClass: SubscriptionGuard },
   ],
   exports: [AuthService, CredentialService, PasswordHasher, TokenService, SessionService, OneTimeTokenService, MeService, RateLimitService],
 })

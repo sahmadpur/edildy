@@ -1,4 +1,4 @@
-import type { PermissionKey } from '@edildy/contracts';
+import type { FeatureKey, PermissionKey } from '@edildy/contracts';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
 import { Building2, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, ShieldCheck, TriangleAlert, Users, X } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
@@ -8,6 +8,7 @@ import { Mark } from '@/components/logo';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { NotificationBell } from '@/features/notifications/notification-bell';
+import { SubscriptionBanner } from '@/features/subscription/subscription-banner';
 import { session } from '@/lib/session';
 import { cn } from '@/lib/utils';
 import { UserMenu } from './user-menu';
@@ -23,14 +24,16 @@ export interface NavItem {
   permission?: PermissionKey | readonly PermissionKey[];
   /** The sidebar group (nav.groups.*). */
   group: 'overview' | 'operations' | 'admin' | 'other';
+  /** The plan feature the page belongs to (BR-01.03): hidden when the organisation's plan lacks it. */
+  feature?: FeatureKey;
   /** Other pages this item stands for: a merged page's second tab (e.g. /calendar under Yoxlamalar). */
   also?: readonly string[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', labelKey: 'nav.home', icon: Home, group: 'overview' },
-  { to: '/problems', labelKey: 'nav.problems', icon: TriangleAlert, permission: 'assignments.view', group: 'overview' },
-  { to: '/reports', labelKey: 'nav.reports', icon: ChartColumn, permission: 'reports.view', group: 'overview' },
+  { to: '/problems', labelKey: 'nav.problems', icon: TriangleAlert, permission: 'assignments.view', group: 'overview', feature: 'problems' },
+  { to: '/reports', labelKey: 'nav.reports', icon: ChartColumn, permission: 'reports.view', group: 'overview', feature: 'reports' },
   {
     to: '/assignments',
     labelKey: 'nav.assignments',
@@ -40,8 +43,8 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'operations',
     also: ['/calendar', '/checklists', '/templates'],
   },
-  { to: '/tasks', labelKey: 'nav.tasks', icon: ClipboardCheck, permission: ['tasks.view', 'tasks.manage'], group: 'operations' },
-  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'other' },
+  { to: '/tasks', labelKey: 'nav.tasks', icon: ClipboardCheck, permission: ['tasks.view', 'tasks.manage'], group: 'operations', feature: 'tasks' },
+  { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'other', feature: 'audits' },
   // Əməkdaş siyahısı and Komandalar are the tabs of one page (feedback 2026-11-11, item 15).
   {
     to: '/users',
@@ -55,7 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/sites', labelKey: 'nav.sites', icon: Building2, permission: 'sites.view', group: 'admin' },
   // Növbə cədvəli is the first tab (feedback 2026-11-11, item 11).
   { to: '/roster', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'admin', also: ['/shifts'] },
-  { to: '/audit', labelKey: 'nav.audit', icon: ClipboardList, permission: 'audit.view', group: 'admin' },
+  { to: '/audit', labelKey: 'nav.audit', icon: ClipboardList, permission: 'audit.view', group: 'admin', feature: 'usage_log' },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings, group: 'admin' },
 ];
 
@@ -141,7 +144,8 @@ export function AppShell() {
     if (!item.fallbacks || !primary || me.permissions.includes(primary)) return item.to;
     return item.fallbacks.find((f) => me.permissions.includes(f.permission))?.to ?? item.to;
   };
-  const items = NAV_ITEMS.filter((i) => allowed(i.permission));
+  const features = me.tenant.subscription.features;
+  const items = NAV_ITEMS.filter((i) => allowed(i.permission) && (!i.feature || features.includes(i.feature)));
   const groups = GROUPS.map((g) => [g, items.filter((i) => i.group === g)] as const).filter(([, list]) => list.length > 0);
   const activeGroup = items.find((i) => isNavItemActive(i, pathname))?.group;
   const isOpen = (group: string) => (group === activeGroup ? activeFolded !== group : !collapsed.has(group));
@@ -206,18 +210,19 @@ export function AppShell() {
           </Button>
           <div className="ml-auto flex items-center gap-1">
             <LanguageMenu compact />
-            {allowed('notifications.send') && (
+            {features.includes('notifications') && allowed('notifications.send') && (
               <Link to="/messages" aria-label={t('nav.messages')} className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
                 <Megaphone className="size-4" aria-hidden />
               </Link>
             )}
-            <NotificationBell />
+            {features.includes('notifications') && <NotificationBell />}
             <UserMenu me={me} />
             <Button variant="ghost" size="icon" aria-label={t('nav.logout')} onClick={() => void session.signOut()}>
               <LogOut className="size-4" />
             </Button>
           </div>
         </header>
+        <SubscriptionBanner />
         <VerifyEmailBanner />
         <main id="main" className="flex-1 p-4 md:p-6 lg:p-8">
           <Outlet />

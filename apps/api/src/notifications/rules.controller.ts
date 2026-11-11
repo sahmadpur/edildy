@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Inject, Injectable, Param, type PipeTran
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { type NotificationRuleDto, type RuleType, ruleTypeSchema } from '@edildy/contracts';
 import { AppError } from '../common/app-error';
-import { RequirePermission } from '../common/decorators';
+import { RequireFeature, RequirePermission } from '../common/decorators';
 import { NotificationRuleResponse, UpdateNotificationRuleDto } from './dto';
 import { NotificationRules } from './rules.service';
 
@@ -19,6 +19,7 @@ export class ParseRuleTypePipe implements PipeTransform<string, RuleType> {
 /** Spec §6.4 "Rules". */
 @ApiTags('notifications')
 @ApiBearerAuth()
+@RequireFeature('notifications')
 @Controller('notification-rules')
 @RequirePermission('notifications.manage')
 export class NotificationRulesController {

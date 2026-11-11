@@ -66,7 +66,7 @@ describe('meSchema', () => {
         user: { id, fullName: 'A B', jobTitle: null, kind: 'staff', email: 'a@b.az', username: null, emailVerified: true, credentialKind: 'password', emailNotifications: true, locale: null },
         role: { id, name: 'Owner', systemKey: 'owner', dataScope: 'all' },
         permissions: ['users.view'],
-        tenant: { id, name: 'Acme', orgCode: 'acme', timezone: 'Asia/Baku', locale: 'az' },
+        tenant: { id, name: 'Acme', orgCode: 'acme', timezone: 'Asia/Baku', locale: 'az', subscription: { plan: 'xl', state: 'active', endsOn: null, features: ['notifications', 'usage_log', 'problems', 'tasks', 'reports', 'data_export', 'audits'], limits: { staff: null, workers: null, branches: 1 } } },
       }).role.systemKey,
     ).toBe('owner');
   });

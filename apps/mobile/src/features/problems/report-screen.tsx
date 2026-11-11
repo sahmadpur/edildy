@@ -12,6 +12,7 @@ import { notAcceptedText } from '@/features/sync/refusal-text';
 import { MultilineInput } from '@/features/tasks/multiline-input';
 import { RemoteMediaStrip } from '@/features/tasks/remote-media';
 import { ScreenHeader } from '@/features/tasks/screen-header';
+import { hasFeature } from '@/lib/features';
 import { useLocale } from '@/lib/language';
 import { api, useSession } from '@/lib/session';
 import { colors, font, spacing, type } from '@/lib/theme';
@@ -35,6 +36,8 @@ export function ReportScreen({ id, remote }: Props) {
   const { online } = useSyncStatus();
   const session = useSession();
   const canManage = session.status === 'authenticated' && session.me.permissions.includes('tasks.manage');
+  // Without tasks in the plan (BR-01) a report links to no task and makes none.
+  const tasksOn = session.status === 'authenticated' && hasFeature(session.me, 'tasks');
   const local = useLiveQuery(async (s) => (remote ? null : { report: await s.reports.report(id), media: await s.reports.media(id) }), [id, remote]);
   const [fetched, setFetched] = useState<ProblemReportDto | null | undefined>(undefined);
   const [closing, setClosing] = useState(false);
@@ -114,14 +117,16 @@ export function ReportScreen({ id, remote }: Props) {
       {report.closedAt ? (
         <Text style={styles.text}>{t('mobile.problems.detail.closedBy', { name: report.closedBy?.fullName ?? '', comment: report.closeComment ?? '' })}</Text>
       ) : null}
-      {report.taskId ? (
+      {report.taskId && tasksOn ? (
         <Pressable accessibilityRole="button" accessibilityLabel={t('mobile.problems.detail.task')} onPress={() => router.push({ pathname: '/task/[id]', params: { id: report.taskId! } })} style={({ pressed }) => [styles.taskRow, pressed && styles.pressed]}>
           <Text style={styles.link}>{`${t('mobile.problems.detail.task')}: ${report.taskStatus ? t(`tasks.statuses.${report.taskStatus}`) : ''}`}</Text>
         </Pressable>
       ) : null}
       {actions ? (
         <View style={styles.actions}>
-          <PrimaryButton title={t('mobile.problems.detail.createTask')} onPress={() => router.push({ pathname: '/task/new', params: { n: services.newId(), problemReportId: id } })} />
+          {tasksOn ? (
+            <PrimaryButton title={t('mobile.problems.detail.createTask')} onPress={() => router.push({ pathname: '/task/new', params: { n: services.newId(), problemReportId: id } })} />
+          ) : null}
           <PrimaryButton variant="outline" title={t('mobile.problems.detail.close')} onPress={() => setClosing(true)} />
         </View>
       ) : null}

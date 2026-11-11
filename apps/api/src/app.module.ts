@@ -25,6 +25,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ReportsModule } from './reports/reports.module';
 import { AuditsModule } from './audits/audits.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
+import { SubscriptionsModule } from './tenancy/subscriptions.module';
 import { HealthController } from './health/health.controller';
 
 @Module({})
@@ -32,7 +33,7 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      imports: [ConfigModule.forRoot(config), LoggerModule.forRoot(loggerParams(config)), DbModule, MailModule, CommonModule, StorageModule, AuthModule, TenancyModule, TeamsModule, RolesModule, AuditLogModule, UsersModule, PlatformModule, ChecklistsModule, SchedulingModule, ExecutionsModule, TasksModule, ProblemReportsModule, NotificationsModule, ReportsModule, AuditsModule],
+      imports: [ConfigModule.forRoot(config), LoggerModule.forRoot(loggerParams(config)), DbModule, MailModule, CommonModule, StorageModule, AuthModule, TenancyModule, TeamsModule, RolesModule, AuditLogModule, UsersModule, PlatformModule, ChecklistsModule, SchedulingModule, ExecutionsModule, TasksModule, ProblemReportsModule, NotificationsModule, ReportsModule, AuditsModule, SubscriptionsModule],
       controllers: [HealthController],
       providers: [
         { provide: APP_PIPE, useClass: ZodValidationPipe },

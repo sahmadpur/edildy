@@ -4,7 +4,9 @@ import { renderWithRouter } from '@/test/router';
 import { ChecklistAssignments } from './checklist-assignments';
 
 const mocks = vi.hoisted(() => ({ api: { assignments: { list: vi.fn() } }, can: true }));
-vi.mock('@/lib/session', () => ({ api: mocks.api, useCan: () => mocks.can }));
+vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true, api: mocks.api, useCan: () => mocks.can }));
 
 const row = {
   id: 'a1', name: 'Səhər', checklistId: 'c1', checklistName: 'Açılış', siteId: 'site1', siteName: 'Anbar',

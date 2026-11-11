@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { MediaUploadTicket, Page, ProblemReportDto, ReportSite } from '@edildy/contracts';
-import { CurrentPrincipal, RequirePermission } from '../common/decorators';
+import { CurrentPrincipal, RequireFeature, RequirePermission } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { Principal } from '../common/request';
 import { MediaUploadTicketResponse } from '../executions/dto';
@@ -13,6 +13,7 @@ import { ProblemReportsService } from './problem-reports.service';
 /** 2026-11-06 design §6.2. Routes without a permission decorator decide access in the service (readable scope). */
 @ApiTags('problem-reports')
 @ApiBearerAuth()
+@RequireFeature('problems')
 @Controller('problem-reports')
 export class ProblemReportsController {
   constructor(

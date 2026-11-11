@@ -1,21 +1,25 @@
 import { fireEvent, screen, within } from '@testing-library/react-native';
 import { Alert, StyleSheet } from 'react-native';
-import { formatDateTime } from '@edildy/i18n';
+import { formatDateTime, formatLocalDate } from '@edildy/i18n';
 import i18n from '@/lib/i18n';
 import { colors } from '@/lib/theme';
-import { ME, OCC, OCC2, OCC3, OCC4, OCC5, occurrence, OTHER, OTHER_EXECUTION, REWORK_DUE, reworkSync, syncResponse, VERSION2, versionOf } from '@/offline/testing/fixtures';
+import { ME, OCC, OCC2, OCC3, OCC4, OCC5, occurrence, OTHER, OTHER_EXECUTION, REWORK_DUE, reworkSync, subscription, syncResponse, VERSION2, versionOf, XL_SUBSCRIPTION } from '@/offline/testing/fixtures';
 import { eventually, renderWithServices } from '@/offline/testing/render';
 import { createTestServices, type TestServices } from '@/offline/testing/test-services';
 import { HomeScreen } from './home-screen';
 
 const mockPush = jest.fn();
+let mockSubscription = XL_SUBSCRIPTION;
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a) } }));
 jest.mock('@/lib/session', () => ({
-  useSession: () => ({ status: 'authenticated', offline: false, me: { user: { fullName: 'Aysel Əliyeva' } } }),
+  useSession: () => ({ status: 'authenticated', offline: false, me: { user: { fullName: 'Aysel Əliyeva' }, tenant: { subscription: mockSubscription } } }),
 }));
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 
-beforeEach(() => mockPush.mockClear());
+beforeEach(() => {
+  mockPush.mockClear();
+  mockSubscription = XL_SUBSCRIPTION;
+});
 
 /** OCC open, OCC2 claimed by Murad, OCC3 later today, OCC4 completed, OCC5 open (optionally on a too-new version). */
 async function world(extra: { version?: string } = {}): Promise<TestServices> {
@@ -211,5 +215,43 @@ describe('Needs correction (spec §8.1)', () => {
     const t = await sentBack();
     await renderWithServices(t.services, <HomeScreen />);
     expect(await within(await screen.findByTestId('section-myTasks')).findByText('1')).toBeTruthy();
+  });
+});
+
+describe('the subscription on Home (BR-01)', () => {
+  it('has no bell without notifications in the plan', async () => {
+    mockSubscription = subscription({ without: ['notifications'] });
+    const t = await world();
+    await t.services.setUnreadNotifications(2);
+    await renderWithServices(t.services, <HomeScreen />);
+    expect(await screen.findByTestId('section-myTasks')).toBeTruthy();
+    expect(screen.queryByTestId('notification-bell')).toBeNull();
+  });
+
+  it('says nothing while the subscription is active', async () => {
+    mockSubscription = subscription({ endsOn: '2026-11-30' });
+    await renderWithServices((await world()).services, <HomeScreen />);
+    expect(await screen.findByTestId('section-myTasks')).toBeTruthy();
+    expect(screen.queryByTestId('subscription-expired')).toBeNull();
+    expect(screen.queryByTestId('subscription-grace')).toBeNull();
+  });
+
+  it('says the organisation is view-only once it has expired, and whom to ask', async () => {
+    mockSubscription = subscription({ state: 'expired', endsOn: '2026-10-20' });
+    await renderWithServices((await world()).services, <HomeScreen />);
+    const notice = within(await screen.findByTestId('subscription-expired'));
+    expect(notice.getByText('Abunəlik bitib')).toBeTruthy();
+    expect(notice.getByText(/Təşkilatınızın rəhbərinə müraciət edin\.$/)).toBeTruthy();
+    // The runs stay listed: everything can still be viewed.
+    expect(screen.getByTestId(`occurrence-${OCC}`)).toBeTruthy();
+  });
+
+  it('shows the end date and when view-only starts during the grace days', async () => {
+    mockSubscription = subscription({ state: 'grace', endsOn: '2026-10-30' });
+    await renderWithServices((await world()).services, <HomeScreen />);
+    const notice = await screen.findByTestId('subscription-grace');
+    const text = i18n.t('mobile.home.subscription.grace', { date: formatLocalDate('2026-10-30', 'az'), graceEnd: formatLocalDate('2026-11-06', 'az') });
+    expect(within(notice).getByText(text)).toBeTruthy();
+    expect(screen.queryByTestId('subscription-expired')).toBeNull();
   });
 });

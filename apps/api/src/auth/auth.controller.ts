@@ -1,8 +1,8 @@
 import { Body, Controller, HttpCode, Inject, Post, Req, Res } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { LoginResult } from '@edildy/contracts';
 import type { Response } from 'express';
-import { CurrentPrincipal, Public } from '../common/decorators';
+import { AllowWhenExpired, CurrentPrincipal, Public } from '../common/decorators';
 import type { AppRequest, Principal } from '../common/request';
 import { APP_CONFIG, type AppConfig } from '../config/config';
 import { type IssuedLogin, AuthService } from './auth.service';
@@ -17,7 +17,6 @@ import {
   LoginWorkerDto,
   RefreshDto,
   ResetPasswordDto,
-  SignupDto,
   VerifyEmailDto,
 } from './dto';
 
@@ -29,13 +28,6 @@ export class AuthController {
     private readonly credentials: CredentialService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
-
-  @Public()
-  @Post('signup')
-  @ApiCreatedResponse({ type: LoginResultDto })
-  async signup(@Body() body: SignupDto, @Res({ passthrough: true }) res: Response): Promise<LoginResult> {
-    return this.respond(await this.auth.signup(body), res);
-  }
 
   @Public()
   @Post('verify-email')
@@ -76,6 +68,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Post('logout')
+  @AllowWhenExpired()
   @HttpCode(204)
   async logout(@CurrentPrincipal() p: Principal, @Res({ passthrough: true }) res: Response): Promise<void> {
     await this.auth.logout(p);
@@ -84,6 +77,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Post('verify-email/resend')
+  @AllowWhenExpired()
   @HttpCode(204)
   async resendVerification(@CurrentPrincipal() p: Principal): Promise<void> {
     await this.auth.resendVerification(p);
@@ -113,6 +107,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Post('credential/change')
+  @AllowWhenExpired()
   @HttpCode(204)
   async changeCredential(@CurrentPrincipal() p: Principal, @Body() body: ChangeCredentialDto): Promise<void> {
     await this.credentials.changeCredential(p, body);

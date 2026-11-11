@@ -4,6 +4,7 @@ import { formatLocalDate } from '@edildy/i18n';
 import { LanguagePicker } from '@/components/language-picker';
 import { NotificationBell } from '@/features/notifications/notification-bell';
 import { SyncIndicator } from '@/features/sync/sync-indicator';
+import { useFeature } from '@/lib/features';
 import { useLocale } from '@/lib/language';
 import { colors, font, radius, spacing, type } from '@/lib/theme';
 import { localDate } from '@/lib/time';
@@ -12,13 +13,15 @@ import { useNow } from '@/offline/hooks';
 
 /**
  * The top of every tab (Nov 2026 feedback): one deep brand block of the same height everywhere — the date and the tools
- * (sync · language · bell) on a 44 px row, then one line of title. `action` sits at the end of the title line (Tasks'
+ * (sync · language · bell, when the plan has notifications) on a 44 px row, then one line of title. `action` sits at the end of the title line (Tasks'
  * "+ Yeni"); anything longer belongs under the block, so the tabs never jump in height when switching.
  */
 export function TabHeader({ title, action, testID }: { title: string; action?: ReactNode; testID?: string }) {
   const locale = useLocale();
   const services = useOffline();
   const now = useNow();
+  // No bell without notifications in the plan (BR-01): the inbox route is closed too.
+  const bell = useFeature('notifications');
   return (
     <View testID={testID ?? 'tab-header'} style={styles.block}>
       <View style={styles.top}>
@@ -28,7 +31,7 @@ export function TabHeader({ title, action, testID }: { title: string; action?: R
         <View style={styles.tools}>
           <SyncIndicator compact />
           <LanguagePicker variant="dropdown" tone="light" testID="header-language" />
-          <NotificationBell tone="light" />
+          {bell ? <NotificationBell tone="light" /> : null}
         </View>
       </View>
       <View style={styles.titleRow}>

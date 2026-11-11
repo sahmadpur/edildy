@@ -7,6 +7,8 @@ import { filterOptions, tickOptions } from '@/test/multi-select';
 
 const mocks = vi.hoisted(() => ({ api: { audit: { list: vi.fn() } } }));
 vi.mock('@/lib/session', () => ({
+  useFeature: () => true,
+  useFeatureOrStaff: () => true,
   api: mocks.api,
   useCan: () => true,
   useMe: () => ({ tenant: { timezone: 'Asia/Baku' } }),

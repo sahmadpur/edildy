@@ -1,16 +1,16 @@
 import { expect, type Page, type Response, test } from '@playwright/test';
+import { createOrg } from './org';
 
 test('owner builds a checklist from a template, publishes v1 and v2, and v1 stays unchanged', async ({
   page,
+  request,
 }) => {
   const suffix = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-  await page.goto('/signup');
-  await page.getByLabel('Təşkilatın adı').fill('E2E Checklist MMC');
-  await page.getByLabel('Təşkilat kodu').fill(`e2e-cl-${suffix}`);
-  await page.getByLabel('Ad və soyad').fill('Elvin Əhmədov');
-  await page.getByLabel('E-poçt', { exact: true }).fill(`cl-${suffix}@example.az`);
-  await page.getByLabel('Şifrə', { exact: true }).fill('e2e owner password');
-  await page.getByRole('button', { name: 'Qeydiyyatdan keç' }).click();
+  const owner = await createOrg(request, { name: 'E2E Checklist MMC', orgCode: `e2e-cl-${suffix}`, email: `cl-${suffix}@example.az`, password: 'e2e owner password' });
+  await page.goto('/login');
+  await page.getByLabel('E-poçt', { exact: true }).fill(owner.email);
+  await page.getByLabel('Şifrə', { exact: true }).fill(owner.password);
+  await page.getByRole('button', { name: 'Daxil ol' }).click();
   await expect(page.getByRole('heading', { name: 'Göstəricilər' })).toBeVisible();
 
   // Create from a Edildy template: the Şablonlar tab of the Yoxlamalar page.

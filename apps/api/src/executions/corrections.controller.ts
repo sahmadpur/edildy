@@ -1,4 +1,5 @@
 import { Body, HttpCode, Inject, Param, Post } from '@nestjs/common';
+import { RequireFeature } from '../common/decorators';
 import { ApiOkResponse } from '@nestjs/swagger';
 import type { CorrectionResult, ReworkRequest } from '@edildy/contracts';
 import { controllerDecorators, named, perm, type RouteMode } from '../checklists/route-mode';
@@ -11,6 +12,7 @@ import { CorrectAnswersDto, CorrectionResultResponse, ReworkRequestResponse, Sen
 export function correctionsControllerFor(mode: RouteMode) {
   const correct = perm(mode, 'executions.correct');
 
+  @RequireFeature('audits')
   @controllerDecorators(mode, 'executions', 'executions')
   class CorrectionsController {
     constructor(@Inject(CorrectionsService) private readonly corrections: CorrectionsService) {}

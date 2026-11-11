@@ -1,5 +1,5 @@
 import { ApiClient, ApiError, createEdildyApi, memoryTokenStore } from '@edildy/api-client';
-import type { LoginResult, Me, PermissionKey } from '@edildy/contracts';
+import type { FeatureKey, LoginResult, Me, PermissionKey } from '@edildy/contracts';
 import { useSyncExternalStore } from 'react';
 import { setLanguage } from './i18n';
 import { queryClient } from './query';
@@ -77,6 +77,23 @@ export function useMe(): Me {
   const s = useSession();
   if (s.status !== 'authenticated') throw new Error('useMe() used outside the authenticated area');
   return s.me;
+}
+
+/** Whether the organisation's plan (or an add-on) includes `feature` (BR-01.03). */
+export function useFeature(feature: FeatureKey): boolean {
+  return useMe().tenant.subscription.features.includes(feature);
+}
+
+/** useFeature for pages shared with the platform workspace: Edildy staff (no tenant session) see everything. */
+export function useFeatureOrStaff(feature: FeatureKey): boolean {
+  const s = useSession();
+  return s.status !== 'authenticated' || s.me.tenant.subscription.features.includes(feature);
+}
+
+/** For route guards: the current session's plan includes `feature` (true when signed out; the layout redirects). */
+export function sessionHasFeature(feature: FeatureKey): boolean {
+  const s = session.get();
+  return s.status !== 'authenticated' || s.me.tenant.subscription.features.includes(feature);
 }
 
 export function useCan(...keys: PermissionKey[]): boolean {
