@@ -164,7 +164,9 @@ export default {
   /** The web home page: four period boxes, then the selected period's charts and runs. */
   home: {
     periods: 'Периоды',
-    late: 'Просрочено',
+    completed: 'Выполненные',
+    planned: 'Предстоящие',
+    late: 'Просроченные',
     problems: 'С проблемами',
     selectPeriod: 'Выбрать период {{period}}',
     breakdown: 'Статус выполнений',

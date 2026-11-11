@@ -43,7 +43,7 @@ describe('CountTiles', () => {
     renderWithRouter(<CountTiles summary={reportSummary()} search={{}} keys={DASHBOARD_TILES} />);
     const completion = await screen.findByRole('group', { name: 'Tamamlanma faizi' });
     expect(completion).toHaveTextContent('70%');
-    expect(completion).toHaveAccessibleDescription('Vaxtı çatmış icralardan tamamlananların payı');
+    expect(completion).toHaveAccessibleDescription('Vaxtı çatmış yoxlamalardan tamamlananların payı');
     expect(screen.getByRole('group', { name: 'Orta bal' })).toHaveTextContent('87,5%');
     // The dashboard's five counts only.
     expect(screen.getAllByRole('link')).toHaveLength(5);

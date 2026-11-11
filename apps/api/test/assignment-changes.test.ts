@@ -134,7 +134,7 @@ describe('changing assignments', () => {
   it('user access changes refresh snapshots and future roster rows', async () => {
     const w = await schedulingWorld(t);
     const [w0, w1] = w.workers as [string, string];
-    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id;
+    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     await w.api.put('/api/v1/roster', {
       siteId: w.siteId,
       from: TODAY,
@@ -181,7 +181,7 @@ describe('changing assignments', () => {
   it('a roster change refreshes shift-based snapshots for that site and range', async () => {
     const w = await schedulingWorld(t);
     const [, w1] = w.workers as [string, string];
-    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id;
+    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     const a = await createAssignment(w, { timing: { mode: 'shift', shiftId: shift, graceMinutes: 0 } });
     expect((await occurrenceRows(a.id))[3]!.assignees).toEqual([]);
     await w.api.put('/api/v1/roster', { siteId: w.siteId, from: '2026-11-05', to: '2026-11-05', rows: [{ userId: w1, shiftId: shift, date: '2026-11-05' }] });
@@ -190,10 +190,10 @@ describe('changing assignments', () => {
 
   it('regenerates future occurrences when a shift’s hours change', async () => {
     const w = await schedulingWorld(t);
-    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id;
+    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     const a = await createAssignment(w, { timing: { mode: 'shift', shiftId: shift, graceMinutes: 0 } });
     clock.set('2026-11-02T04:30:00Z');
-    await w.api.patch(`/api/v1/shifts/${shift}`, { startTime: '09:00', endTime: '17:00' });
+    await w.api.patch(`/api/v1/shifts/${shift}`, { ranges: [{ startTime: '09:00', endTime: '17:00' }] });
     const rows = await occurrenceRows(a.id);
     expect(rows.filter((r) => r.cancel_reason === 'shift_changed')).toHaveLength(14);
     expect(live(rows).find((r) => r.local_date === '2026-11-03')!.starts_at.toISOString()).toBe('2026-11-03T05:00:00.000Z');

@@ -62,8 +62,8 @@ describe('notification fan-out', () => {
     await t.app.get(OccurrenceJobs).sweepAll([w.s.tenantId]);
     expect(await fanOutAll(t, w.s.tenantId)).toEqual(['fanned_out']);
     expect((await inboxOf(w.workers[0]!)).map((n) => [n.type, n.title, n.body, n.target_kind, n.target_id, n.target_date])).toEqual([
-      ['checklist.assigned', 'Yeni checklist təyin edildi', 'Açılış yoxlaması — Filial 1', 'none', null, null],
-      ['checklist.overdue', 'Checklist gecikir', 'Açılış yoxlaması — Filial 1. Son vaxt 10:00 idi (02.11.2026).', 'occurrence', today.id, '2026-11-02'],
+      ['checklist.assigned', 'Yeni yoxlama təyin edildi', 'Açılış yoxlaması — Filial 1', 'none', null, null],
+      ['checklist.overdue', 'Yoxlama gecikir', 'Açılış yoxlaması — Filial 1. Son vaxt 10:00 idi (02.11.2026).', 'occurrence', today.id, '2026-11-02'],
     ]);
   });
 

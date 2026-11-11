@@ -26,7 +26,7 @@ export function useOpenNotification() {
           .finally(() => qc.invalidateQueries({ queryKey: notificationKeys.all }));
       }
       const link = notificationLink(n);
-      if (link?.to === '/schedule') await navigate({ to: '/schedule', search: link.search });
+      if (link?.to === '/calendar') await navigate({ to: '/calendar', search: link.search });
       else if (link?.to === '/tasks') await navigate({ to: '/tasks', search: link.search });
       else if (link?.to === '/problems') await navigate({ to: '/problems', search: link.search });
       else if (inboxFallback) await navigate({ to: '/notifications' });

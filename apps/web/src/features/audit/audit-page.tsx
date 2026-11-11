@@ -1,6 +1,6 @@
-import { type AuditEntryDto, toListParam } from '@taskop/contracts';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, type AuditEntryDto, toListParam } from '@taskop/contracts';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Fragment, useDeferredValue, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
@@ -12,17 +12,6 @@ import { useFormatDateTime } from '@/lib/format';
 import { api } from '@/lib/session';
 import { AuditDiff } from './audit-diff';
 
-const ENTITY_TYPES = [
-  'user',
-  'role',
-  'site',
-  'site_type',
-  'team',
-  'tenant',
-  'session',
-  'execution',
-  'task',
-] as const;
 const CLIENTS = ['web', 'mobile'] as const;
 
 /** `<input type="date">` gives a local day; convert to the UTC instant at its start/end. */
@@ -32,14 +21,14 @@ const dayBoundary = (day: string, end: boolean) =>
 export function AuditPage() {
   const { t } = useTranslation();
   const formatDateTime = useFormatDateTime();
-  const [action, setAction] = useState('');
+  const [action, setAction] = useState<string[]>([]);
   const [entityType, setEntityType] = useState<string[]>([]);
   const [client, setClient] = useState<string[]>([]);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [open, setOpen] = useState<string | null>(null);
   const filters = {
-    action: useDeferredValue(action.trim()) || undefined,
+    action: toListParam(action),
     entityType: toListParam(entityType),
     client: toListParam(client),
     from: dayBoundary(from, false),
@@ -64,15 +53,21 @@ export function AuditPage() {
       <PageHeader title={t('audit.title')} description={t('pages.auditLog')} />
       <div className="mb-4 grid gap-3 sm:grid-cols-5">
         <div className="grid gap-1.5">
-          <Label htmlFor="f-action">{t('audit.filters.action')}</Label>
-          <Input id="f-action" value={action} onChange={(e) => setAction(e.target.value)} />
+          <Label>{t('audit.filters.action')}</Label>
+          <MultiSelectFilter
+            label={t('audit.filters.action')}
+            allLabel={t('common.all')}
+            options={AUDIT_ACTIONS.map((a) => ({ value: a, label: t(`audit.actions.${a}`) }))}
+            value={action}
+            onChange={setAction}
+          />
         </div>
         <div className="grid gap-1.5">
           <Label>{t('audit.filters.entityType')}</Label>
           <MultiSelectFilter
             label={t('audit.filters.entityType')}
             allLabel={t('common.all')}
-            options={ENTITY_TYPES.map((et) => ({ value: et, label: t(`audit.entityTypes.${et}`) }))}
+            options={AUDIT_ENTITY_TYPES.map((et) => ({ value: et, label: t(`audit.entityTypes.${et}`) }))}
             value={entityType}
             onChange={setEntityType}
           />
@@ -115,9 +110,6 @@ export function AuditPage() {
                 <TableCell>{actorName(e)}</TableCell>
                 <TableCell className="text-sm">
                   {t(`audit.actions.${e.action}`, { defaultValue: e.action })}
-                  {t(`audit.actions.${e.action}`, { defaultValue: '' }) && (
-                    <span className="text-muted-foreground block text-xs tabular-nums">{e.action}</span>
-                  )}
                 </TableCell>
                 <TableCell>
                   {t(`audit.entityTypes.${e.entityType}`, { defaultValue: e.entityType })}

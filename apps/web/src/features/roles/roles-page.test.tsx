@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/render';
-import { RolesPage } from './roles-page';
+import { RolesPanel } from './roles-page';
 
 const mocks = vi.hoisted(() => ({
   api: {
@@ -42,12 +42,12 @@ beforeEach(() => {
   mocks.api.roles.catalog.mockResolvedValue([{ group: 'users', keys: ['users.view', 'users.manage'] }]);
 });
 
-describe('RolesPage saving', () => {
+describe('RolesPanel saving', () => {
   it('refreshes roles and shows the error when setPermissions fails after the name update', async () => {
     mocks.api.roles.list.mockResolvedValue([role()]);
     mocks.api.roles.update.mockResolvedValue(role({ name: 'Yeni' }));
     mocks.api.roles.setPermissions.mockRejectedValue(new Error('boom'));
-    renderWithProviders(<RolesPage />);
+    renderWithProviders(<RolesPanel />);
     await userEvent.click(await screen.findByRole('button', { name: /Köhnə/ }));
     const name = await screen.findByLabelText('Rolun adı');
     await userEvent.clear(name);
@@ -59,7 +59,7 @@ describe('RolesPage saving', () => {
 
   it('opens with the first role selected, so its editor shows without a click', async () => {
     mocks.api.roles.list.mockResolvedValue([role(), role({ id: 'r2', name: 'İkinci' })]);
-    renderWithProviders(<RolesPage />);
+    renderWithProviders(<RolesPanel />);
     expect(await screen.findByLabelText('Rolun adı')).toHaveValue('Köhnə');
     expect(screen.getByRole('button', { name: /Köhnə/ })).toHaveClass('bg-muted');
     expect(screen.queryByText('Redaktə etmək üçün rol seçin.')).toBeNull();

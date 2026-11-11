@@ -190,7 +190,7 @@ function ProblemCard({ taskId, problem: p }: { taskId: string; problem: ProblemD
       {p.note && <p className="whitespace-pre-line">{p.note}</p>}
       <ProblemMediaStrip taskId={taskId} media={p.media} />
       <Link
-        to="/schedule"
+        to="/calendar"
         search={{ date: p.localDate, occurrence: p.occurrenceId, tab: 'execution' }}
         className="w-fit underline-offset-4 hover:underline"
       >

@@ -15,12 +15,12 @@ import {
   primaryKey,
   real,
   text,
-  time,
   timestamp,
   unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import type { ShiftRange } from '@taskop/contracts';
 import { uuidv7 } from 'uuidv7';
 import { citext, ltree } from './column-types';
 
@@ -442,8 +442,8 @@ export const shifts = pgTable(
     id: id(),
     tenantId: tenantId(),
     name: text('name').notNull(),
-    startTime: time('start_time').notNull(),
-    endTime: time('end_time').notNull(),
+    /** The shift's periods in start order, `[{ startTime: 'HH:MM', endTime: 'HH:MM' }]` (feedback 2026-11-11, item 12). */
+    ranges: jsonb('ranges').$type<ShiftRange[]>().notNull(),
     // null = usable at every site.
     siteId: uuid('site_id'),
     active: boolean('active').notNull().default(true),
@@ -453,7 +453,6 @@ export const shifts = pgTable(
   (t) => [
     unique('shifts_tenant_id_uq').on(t.tenantId, t.id),
     foreignKey({ columns: [t.tenantId, t.siteId], foreignColumns: [sites.tenantId, sites.id], name: 'shifts_site_fk' }),
-    check('shifts_nonzero_ck', sql`${t.startTime} <> ${t.endTime}`),
     index('shifts_tenant_idx').on(t.tenantId),
   ],
 );

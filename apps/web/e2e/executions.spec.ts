@@ -129,11 +129,10 @@ test('a worker executes an occurrence through the API, then the owner reads it i
   await expect(page.getByRole('heading', { name: 'Problemlər' })).toBeVisible();
   const glassRow = page.getByRole('row').filter({ hasText: 'Şüşədə çat var' });
   const binRow = page.getByRole('row').filter({ hasText: 'Zibil qutuları boşaldılıb?' });
-  for (const text of ['Giriş qapısının şüşələri təmizdir?', 'Kritik', 'Əl ilə qeyd', 'Nigar Səfərli', 'Anbar №1', 'E2E icra']) {
+  for (const text of ['Giriş qapısının şüşələri təmizdir?', 'Kritik', 'Nigar Səfərli', 'Anbar №1', 'E2E icra']) {
     await expect(glassRow).toContainText(text);
   }
   await expect(binRow).toContainText('Adi');
-  await expect(binRow).toContainText('Qayda üzrə');
   // The type filter is a tick-box multi-select (feedback 2026-11-07).
   await page.getByRole('button', { name: 'Növ', exact: true }).click();
   await page.getByRole('group', { name: 'Növ' }).getByRole('checkbox', { name: 'Kritik' }).click();
@@ -143,7 +142,7 @@ test('a worker executes an occurrence through the API, then the owner reads it i
 
   // A row opens the occurrence drawer on its execution tab.
   await glassRow.getByRole('link', { name: 'Giriş qapısının şüşələri təmizdir?' }).click();
-  await expect(page).toHaveURL(/\/schedule\?/);
+  await expect(page).toHaveURL(/\/calendar\?/);
   const drawer = page.getByRole('dialog');
   await expect(drawer.getByRole('tab', { name: 'İcra' })).toHaveAttribute('aria-selected', 'true');
   await expect(drawer.getByText('Nigar Səfərli', { exact: true })).toBeVisible();

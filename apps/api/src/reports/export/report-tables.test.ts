@@ -43,15 +43,15 @@ describe('report tables', () => {
       score: 100, problemCount: 1, criticalCount: 0, late: false, clockSuspect: true, auditState: 'passed', corrected: true,
     };
     const t = runsTable([run], runsTitle('all'));
-    expect(t.title).toBe('İcralar');
+    expect(t.title).toBe('Yoxlamalar');
     expect(t.columns.map((c) => c.label)).toEqual([
-      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Obyekt', 'Status', 'İcraçılar', 'İcra edən', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
+      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Obyekt', 'Status', 'İcraçılar', 'Yoxlayan', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
     ]);
     expect(t.rows[0]).toEqual([
       '2026-11-02', '2026-11-02T06:00:00.000Z', 'Açılış yoxlaması', 'Zona A1', 'Tamamlanıb', 'Aynur, Kamran', 'Kamran',
       '2026-11-02T04:10:00.000Z', '2026-11-02T05:40:00.000Z', '2026-11-04T05:00:00.000Z', 100, 1, 0, false, true, 'Audit uğurlu', true,
     ]);
-    expect(runsTitle('missed')).toBe('İcralar (Buraxılmış)');
+    expect(runsTitle('missed')).toBe('Yoxlamalar (Buraxılmış)');
   });
 
   it('joins a site’s ancestors and labels the Unassigned employee', () => {

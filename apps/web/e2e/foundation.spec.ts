@@ -24,7 +24,7 @@ test('owner signs up, creates a site and a worker, and finds the worker after lo
   await page.getByRole('link', { name: 'Əməkdaşlar' }).click();
   await page.getByRole('button', { name: 'Yeni əməkdaş' }).click();
   await page.getByLabel('Ad və soyad').fill('Nigar Səfərli');
-  await page.getByLabel('İstifadəçi adı').fill('nigar');
+  await page.getByLabel('Login').fill('nigar');
   await page.getByRole('checkbox', { name: 'Anbar №1' }).check();
   await page.getByRole('button', { name: 'Yarat' }).click();
   await expect(page.getByText('Giriş məlumatları')).toBeVisible();

@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,11 @@ import { api, useCan, useMe } from '@/lib/session';
 import { useCatalog, useRoles, roleDisplayName } from './queries';
 import { RoleEditor } from './role-editor';
 
-export function RolesPage() {
+/**
+ * Əməkdaş rolları: the role list beside the role editor. A Parametrlər tab since feedback 2026-11-11 (item 16), so it has
+ * no page header of its own; its line and the add button sit on top.
+ */
+export function RolesPanel() {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const me = useMe();
@@ -30,11 +33,11 @@ export function RolesPage() {
   };
 
   return (
-    <div>
-      <PageHeader
-        title={t('roles.title')} description={t('pages.roles')}
-        actions={canManage && <Button onClick={() => setSelected('new')}>{t('roles.add')}</Button>}
-      />
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-muted-foreground text-sm">{t('pages.roles')}</p>
+        {canManage && <Button onClick={() => setSelected('new')}>{t('roles.add')}</Button>}
+      </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
         <Card>
           <CardContent className="grid gap-1 p-2">

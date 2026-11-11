@@ -1,13 +1,28 @@
 import { z } from 'zod';
 import { idSchema } from './common.js';
 import { dayNumber, localDateSchema, localTimeSchema } from './scheduling-time.js';
-import { localRangeCheck, SCHEDULING_LIMITS } from './scheduling.js';
+import { localRangeCheck, rangesOverlap, SCHEDULING_LIMITS, SHIFT_MAX_RANGES } from './scheduling.js';
+
+export const shiftRangeSchema = z.object({ startTime: localTimeSchema, endTime: localTimeSchema });
+
+/** 1–4 periods, none of zero length, none sharing a minute with another (feedback 2026-11-11, item 12). */
+export const shiftRangesSchema = z
+  .array(shiftRangeSchema)
+  .min(1)
+  .max(SHIFT_MAX_RANGES)
+  .superRefine((ranges, ctx) => {
+    ranges.forEach((r, i) => {
+      if (r.startTime === r.endTime) ctx.addIssue({ code: 'custom', path: [i, 'endTime'], message: 'scheduling.issues.shiftZeroLength' });
+      else if (ranges.slice(0, i).some((o) => o.startTime !== o.endTime && rangesOverlap(o, r)))
+        ctx.addIssue({ code: 'custom', path: [i, 'startTime'], message: 'scheduling.issues.shiftRangesOverlap' });
+    });
+  });
 
 export const shiftDtoSchema = z.object({
   id: idSchema,
   name: z.string(),
-  startTime: localTimeSchema,
-  endTime: localTimeSchema,
+  /** In start order. */
+  ranges: z.array(shiftRangeSchema),
   /** null = usable at every site. */
   siteId: idSchema.nullable(),
   siteName: z.string().nullable(),
@@ -17,18 +32,13 @@ export type ShiftDto = z.infer<typeof shiftDtoSchema>;
 
 const shiftName = z.string().trim().min(1).max(100);
 
-export const createShiftInputSchema = z
-  .object({ name: shiftName, startTime: localTimeSchema, endTime: localTimeSchema, siteId: idSchema.nullable().optional() })
-  .superRefine((v, ctx) => {
-    if (v.startTime === v.endTime) ctx.addIssue({ code: 'custom', path: ['endTime'], message: 'scheduling.issues.shiftZeroLength' });
-  });
+export const createShiftInputSchema = z.object({ name: shiftName, ranges: shiftRangesSchema, siteId: idSchema.nullable().optional() });
 export type CreateShiftInput = z.input<typeof createShiftInputSchema>;
 
-/** The zero-length check needs the stored values, so the API does it on the merged result. */
+/** `ranges` replaces all of the shift's periods. */
 export const updateShiftInputSchema = z.object({
   name: shiftName.optional(),
-  startTime: localTimeSchema.optional(),
-  endTime: localTimeSchema.optional(),
+  ranges: shiftRangesSchema.optional(),
   siteId: idSchema.nullable().optional(),
   active: z.boolean().optional(),
 });

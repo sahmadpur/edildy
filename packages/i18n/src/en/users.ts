@@ -5,7 +5,8 @@ export default {
   search: 'Name, username or email',
   kinds: { worker: 'Worker (mobile)', staff: 'Staff (web)' },
   statuses: { active: 'Active', deactivated: 'Deactivated', invited: 'Invited' },
-  columns: { name: 'Name', login: 'Login', role: 'Role', status: 'Status', lastLogin: 'Last login' },
+  columns: { name: 'Name', sites: 'Site', login: 'Login', role: 'Role', status: 'Status', lastLogin: 'Last login' },
+  tabs: { list: 'Employee list', teams: 'Teams' },
   never: 'Never',
   empty: 'No users found.',
   form: {

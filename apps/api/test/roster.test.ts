@@ -15,8 +15,8 @@ describe('roster', () => {
 
   async function world() {
     const w = await schedulingWorld(t, 2);
-    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id as string;
-    const night = (await w.api.post('/api/v1/shifts', { name: 'Gecə', startTime: '22:00', endTime: '06:00', siteId: w.otherSiteId })).body.id as string;
+    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id as string;
+    const night = (await w.api.post('/api/v1/shifts', { name: 'Gecə', ranges: [{ startTime: '22:00', endTime: '06:00' }], siteId: w.otherSiteId })).body.id as string;
     return { w, morning, night };
   }
 
@@ -113,7 +113,7 @@ describe('roster after access changes', () => {
   it('keeps stored rows of a person deactivated mid-week but refuses new ones', async () => {
     const w = await schedulingWorld(t, 2);
     const [w0, w1] = w.workers as [string, string];
-    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id as string;
+    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id as string;
     const rows = [
       { userId: w0, shiftId: morning, date: '2026-11-02' },
       { userId: w1, shiftId: morning, date: '2026-11-02' },
@@ -136,7 +136,7 @@ describe('roster after access changes', () => {
   it('keeps stored rows of a deactivated shift but refuses new ones', async () => {
     const w = await schedulingWorld(t, 2);
     const [w0, w1] = w.workers as [string, string];
-    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id as string;
+    const morning = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id as string;
     const rows = [{ userId: w0, shiftId: morning, date: '2026-11-05' }];
     expect((await w.api.put('/api/v1/roster', { siteId: w.siteId, ...week, rows })).status).toBe(200);
     await w.api.patch(`/api/v1/shifts/${morning}`, { active: false });

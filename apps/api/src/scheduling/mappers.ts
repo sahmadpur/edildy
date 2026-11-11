@@ -1,20 +1,20 @@
-import { type AssignmentDto, type ExecutionBrief, type OccurrenceDto, type OccurrenceHistoryEntry, type Recurrence, recurrenceSchema, type ShiftDto, timingSchema, type UserRef } from '@taskop/contracts';
+import { type AssignmentDto, type ExecutionBrief, type OccurrenceDto, type OccurrenceHistoryEntry, type Recurrence, recurrenceSchema, type ShiftDto, type ShiftRange, timingSchema, type UserRef } from '@taskop/contracts';
 import type { assignments, occurrences, occurrenceStatusHistory } from '../db/schema';
-
-/** Postgres `time` reads back as 'HH:MM:SS'. */
-export const hhmm = (t: string): string => t.slice(0, 5);
 
 export interface ShiftRow {
   id: string;
   name: string;
-  startTime: string;
-  endTime: string;
+  ranges: ShiftRange[];
   siteId: string | null;
   siteName: string | null;
   active: boolean;
 }
 
-export const toShiftDto = (r: ShiftRow): ShiftDto => ({ ...r, startTime: hhmm(r.startTime), endTime: hhmm(r.endTime) });
+export const toShiftDto = (r: ShiftRow): ShiftDto => ({ ...r, ranges: sortRanges(r.ranges) });
+
+/** A shift's periods in start order, as stored and shown. */
+export const sortRanges = (ranges: readonly ShiftRange[]): ShiftRange[] =>
+  [...ranges].map((x) => ({ startTime: x.startTime, endTime: x.endTime })).sort((a, b) => (a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0));
 
 const canonical = (v: unknown): unknown => {
   if (Array.isArray(v)) return v.map(canonical);

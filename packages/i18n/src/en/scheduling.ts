@@ -4,6 +4,7 @@ export default {
     duplicateDate: 'This date has already been added.',
     duplicateWeekday: 'This weekday is repeated.',
     shiftZeroLength: 'The shift start and end times cannot be the same.',
+    shiftRangesOverlap: 'The shift periods must not overlap.',
     rangeTooLong: 'The date range is too long (62 days at most).',
     dateOutOfRange: 'The date is outside the selected range.',
     repeatEndBeforeStart: 'The end time must be after the start time.',
@@ -66,6 +67,10 @@ export default {
     site: 'Site',
     allSites: 'All sites',
     nextDay: 'ends the next day',
+    addRange: 'Add a time period',
+    removeRange: 'Remove period {{n}}',
+    range: 'Period {{n}}',
+    rangesHint: 'Each period gets its own inspection.',
     empty: 'No shifts yet.',
   },
   roster: {

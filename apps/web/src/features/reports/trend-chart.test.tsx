@@ -12,8 +12,8 @@ vi.mock('recharts', async (original) => fixedSizeCharts(await original<object>()
 describe('TrendChart', () => {
   it('draws due and completed per day with the completion line, and gives the same numbers as a table', () => {
     renderWithProviders(<TrendChart trend={reportSummary().trend} />);
-    const figure = screen.getByRole('figure', { name: 'Gündəlik icra' });
-    const rows = within(within(figure).getByRole('table', { name: 'Gündəlik icra cədvəli' })).getAllByRole('row');
+    const figure = screen.getByRole('figure', { name: 'Gündəlik yoxlamalar' });
+    const rows = within(within(figure).getByRole('table', { name: 'Gündəlik yoxlama cədvəli' })).getAllByRole('row');
     expect(rows).toHaveLength(4);
     expect(within(rows[0]!).getAllByRole('columnheader').map((c) => c.textContent)).toEqual(['Tarix', 'Vaxtı çatıb', 'Tamamlanıb', 'Tamamlanma faizi']);
     expect(within(rows[1]!).getAllByRole('cell').map((c) => c.textContent)).toEqual([formatLocalDate('2026-11-02'), '4', '3', '75%']);

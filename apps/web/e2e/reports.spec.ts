@@ -126,17 +126,17 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
 
   // Last 7 days covers yesterday whatever the time of day (decision 18).
   const week = page.getByRole('article', { name: 'Son 7 gün' });
-  for (const name of ['Planlaşdırılıb: 2', 'Tamamlanıb: 1', 'Problemli: 1', 'Gecikib: 1']) {
+  for (const name of ['Gələcək: 2', 'Tamamlanan: 1', 'Problemli: 1', 'Gecikən: 1']) {
     await expect(week.getByRole('button', { name })).toBeVisible();
   }
 
   // Late → that box is selected and its overdue runs open under the boxes; the URL does not change.
-  await week.getByRole('button', { name: 'Gecikib: 1' }).click();
+  await week.getByRole('button', { name: 'Gecikən: 1' }).click();
   await expect(week.getByRole('button', { name: 'Son 7 gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
   const detail = page.getByRole('region', { name: 'Son 7 gün' });
   await expect(detail.getByRole('group', { name: 'Tamamlanma faizi' })).toContainText('50%');
   await expect(detail.getByRole('group', { name: 'Orta bal' })).toContainText(/87[,.]5%/);
-  await expect(detail.getByRole('group', { name: 'İcralar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(detail.getByRole('group', { name: 'Yoxlamalar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
   const homeRows = detail.getByRole('table').getByRole('row');
   await expect(homeRows).toHaveCount(2);
   for (const text of ['E2E hesabat', 'Anbar №1', 'Gecikib', 'Nigar Səfərli']) await expect(homeRows.nth(1)).toContainText(text);
@@ -144,8 +144,8 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
 
   // The runs report, overdue bucket, same period.
   await page.goto('/reports?period=last_7&tab=runs&bucket=overdue');
-  await expect(page.getByRole('tab', { name: 'İcralar' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('group', { name: 'İcralar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('tab', { name: 'Yoxlamalar' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('group', { name: 'Yoxlamalar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
   const rows = page.getByRole('table').getByRole('row');
   await expect(rows).toHaveCount(2);
   for (const text of ['E2E hesabat', 'Anbar №1', 'Gecikib', 'Nigar Səfərli']) await expect(rows.nth(1)).toContainText(text);

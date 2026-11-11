@@ -34,11 +34,11 @@ const nowhere = { targetKind: 'none', targetId: null, targetDate: null } as cons
 
 describe('renderNotification', () => {
   it.each([
-    ['checklist.assigned', assignment, 'Yeni checklist təyin edildi', 'Açılış yoxlaması — Filial 1', nowhere],
-    ['checklist.available', occurrence, 'Checklist başladı', 'Açılış yoxlaması — Filial 1. Son vaxt: 10:00.', onOccurrence],
-    ['checklist.due_soon', occurrence, 'Checklistin vaxtı yaxınlaşır', 'Açılış yoxlaması — Filial 1. 10:00-dək tamamlayın.', onOccurrence],
-    ['checklist.overdue', occurrence, 'Checklist gecikir', 'Açılış yoxlaması — Filial 1. Son vaxt 10:00 idi (02.11.2026).', onOccurrence],
-    ['checklist.missed', occurrence, 'Checklist icra olunmadı', 'Açılış yoxlaması — Filial 1, 02.11.2026.', onOccurrence],
+    ['checklist.assigned', assignment, 'Yeni yoxlama təyin edildi', 'Açılış yoxlaması — Filial 1', nowhere],
+    ['checklist.available', occurrence, 'Yoxlama başladı', 'Açılış yoxlaması — Filial 1. Son vaxt: 10:00.', onOccurrence],
+    ['checklist.due_soon', occurrence, 'Yoxlamanın vaxtı yaxınlaşır', 'Açılış yoxlaması — Filial 1. 10:00-dək tamamlayın.', onOccurrence],
+    ['checklist.overdue', occurrence, 'Yoxlama gecikir', 'Açılış yoxlaması — Filial 1. Son vaxt 10:00 idi (02.11.2026).', onOccurrence],
+    ['checklist.missed', occurrence, 'Yoxlama keçirilmədi', 'Açılış yoxlaması — Filial 1, 02.11.2026.', onOccurrence],
     ['problem.recorded', { ...problem, severity: 'normal' }, 'Yeni problem', 'Filial 1, Açılış yoxlaması: Kondisioner xarabdır', onOccurrence],
     ['problem.critical', problem, 'Kritik problem!', 'Filial 1, Açılış yoxlaması: Kondisioner xarabdır', onOccurrence],
     ['task.assigned', task, 'Yeni tapşırıq', 'Soyuducunun qapısını təmir edin. Son vaxt: 02.11.2026 14:30.', onTask],
@@ -148,8 +148,8 @@ describe('links and email', () => {
   const web = 'http://localhost:5173';
 
   it('links each target kind to its web page', () => {
-    expect(notificationLink(web, { type: 'checklist.overdue', ...onOccurrence })).toBe(`${web}/schedule?date=2026-11-02&occurrence=${OCC}`);
-    expect(notificationLink(web, { type: 'problem.critical', ...onOccurrence })).toBe(`${web}/schedule?date=2026-11-02&occurrence=${OCC}&tab=execution`);
+    expect(notificationLink(web, { type: 'checklist.overdue', ...onOccurrence })).toBe(`${web}/calendar?date=2026-11-02&occurrence=${OCC}`);
+    expect(notificationLink(web, { type: 'problem.critical', ...onOccurrence })).toBe(`${web}/calendar?date=2026-11-02&occurrence=${OCC}&tab=execution`);
     expect(notificationLink(web, { type: 'task.assigned', ...onTask })).toBe(`${web}/tasks?task=${TASK}`);
     expect(notificationLink(web, { type: 'manual', ...nowhere })).toBe(`${web}/notifications`);
   });
@@ -159,7 +159,7 @@ describe('links and email', () => {
     expect(notificationMail({ to: 'menecer@example.az', webUrl: web, locale: 'az', notification: { type: 'problem.critical', ...rendered } })).toEqual({
       to: 'menecer@example.az',
       subject: 'Kritik problem!',
-      text: `Filial 1, Açılış yoxlaması: Kondisioner xarabdır\n\nAçmaq üçün: ${web}/schedule?date=2026-11-02&occurrence=${OCC}&tab=execution\n\nBu e-poçtları profil ayarlarında söndürə bilərsiniz.`,
+      text: `Filial 1, Açılış yoxlaması: Kondisioner xarabdır\n\nAçmaq üçün: ${web}/calendar?date=2026-11-02&occurrence=${OCC}&tab=execution\n\nBu e-poçtları profil ayarlarında söndürə bilərsiniz.`,
     });
   });
 });

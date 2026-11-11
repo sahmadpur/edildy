@@ -75,7 +75,7 @@ describe('assignments', () => {
   it('snapshots only rostered assignees for shift timing', async () => {
     const w = await schedulingWorld(t);
     const [w0, w1] = w.workers as [string, string];
-    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id;
+    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     await w.api.put('/api/v1/roster', {
       siteId: w.siteId,
       from: TODAY,
@@ -120,9 +120,9 @@ describe('assignments', () => {
     expect((await post(w, { schedule: { kind: 'once', date: '2026-10-01' } })).body.error.code).toBe('SCHEDULE_EMPTY');
     expect((await post(w, { assigneeIds: [] })).status).toBe(400);
 
-    const otherShift = (await w.api.post('/api/v1/shifts', { name: 'Gecə', startTime: '22:00', endTime: '06:00', siteId: w.otherSiteId })).body.id;
+    const otherShift = (await w.api.post('/api/v1/shifts', { name: 'Gecə', ranges: [{ startTime: '22:00', endTime: '06:00' }], siteId: w.otherSiteId })).body.id;
     expect((await post(w, { timing: { mode: 'shift', shiftId: otherShift, graceMinutes: 0 } })).body.error.code).toBe('SHIFT_NOT_AT_SITE');
-    const off = (await w.api.post('/api/v1/shifts', { name: 'Off', startTime: '08:00', endTime: '16:00' })).body.id;
+    const off = (await w.api.post('/api/v1/shifts', { name: 'Off', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     await w.api.patch(`/api/v1/shifts/${off}`, { active: false });
     expect((await post(w, { timing: { mode: 'shift', shiftId: off, graceMinutes: 0 } })).body.error.code).toBe('SHIFT_INACTIVE');
 
@@ -171,7 +171,7 @@ describe('assignments', () => {
     expect(res.body.slots[0]).toEqual({ localDate: TODAY, startsAt: '2026-11-02T04:00:00.000Z', dueAt: '2026-11-02T06:00:00.000Z', closesAt: '2026-11-02T07:00:00.000Z' });
     expect(res.body.warnings).toEqual(['SKIP_DATE_OUT_OF_RANGE']);
 
-    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id;
+    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     const noRoster = await w.api.post('/api/v1/assignments/preview', { siteId: w.siteId, schedule: daily(), timing: { mode: 'shift', shiftId: shift, graceMinutes: 0 }, assigneeIds: w.workers });
     expect(noRoster.body.warnings).toEqual(['NO_ROSTERED_ASSIGNEES']);
     const past = await w.api.post('/api/v1/assignments/preview', { siteId: w.siteId, schedule: { kind: 'once', date: '2026-10-01' }, timing: fixed() });

@@ -17,11 +17,24 @@ const schedule = { kind: 'daily', every: 1, startDate: '2026-11-02', endDate: nu
 const timing = { mode: 'fixed', startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 60 };
 
 describe('scheduling resources', () => {
-  it('rejects a zero-length shift on endTime', () => {
-    const r = createShiftInputSchema.safeParse({ name: 'Səhər', startTime: '08:00', endTime: '08:00' });
+  it('rejects a zero-length shift period on its endTime', () => {
+    const r = createShiftInputSchema.safeParse({ name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '08:00' }] });
     expect(r.success).toBe(false);
-    expect(r.error!.issues[0]).toMatchObject({ path: ['endTime'], message: 'scheduling.issues.shiftZeroLength' });
-    expect(createShiftInputSchema.safeParse({ name: 'Gecə', startTime: '22:00', endTime: '06:00' }).success).toBe(true);
+    expect(r.error!.issues[0]).toMatchObject({ path: ['ranges', 0, 'endTime'], message: 'scheduling.issues.shiftZeroLength' });
+    expect(createShiftInputSchema.safeParse({ name: 'Gecə', ranges: [{ startTime: '22:00', endTime: '06:00' }] }).success).toBe(true);
+  });
+
+  it('takes several periods that do not overlap, up to four (feedback 2026-11-11, item 12)', () => {
+    const ranges = (...pairs: [string, string][]) => ({ name: 'X', ranges: pairs.map(([startTime, endTime]) => ({ startTime, endTime })) });
+    expect(createShiftInputSchema.safeParse(ranges(['08:00', '10:00'], ['18:00', '20:00'])).success).toBe(true);
+    expect(createShiftInputSchema.safeParse(ranges(['08:00', '10:00'], ['10:00', '12:00'])).success).toBe(true);
+    const clash = createShiftInputSchema.safeParse(ranges(['08:00', '10:00'], ['09:30', '11:00']));
+    expect(clash.error!.issues[0]).toMatchObject({ path: ['ranges', 1, 'startTime'], message: 'scheduling.issues.shiftRangesOverlap' });
+    // A night period wraps round midnight into a morning one.
+    expect(createShiftInputSchema.safeParse(ranges(['22:00', '06:00'], ['05:00', '07:00'])).success).toBe(false);
+    expect(createShiftInputSchema.safeParse(ranges(['22:00', '02:00'], ['06:00', '08:00'])).success).toBe(true);
+    expect(createShiftInputSchema.safeParse({ name: 'X', ranges: [] }).success).toBe(false);
+    expect(createShiftInputSchema.safeParse(ranges(['01:00', '02:00'], ['03:00', '04:00'], ['05:00', '06:00'], ['07:00', '08:00'], ['09:00', '10:00'])).success).toBe(false);
   });
 
   it('parses comma-separated statuses and limits the date range', () => {

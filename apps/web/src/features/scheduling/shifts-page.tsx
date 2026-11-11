@@ -1,4 +1,4 @@
-import type { ShiftDto } from '@taskop/contracts';
+import { formatShiftRanges, type ShiftDto } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,7 +30,7 @@ export function ShiftsPage({ tabs }: { tabs?: ReactNode } = {}) {
       toast.error(errorText(t, e));
     }
   };
-  const hours = (s: ShiftDto) => `${s.startTime}–${s.endTime}${s.endTime < s.startTime ? ` (${t('scheduling.shifts.nextDay')})` : ''}`;
+  const hours = (s: ShiftDto) => formatShiftRanges(s.ranges, t('scheduling.shifts.nextDay'));
 
   return (
     <div>

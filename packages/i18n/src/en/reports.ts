@@ -164,6 +164,8 @@ export default {
   /** The web home page: four period boxes, then the selected period's charts and runs. */
   home: {
     periods: 'Periods',
+    completed: 'Completed',
+    planned: 'Upcoming',
     late: 'Late',
     problems: 'With problems',
     selectPeriod: 'Select the period {{period}}',

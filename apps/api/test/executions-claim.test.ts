@@ -144,7 +144,7 @@ describe('claims (POST /executions)', () => {
     const tuesday = await occurrenceOn(w.assignmentId, TUESDAY);
     const wednesday = await occurrenceOn(w.assignmentId, WEDNESDAY);
     expect((await w.owner.post(`/api/v1/occurrences/${wednesday}/cancel`, { reason: 'Bayram' })).status).toBe(200);
-    const shift = (await w.owner.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id as string;
+    const shift = (await w.owner.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id as string;
     await w.owner.put('/api/v1/roster', { siteId: w.siteId, from: TODAY, to: TODAY, rows: [{ userId: w0.id, shiftId: shift, date: TODAY }] });
     const shiftAssignment = await w.owner.post('/api/v1/assignments', {
       checklistId: w.checklistId,

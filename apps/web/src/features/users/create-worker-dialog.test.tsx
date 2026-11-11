@@ -37,7 +37,7 @@ describe('CreateWorkerDialog', () => {
     const onCreated = vi.fn();
     renderWithProviders(<CreateWorkerDialog open onOpenChange={vi.fn()} orgCode="acme" onCreated={onCreated} />);
     await userEvent.type(screen.getByLabelText('Ad və soyad'), 'Elvin Məmmədov');
-    await userEvent.type(screen.getByLabelText('İstifadəçi adı'), 'Elvin.M');
+    await userEvent.type(screen.getByLabelText('Login'), 'Elvin.M');
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
 
     expect(createWorker).toHaveBeenCalledWith(
@@ -54,9 +54,9 @@ describe('CreateWorkerDialog', () => {
     createWorker.mockRejectedValue(new ApiError(409, 'USERNAME_TAKEN', 'errors.USERNAME_TAKEN', { username: 'errors.USERNAME_TAKEN' }));
     renderWithProviders(<CreateWorkerDialog open onOpenChange={vi.fn()} orgCode="acme" onCreated={vi.fn()} />);
     await userEvent.type(screen.getByLabelText('Ad və soyad'), 'Elvin Məmmədov');
-    await userEvent.type(screen.getByLabelText('İstifadəçi adı'), 'elvin');
+    await userEvent.type(screen.getByLabelText('Login'), 'elvin');
     await userEvent.click(screen.getByRole('button', { name: 'Yarat' }));
-    expect(await screen.findByText('Bu istifadəçi adı artıq mövcuddur.')).toBeInTheDocument();
+    expect(await screen.findByText('Bu login artıq mövcuddur.')).toBeInTheDocument();
   });
 
   it('does not query sites, teams or roles the actor may not view', () => {

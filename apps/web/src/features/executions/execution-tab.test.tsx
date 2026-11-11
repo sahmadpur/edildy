@@ -65,7 +65,7 @@ describe('ExecutionTab', () => {
     await userEvent.click(toggle);
     const item = screen.getByRole('listitem', { name: 'Murad Əliyev' });
     expect(within(item).getByText('Rədd edilib')).toBeInTheDocument();
-    expect(within(item).getByText('Səbəb: Bu checklist artıq başqa əməkdaş tərəfindən icra olunur.')).toBeInTheDocument();
+    expect(within(item).getByText('Səbəb: Bu yoxlama artıq başqa əməkdaş tərəfindən icra olunur.')).toBeInTheDocument();
     expect(within(item).getByText('Tamamlanmayıb')).toBeInTheDocument();
     expect(within(item).getByText('Bal hesablanmır')).toBeInTheDocument();
     expect(within(item).getByText('4 tələb yerinə yetirilməyib')).toBeInTheDocument();

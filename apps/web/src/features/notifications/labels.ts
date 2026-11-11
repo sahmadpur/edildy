@@ -5,7 +5,7 @@ import type { ScheduleSearch } from '@/features/scheduling/routes';
 import type { ProblemsSearch } from '@/features/problem-reports/routes';
 import type { TasksSearch } from '@/features/tasks/routes';
 
-export type NotificationLink = { to: '/schedule'; search: ScheduleSearch } | { to: '/tasks'; search: TasksSearch } | { to: '/problems'; search: ProblemsSearch };
+export type NotificationLink = { to: '/calendar'; search: ScheduleSearch } | { to: '/tasks'; search: TasksSearch } | { to: '/problems'; search: ProblemsSearch };
 
 /** SP8: the run dialog tab an audit notification is about (decision 18). Problems and a finished run open the execution tab. */
 const RUN_TABS: Partial<Record<NotificationType, OccurrenceTab>> = {
@@ -27,9 +27,9 @@ export function notificationLink(n: Pick<NotificationItem, 'type' | 'targetKind'
   if (n.targetKind === 'occurrence') {
     const tab: OccurrenceTab | undefined = isProblemType(n.type) ? 'execution' : RUN_TABS[n.type];
     return {
-      to: '/schedule',
+      to: '/calendar',
       search: {
-        // Without a date the schedule opens the current week; the drawer still opens the occurrence.
+        // Without a date the calendar opens the current month; the drawer still opens the occurrence.
         ...(n.targetDate ? { date: n.targetDate } : {}),
         occurrence: n.targetId,
         ...(tab ? { tab } : {}),

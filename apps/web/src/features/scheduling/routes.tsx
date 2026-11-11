@@ -7,7 +7,6 @@ import { AssignmentDetailPage, AssignmentsPage, NewAssignmentPage } from './assi
 import { CalendarPage } from './calendar-page';
 import { OCCURRENCE_TABS, type OccurrenceTab } from './occurrence-dialog';
 import { RosterPage } from './roster-page';
-import { SchedulePage } from './schedule-page';
 import { ShiftsPage } from './shifts-page';
 import { WorkTabs } from './work-tabs';
 
@@ -25,9 +24,10 @@ function RouteTabs({ label, tabs, active }: { label: string; tabs: readonly { to
   return <PageTabs label={label} tabs={tabs.map((tab) => ({ key: tab.to, label: t(tab.labelKey), href: tab.to, active: tab.to === active, onClick: go(tab.to) }))} />;
 }
 
+/** Növbə cədvəli first: the menu opens it (feedback 2026-11-11, item 11). */
 const SHIFT_TABS = [
-  { to: '/shifts', labelKey: 'nav.shifts' },
   { to: '/roster', labelKey: 'nav.roster' },
+  { to: '/shifts', labelKey: 'nav.shifts' },
 ] as const;
 
 function ShiftTabs({ active }: { active: '/shifts' | '/roster' }) {
@@ -40,7 +40,11 @@ export function AssignmentsRoute() {
 }
 
 export function CalendarRoute() {
-  return <CalendarPage tabs={<WorkTabs active="/calendar" />} />;
+  const s = useSearch({ strict: false }) as ScheduleSearch;
+  // A new link remounts the page, so its month and drawer replace the current ones.
+  return (
+    <CalendarPage key={`${s.date ?? ''}|${s.occurrence ?? ''}|${s.tab ?? ''}`} initialDate={s.date} initialOccurrenceId={s.occurrence} initialTab={s.tab} tabs={<WorkTabs active="/calendar" />} />
+  );
 }
 
 export function ShiftsRoute() {
@@ -62,7 +66,11 @@ export function AssignmentDetailRoute() {
   return <AssignmentDetailPage assignmentId={p.assignmentId!} />;
 }
 
-/** `/schedule?date=YYYY-MM-DD&occurrence=<id>&tab=execution|audit|corrections`: the week to show and the drawer to open. */
+/**
+ * `/calendar?date=YYYY-MM-DD&occurrence=<id>&tab=execution|audit|corrections`: the month to show and the run drawer to
+ * open. Run links (notifications, e-mails, problems, tasks, audits) land here; the old `/schedule` page redirects here
+ * with the same search (feedback 2026-11-11, item 7).
+ */
 export interface ScheduleSearch {
   date?: string;
   occurrence?: string;
@@ -75,10 +83,4 @@ export const scheduleSearch = (s: Record<string, unknown>): ScheduleSearch => ({
   ...((OCCURRENCE_TABS as readonly unknown[]).includes(s.tab) ? { tab: s.tab as OccurrenceTab } : {}),
 });
 
-export function ScheduleRoute() {
-  const s = useSearch({ strict: false }) as ScheduleSearch;
-  // A new link remounts the page, so its week and drawer replace the current ones.
-  return (
-    <SchedulePage key={`${s.date ?? ''}|${s.occurrence ?? ''}|${s.tab ?? ''}`} initialDate={s.date} initialOccurrenceId={s.occurrence} initialTab={s.tab} tabs={<WorkTabs active="/schedule" />} />
-  );
-}
+

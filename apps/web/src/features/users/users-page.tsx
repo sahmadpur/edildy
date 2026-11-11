@@ -1,7 +1,7 @@
 import { toListParam } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useDeferredValue, useState } from 'react';
+import { type ReactNode, useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { PageHeader } from '@/components/page-header';
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { roleDisplayName, useRoles } from '@/features/roles/queries';
+import { useSites } from '@/features/sites/queries';
 import { useFormatDateTime } from '@/lib/format';
 import { toast } from 'sonner';
 import { errorText } from '@/lib/errors';
@@ -18,9 +19,10 @@ import { api, useCan, useMe } from '@/lib/session';
 import { CreateWorkerDialog } from './create-worker-dialog';
 import { InviteStaffDialog } from './invite-staff-dialog';
 import { useUsersInfinite } from './queries';
-import { loginLabel, statusVariant } from './user-labels';
+import { statusVariant } from './user-labels';
 
-export function UsersPage() {
+/** `tabs` is the Əməkdaş siyahısı / Komandalar strip (people-tabs.tsx), shown under the header. */
+export function UsersPage({ tabs }: { tabs?: ReactNode } = {}) {
   const { t } = useTranslation();
   const me = useMe();
   const navigate = useNavigate();
@@ -29,6 +31,8 @@ export function UsersPage() {
   const canSeeRoles = useCan('roles.view');
   const formatDateTime = useFormatDateTime();
   const roles = useRoles(canSeeRoles);
+  const sites = useSites(useCan('sites.view'));
+  const siteName = new Map((sites.data ?? []).map((s) => [s.id, s.name]));
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string[]>([]);
   const [roleId, setRoleId] = useState<string[]>([]);
@@ -61,6 +65,7 @@ export function UsersPage() {
           )
         }
       />
+      {tabs}
       <div className="mb-4 flex flex-wrap gap-3">
         <Input type="search" className="max-w-sm" placeholder={t('users.search')} aria-label={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
         <MultiSelectFilter
@@ -86,7 +91,7 @@ export function UsersPage() {
         <TableHeader>
           <TableRow>
             <TableHead>{t('users.columns.name')}</TableHead>
-            <TableHead>{t('users.columns.login')}</TableHead>
+            <TableHead>{t('users.columns.sites')}</TableHead>
             <TableHead>{t('users.columns.role')}</TableHead>
             <TableHead>{t('users.columns.status')}</TableHead>
             <TableHead>{t('users.columns.lastLogin')}</TableHead>
@@ -104,7 +109,8 @@ export function UsersPage() {
                 <div className="font-medium">{u.fullName}</div>
                 <div className="text-muted-foreground text-xs">{u.jobTitle ?? t(`users.kinds.${u.kind}`)}</div>
               </TableCell>
-              <TableCell className="tabular-nums text-sm">{loginLabel(u)}</TableCell>
+              {/* The person's objects (feedback 2026-11-11, item 17); the login column was dropped (item 18). */}
+              <TableCell className="text-sm">{u.siteIds.map((id) => siteName.get(id)).filter(Boolean).join(', ') || '—'}</TableCell>
               <TableCell>{roleDisplayName(t, { name: u.role.name, systemKey: u.role.systemKey })}</TableCell>
               <TableCell>
                 <Badge variant={statusVariant(u.status)}>{t(`users.statuses.${u.status}`)}</Badge>

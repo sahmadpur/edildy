@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import type { ShiftDto } from '@taskop/contracts';
-import { and, asc, eq, isNull, or, type SQL } from 'drizzle-orm';
+import { and, asc, eq, isNull, or, type SQL, sql } from 'drizzle-orm';
 import { AppError } from '../common/app-error';
 import { assertIdsExist } from '../common/ids-exist';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
 import { assignments, shifts, sites } from '../db/schema';
 import type { CreateShiftDto, ShiftListQueryDto, UpdateShiftDto } from './dto';
-import { toShiftDto } from './mappers';
+import { sortRanges, toShiftDto } from './mappers';
 import { OccurrenceWriter } from './occurrence-writer';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class ShiftsService {
     const conds: (SQL | undefined)[] = [];
     if (q.active !== undefined) conds.push(eq(shifts.active, q.active));
     if (q.siteId) conds.push(or(isNull(shifts.siteId), eq(shifts.siteId, q.siteId)));
-    const rows = await this.select().where(and(...conds)).orderBy(asc(shifts.startTime), asc(shifts.name));
+    const rows = await this.select().where(and(...conds)).orderBy(asc(sql`${shifts.ranges}->0->>'startTime'`), asc(shifts.name));
     return rows.map(toShiftDto);
   }
 
@@ -38,7 +38,7 @@ export class ShiftsService {
     if (input.siteId) await assertIdsExist(tx, sites, sites.id, [input.siteId]);
     const [row] = await tx
       .insert(shifts)
-      .values({ tenantId, name: input.name, startTime: input.startTime, endTime: input.endTime, siteId: input.siteId ?? null })
+      .values({ tenantId, name: input.name, ranges: sortRanges(input.ranges), siteId: input.siteId ?? null })
       .returning({ id: shifts.id });
     const dto = await this.get(row!.id);
     await this.audit.record({ action: 'shift.created', entityType: 'shift', entityId: dto.id, after: dto });
@@ -47,17 +47,14 @@ export class ShiftsService {
 
   async update(id: string, input: UpdateShiftDto): Promise<ShiftDto> {
     const before = await this.get(id);
-    const startTime = input.startTime ?? before.startTime;
-    const endTime = input.endTime ?? before.endTime;
-    if (startTime === endTime) throw new AppError('VALIDATION_FAILED', { fields: { endTime: 'scheduling.issues.shiftZeroLength' } });
     const tx = this.db.tx();
     if (input.siteId) await assertIdsExist(tx, sites, sites.id, [input.siteId]);
     await tx
       .update(shifts)
-      .set({ name: input.name, startTime: input.startTime, endTime: input.endTime, siteId: input.siteId, active: input.active, updatedAt: new Date() })
+      .set({ name: input.name, ranges: input.ranges && sortRanges(input.ranges), siteId: input.siteId, active: input.active, updatedAt: new Date() })
       .where(eq(shifts.id, id));
     const after = await this.get(id);
-    if (after.startTime !== before.startTime || after.endTime !== before.endTime) {
+    if (JSON.stringify(after.ranges) !== JSON.stringify(before.ranges)) {
       const using = await this.db
         .tx()
         .select({ id: assignments.id })
@@ -79,8 +76,7 @@ export class ShiftsService {
       .select({
         id: shifts.id,
         name: shifts.name,
-        startTime: shifts.startTime,
-        endTime: shifts.endTime,
+        ranges: shifts.ranges,
         siteId: shifts.siteId,
         siteName: sites.name,
         active: shifts.active,

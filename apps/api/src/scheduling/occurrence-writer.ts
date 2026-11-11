@@ -18,7 +18,7 @@ import { Clock } from '../common/clock';
 import { DomainEvents } from '../common/domain-events';
 import { DbService } from '../db/db.service';
 import { assignments, occurrenceAssignees, occurrences, occurrenceStatusHistory, shifts, tenants } from '../db/schema';
-import { hhmm } from './mappers';
+import { sortRanges } from './mappers';
 
 export type SnapshotScope = { assignmentId: string } | { siteId: string; from: string; to: string } | { userId: string };
 
@@ -47,8 +47,8 @@ export class OccurrenceWriter {
   }
 
   async shiftHours(shiftId: string): Promise<ShiftHours | null> {
-    const [s] = await this.db.tx().select({ startTime: shifts.startTime, endTime: shifts.endTime }).from(shifts).where(eq(shifts.id, shiftId));
-    return s ? { startTime: hhmm(s.startTime), endTime: hhmm(s.endTime) } : null;
+    const [s] = await this.db.tx().select({ ranges: shifts.ranges }).from(shifts).where(eq(shifts.id, shiftId));
+    return s ? { ranges: sortRanges(s.ranges) } : null;
   }
 
   /**
@@ -72,7 +72,8 @@ export class OccurrenceWriter {
     const candidates = expandSchedule(recurrenceSchema.parse(a.schedule), timing, shift, tz, from, addDays(today, SCHEDULING_LIMITS.horizonDays)).filter(
       (s) => (!until || s.startsAt >= until) && s.closesAt > now,
     );
-    const slots = await this.withoutClashes(a.id, timing.mode === 'repeat', candidates);
+    // Several runs a day (repeat, or a shift with several periods) are told apart by their windows, not their day.
+    const slots = await this.withoutClashes(a.id, timing.mode === 'repeat' || (shift?.ranges.length ?? 0) > 1, candidates);
     let created: { id: string }[] = [];
     if (slots.length) {
       created = await tx

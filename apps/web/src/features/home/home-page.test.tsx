@@ -90,8 +90,8 @@ describe('HomeDashboard', () => {
     expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-10-06', to: TODAY });
 
     const week = await box('Son 7 gün');
-    expect(await week.findByRole('button', { name: 'Planlaşdırılıb: 12' })).toBeInTheDocument();
-    for (const name of ['Tamamlanıb: 7', 'Problemli: 2', 'Gecikib: 1'])
+    expect(await week.findByRole('button', { name: 'Gələcək: 12' })).toBeInTheDocument();
+    for (const name of ['Tamamlanan: 7', 'Problemli: 2', 'Gecikən: 1'])
       expect(week.getByRole('button', { name })).toBeInTheDocument();
     // Only the four figures: no in-progress tile, no percentages inside a box.
     expect(week.queryByRole('button', { name: /Davam edir/ })).not.toBeInTheDocument();
@@ -117,11 +117,11 @@ describe('HomeDashboard', () => {
     expect(panel.getByRole('group', { name: 'Orta bal' })).toHaveTextContent('87,5%');
     // No charts on the home page.
     expect(panel.queryByRole('figure')).not.toBeInTheDocument();
-    expect(screen.queryByText('İcraların vəziyyəti')).not.toBeInTheDocument();
-    expect(screen.queryByText('Gündəlik icra')).not.toBeInTheDocument();
+    expect(screen.queryByText('Yoxlamaların vəziyyəti')).not.toBeInTheDocument();
+    expect(screen.queryByText('Gündəlik yoxlamalar')).not.toBeInTheDocument();
 
     // The runs table: Hamısı is the first chip and the one open on arrival.
-    const chips = within(panel.getByRole('group', { name: 'İcralar' })).getAllByRole('button');
+    const chips = within(panel.getByRole('group', { name: 'Yoxlamalar' })).getAllByRole('button');
     expect(chips[0]).toHaveTextContent('Hamısı');
     expect(chips[0]).toHaveAttribute('aria-pressed', 'true');
     expect(await panel.findByRole('row', { name: /Açılış yoxlaması/ })).toBeInTheDocument();
@@ -153,7 +153,7 @@ describe('HomeDashboard', () => {
 
   it("a count inside a box selects its period and opens that count's runs; the bucket chips switch the list", async () => {
     renderWithRouter(<HomeDashboard today={TODAY} />);
-    const late = await (await box('Son 30 gün')).findByRole('button', { name: 'Gecikib: 1' });
+    const late = await (await box('Son 30 gün')).findByRole('button', { name: 'Gecikən: 1' });
     await userEvent.click(late);
     expect(late).toHaveAttribute('aria-pressed', 'true');
     expect((await box('Son 30 gün')).getByRole('button', { name: 'Son 30 gün dövrünü seç' })).toHaveAttribute(
@@ -169,7 +169,7 @@ describe('HomeDashboard', () => {
       }),
     );
     expect(
-      panel.getByRole('group', { name: 'İcralar' }).querySelector('[aria-pressed="true"]'),
+      panel.getByRole('group', { name: 'Yoxlamalar' }).querySelector('[aria-pressed="true"]'),
     ).toHaveTextContent('Gecikmiş');
 
     await userEvent.click((await box('Bu gün')).getByRole('button', { name: 'Problemli: 2' }));
@@ -183,14 +183,14 @@ describe('HomeDashboard', () => {
     expect(late).toHaveAttribute('aria-pressed', 'false');
 
     await userEvent.click(
-      within(detail('Bu gün').getByRole('group', { name: 'İcralar' })).getByRole('button', {
+      within(detail('Bu gün').getByRole('group', { name: 'Yoxlamalar' })).getByRole('button', {
         name: 'Tamamlanmış',
       }),
     );
     await waitFor(() =>
       expect(mocks.api.reports.runs).toHaveBeenCalledWith({ from: TODAY, to: TODAY, bucket: 'completed' }),
     );
-    expect((await box('Bu gün')).getByRole('button', { name: 'Tamamlanıb: 7' })).toHaveAttribute(
+    expect((await box('Bu gün')).getByRole('button', { name: 'Tamamlanan: 7' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -217,7 +217,7 @@ describe('HomeDashboard', () => {
   it('asks again every minute while the page is visible, not while it is hidden, and at once when it comes back', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     renderWithRouter(<HomeDashboard today={TODAY} />, '/', appClient());
-    await screen.findAllByRole('button', { name: 'Gecikib: 1' });
+    await screen.findAllByRole('button', { name: 'Gecikən: 1' });
     expect(mocks.api.reports.summary).toHaveBeenCalledTimes(4);
     await act(() => vi.advanceTimersByTimeAsync(60_000));
     await waitFor(() => expect(mocks.api.reports.summary).toHaveBeenCalledTimes(8));

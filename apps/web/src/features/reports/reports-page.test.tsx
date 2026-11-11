@@ -82,7 +82,7 @@ describe('ReportsPage', () => {
     });
     // Summary adds the partial and missed tiles, and a multi-day period has its trend.
     expect(screen.getByRole('link', { name: 'Yarımçıq: 1' })).toBeInTheDocument();
-    expect(screen.getByRole('figure', { name: 'Gündəlik icra' })).toBeInTheDocument();
+    expect(screen.getByRole('figure', { name: 'Gündəlik yoxlamalar' })).toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByLabelText('Dövr'), 'last_7');
     await waitFor(() =>
@@ -107,7 +107,7 @@ describe('ReportsPage', () => {
         bucket: 'overdue',
       }),
     );
-    expect(screen.getByRole('tab', { name: 'İcralar' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Yoxlamalar' })).toHaveAttribute('aria-selected', 'true');
 
     await userEvent.click(screen.getByRole('tab', { name: 'Obyektlər' }));
     await waitFor(() =>

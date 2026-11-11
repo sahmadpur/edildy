@@ -88,9 +88,37 @@ export const TIMING_MODES = ['fixed', 'shift', 'anytime', 'repeat'] as const sat
 export const ANYTIME_WINDOW_MINUTES = 1440;
 export type Timing = z.infer<typeof timingSchema>;
 
-export interface ShiftHours {
+/** One working period of a shift. An end at or before the start means the period ends the next day. */
+export interface ShiftRange {
   startTime: LocalTime;
   endTime: LocalTime;
+}
+
+/**
+ * A shift's working periods (feedback 2026-11-11, item 12): e.g. 08:00–10:00 and 18:00–20:00. Each period is its own
+ * run of a shift-timed assignment: it opens at the period's start, is due at its end, and closes after the grace.
+ */
+export interface ShiftHours {
+  ranges: readonly ShiftRange[];
+}
+
+export const SHIFT_MAX_RANGES = 4;
+
+/** Length of one period in minutes (1–1440). */
+export function rangeMinutes(r: ShiftRange): number {
+  const d = timeToMinutes(r.endTime) - timeToMinutes(r.startTime);
+  return d > 0 ? d : d + 1440;
+}
+
+/** Whether two periods share a minute on the 24-hour clock (a period that crosses midnight wraps round). */
+export function rangesOverlap(a: ShiftRange, b: ShiftRange): boolean {
+  const inside = (m: number, r: ShiftRange) => (m - timeToMinutes(r.startTime) + 1440) % 1440 < rangeMinutes(r);
+  return inside(timeToMinutes(b.startTime), a) || inside(timeToMinutes(a.startTime), b);
+}
+
+/** "08:00–10:00, 18:00–20:00"; `nextDay` is appended to a period that ends the next day. */
+export function formatShiftRanges(ranges: readonly ShiftRange[], nextDay: string): string {
+  return ranges.map((r) => `${r.startTime}–${r.endTime}${r.endTime <= r.startTime ? ` (${nextDay})` : ''}`).join(', ');
 }
 
 export interface Slot {
@@ -100,10 +128,9 @@ export interface Slot {
   closesAt: Date;
 }
 
-/** An end time at or before the start time means the shift ends the next day. */
+/** The longest period of the shift: the window of its longest run. */
 export function shiftDurationMinutes(s: ShiftHours): number {
-  const d = timeToMinutes(s.endTime) - timeToMinutes(s.startTime);
-  return d > 0 ? d : d + 1440;
+  return Math.max(...s.ranges.map(rangeMinutes));
 }
 
 /** Start → close length of every slot (FR-09.05). */
@@ -165,8 +192,20 @@ export function repeatStarts(timing: Extract<Timing, { mode: 'repeat' }>): numbe
   return out;
 }
 
-/** Every slot on one scheduled day: one for most timings, several for "repeat". */
+/** A shift period's slot on a day: start, due at the period's end (next day when it crosses midnight), then the grace. */
+function rangeSlot(date: LocalDate, range: ShiftRange, graceMinutes: number, tz: string): Slot {
+  const startsAt = zonedTimeToUtc(date, timeToMinutes(range.startTime), tz);
+  const overnight = timeToMinutes(range.endTime) <= timeToMinutes(range.startTime);
+  const dueAt = zonedTimeToUtc(overnight ? addDays(date, 1) : date, timeToMinutes(range.endTime), tz);
+  return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + graceMinutes * 60_000) };
+}
+
+/** Every slot on one scheduled day: one for most timings, several for "repeat" and for a shift with several periods. */
 export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | null, tz: string): Slot[] {
+  if (timing.mode === 'shift') {
+    if (!shift) throw new Error('shift timing needs the shift hours');
+    return shift.ranges.map((range) => rangeSlot(date, range, timing.graceMinutes, tz)).sort((a, b) => +a.startsAt - +b.startsAt);
+  }
   if (timing.mode !== 'repeat') return [slotFor(date, timing, shift, tz)];
   const end = timeToMinutes(timing.endTime);
   return repeatStarts(timing).map((m) => {
@@ -176,11 +215,11 @@ export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | nu
   });
 }
 
-/** One slot for a day; a "repeat" timing gives its first run (use `slotsFor` for all of them). */
+/** One slot for a day; "repeat" timing and a shift with several periods give their first run (use `slotsFor` for all). */
 export function slotFor(date: LocalDate, timing: Timing, shift: ShiftHours | null, tz: string): Slot {
-  if (timing.mode === 'repeat') {
+  if (timing.mode === 'repeat' || timing.mode === 'shift') {
     const first = slotsFor(date, timing, shift, tz)[0];
-    if (!first) throw new Error('repeat timing has no run');
+    if (!first) throw new Error(`${timing.mode} timing has no run`);
     return first;
   }
   if (timing.mode === 'fixed') {
@@ -194,11 +233,7 @@ export function slotFor(date: LocalDate, timing: Timing, shift: ShiftHours | nul
     const dueAt = zonedTimeToUtc(addDays(date, 1), 0, tz);
     return { localDate: date, startsAt, dueAt, closesAt: dueAt };
   }
-  if (!shift) throw new Error('shift timing needs the shift hours');
-  const startsAt = zonedTimeToUtc(date, timeToMinutes(shift.startTime), tz);
-  const overnight = timeToMinutes(shift.endTime) <= timeToMinutes(shift.startTime);
-  const dueAt = zonedTimeToUtc(overnight ? addDays(date, 1) : date, timeToMinutes(shift.endTime), tz);
-  return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + timing.graceMinutes * 60_000) };
+  return timing satisfies never;
 }
 
 /**
@@ -220,6 +255,7 @@ export const SCHEDULING_ISSUE_CODES = [
   'scheduling.issues.duplicateDate',
   'scheduling.issues.duplicateWeekday',
   'scheduling.issues.shiftZeroLength',
+  'scheduling.issues.shiftRangesOverlap',
   'scheduling.issues.rangeTooLong',
   'scheduling.issues.dateOutOfRange',
   'scheduling.issues.repeatEndBeforeStart',

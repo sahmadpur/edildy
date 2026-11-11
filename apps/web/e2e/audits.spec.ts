@@ -254,7 +254,7 @@ test('a run sent back during its audit: the worker fixes the flagged item, its v
   if (bin.type !== 'yes_no') throw new Error('the bin item is a yes/no question');
 
   // An on-demand audit from the run dialog's Audit tab.
-  await page.goto(`/schedule?date=${t.yesterday}&occurrence=${run.occurrenceId}&tab=audit`);
+  await page.goto(`/calendar?date=${t.yesterday}&occurrence=${run.occurrenceId}&tab=audit`);
   await page.getByRole('dialog', { name: 'E2E düzəliş' }).getByRole('button', { name: az.audits.actions.start }).click();
   await expect(page).toHaveURL(/\/audits\/[0-9a-f-]{36}$/);
   const auditUrl = page.url();
@@ -317,7 +317,7 @@ test('a run sent back during its audit: the worker fixes the flagged item, its v
   await expect(page.getByText(az.audits.results.passed, { exact: true })).toBeVisible();
 
   // The run's Corrections tab: the original and current answer, and the round.
-  await page.goto(`/schedule?date=${t.yesterday}&occurrence=${run.occurrenceId}&tab=corrections`);
+  await page.goto(`/calendar?date=${t.yesterday}&occurrence=${run.occurrenceId}&tab=corrections`);
   const corrections = page.getByRole('dialog', { name: 'E2E düzəliş' });
   const diffRow = corrections.getByRole('row').filter({ hasText: BIN });
   await expect(diffRow).toContainText('Xeyr');

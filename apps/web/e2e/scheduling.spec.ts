@@ -35,8 +35,10 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await page.getByLabel('Şifrə', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Daxil ol' }).click();
 
-  // Shift template.
-  await page.getByRole('link', { name: 'Növbələr' }).click();
+  // Shift template. The menu opens Növbə cədvəli first (feedback 2026-11-11); the shift list is the second tab.
+  await page.getByRole('link', { name: 'Növbələr' }).first().click();
+  await expect(page.getByRole('navigation', { name: 'Növbələr' }).getByRole('link', { name: 'Növbə cədvəli' })).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('navigation', { name: 'Növbələr' }).getByRole('link', { name: 'Növbələr' }).click();
   await page.getByRole('button', { name: 'Yeni növbə' }).click();
   const shiftDialog = page.getByRole('dialog');
   await shiftDialog.getByLabel('Ad', { exact: true }).fill('Səhər');
@@ -73,10 +75,10 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await page.getByRole('link', { name: 'Yoxlama cədvəli' }).click();
   await expect(page.getByRole('gridcell').getByRole('button', { name: /E2E açılış/ }).first()).toBeVisible();
 
-  // The schedule is no longer a Yoxlamalar tab (feedback 2026-11-07); run links still open it, under Təyinatlar.
+  // The old schedule page is gone (feedback 2026-11-11): its links land on Yoxlama cədvəli.
   await page.getByRole('link', { name: 'Yoxlamalar' }).click();
   await expect(page.getByRole('link', { name: 'İcra cədvəli' })).toHaveCount(0);
   await page.goto('/schedule');
-  await expect(page.getByRole('heading', { name: 'Yoxlamalar' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Təyinatlar' })).toHaveAttribute('aria-current', 'page');
+  await expect(page).toHaveURL(/\/calendar/);
+  await expect(page.getByRole('link', { name: 'Yoxlama cədvəli' })).toHaveAttribute('aria-current', 'page');
 });

@@ -46,7 +46,7 @@ describe('RunsTab', () => {
   it('switches the bucket with the chips', async () => {
     const onBucket = vi.fn();
     renderWithRouter(<RunsTab filters={FILTERS} bucket="overdue" onBucket={onBucket} />);
-    const chips = await screen.findByRole('group', { name: 'İcralar' });
+    const chips = await screen.findByRole('group', { name: 'Yoxlamalar' });
     expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Hamısı', 'Gecikmiş', 'Yarımçıq', 'Buraxılmış', 'Problemli', 'Tamamlanmış', 'Davam edən', 'Planlaşdırılmış']);
     expect(within(chips).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(chips).getByRole('button', { name: 'Hamısı' })).toHaveAttribute('aria-pressed', 'false');

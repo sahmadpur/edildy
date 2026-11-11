@@ -5,7 +5,8 @@ export default {
   search: 'Имя, имя пользователя или эл. почта',
   kinds: { worker: 'Сотрудник (мобильный)', staff: 'Руководитель (веб)' },
   statuses: { active: 'Активен', deactivated: 'Деактивирован', invited: 'Приглашение отправлено' },
-  columns: { name: 'Имя', login: 'Логин', role: 'Роль', status: 'Статус', lastLogin: 'Последний вход' },
+  columns: { name: 'Имя', sites: 'Объект', login: 'Логин', role: 'Роль', status: 'Статус', lastLogin: 'Последний вход' },
+  tabs: { list: 'Список сотрудников', teams: 'Команды' },
   never: 'Никогда',
   empty: 'Пользователи не найдены.',
   form: {

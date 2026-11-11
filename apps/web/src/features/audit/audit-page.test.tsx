@@ -45,19 +45,21 @@ beforeEach(() => {
 describe('AuditPage (İstifadə jurnalı)', () => {
   it('shows where each entry came from and names the run and task actions', async () => {
     renderWithProviders(<AuditPage />);
-    await screen.findByText('team.created');
+    await screen.findByText('Komanda yaradıldı');
     const rows = screen.getAllByRole('row');
     expect(rows).toHaveLength(3);
     expect(rows[0]).toHaveTextContent('Mənbə');
     expect(rows[1]).toHaveTextContent('Mobil');
-    expect(rows[1]).toHaveTextContent('İcra tamamlandı');
+    expect(rows[1]).toHaveTextContent('Yoxlama tamamlandı');
     expect(rows[2]).toHaveTextContent('Veb');
-    expect(rows[2]).toHaveTextContent('team.created');
+    expect(rows[2]).toHaveTextContent('Komanda yaradıldı');
+    // Only labels, never the raw code (feedback 2026-11-11, item 9).
+    expect(screen.queryByText('team.created')).not.toBeInTheDocument();
   });
 
   it('filters by source and offers runs and tasks as element types', async () => {
     renderWithProviders(<AuditPage />);
-    await screen.findByText('team.created');
+    await screen.findByText('Komanda yaradıldı');
     expect(await filterOptions('Mənbə')).toEqual(['Hamısı', 'Veb', 'Mobil']);
     await tickOptions('Mənbə', ['Mobil']);
     await waitFor(() =>
