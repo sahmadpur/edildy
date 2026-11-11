@@ -78,7 +78,8 @@ export default {
   legal: {
     privacyTitle: 'Məxfilik siyasəti',
     termsTitle: 'İstifadə şərtləri',
-    placeholder: 'Bu səhifə hazırlanır. Suallarınız üçün bizə yazın: {{email}}',
+    updated: 'Son yenilənmə: {{date}}',
+    contents: 'Mündəricat',
     back: 'Ana səhifəyə qayıt',
   },
 } as const;

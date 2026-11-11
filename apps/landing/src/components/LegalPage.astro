@@ -1,6 +1,7 @@
 ---
 import type { Language } from '../lib/site';
 import { fill, localePath, strings } from '../lib/site';
+import { LEGAL, linkEmails } from '../legal';
 import Base from '../layouts/Base.astro';
 import Footer from './Footer.astro';
 import Header from './Header.astro';
@@ -11,14 +12,45 @@ interface Props {
 const { lang, kind } = Astro.props;
 const t = strings(lang);
 const title = kind === 'privacy' ? t.legal.privacyTitle : t.legal.termsTitle;
+const texts = LEGAL[lang];
+const doc = texts[kind];
 ---
 
 <Base lang={lang} path={`${kind}/`} title={`${title} — Edildy`}>
   <Header lang={lang} path={`${kind}/`} sections={false} />
   <main id="main" class="wrap section legal">
-    <h1>{title}</h1>
-    <p class="lead">{fill(t.legal.placeholder, { email: t.footer.email })}</p>
-    <a href={localePath(lang)}>{t.legal.back}</a>
+    <header class="head">
+      <h1>{title}</h1>
+      <p class="updated">{fill(t.legal.updated, { date: texts.updatedOn })}</p>
+    </header>
+    {doc.intro.map((p) => <p class="lead">{p}</p>)}
+    <nav class="toc" aria-label={t.legal.contents}>
+      <h2>{t.legal.contents}</h2>
+      <ol>
+        {doc.sections.map((s) => (
+          <li>
+            <a href={`#${s.id}`}>{s.title}</a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+    {doc.sections.map((s, i) => (
+      <section id={s.id} aria-labelledby={`${s.id}-title`}>
+        <h2 id={`${s.id}-title`}>{`${i + 1}. ${s.title}`}</h2>
+        {s.body.map((block) =>
+          typeof block === 'string' ? (
+            <p>{linkEmails(block).map((part) => (part.email ? <a href={`mailto:${part.text}`}>{part.text}</a> : part.text))}</p>
+          ) : (
+            <ul>
+              {block.list.map((item) => (
+                <li>{linkEmails(item).map((part) => (part.email ? <a href={`mailto:${part.text}`}>{part.text}</a> : part.text))}</li>
+              ))}
+            </ul>
+          ),
+        )}
+      </section>
+    ))}
+    <a class="back" href={localePath(lang)}>{t.legal.back}</a>
   </main>
   <Footer lang={lang} />
 </Base>
@@ -29,5 +61,54 @@ const title = kind === 'privacy' ? t.legal.privacyTitle : t.legal.termsTitle;
     gap: 1.25rem;
     min-height: 50vh;
     align-content: start;
+    max-width: 46rem;
+  }
+  .head {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .updated {
+    color: var(--tp-ink2);
+    font-size: 0.95rem;
+  }
+  .toc {
+    border-block: 1px solid var(--tp-line);
+    padding-block: 1rem;
+  }
+  .toc h2 {
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+  .toc ol {
+    margin: 0.5rem 0 0;
+    padding-left: 1.4rem;
+    columns: 2 16rem;
+    column-gap: 2rem;
+  }
+  .toc li {
+    padding-block: 0.15rem;
+    break-inside: avoid;
+  }
+  section {
+    display: grid;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    scroll-margin-top: 5rem;
+  }
+  section h2 {
+    font-size: 1.3rem;
+    letter-spacing: -0.01em;
+  }
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+  section a {
+    overflow-wrap: anywhere;
+  }
+  .back {
+    margin-top: 1rem;
   }
 </style>
