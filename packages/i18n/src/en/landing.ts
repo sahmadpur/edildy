@@ -77,7 +77,8 @@ export default {
   legal: {
     privacyTitle: 'Privacy policy',
     termsTitle: 'Terms of use',
-    placeholder: 'This page is being written. For questions, write to {{email}}',
+    updated: 'Last updated: {{date}}',
+    contents: 'Contents',
     back: 'Back to the home page',
   },
 } as const;

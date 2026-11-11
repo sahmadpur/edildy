@@ -77,7 +77,8 @@ export default {
   legal: {
     privacyTitle: 'Политика конфиденциальности',
     termsTitle: 'Условия использования',
-    placeholder: 'Эта страница готовится. По вопросам пишите: {{email}}',
+    updated: 'Последнее обновление: {{date}}',
+    contents: 'Содержание',
     back: 'На главную',
   },
 } as const;
