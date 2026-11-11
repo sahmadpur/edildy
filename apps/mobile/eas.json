@@ -17,6 +17,9 @@
     }
   },
   "submit": {
-    "production": { "ios": { "ascAppId": "6820003053" } }
+    "production": {
+      "ios": { "ascAppId": "6820003053" },
+      "android": { "serviceAccountKeyPath": "./credentials/play-service-account.json", "track": "internal" }
+    }
   }
 }
