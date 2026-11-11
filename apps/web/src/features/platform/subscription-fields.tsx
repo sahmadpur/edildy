@@ -19,6 +19,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+/** The smallest plan that includes `feature`: where an add-on "comes from". */
+export const firstPlanWith = (feature: FeatureKey): PlanKey => PLANS.find((p) => PLAN_CATALOGUE[p].features.includes(feature)) ?? 'xl';
+
 /** The subscription form's state: numbers as typed, so an empty override means "the plan's limit". */
 export interface SubscriptionDraft {
   plan: PlanKey;
@@ -132,16 +135,18 @@ export function SubscriptionFields({ value, onChange, invalid }: { value: Subscr
           <Input id="sub-workers" type="number" min={1} value={value.workerLimitOverride} onChange={(e) => set('workerLimitOverride', e.target.value)} />
         </Field>
       </div>
-      {addOns.length > 0 && (
+      {addOns.length > 0 ? (
         <div className="grid gap-1.5">
           <CheckboxList
             label={t('platform.subscription.extraFeatures')}
-            options={addOns.map((f) => ({ value: f, label: t(`subscription.features.${f}`) }))}
+            options={addOns.map((f) => ({ value: f, label: `${t(`subscription.features.${f}`)} (${t(`subscription.plans.${firstPlanWith(f)}`)})` }))}
             value={value.extraFeatures.filter((f) => addOns.includes(f))}
             onChange={(next) => set('extraFeatures', next as FeatureKey[])}
           />
           <p className="text-muted-foreground text-xs">{t('platform.subscription.extraHint')}</p>
         </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">{t('platform.subscription.allIncluded')}</p>
       )}
       <p className="text-muted-foreground text-sm">{t('platform.subscription.price', { price: def.pricePerBranch, extra: def.extraBranchPrice, total })}</p>
     </div>

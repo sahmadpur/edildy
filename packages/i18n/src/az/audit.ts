@@ -53,6 +53,7 @@ export default {
     'tenant.created': 'Təşkilat yaradıldı',
     'tenant.updated': 'Təşkilatın məlumatları dəyişdirildi',
     'tenant.suspended': 'Təşkilat dayandırıldı',
+    'tenant.subscription_changed': 'Abunəlik dəyişdirildi',
     'tenant.reactivated': 'Təşkilat yenidən aktiv edildi',
     'role.created': 'Rol yaradıldı',
     'role.updated': 'Rol dəyişdirildi',

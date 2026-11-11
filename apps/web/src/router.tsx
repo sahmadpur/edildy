@@ -22,6 +22,7 @@ import { LoginPage } from '@/features/auth/login-page';
 import { ResetPasswordPage } from '@/features/auth/reset-password-page';
 import { VerifyEmailPage } from '@/features/auth/verify-email-page';
 import { PlatformLoginPage } from '@/features/platform/platform-login-page';
+import { PlatformTenantPage } from '@/features/platform/platform-tenant-page';
 import { platformSession } from '@/features/platform/platform-session';
 import { GlobalTemplateEditorPage } from '@/features/platform/global-template-editor-page';
 import { GlobalTemplatesPage } from '@/features/platform/global-templates-page';
@@ -239,9 +240,13 @@ const platformTenantWs = createRoute({
   path: '/platform/tenants/$tenantId',
   component: PlatformTenantWorkspaceRoute,
 });
+function PlatformTenantRoute() {
+  return <PlatformTenantPage tenantId={platformTenantWs.useParams().tenantId} />;
+}
 const pt = (path: string, component: () => ReactElement) =>
   createRoute({ getParentRoute: () => platformTenantWs, path, component });
 const platformTenantChildren = [
+  pt('/', PlatformTenantRoute),
   pt('checklists', ChecklistsPage),
   pt('checklists/$checklistId', ChecklistDetailRoute),
   pt('checklists/$checklistId/draft', ChecklistDraftRoute),

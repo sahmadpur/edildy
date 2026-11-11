@@ -53,6 +53,7 @@ export default {
     'tenant.created': 'Организация создана',
     'tenant.updated': 'Данные организации изменены',
     'tenant.suspended': 'Организация приостановлена',
+    'tenant.subscription_changed': 'Подписка изменена',
     'tenant.reactivated': 'Организация снова активна',
     'role.created': 'Роль создана',
     'role.updated': 'Роль изменена',

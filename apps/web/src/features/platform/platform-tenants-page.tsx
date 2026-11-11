@@ -24,9 +24,10 @@ interface TableProps {
   onSuspend: (id: string) => Promise<void> | void;
   onReactivate: (id: string) => Promise<void> | void;
   onOpenChecklists: (id: string) => void;
+  onOpen: (id: string) => void;
 }
 
-export function PlatformTenantsTable({ tenants, onSubscription, onSuspend, onReactivate, onOpenChecklists }: TableProps) {
+export function PlatformTenantsTable({ tenants, onSubscription, onSuspend, onReactivate, onOpenChecklists, onOpen }: TableProps) {
   const { t } = useTranslation();
   const locale = useLocale();
   return (
@@ -38,6 +39,7 @@ export function PlatformTenantsTable({ tenants, onSubscription, onSuspend, onRea
           <TableHead>{t('platform.tenants.users')}</TableHead>
           <TableHead>{t('platform.tenants.plan')}</TableHead>
           <TableHead>{t('platform.tenants.endsOn')}</TableHead>
+          <TableHead>{t('platform.tenants.lastActivity')}</TableHead>
           <TableHead>{t('platform.tenants.created')}</TableHead>
           <TableHead>{t('platform.tenants.status')}</TableHead>
           <TableHead />
@@ -47,13 +49,20 @@ export function PlatformTenantsTable({ tenants, onSubscription, onSuspend, onRea
       <TableBody>
         {tenants.map((tn) => (
           <TableRow key={tn.id}>
-            <TableCell className="font-medium">{tn.name}</TableCell>
+            <TableCell className="font-medium">
+              <Button variant="link" className="h-auto p-0 font-medium" onClick={() => onOpen(tn.id)}>
+                {tn.name}
+              </Button>
+            </TableCell>
             <TableCell className="tabular-nums">{tn.orgCode}</TableCell>
             <TableCell>{tn.userCount}</TableCell>
             <TableCell>
-              <Button variant="link" className="h-auto p-0" onClick={() => onSubscription(tn.id)}>
-                {t(`subscription.plans.${tn.plan}`)}
-              </Button>
+              <span className="flex items-center gap-2 whitespace-nowrap">
+                <span className="font-medium">{t(`subscription.plans.${tn.plan}`)}</span>
+                <Button variant="outline" size="sm" onClick={() => onSubscription(tn.id)}>
+                  {t('platform.org.changePlan')}
+                </Button>
+              </span>
             </TableCell>
             <TableCell>
               <span className="flex items-center gap-2">
@@ -61,6 +70,7 @@ export function PlatformTenantsTable({ tenants, onSubscription, onSuspend, onRea
                 {tn.subscriptionState !== 'active' && <Badge variant={STATE_BADGE[tn.subscriptionState]}>{t(`subscription.states.${tn.subscriptionState}`)}</Badge>}
               </span>
             </TableCell>
+            <TableCell className="whitespace-nowrap">{tn.lastActivityAt ? formatDateTime(tn.lastActivityAt, { locale, timeZone: 'Asia/Baku' }) : '—'}</TableCell>
             <TableCell>{formatDateTime(tn.createdAt, { locale, timeZone: 'Asia/Baku' })}</TableCell>
             <TableCell>
               <Badge variant={tn.status === 'active' ? 'default' : 'destructive'}>
@@ -138,6 +148,7 @@ export function PlatformTenantsPage() {
         onSubscription={setEditing}
         onSuspend={(id) => act(() => platformApi.tenants.suspend(id))}
         onReactivate={(id) => act(() => platformApi.tenants.reactivate(id))}
+        onOpen={(id) => void navigate({ to: `/platform/tenants/${id}` as '/platform/tenants' })}
         onOpenChecklists={(id) =>
           void navigate({ to: `/platform/tenants/${id}/checklists` as '/platform/tenants' })
         }

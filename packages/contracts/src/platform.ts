@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { auditEntryDtoSchema } from './audit.js';
 import { cursorQuerySchema, idSchema, isoDateTimeSchema } from './common.js';
 import { emailSchema, orgCodeSchema } from './credentials.js';
 import { planPeriodSchema, planSchema, SUBSCRIPTION_STATES, subscriptionInputSchema, subscriptionUsageSchema } from './plans.js';
@@ -27,6 +28,8 @@ export const platformTenantDtoSchema = z.object({
   plan: planSchema,
   endsOn: localDateSchema.nullable(),
   subscriptionState: z.enum(SUBSCRIPTION_STATES),
+  /** The last thing a member of the organisation did (usage log); null if nobody has done anything yet. */
+  lastActivityAt: isoDateTimeSchema.nullable(),
   createdAt: isoDateTimeSchema,
 });
 export type PlatformTenantDto = z.infer<typeof platformTenantDtoSchema>;
@@ -49,6 +52,8 @@ export const platformTenantDetailSchema = platformTenantDtoSchema.extend({
     workerLimitOverride: z.number().int().nullable(),
   }),
   usage: subscriptionUsageSchema,
+  /** What the organisation has set up: active sites, teams, checklists and assignments. */
+  counts: z.object({ sites: z.number().int(), teams: z.number().int(), checklists: z.number().int(), assignments: z.number().int() }),
   owners: z.array(z.object({ id: idSchema, fullName: z.string(), email: z.string().nullable(), status: z.enum(['active', 'deactivated', 'invited']) })),
 });
 export type PlatformTenantDetail = z.infer<typeof platformTenantDetailSchema>;
@@ -63,3 +68,23 @@ export const createTenantInputSchema = z.object({
   subscription: subscriptionInputSchema,
 });
 export type CreateTenantInput = z.input<typeof createTenantInputSchema>;
+
+const count = z.number().int();
+
+/** How much an organisation uses Edildy (the platform admin's organisation page): from the usage log and the runs. */
+export const tenantActivitySchema = z.object({
+  lastActivityAt: isoDateTimeSchema.nullable(),
+  /** Distinct people who did anything, in the last 7 and 30 days. */
+  activeUsers: z.object({ d7: count, d30: count }),
+  /** Distinct people per app in the last 30 days. */
+  activeByClient: z.object({ web: count, mobile: count }),
+  logins: z.object({ d7: count, d30: count }),
+  runsCompleted: z.object({ d7: count, d30: count }),
+  tasksCreated30: count,
+  problemReports30: count,
+  /** The last 30 days in the organisation's time zone, oldest first. */
+  daily: z.array(z.object({ date: localDateSchema, actions: count, users: count, runs: count })),
+  /** The latest entries of its usage log. */
+  recent: z.array(auditEntryDtoSchema),
+});
+export type TenantActivity = z.infer<typeof tenantActivitySchema>;
