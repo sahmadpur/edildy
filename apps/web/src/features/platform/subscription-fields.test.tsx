@@ -23,10 +23,10 @@ describe('SubscriptionFields', () => {
     let last = newDraft('2026-11-11');
     renderWithProviders(<Harness onChange={(d) => (last = d)} />);
     // Basic: every feature is an add-on.
-    expect(screen.getByRole('checkbox', { name: 'Tapşırıqlar' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Tapşırıqlar (Enterprise)' })).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText(/Paket/), 'enterprise');
-    expect(screen.queryByRole('checkbox', { name: 'Tapşırıqlar' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Audit' }));
+    expect(screen.queryByRole('checkbox', { name: 'Tapşırıqlar (Enterprise)' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Audit (XL)' }));
     await userEvent.clear(screen.getByLabelText(/Filial sayı/));
     await userEvent.type(screen.getByLabelText(/Filial sayı/), '3');
     expect(screen.getByText(/Cəmi: 200 AZN\/ay/)).toBeInTheDocument();

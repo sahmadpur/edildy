@@ -7,6 +7,7 @@ import {
   platformTenantDtoSchema,
   platformTenantListQuerySchema,
   subscriptionInputSchema,
+  tenantActivitySchema,
 } from '@edildy/contracts';
 import { createZodDto } from 'nestjs-zod';
 
@@ -18,3 +19,4 @@ export class PlatformTenantPageResponse extends createZodDto(pageOf(platformTena
 export class PlatformTenantDetailResponse extends createZodDto(platformTenantDetailSchema) {}
 export class CreateTenantDto extends createZodDto(createTenantInputSchema) {}
 export class SubscriptionInputDto extends createZodDto(subscriptionInputSchema) {}
+export class TenantActivityResponse extends createZodDto(tenantActivitySchema) {}

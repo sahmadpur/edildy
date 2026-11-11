@@ -53,6 +53,7 @@ export default {
     'tenant.created': 'Organisation created',
     'tenant.updated': 'Organisation details changed',
     'tenant.suspended': 'Organisation suspended',
+    'tenant.subscription_changed': 'Subscription changed',
     'tenant.reactivated': 'Organisation reactivated',
     'role.created': 'Role created',
     'role.updated': 'Role changed',

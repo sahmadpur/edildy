@@ -87,6 +87,7 @@ import {
   tenantDtoSchema,
   tenantSubscriptionDtoSchema,
   platformTenantDetailSchema,
+  tenantActivitySchema,
   type CreateTenantInput,
   type SubscriptionInput,
   type UpdateRoleInput,
@@ -286,6 +287,7 @@ export function createPlatformApi(c: ApiClient) {
       reactivate: (id: string) => c.request('POST', `/platform/tenants/${id}/reactivate`, { body: {}, schema: platformTenantDtoSchema }),
       create: (body: CreateTenantInput) => c.request('POST', '/platform/tenants', { body, schema: platformTenantDetailSchema }),
       get: (id: string) => c.request('GET', `/platform/tenants/${id}`, { schema: platformTenantDetailSchema }),
+      activity: (id: string) => c.request('GET', `/platform/tenants/${id}/activity`, { schema: tenantActivitySchema }),
       setSubscription: (id: string, body: SubscriptionInput) =>
         c.request('PUT', `/platform/tenants/${id}/subscription`, { body, schema: platformTenantDetailSchema }),
     },

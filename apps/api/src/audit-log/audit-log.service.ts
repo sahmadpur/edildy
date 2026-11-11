@@ -8,6 +8,26 @@ import type { AuditListQueryDto } from './dto';
 
 const actor = alias(users, 'actor');
 
+/** A usage-log row as the API shows it; `actorName` is the acting user's name, if a user acted. */
+export function toAuditEntryDto(entry: typeof auditLog.$inferSelect, actorName: string | null): AuditEntryDto {
+  return {
+    id: entry.id,
+    actor: entry.actorPlatformAdminId
+      ? { type: 'platform_admin', id: entry.actorPlatformAdminId, name: null }
+      : entry.actorUserId
+        ? { type: 'user', id: entry.actorUserId, name: actorName }
+        : { type: 'system', id: null, name: null },
+    action: entry.action,
+    entityType: entry.entityType,
+    entityId: entry.entityId,
+    before: entry.before ?? null,
+    after: entry.after ?? null,
+    ip: entry.ip,
+    client: entry.client,
+    occurredAt: entry.occurredAt.toISOString(),
+  };
+}
+
 @Injectable()
 export class AuditLogService {
   constructor(private readonly db: DbService) {}
@@ -30,22 +50,7 @@ export class AuditLogService {
       .where(and(...conditions))
       .orderBy(desc(auditLog.id))
       .limit(q.limit + 1);
-    const items = rows.slice(0, q.limit).map(({ entry, actorName }): AuditEntryDto => ({
-      id: entry.id,
-      actor: entry.actorPlatformAdminId
-        ? { type: 'platform_admin', id: entry.actorPlatformAdminId, name: null }
-        : entry.actorUserId
-          ? { type: 'user', id: entry.actorUserId, name: actorName }
-          : { type: 'system', id: null, name: null },
-      action: entry.action,
-      entityType: entry.entityType,
-      entityId: entry.entityId,
-      before: entry.before ?? null,
-      after: entry.after ?? null,
-      ip: entry.ip,
-      client: entry.client,
-      occurredAt: entry.occurredAt.toISOString(),
-    }));
+    const items = rows.slice(0, q.limit).map(({ entry, actorName }) => toAuditEntryDto(entry, actorName));
     return { items, nextCursor: rows.length > q.limit ? items[items.length - 1]!.id : null };
   }
 }

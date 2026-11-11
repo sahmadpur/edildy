@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Page, PlatformLoginResult, PlatformTenantDetail, PlatformTenantDto } from '@edildy/contracts';
+import type { Page, PlatformLoginResult, PlatformTenantDetail, PlatformTenantDto, TenantActivity } from '@edildy/contracts';
 import { Public } from '../common/decorators';
 import { ParseIdPipe } from '../common/parse-id.pipe';
 import type { AppRequest } from '../common/request';
@@ -13,6 +13,7 @@ import {
   PlatformTenantPageResponse,
   PlatformTenantResponse,
   SubscriptionInputDto,
+  TenantActivityResponse,
 } from './dto';
 import { PlatformGuard } from './platform.guard';
 import { PlatformService } from './platform.service';
@@ -55,6 +56,12 @@ export class PlatformTenantsController {
   @ApiOkResponse({ type: PlatformTenantDetailResponse })
   get(@Param('id', ParseIdPipe) id: string): Promise<PlatformTenantDetail> {
     return this.platform.getTenant(id);
+  }
+
+  @Get(':id/activity')
+  @ApiOkResponse({ type: TenantActivityResponse })
+  activity(@Param('id', ParseIdPipe) id: string): Promise<TenantActivity> {
+    return this.platform.getActivity(id);
   }
 
   @Put(':id/subscription')

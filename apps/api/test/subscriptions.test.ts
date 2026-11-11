@@ -95,6 +95,25 @@ describe('subscriptions', () => {
       expect(me.body.tenant.subscription.limits).toEqual({ staff: 70, workers: 100, branches: 1 });
     });
 
+    it('shows what the organisation has set up and how it is used', async () => {
+      const s = await signupTenant(t, { client: 'web' });
+      await as(t, s.accessToken).post('/api/v1/teams', { name: 'Activity team' });
+      const detail = await platform.get(`/api/v1/platform/tenants/${s.tenantId}`);
+      expect(detail.body.counts).toEqual({ sites: 0, teams: 1, checklists: 0, assignments: 0 });
+      expect(detail.body.lastActivityAt).not.toBeNull();
+
+      const res = await platform.get(`/api/v1/platform/tenants/${s.tenantId}/activity`);
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body).toMatchObject({ activeUsers: { d7: 1, d30: 1 }, activeByClient: { web: 1, mobile: 0 }, logins: { d7: 1, d30: 1 }, runsCompleted: { d7: 0, d30: 0 } });
+      expect(res.body.daily).toHaveLength(30);
+      expect(res.body.daily.at(-1)).toMatchObject({ users: 1 });
+      expect(res.body.daily.at(-1).actions).toBeGreaterThanOrEqual(2);
+      expect(res.body.recent[0]).toMatchObject({ action: 'team.created', actor: { type: 'user', id: s.ownerId } });
+      // Another organisation's activity is not mixed in.
+      const other = await signupTenant(t);
+      expect((await platform.get(`/api/v1/platform/tenants/${other.tenantId}/activity`)).body.recent.map((e: { action: string }) => e.action)).not.toContain('team.created');
+    });
+
     it('refuses an end date before the start', async () => {
       const s = await signupTenant(t);
       const res = await platform.put(`/api/v1/platform/tenants/${s.tenantId}/subscription`, sub({ endsOn: addDays(today(), -1) }));

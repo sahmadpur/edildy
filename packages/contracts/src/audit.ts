@@ -105,6 +105,7 @@ export const AUDIT_ACTIONS = [
   'tenant.created',
   'tenant.updated',
   'tenant.suspended',
+  'tenant.subscription_changed',
   'tenant.reactivated',
   'role.created',
   'role.updated',
