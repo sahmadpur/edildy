@@ -1,6 +1,6 @@
 import type { PermissionKey } from '@taskop/contracts';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Building2, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, Shield, ShieldCheck, TriangleAlert, Users, UsersRound, X } from 'lucide-react';
+import { Building2, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, ShieldCheck, TriangleAlert, Users, X } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageMenu } from '@/components/language-menu';
@@ -14,7 +14,7 @@ import { UserMenu } from './user-menu';
 import { VerifyEmailBanner } from './verify-email-banner';
 
 export interface NavItem {
-  to: '/' | '/users' | '/roles' | '/sites' | '/teams' | '/audit' | '/settings' | '/checklists' | '/assignments' | '/problems' | '/tasks' | '/audits' | '/reports' | '/shifts';
+  to: '/' | '/users' | '/sites' | '/teams' | '/audit' | '/settings' | '/checklists' | '/assignments' | '/problems' | '/tasks' | '/audits' | '/reports' | '/roster';
   /** When the user may not open `to`, the first of these they may open is linked instead (a merged page's other tab). */
   fallbacks?: readonly { to: NavItem['to']; permission: PermissionKey }[];
   labelKey: string;
@@ -23,7 +23,7 @@ export interface NavItem {
   permission?: PermissionKey | readonly PermissionKey[];
   /** The sidebar group (nav.groups.*). */
   group: 'overview' | 'operations' | 'admin' | 'other';
-  /** Other pages this item stands for: a merged page's second tab (e.g. /schedule under Təyinatlar). */
+  /** Other pages this item stands for: a merged page's second tab (e.g. /calendar under Yoxlamalar). */
   also?: readonly string[];
 }
 
@@ -38,15 +38,23 @@ export const NAV_ITEMS: NavItem[] = [
     permission: ['assignments.view', 'checklists.view'],
     fallbacks: [{ to: '/checklists', permission: 'checklists.view' }],
     group: 'operations',
-    also: ['/calendar', '/schedule', '/checklists', '/templates'],
+    also: ['/calendar', '/checklists', '/templates'],
   },
   { to: '/tasks', labelKey: 'nav.tasks', icon: ClipboardCheck, permission: ['tasks.view', 'tasks.manage'], group: 'operations' },
   { to: '/audits', labelKey: 'nav.audits', icon: ShieldCheck, permission: 'audits.perform', group: 'other' },
-  { to: '/users', labelKey: 'nav.users', icon: Users, permission: 'users.view', group: 'admin' },
+  // Əməkdaş siyahısı and Komandalar are the tabs of one page (feedback 2026-11-11, item 15).
+  {
+    to: '/users',
+    labelKey: 'nav.users',
+    icon: Users,
+    permission: ['users.view', 'teams.view'],
+    fallbacks: [{ to: '/teams', permission: 'teams.view' }],
+    group: 'admin',
+    also: ['/teams'],
+  },
   { to: '/sites', labelKey: 'nav.sites', icon: Building2, permission: 'sites.view', group: 'admin' },
-  { to: '/teams', labelKey: 'nav.teams', icon: UsersRound, permission: 'teams.view', group: 'admin' },
-  { to: '/shifts', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'admin', also: ['/roster'] },
-  { to: '/roles', labelKey: 'nav.roles', icon: Shield, permission: 'roles.view', group: 'admin' },
+  // Növbə cədvəli is the first tab (feedback 2026-11-11, item 11).
+  { to: '/roster', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'admin', also: ['/shifts'] },
   { to: '/audit', labelKey: 'nav.audit', icon: ClipboardList, permission: 'audit.view', group: 'admin' },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings, group: 'admin' },
 ];

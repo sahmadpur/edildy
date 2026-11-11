@@ -69,7 +69,7 @@ async function seedDemoScheduling(tx: Tx, tenantId: string, ownerId: string): Pr
   if (!warehouse || !elvin || !cleaning) return;
   const today = localDateOf(new Date(), 'Asia/Baku');
   const shiftId = uuidv7();
-  await tx.insert(schema.shifts).values({ id: shiftId, tenantId, name: 'Səhər', startTime: '08:00', endTime: '16:00' });
+  await tx.insert(schema.shifts).values({ id: shiftId, tenantId, name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] });
   await tx.insert(schema.shiftRoster).values(Array.from({ length: 7 }, (_, i) => ({ tenantId, userId: elvin.id, shiftId, siteId: warehouse.id, date: addDays(today, i) })));
   const assignmentId = uuidv7();
   await tx.insert(schema.assignments).values({

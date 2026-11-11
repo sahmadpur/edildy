@@ -34,7 +34,9 @@ export function RosterPage({ initialDate, tabs }: { initialDate?: string; tabs?:
   const today = useTenantToday();
   const canManage = useCan('shifts.manage');
   const sites = useSites();
-  const [siteId, setSiteId] = useState<string | null>(null);
+  // The first active object is open on arrival (feedback 2026-11-11, item 11); undefined = not picked yet.
+  const [pickedSite, setSiteId] = useState<string | null | undefined>(undefined);
+  const siteId = pickedSite === undefined ? ((sites.data ?? []).find((s) => s.active)?.id ?? null) : pickedSite;
   const [weekStart, setWeekStart] = useState(() => weekStartOf(initialDate ?? today));
   const days = weekDates(weekStart);
   const to = days[6]!;

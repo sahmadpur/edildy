@@ -4,6 +4,7 @@ export default {
     duplicateDate: 'Эта дата уже добавлена.',
     duplicateWeekday: 'День недели повторяется.',
     shiftZeroLength: 'Время начала и окончания смены не может совпадать.',
+    shiftRangesOverlap: 'Периоды смены не должны пересекаться.',
     rangeTooLong: 'Слишком длинный диапазон дат (не более 62 дней).',
     dateOutOfRange: 'Дата вне выбранного диапазона.',
     repeatEndBeforeStart: 'Время окончания должно быть позже времени начала.',
@@ -66,6 +67,10 @@ export default {
     site: 'Объект',
     allSites: 'Все объекты',
     nextDay: 'заканчивается на следующий день',
+    addRange: 'Добавить период',
+    removeRange: 'Удалить период {{n}}',
+    range: 'Период {{n}}',
+    rangesHint: 'Для каждого периода создаётся своя проверка.',
     empty: 'Смен пока нет.',
   },
   roster: {

@@ -114,7 +114,7 @@ describe('TaskDrawer', () => {
     const problem = within(drawer).getByRole('region', { name: 'Mənbə problem' });
     for (const text of ['Kritik', 'Temperatur', 'Açılış', 'Kondisioner xarabdır', 'Aysel']) expect(problem).toHaveTextContent(text);
     await userEvent.click(within(problem).getByRole('link', { name: 'İcraya bax' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/calendar'));
     expect(router.state.location.search).toEqual({ date: '2026-11-02', occurrence: 'o1', tab: 'execution' });
   });
 

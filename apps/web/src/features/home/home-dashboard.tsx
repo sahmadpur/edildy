@@ -42,14 +42,14 @@ type BoxStat = {
 const PLANNED: BoxStat = {
   key: 'planned',
   bucket: 'planned',
-  labelKey: 'reports.counts.planned',
+  labelKey: 'reports.home.planned',
   tone: 'text-foreground',
 };
 const OUTCOMES: readonly BoxStat[] = [
   {
     key: 'completed',
     bucket: 'completed',
-    labelKey: 'reports.counts.completed',
+    labelKey: 'reports.home.completed',
     tone: 'text-status-ok-text',
   },
   {

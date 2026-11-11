@@ -229,6 +229,6 @@ describe('AuditScreen', () => {
     const f = auditFixture();
     mocks.api.audits.get.mockResolvedValue(f.detail());
     renderScreen();
-    expect(await screen.findByRole('link', { name: 'İcraya bax' })).toHaveAttribute('href', '/schedule?date=2026-11-02&occurrence=o1&tab=execution');
+    expect(await screen.findByRole('link', { name: 'İcraya bax' })).toHaveAttribute('href', '/calendar?date=2026-11-02&occurrence=o1&tab=execution');
   });
 });

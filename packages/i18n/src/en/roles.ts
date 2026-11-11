@@ -1,5 +1,5 @@
 export default {
-  title: 'Roles',
+  title: 'Employee roles',
   add: 'New role',
   name: 'Role name',
   scope: 'Data scope',

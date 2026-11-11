@@ -34,14 +34,14 @@ import { MessagesPage } from '@/features/notifications/messages-page';
 import { messagesSearch } from '@/features/notifications/routes';
 import { ReportsPage } from '@/features/reports/reports-page';
 import { reportsPageSearch } from '@/features/reports/search';
-import { RolesPage } from '@/features/roles/roles-page';
-import { AssignmentDetailRoute, AssignmentsRoute, CalendarRoute, NewAssignmentRoute, RosterRoute, ScheduleRoute, scheduleSearch, ShiftsRoute } from '@/features/scheduling/routes';
+import { AssignmentDetailRoute, AssignmentsRoute, CalendarRoute, NewAssignmentRoute, RosterRoute, scheduleSearch, ShiftsRoute } from '@/features/scheduling/routes';
 import { tasksSearch } from '@/features/tasks/routes';
 import { TasksPage } from '@/features/tasks/tasks-page';
-import { SettingsPage } from '@/features/settings/settings-page';
+import { SettingsPage, settingsSearch } from '@/features/settings/settings-page';
 import { SitesPage } from '@/features/sites/sites-page';
 import { TeamsPage } from '@/features/teams/teams-page';
 import { UserDetailPage } from '@/features/users/user-detail-page';
+import { PeopleTabs } from '@/features/users/people-tabs';
 import { UsersPage } from '@/features/users/users-page';
 import { AppShell } from '@/layouts/app-shell';
 import { AuthLayout } from '@/layouts/auth-layout';
@@ -107,14 +107,26 @@ const homeRoute = createRoute({ getParentRoute: () => appLayout, path: '/', comp
 const settingsRoute = createRoute({
   getParentRoute: () => appLayout,
   path: '/settings',
-  component: SettingsPage,
+  component: SettingsRoute,
+  validateSearch: settingsSearch,
 });
+function SettingsRoute() {
+  return <SettingsPage tab={settingsRoute.useSearch().tab} />;
+}
 const sitesRoute = createRoute({ getParentRoute: () => appLayout, path: '/sites', component: SitesPage });
-const teamsRoute = createRoute({ getParentRoute: () => appLayout, path: '/teams', component: TeamsPage });
+const teamsRoute = createRoute({ getParentRoute: () => appLayout, path: '/teams', component: () => <TeamsPage tabs={<PeopleTabs active="/teams" />} /> });
 const rosterRoute = createRoute({ getParentRoute: () => appLayout, path: '/roster', component: RosterRoute });
 const shiftsRoute = createRoute({ getParentRoute: () => appLayout, path: '/shifts', component: ShiftsRoute });
-const calendarRoute = createRoute({ getParentRoute: () => appLayout, path: '/calendar', component: CalendarRoute });
-const scheduleRoute = createRoute({ getParentRoute: () => appLayout, path: '/schedule', component: ScheduleRoute, validateSearch: scheduleSearch });
+const calendarRoute = createRoute({ getParentRoute: () => appLayout, path: '/calendar', component: CalendarRoute, validateSearch: scheduleSearch });
+/** The old İcra cədvəli page: links in older e-mails and bookmarks land on the calendar with the same run (feedback 2026-11-11, item 7). */
+const scheduleRoute = createRoute({
+  getParentRoute: () => appLayout,
+  path: '/schedule',
+  validateSearch: scheduleSearch,
+  beforeLoad: ({ search }) => {
+    throw redirect({ to: '/calendar', search });
+  },
+});
 const problemsRoute = createRoute({ getParentRoute: () => appLayout, path: '/problems', component: ProblemsRoute, validateSearch: problemsSearch });
 function ProblemsRoute() {
   const search = problemsRoute.useSearch();
@@ -138,13 +150,20 @@ const newAssignmentRoute = createRoute({
   }),
 });
 const assignmentDetailRoute = createRoute({ getParentRoute: () => appLayout, path: '/assignments/$assignmentId', component: AssignmentDetailRoute });
-const usersRoute = createRoute({ getParentRoute: () => appLayout, path: '/users', component: UsersPage });
+const usersRoute = createRoute({ getParentRoute: () => appLayout, path: '/users', component: () => <UsersPage tabs={<PeopleTabs active="/users" />} /> });
 const userDetailRoute = createRoute({
   getParentRoute: () => appLayout,
   path: '/users/$userId',
   component: UserDetailPage,
 });
-const rolesRoute = createRoute({ getParentRoute: () => appLayout, path: '/roles', component: RolesPage });
+/** Əməkdaş rolları is a Parametrlər tab now (feedback 2026-11-11, item 16); old links land there. */
+const rolesRoute = createRoute({
+  getParentRoute: () => appLayout,
+  path: '/roles',
+  beforeLoad: () => {
+    throw redirect({ to: '/settings', search: { tab: 'roles' } });
+  },
+});
 
 const auditRoute = createRoute({ getParentRoute: () => appLayout, path: '/audit', component: AuditPage });
 const checklistsWs = createRoute({

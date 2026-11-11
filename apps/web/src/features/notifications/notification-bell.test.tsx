@@ -89,7 +89,7 @@ describe('NotificationBell', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/notifications'));
     expect(mocks.api.notifications.markRead).not.toHaveBeenCalled();
     await userEvent.click(await within(await openBell()).findByRole('button', { name: /Kritik problem/ }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/calendar'));
     expect(router.state.location.search).toEqual({ date: '2026-11-02', occurrence: 'o1', tab: 'execution' });
     expect(mocks.api.notifications.markRead).toHaveBeenCalledWith('n2');
   });

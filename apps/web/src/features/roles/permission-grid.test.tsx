@@ -14,14 +14,14 @@ describe('PermissionGrid', () => {
   it('toggles permissions', async () => {
     const onChange = vi.fn();
     renderWithProviders(<PermissionGrid catalog={catalog} value={['users.view']} onChange={onChange} held={new Set(['users.view', 'users.manage', 'audit.view'])} disabled={false} />);
-    await userEvent.click(screen.getByRole('checkbox', { name: 'İstifadəçiləri idarə etmək' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Əməkdaşları idarə etmək' }));
     expect(onChange).toHaveBeenCalledWith(['users.view', 'users.manage']);
   });
 
   it('disables keys the actor does not hold, but still allows removing granted ones', () => {
     renderWithProviders(<PermissionGrid catalog={catalog} value={['users.manage']} onChange={vi.fn()} held={new Set(['users.view'])} disabled={false} />);
     expect(screen.getByRole('checkbox', { name: 'Audit jurnalına baxmaq' })).toBeDisabled();
-    expect(screen.getByRole('checkbox', { name: 'İstifadəçiləri idarə etmək' })).toBeEnabled();
+    expect(screen.getByRole('checkbox', { name: 'Əməkdaşları idarə etmək' })).toBeEnabled();
   });
 
   it('disables everything for locked roles', () => {

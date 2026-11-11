@@ -162,6 +162,20 @@
       "when": 1794146259365,
       "tag": "0022_occurrences_live_start",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794371995465,
+      "tag": "0023_shift_ranges",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794372003842,
+      "tag": "0024_shift_drop_times",
+      "breakpoints": true
     }
   ]
 }

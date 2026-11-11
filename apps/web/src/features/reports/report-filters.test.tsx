@@ -179,7 +179,7 @@ describe('ReportFilters', () => {
     renderBar({ userId: IDS.stranger });
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent(
-        'Seçilmiş əməkdaş (bu dövrdə icrası yoxdur)',
+        'Seçilmiş əməkdaş (bu dövrdə yoxlaması yoxdur)',
       ),
     );
   });
@@ -195,7 +195,7 @@ describe('ReportFilters', () => {
   it('keeps the selected person visible when an invalid custom range asks for no employee report', () => {
     // An invalid custom range asks for no employee report, yet the selected person stays visible.
     renderBar({ period: 'custom', from: '2026-10-31', to: '2026-10-01', userId: IDS.aynur });
-    expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent('Seçilmiş əməkdaş (bu dövrdə icrası yoxdur)');
+    expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent('Seçilmiş əməkdaş (bu dövrdə yoxlaması yoxdur)');
     expect(mocks.api.reports.employees).not.toHaveBeenCalled();
   });
 

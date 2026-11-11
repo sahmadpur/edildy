@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALL_PERMISSIONS,
+  AUDIT_ACTIONS,
+  AUDIT_ENTITY_TYPES,
   AUDIT_FLOW_AUDIT_ACTIONS,
   EXECUTION_AUDIT_ACTIONS,
   AUDIT_ISSUE_CODES,
@@ -269,7 +271,7 @@ describe('execution translations', () => {
   it('uses the spec wording for the clock and the lost claim', () => {
     expect(az.errors.CLOCK_INVALID).toBe('Telefonun saatını yoxlayın.');
     expect(az.executions.alreadyClaimedBy.replace('{{name}}', 'Murad')).toBe(
-      'Bu checklist artıq Murad tərəfindən icra olunur',
+      'Bu yoxlama artıq Murad tərəfindən icra olunur',
     );
     expect(az.executions.flags.mediaPending).toContain('{{count}}');
   });
@@ -532,10 +534,10 @@ describe('notification translations', () => {
   });
 
   it('uses the agreed wording and registers the nav, audit and role labels', () => {
-    expect(az.notifications.types['checklist.due_soon']).toBe('Checklistin vaxtı yaxınlaşır');
+    expect(az.notifications.types['checklist.due_soon']).toBe('Yoxlamanın vaxtı yaxınlaşır');
     expect(az.notifications.types.manual).toBe('Admin mesajı');
     expect(az.notifications.groups).toEqual({
-      checklist: 'Checklistlər',
+      checklist: 'Yoxlamalar',
       problem: 'Problemlər',
       task: 'Tapşırıqlar',
       audit: 'Audit və düzəlişlər',
@@ -742,7 +744,7 @@ describe('report web translations', () => {
     expect(az.reports.picker.unknown).toBeTypeOf('string');
     expect(az.reports.picker.unknownEmployee).toBeTypeOf('string');
     expect(az.reports.tiles.link).toBe('{{label}}: {{value}}');
-    expect(az.reports.chart.table).toBe('Gündəlik icra cədvəli');
+    expect(az.reports.chart.table).toBe('Gündəlik yoxlama cədvəli');
     expect(az.reports.live.refresh).toBe('Yenilə');
     expect(az.reports.live.updatedAt).toBe('Son yenilənmə: {{time}}');
     expect(az.reports.table.more).toBe('Daha çox göstər');
@@ -752,7 +754,7 @@ describe('report web translations', () => {
     // Part 1's keys are untouched.
     expect(az.nav.home).toBe('Göstəricilər');
     expect(az.reports.export.thisTable).toBe('Bu cədvəl');
-    expect(az.reports.measures.completionHint).toBe('Vaxtı çatmış icralardan tamamlananların payı');
+    expect(az.reports.measures.completionHint).toBe('Vaxtı çatmış yoxlamalardan tamamlananların payı');
     expect(az.nav.reports).toBe('Hesabatlar');
   });
 });
@@ -882,6 +884,13 @@ describe('audit and correction translations', () => {
       expect(az.audit.actions[a], a).toBeTypeOf('string');
     expect(az.audit.clients).toEqual({ web: 'Veb', mobile: 'Mobil' });
     expect(az.audit.filters.client).toBe('Mənbə');
+  });
+
+  it('labels every usage-log action and entity type in every language (feedback 2026-11-11, item 9)', () => {
+    for (const lang of [az, en, ru]) {
+      for (const a of AUDIT_ACTIONS) expect(lang.audit.actions[a], a).toBeTypeOf('string');
+      for (const e of AUDIT_ENTITY_TYPES) expect(lang.audit.entityTypes[e], e).toBeTypeOf('string');
+    }
   });
 
   it('has the notification labels, filters and templates of the three audit types', () => {

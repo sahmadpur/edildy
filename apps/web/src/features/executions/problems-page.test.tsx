@@ -95,15 +95,19 @@ describe('ProblemsPage', () => {
     expect(within(active).getByRole('button', { name: 'Tapşırıq yarat' })).toBeEnabled();
   });
 
-  it('lists problems with place, item, severity and source, and links a row to the occurrence drawer', async () => {
+  it('lists problems with time, place, item and severity, and links a row to the occurrence drawer', async () => {
     const router = renderWithRouter(<ProblemsPage today="2026-11-04" />, '/problems');
     await screen.findByText('Kondisioner xarabdır');
     expect(mocks.api.problems.list).toHaveBeenCalledWith(expect.objectContaining({ from: '2026-10-06', to: '2026-11-04', limit: 50 }));
     const [, first, second] = screen.getAllByRole('row');
-    for (const text of ['Anbar', 'Açılış', 'Temperatur', 'Kritik', 'Əl ilə qeyd', 'Aysel', '2 fayl']) expect(first).toHaveTextContent(text);
-    for (const text of ['Silinmiş sual', 'Adi', 'Qayda üzrə']) expect(second).toHaveTextContent(text);
+    for (const text of ['Anbar', 'Açılış', 'Temperatur', 'Kritik', 'Aysel', '2 fayl']) expect(first).toHaveTextContent(text);
+    // The owner's column order, with the time of day and without Mənbə (feedback 2026-11-11, item 5).
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Tarix', 'İcraçı', 'Obyekt', 'Növ', 'Sual', 'Qeyd', 'Vərəqə', 'Fayllar', 'Nəticə']);
+    expect(first).not.toHaveTextContent('Əl ilə qeyd');
+    expect(within(first!).getAllByRole('cell')[0]!.textContent).toMatch(/\d\d:\d\d/);
+    for (const text of ['Silinmiş sual', 'Adi']) expect(second).toHaveTextContent(text);
     await userEvent.click(within(first!).getByRole('link', { name: 'Temperatur' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/calendar'));
     expect(router.state.location.search).toEqual({ date: '2026-11-02', occurrence: 'o1', tab: 'execution' });
   });
 

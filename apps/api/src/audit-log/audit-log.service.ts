@@ -15,7 +15,7 @@ export class AuditLogService {
   async list(q: AuditListQueryDto): Promise<Page<AuditEntryDto>> {
     const conditions: (SQL | undefined)[] = [];
     if (q.actorUserId) conditions.push(eq(auditLog.actorUserId, q.actorUserId));
-    if (q.action) conditions.push(eq(auditLog.action, q.action));
+    if (q.action) conditions.push(inArray(auditLog.action, q.action));
     if (q.entityType) conditions.push(inArray(auditLog.entityType, q.entityType));
     if (q.entityId) conditions.push(eq(auditLog.entityId, q.entityId));
     if (q.from) conditions.push(gte(auditLog.occurredAt, new Date(q.from)));

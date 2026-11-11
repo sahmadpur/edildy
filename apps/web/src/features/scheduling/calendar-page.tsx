@@ -20,7 +20,7 @@ import { useLocale } from '@/lib/i18n';
 import { api, useMe } from '@/lib/session';
 import { cn } from '@/lib/utils';
 import { occurrenceVariant, useTenantToday, useTimeFormat, useWindowText } from './labels';
-import { OccurrenceDialog } from './occurrence-dialog';
+import { OccurrenceDialog, type OccurrenceTab } from './occurrence-dialog';
 
 /** Chips a day cell shows before "+N daha". */
 const SHOWN_PER_DAY = 3;
@@ -173,18 +173,18 @@ const useFilterOptions = () => {
  * "Yoxlama cədvəli" (feedback 2026-11-08): a month of checks, stored runs and the planned ones after the 14-day
  * horizon, with hover details like an Outlook meeting. A run opens its drawer; a planned check opens its assignment.
  */
-export function CalendarPage({ tabs }: { tabs?: ReactNode }) {
+export function CalendarPage({ tabs, initialDate, initialOccurrenceId, initialTab }: { tabs?: ReactNode; initialDate?: string; initialOccurrenceId?: string; initialTab?: OccurrenceTab }) {
   const { t } = useTranslation();
   const locale = useLocale();
   const navigate = useNavigate();
   const today = useTenantToday();
   const options = useFilterOptions();
-  const [month, setMonth] = useState(monthOf(today));
+  const [month, setMonth] = useState(monthOf(initialDate ?? today));
   const [siteId, setSiteId] = useState<string[]>([]);
   const [checklistId, setChecklistId] = useState<string[]>([]);
   const [assigneeId, setAssigneeId] = useState<string[]>([]);
   const [status, setStatus] = useState<string[]>([]);
-  const [opened, setOpened] = useState<string | null>(null);
+  const [opened, setOpened] = useState<string | null>(initialOccurrenceId ?? null);
   const days = monthGrid(month);
   const from = days[0]!;
   const to = days[days.length - 1]!;
@@ -332,7 +332,7 @@ export function CalendarPage({ tabs }: { tabs?: ReactNode }) {
         ))}
       </div>
 
-      {opened && <OccurrenceDialog id={opened} onClose={() => setOpened(null)} />}
+      {opened && <OccurrenceDialog id={opened} initialTab={opened === initialOccurrenceId ? initialTab : undefined} onClose={() => setOpened(null)} />}
     </div>
   );
 }

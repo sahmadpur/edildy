@@ -30,7 +30,7 @@ describe('EmployeesTab', () => {
     expect(within(rows[4]!).getAllByRole('cell')[1]).toHaveTextContent('9');
     expect(
       screen.getByText(
-        'Bir neçə icraçıya təyin olunmuş və icra edilməmiş icra hər icraçı üçün ayrıca sayılır, ona görə cəm obyektlər cədvəlindəkindən çox ola bilər.',
+        'Bir neçə icraçıya təyin olunmuş və keçirilməmiş yoxlama hər icraçı üçün ayrıca sayılır, ona görə cəm obyektlər cədvəlindəkindən çox ola bilər.',
       ),
     ).toBeInTheDocument();
     await userEvent.click(within(rows[2]!).getByRole('button', { name: 'Kamran Əliyev' }));

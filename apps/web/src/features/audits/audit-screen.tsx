@@ -137,7 +137,7 @@ function AuditView({ audit, report }: { audit: AuditDetail; report: { timedOut: 
         actions={
           <>
             {canOpenRun && (
-              <Link to="/schedule" search={{ date: o.localDate, occurrence: o.id, tab: 'execution' }} className={buttonVariants({ variant: 'outline' })}>
+              <Link to="/calendar" search={{ date: o.localDate, occurrence: o.id, tab: 'execution' }} className={buttonVariants({ variant: 'outline' })}>
                 {t('audits.web.screen.openRun')}
               </Link>
             )}

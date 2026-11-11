@@ -13,7 +13,7 @@ describe('scheduling tenant isolation', () => {
     t = await createTestApp({}, { clock });
     A = await schedulingWorld(t);
     B = await schedulingWorld(t);
-    a.shift = (await A.api.post('/api/v1/shifts', { name: 'A', startTime: '08:00', endTime: '16:00' })).body.id;
+    a.shift = (await A.api.post('/api/v1/shifts', { name: 'A', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     a.assignment = (await createAssignment(A)).id;
     a.occurrence = (await occurrenceRows(a.assignment))[0]!.id;
   });
@@ -49,7 +49,7 @@ describe('scheduling tenant isolation', () => {
       await B.api.post('/api/v1/assignments', { ...base, assigneeIds: A.workers }),
       await B.api.post('/api/v1/assignments', { ...base, timing: { mode: 'shift', shiftId: a.shift, graceMinutes: 0 } }),
       await B.api.post('/api/v1/assignments/preview', { siteId: A.siteId, schedule: daily(), timing: fixed() }),
-      await B.api.post('/api/v1/shifts', { name: 'x', startTime: '08:00', endTime: '16:00', siteId: A.siteId }),
+      await B.api.post('/api/v1/shifts', { name: 'x', ranges: [{ startTime: '08:00', endTime: '16:00' }], siteId: A.siteId }),
       await B.api.put('/api/v1/roster', { siteId: A.siteId, from: TODAY, to: TODAY, rows: [] }),
       await B.api.post('/api/v1/roster/copy', { siteId: A.siteId, sourceWeekStart: TODAY, targetWeekStarts: ['2026-11-09'] }),
     ];

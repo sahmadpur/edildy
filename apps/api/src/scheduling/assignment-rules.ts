@@ -18,7 +18,7 @@ import { Clock } from '../common/clock';
 import { DbService } from '../db/db.service';
 import { checklists, shifts, sites, users } from '../db/schema';
 import type { Actor } from './actor';
-import { hhmm } from './mappers';
+import { sortRanges } from './mappers';
 import { SchedulingScope } from './scheduling-scope';
 
 /** Checks shared by create, update, resume and preview (spec §4.2). */
@@ -72,7 +72,7 @@ export class AssignmentRules {
     if (!s) throw new AppError('REFERENCE_NOT_FOUND');
     if (!s.active) throw new AppError('SHIFT_INACTIVE');
     if (s.siteId && s.siteId !== siteId) throw new AppError('SHIFT_NOT_AT_SITE');
-    return { name: s.name, startTime: hhmm(s.startTime), endTime: hhmm(s.endTime) };
+    return { name: s.name, ranges: sortRanges(s.ranges) };
   }
 
   schedule(r: Recurrence): void {

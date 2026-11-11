@@ -178,7 +178,7 @@ describe('ExecutionScreen', () => {
       await t.db.run(`UPDATE executions SET state = 'rejected', claim = 'rejected', rejected_reason = 'ALREADY_CLAIMED', rejected_by = 'Murad Həsənov'`);
       t.services.feed.emit();
     });
-    expect(await screen.findByText('Bu checklist artıq Murad Həsənov tərəfindən icra olunur')).toBeTruthy();
+    expect(await screen.findByText('Bu yoxlama artıq Murad Həsənov tərəfindən icra olunur')).toBeTruthy();
   });
 
   it('is read-only once a pull shows someone else holding the claim', async () => {
@@ -187,7 +187,7 @@ describe('ExecutionScreen', () => {
       await t.db.run('UPDATE occurrences SET claim_execution_id = ?, claim_user_id = ?, claim_name = ?', [OTHER_EXECUTION, OTHER, 'Murad Həsənov']);
       t.services.feed.emit();
     });
-    expect(await screen.findByText('Bu checklist artıq Murad Həsənov tərəfindən icra olunur')).toBeTruthy();
+    expect(await screen.findByText('Bu yoxlama artıq Murad Həsənov tərəfindən icra olunur')).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Bəli' }).props.accessibilityState).toMatchObject({ disabled: true });
   });
 

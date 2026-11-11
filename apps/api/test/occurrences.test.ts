@@ -117,6 +117,38 @@ describe('occurrences', () => {
     expect(paused.body.items.filter((i: { assignmentId: string }) => i.assignmentId === a.id)).toHaveLength(0);
   });
 
+  it('calendar drops cancelled yoxlamalar but keeps their completed runs (feedback 2026-11-11, item 1)', async () => {
+    const w = await schedulingWorld(t);
+    const a = await createAssignment(w);
+    const rows = await occurrenceRows(a.id);
+    // Today's run was done; one future run was cancelled by hand.
+    await ownerQuery("update occurrences set status = 'completed' where id = $1", [rows[0]!.id]);
+    await w.api.post(`/api/v1/occurrences/${rows[3]!.id}/cancel`, { reason: 'Bayram' });
+    const mine = async (q = '') =>
+      (await w.api.get(`/api/v1/occurrences/calendar?${RANGE}${q}`)).body.items.filter((i: { assignmentId: string; kind: string }) => i.assignmentId === a.id && i.kind === 'run');
+    expect((await mine()).map((i: { occurrenceId: string }) => i.occurrenceId)).not.toContain(rows[3]!.id);
+    expect((await mine('&status=cancelled')).map((i: { occurrenceId: string }) => i.occurrenceId)).toEqual([rows[3]!.id]);
+
+    // Ending the assignment leaves only the completed run; the open one of today goes too.
+    await w.api.post(`/api/v1/assignments/${a.id}/end`, {});
+    expect((await mine()).map((i: { status: string }) => i.status)).toEqual(['completed']);
+  });
+
+  it('keeps shift periods in start order and makes one run per period (feedback 2026-11-11, item 12)', async () => {
+    const w = await schedulingWorld(t);
+    const created = await w.api.post('/api/v1/shifts', { name: 'Bölünmüş', ranges: [{ startTime: '18:00', endTime: '20:00' }, { startTime: '08:00', endTime: '10:00' }] });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    expect(created.body.ranges).toEqual([{ startTime: '08:00', endTime: '10:00' }, { startTime: '18:00', endTime: '20:00' }]);
+    const a = await createAssignment(w, { timing: { mode: 'shift', shiftId: created.body.id, graceMinutes: 0 } });
+    const rows = await occurrenceRows(a.id);
+    // Today (Monday 08:00 Baku) to today + 14: two runs a day, at 08:00 and 18:00 local.
+    expect(rows).toHaveLength(30);
+    expect(rows.slice(0, 2).map((r) => [r.local_date, new Date(r.starts_at).toISOString()])).toEqual([
+      ['2026-11-02', '2026-11-02T04:00:00.000Z'],
+      ['2026-11-02', '2026-11-02T14:00:00.000Z'],
+    ]);
+  });
+
   it('lets a worker list only their own occurrences', async () => {
     const w = await schedulingWorld(t);
     const me = await createUserDirect(t, w.s.tenantId, { fullName: 'Mən' });
@@ -137,7 +169,7 @@ describe('occurrences', () => {
     const outsider = await createUserDirect(t, w.s.tenantId);
     const [first, second] = await occurrenceRows((await createAssignment(w)).id);
     await w.api.post(`/api/v1/occurrences/${second!.id}/cancel`, { reason: 'x' });
-    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', startTime: '08:00', endTime: '16:00' })).body.id;
+    const shift = (await w.api.post('/api/v1/shifts', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }] })).body.id;
     await w.api.put('/api/v1/roster', { siteId: w.siteId, from: TODAY, to: TODAY, rows: [{ userId: w0, shiftId: shift, date: TODAY }] });
     const shiftFirst = (await occurrenceRows((await createAssignment(w, { timing: { mode: 'shift', shiftId: shift, graceMinutes: 0 } })).id))[0]!;
     await ownerQuery('delete from shift_roster where user_id = $1', [w0]);

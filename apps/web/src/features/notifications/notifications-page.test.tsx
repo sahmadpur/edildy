@@ -72,7 +72,7 @@ describe('NotificationsPage', () => {
     await waitFor(() => expect(mocks.api.notifications.markRead).toHaveBeenCalledWith('n3'));
     expect(router.state.location.pathname).toBe('/notifications');
     await userEvent.click(screen.getByRole('button', { name: /Kritik problem/ }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/calendar'));
     expect(router.state.location.search).toEqual({ date: '2026-11-02', occurrence: 'o1', tab: 'execution' });
     expect(mocks.api.notifications.markRead).toHaveBeenCalledWith('n2');
     // The count and the lists are asked again after each mark.
@@ -85,7 +85,7 @@ describe('NotificationsPage', () => {
     mocks.api.notifications.markRead.mockReturnValue(new Promise<void>((resolve) => (settle = resolve)));
     const router = renderWithRouter(<NotificationsPage />, '/notifications');
     await userEvent.click(await screen.findByRole('button', { name: /Kritik problem/ }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/calendar'));
     expect(mocks.api.notifications.markRead).toHaveBeenCalledWith('n2');
     const countCalls = mocks.api.notifications.unreadCount.mock.calls.length;
     settle();
@@ -97,7 +97,7 @@ describe('NotificationsPage', () => {
     mocks.api.notifications.markRead.mockRejectedValue(new Error('not found'));
     const router = renderWithRouter(<NotificationsPage />, '/notifications');
     await userEvent.click(await screen.findByRole('button', { name: /Kritik problem/ }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/schedule'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/calendar'));
     expect(router.state.location.search).toEqual({ date: '2026-11-02', occurrence: 'o1', tab: 'execution' });
   });
 

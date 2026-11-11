@@ -17,7 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatLocalDate, useTenantToday } from '@/features/scheduling/labels';
+import { useTenantToday } from '@/features/scheduling/labels';
+import { useFormatDateTime } from '@/lib/format';
 import { useSites } from '@/features/sites/queries';
 import { resolutionVariant } from '@/features/tasks/labels';
 import { ReportsTab } from '@/features/problem-reports/reports-tab';
@@ -27,7 +28,6 @@ import { errorText } from '@/lib/errors';
 import { useCan } from '@/lib/session';
 import { defaultProblemRange, problemRangeError, severityVariant } from './labels';
 import { type ProblemFilters, useChecklistOptions, useProblems } from './queries';
-import { useLocale } from '@/lib/i18n';
 import { LoadingState, EmptyState } from '@/components/states';
 
 /**
@@ -36,7 +36,7 @@ import { LoadingState, EmptyState } from '@/components/states';
  */
 export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: { today?: string } & ProblemsSearch) {
   const { t } = useTranslation();
-  const locale = useLocale();
+  const formatDateTime = useFormatDateTime();
   const tenantToday = useTenantToday();
   const today = fixedToday ?? tenantToday;
   const canManageTasks = useCan('tasks.manage');
@@ -159,7 +159,8 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
         <Table>
           <TableHeader>
             <TableRow>
-              {['date', 'site', 'checklist', 'item', 'severity', 'source', 'note', 'executor', 'media'].map((k) => (
+              {/* The owner's order (feedback 2026-11-11, item 5); Mənbə is gone. */}
+              {['date', 'executor', 'site', 'severity', 'item', 'note', 'checklist', 'media'].map((k) => (
                 <TableHead key={k}>{c(k)}</TableHead>
               ))}
               <TableHead>{t('tasks.problems.resolution')}</TableHead>
@@ -168,27 +169,26 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           <TableBody>
             {items.map((p) => (
               <TableRow key={p.id} data-cleared={p.clearedAt ? 'true' : undefined} className={p.clearedAt ? 'opacity-60' : undefined}>
-                <TableCell>{formatLocalDate(p.localDate, locale)}</TableCell>
+                <TableCell className="whitespace-nowrap tabular-nums">{formatDateTime(p.createdAt)}</TableCell>
+                <TableCell>{p.executorName}</TableCell>
                 <TableCell>{p.siteName}</TableCell>
-                <TableCell>{p.checklistName}</TableCell>
-                <TableCell>
-                  <Link
-                    to="/schedule"
-                    search={{ date: p.localDate, occurrence: p.occurrenceId, tab: 'execution' }}
-                    className="font-medium underline-offset-4 hover:underline"
-                  >
-                    {p.itemLabel ?? t('executions.problemsPage.unknownItem')}
-                  </Link>
-                </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     <Badge variant={severityVariant(p.severity)}>{t(`executions.severities.${p.severity}`)}</Badge>
                     {p.clearedAt && <Badge variant="outline">{t('corrections.cleared')}</Badge>}
                   </div>
                 </TableCell>
-                <TableCell>{t(`executions.problemSources.${p.source}`)}</TableCell>
+                <TableCell>
+                  <Link
+                    to="/calendar"
+                    search={{ date: p.localDate, occurrence: p.occurrenceId, tab: 'execution' }}
+                    className="font-medium underline-offset-4 hover:underline"
+                  >
+                    {p.itemLabel ?? t('executions.problemsPage.unknownItem')}
+                  </Link>
+                </TableCell>
                 <TableCell className="max-w-xs whitespace-pre-line">{p.note ?? '—'}</TableCell>
-                <TableCell>{p.executorName}</TableCell>
+                <TableCell>{p.checklistName}</TableCell>
                 <TableCell>{p.mediaIds.length ? t('executions.problemsPage.mediaCount', { count: p.mediaIds.length }) : '—'}</TableCell>
                 <TableCell>
                   <ResolutionCell problem={p} canCreate={canManageTasks && !p.clearedAt} onCreate={() => setCreatingFrom(p)} />

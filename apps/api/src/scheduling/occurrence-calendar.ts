@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   addDays,
   CALENDAR_MAX_ITEMS,
+  COMPLETED_STATUSES,
   type CalendarItem,
   type CalendarResponse,
   expandSchedule,
@@ -10,7 +11,7 @@ import {
   recurrenceSchema,
   timingSchema,
 } from '@taskop/contracts';
-import { and, asc, between, eq, inArray, type SQL, sql } from 'drizzle-orm';
+import { and, asc, between, eq, inArray, ne, or, type SQL, sql } from 'drizzle-orm';
 import { Clock } from '../common/clock';
 import { inSiteSubtrees, sqlList } from '../common/sql';
 import { DbService } from '../db/db.service';
@@ -49,6 +50,10 @@ export class OccurrenceCalendar {
       if (q.checklistId) conds.push(inArray(occurrences.checklistId, q.checklistId));
       if (q.assigneeId) conds.push(sql`exists (select 1 from occurrence_assignees oa where oa.occurrence_id = ${occurrences.id} and oa.user_id in ${sqlList(q.assigneeId)})`);
       if (runStatuses) conds.push(inArray(occurrences.status, runStatuses));
+      // Cancelled yoxlamalar leave the calendar (feedback 2026-11-11, item 1): cancelled runs show only when asked for, and
+      // a cancelled (ended) assignment or deactivated checklist keeps only the runs that were actually done.
+      else conds.push(ne(occurrences.status, 'cancelled'));
+      conds.push(or(and(ne(assignments.status, 'ended'), eq(checklists.status, 'active')), inArray(occurrences.status, [...COMPLETED_STATUSES])));
       const rows = await this.queries
         .select()
         .where(and(...conds))
@@ -87,7 +92,7 @@ export class OccurrenceCalendar {
   /** Slots of active assignments that start at or after their generated horizon and fall in the range. */
   private async planned(a: Actor, q: CalendarQueryDto, room: number): Promise<CalendarItem[]> {
     if (room <= 0) return [];
-    const conds: (SQL | undefined)[] = [this.scope.assignments(a), eq(assignments.status, 'active')];
+    const conds: (SQL | undefined)[] = [this.scope.assignments(a), eq(assignments.status, 'active'), eq(checklists.status, 'active')];
     if (q.siteId) conds.push(inSiteSubtrees(assignments.siteId, q.siteId));
     if (q.checklistId) conds.push(inArray(assignments.checklistId, q.checklistId));
     if (q.assigneeId) conds.push(sql`exists (select 1 from assignment_assignees aa where aa.assignment_id = ${assignments.id} and aa.user_id in ${sqlList(q.assigneeId)})`);

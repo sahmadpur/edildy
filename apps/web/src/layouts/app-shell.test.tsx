@@ -36,7 +36,7 @@ function renderShell(path = '/users') {
   const root = createRootRoute();
   const shell = createRoute({ getParentRoute: () => root, id: 'app', component: AppShell });
   const page = createRoute({ getParentRoute: () => shell, path: '/users', component: () => <p>users page</p> });
-  const schedule = createRoute({ getParentRoute: () => shell, path: '/schedule', component: () => <p>schedule page</p> });
+  const schedule = createRoute({ getParentRoute: () => shell, path: '/calendar', component: () => <p>calendar page</p> });
   const templates = createRoute({ getParentRoute: () => shell, path: '/templates', component: () => <p>templates page</p> });
   const login = createRoute({ getParentRoute: () => root, path: '/login', component: () => <p>login page</p> });
   const router = createRouter({ routeTree: root.addChildren([shell.addChildren([page, schedule, templates]), login]), history: createMemoryHistory({ initialEntries: [path] }) });
@@ -110,9 +110,9 @@ describe('AppShell', () => {
     expect(JSON.parse(localStorage.getItem('taskop.nav.collapsed') ?? '[]')).toEqual([]);
   });
 
-  it('marks Yoxlamalar current on the schedule page', async () => {
+  it('marks Yoxlamalar current on the calendar page', async () => {
     state.current = { status: 'authenticated', me: me(['assignments.view']) };
-    renderShell('/schedule');
+    renderShell('/calendar');
     expect(await screen.findByRole('link', { name: 'Yoxlamalar' })).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByRole('link', { name: 'İcra cədvəli' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Təyinatlar' })).not.toBeInTheDocument();

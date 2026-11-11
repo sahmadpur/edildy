@@ -97,11 +97,25 @@ describe('slots', () => {
   });
 
   it('lets a shift cross midnight', () => {
-    const s = slotFor('2026-11-02', { mode: 'shift', shiftId: ID, graceMinutes: 30 }, { startTime: '22:00', endTime: '06:00' }, 'Asia/Baku');
+    const s = slotFor('2026-11-02', { mode: 'shift', shiftId: ID, graceMinutes: 30 }, { ranges: [{ startTime: '22:00', endTime: '06:00' }] }, 'Asia/Baku');
     expect(s.localDate).toBe('2026-11-02');
     expect(s.startsAt.toISOString()).toBe('2026-11-02T18:00:00.000Z');
     expect(s.dueAt.toISOString()).toBe('2026-11-03T02:00:00.000Z');
     expect(s.closesAt.toISOString()).toBe('2026-11-03T02:30:00.000Z');
+  });
+
+  it('makes one run per shift period (feedback 2026-11-11, item 12)', () => {
+    const timing = { mode: 'shift', shiftId: ID, graceMinutes: 15 } as const;
+    const shift = { ranges: [{ startTime: '18:00', endTime: '20:00' }, { startTime: '08:00', endTime: '10:00' }] };
+    const slots = slotsFor('2026-11-02', timing, shift, 'Asia/Baku');
+    expect(slots.map((s) => [s.startsAt.toISOString(), s.dueAt.toISOString(), s.closesAt.toISOString()])).toEqual([
+      ['2026-11-02T04:00:00.000Z', '2026-11-02T06:00:00.000Z', '2026-11-02T06:15:00.000Z'],
+      ['2026-11-02T14:00:00.000Z', '2026-11-02T16:00:00.000Z', '2026-11-02T16:15:00.000Z'],
+    ]);
+    expect(slotFor('2026-11-02', timing, shift, 'Asia/Baku').startsAt.toISOString()).toBe('2026-11-02T04:00:00.000Z');
+    expect(windowMinutes(timing, shift)).toBe(135);
+    const days = expandSchedule({ kind: 'daily', every: 1, ...range('2026-11-02') }, timing, shift, 'Asia/Baku', '2026-11-02', '2026-11-03');
+    expect(days.map((s) => s.localDate)).toEqual(['2026-11-02', '2026-11-02', '2026-11-03', '2026-11-03']);
   });
 
   it('keeps the wall-clock start across a DST change', () => {
@@ -131,7 +145,7 @@ describe('slots', () => {
 
   it('measures windows', () => {
     expect(windowMinutes({ mode: 'fixed', startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 60 }, null)).toBe(180);
-    expect(windowMinutes({ mode: 'shift', shiftId: ID, graceMinutes: 30 }, { startTime: '22:00', endTime: '06:00' })).toBe(510);
+    expect(windowMinutes({ mode: 'shift', shiftId: ID, graceMinutes: 30 }, { ranges: [{ startTime: '22:00', endTime: '06:00' }] })).toBe(510);
     expect(windowMinutes({ mode: 'anytime' }, null)).toBe(1440);
   });
 });

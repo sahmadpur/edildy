@@ -1,4 +1,4 @@
-import { isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@taskop/contracts';
+import { formatShiftRanges, isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@taskop/contracts';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -357,7 +357,7 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
                 .filter((s) => s.active || s.id === value.shiftId)
                 .map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.startTime}–{s.endTime})
+                    {s.name} ({formatShiftRanges(s.ranges, t('scheduling.shifts.nextDay'))})
                   </option>
                 ))}
             </NativeSelect>

@@ -63,9 +63,9 @@ export default {
   faq: {
     title: 'Tez-tez verilən suallar',
     q1: { q: 'İnternet olmayanda nə olur?', a: 'Tətbiq bütün cavabları, foto və videoları telefonda saxlayır və əlaqə yaranan kimi göndərir. İşçi heç nə itirmir.' },
-    q2: { q: 'İşçilər necə daxil olur?', a: 'Təşkilatın kodu, istifadəçi adı və PIN ilə. E-poçt və ya telefon nömrəsi tələb olunmur; menecer PIN-i istənilən vaxt sıfırlaya bilər.' },
-    q3: { q: 'Foto və video harada saxlanılır?', a: 'Təşkilatınızın ayrıca yaddaşında. Fayllar yalnız icazəsi olan istifadəçilərə, vaxtla məhdud keçidlərlə göstərilir.' },
-    q4: { q: 'Hansı dillər var?', a: 'Azərbaycan, ingilis və rus dilləri — həm veb, həm mobil tətbiqdə. Hər istifadəçi öz dilini seçir.' },
+    q2: { q: 'İşçilər necə daxil olur?', a: 'Təşkilatın kodu, login və PIN ilə. E-poçt və ya telefon nömrəsi tələb olunmur; menecer PIN-i istənilən vaxt sıfırlaya bilər.' },
+    q3: { q: 'Foto və video harada saxlanılır?', a: 'Təşkilatınızın ayrıca yaddaşında. Fayllar yalnız icazəsi olan əməkdaşlara, vaxtla məhdud keçidlərlə göstərilir.' },
+    q4: { q: 'Hansı dillər var?', a: 'Azərbaycan, ingilis və rus dilləri — həm veb, həm mobil tətbiqdə. Hər əməkdaş öz dilini seçir.' },
     q5: { q: 'Qiymət necədir?', a: 'Hazırda pilot müştərilərlə işləyirik. Bizə yazın, komandanızın ölçüsünə uyğun təklif göndərək.' },
   },
   footer: {

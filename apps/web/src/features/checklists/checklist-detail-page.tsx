@@ -85,7 +85,13 @@ export function ChecklistDetailPage({ checklistId }: { checklistId: string }) {
                   label={t('common.deactivate')}
                   title={t('common.deactivate')}
                   description={t('checklists.detail.confirmDeactivate', { name: c.name })}
-                  onConfirm={() => act(() => ws.checklists.deactivate(checklistId))}
+                  // Back to the list once it is cancelled (feedback 2026-11-11, item 13).
+                  onConfirm={() =>
+                    act(async () => {
+                      await ws.checklists.deactivate(checklistId);
+                      ws.go('/checklists');
+                    })
+                  }
                 />
               ) : (
                 <Button variant="outline" onClick={() => void act(() => ws.checklists.reactivate(checklistId))}>

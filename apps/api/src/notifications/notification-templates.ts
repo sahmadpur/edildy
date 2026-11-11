@@ -152,7 +152,7 @@ export function notificationLink(
   n: { type: NotificationType; targetKind: NotificationTargetKind; targetId: string | null; targetDate: string | null },
 ): string {
   if (n.targetKind === 'occurrence' && n.targetId && n.targetDate) {
-    return `${webUrl}/schedule?date=${n.targetDate}&occurrence=${n.targetId}${isProblemType(n.type) ? '&tab=execution' : ''}`;
+    return `${webUrl}/calendar?date=${n.targetDate}&occurrence=${n.targetId}${isProblemType(n.type) ? '&tab=execution' : ''}`;
   }
   if (n.targetKind === 'task' && n.targetId) return `${webUrl}/tasks?task=${n.targetId}`;
   if (n.targetKind === 'problem_report' && n.targetId) return `${webUrl}/problems?tab=reports&report=${n.targetId}`;

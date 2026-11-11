@@ -27,7 +27,7 @@ describe('LoginScreen', () => {
     mockLoginWorker.mockResolvedValue({ accessToken: 'a' });
     await render(<LoginScreen />);
     await fireEvent.changeText(screen.getByLabelText('Təşkilat kodu'), ' ACME ');
-    await fireEvent.changeText(screen.getByLabelText('İstifadəçi adı'), 'Elvin');
+    await fireEvent.changeText(screen.getByLabelText('Login'), 'Elvin');
     await fireEvent.changeText(screen.getByLabelText('PIN və ya şifrə'), '730184');
     await fireEvent.press(screen.getByRole('button', { name: 'Daxil ol' }));
     await waitFor(() => expect(mockSignedIn).toHaveBeenCalledWith({ accessToken: 'a' }));
@@ -46,7 +46,7 @@ describe('LoginScreen', () => {
     mockLoginWorker.mockRejectedValue(new ApiError(401, 'INVALID_CREDENTIALS', 'errors.INVALID_CREDENTIALS'));
     await render(<LoginScreen />);
     await fireEvent.changeText(screen.getByLabelText('Təşkilat kodu'), 'acme');
-    await fireEvent.changeText(screen.getByLabelText('İstifadəçi adı'), 'elvin');
+    await fireEvent.changeText(screen.getByLabelText('Login'), 'elvin');
     await fireEvent.changeText(screen.getByLabelText('PIN və ya şifrə'), '000001');
     await fireEvent.press(screen.getByRole('button', { name: 'Daxil ol' }));
     expect(await screen.findByText('Giriş məlumatları yanlışdır.')).toBeTruthy();

@@ -34,7 +34,7 @@ describe('report exports (spec §5.4)', () => {
     expect([...f.body.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     const rows = csvRows(f.body);
     expect(rows[0]).toEqual([
-      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Obyekt', 'Status', 'İcraçılar', 'İcra edən', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
+      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Obyekt', 'Status', 'İcraçılar', 'Yoxlayan', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
     ]);
     expect(rows).toHaveLength(17);
     // r7: done on the phone at 11:00 Baku on Monday, received by the server on Wednesday at 09:00 (FR-10.14).
@@ -72,7 +72,7 @@ describe('report exports (spec §5.4)', () => {
     const sheets = await readXlsxFile(f.body);
     expect(sheets.map((s) => [s.sheet, s.data.length])).toEqual([
       ['Xülasə', 13], ['Gündəlik', 4], ['Obyektlər', 5], ['Əməkdaşlar', 6],
-      ['Gecikmiş icralar', 2], ['Yarımçıq icralar', 2], ['Buraxılmış icralar', 4], ['Problemlər', 5], ['Tapşırıqlar', 10],
+      ['Gecikmiş yoxlamalar', 2], ['Yarımçıq yoxlamalar', 2], ['Buraxılmış yoxlamalar', 4], ['Problemlər', 5], ['Tapşırıqlar', 10],
     ]);
     const sites = sheets[2]!.data;
     expect(sites[2]!.slice(0, 4)).toEqual(['Zona A1', 'Filial A', 'Bəli', 7]);

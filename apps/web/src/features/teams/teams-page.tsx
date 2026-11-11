@@ -1,6 +1,6 @@
 import type { TeamDto } from '@taskop/contracts';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmButton } from '@/components/confirm-button';
@@ -14,7 +14,8 @@ import { api, useCan } from '@/lib/session';
 import { useActiveUsers, useTeams } from './queries';
 import { TeamDialog } from './team-dialog';
 
-export function TeamsPage() {
+/** Komandalar is the second tab of Əməkdaşlar (feedback 2026-11-11, item 15), so it carries that page's title. */
+export function TeamsPage({ tabs }: { tabs?: ReactNode } = {}) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const canManage = useCan('teams.manage');
@@ -35,9 +36,10 @@ export function TeamsPage() {
   return (
     <div>
       <PageHeader
-        title={t('teams.title')} description={t('pages.teams')}
+        title={t('users.title')} description={t('pages.users')}
         actions={canManage && <Button onClick={() => setEditing('new')}>{t('teams.add')}</Button>}
       />
+      {tabs}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(teams.data ?? []).map((team) => {
           return (

@@ -19,7 +19,7 @@ function RecurrenceHarness({ initial }: { initial: Recurrence }) {
   );
 }
 
-const shifts: ShiftDto[] = [{ id: 's1', name: 'Səhər', startTime: '08:00', endTime: '16:00', siteId: null, siteName: null, active: true }];
+const shifts: ShiftDto[] = [{ id: 's1', name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }], siteId: null, siteName: null, active: true }];
 function TimingHarness({ initial }: { initial: Timing }) {
   const [v, setV] = useState(initial);
   return (

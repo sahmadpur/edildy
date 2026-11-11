@@ -4,6 +4,7 @@ export default {
     duplicateDate: 'Bu tarix artıq əlavə olunub.',
     duplicateWeekday: 'Həftə günü təkrarlanır.',
     shiftZeroLength: 'Növbənin başlama və bitmə vaxtı eyni ola bilməz.',
+    shiftRangesOverlap: 'Növbənin saat aralıqları bir-birini kəsməməlidir.',
     rangeTooLong: 'Tarix aralığı çox uzundur (ən çox 62 gün).',
     dateOutOfRange: 'Tarix seçilmiş aralıqdan kənardadır.',
     repeatEndBeforeStart: 'Son vaxt başlama vaxtından sonra olmalıdır.',
@@ -66,6 +67,10 @@ export default {
     site: 'Obyekt',
     allSites: 'Bütün obyektlər',
     nextDay: 'növbəti gün bitir',
+    addRange: 'Saat aralığı əlavə et',
+    removeRange: 'Aralığı sil: {{n}}',
+    range: 'Aralıq {{n}}',
+    rangesHint: 'Hər aralıq üçün ayrıca yoxlama yaranır.',
     empty: 'Hələ növbə yoxdur.',
   },
   roster: {
