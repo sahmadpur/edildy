@@ -6,7 +6,7 @@ This is the step-by-step path from "builds exist" to "anyone can install Edildy 
 |---|---|
 | [listing.md](listing.md) | Store texts: name, subtitle, descriptions, keywords, release notes (en/ru for Apple, az/en/ru for Google) |
 | [forms.md](forms.md) | Answers for Apple's privacy questionnaire, Google's Data safety, content rating, app access and review notes |
-| [assets/ios/](assets/ios/) | App Store screenshots, 6.9" iPhone, 1320 × 2868 (en, ru: the App Store has no Azerbaijani listing) |
+| [assets/ios/](assets/ios/) | App Store screenshots in en and ru (the App Store has no Azerbaijani listing): `6.3in/` at 1206 × 2622 (required slot) and `6.9in/` at 1320 × 2868 (optional) |
 | [assets/android/](assets/android/) | Play icon (512 × 512), feature graphic (1024 × 500, az/en/ru), phone screenshots (1080 × 1920; az has 5, en/ru 4) |
 
 App ids:
@@ -63,7 +63,7 @@ App Store Connect → **App Privacy**:
 In the left sidebar under **iOS App**, open **0.1.0 Prepare for Submission**. If there is no version, create it with "+".
 
 For each language (English, Russian):
-1. **Screenshots → iPhone 6.9" display**: upload `assets/ios/en/01…04.png` (English) or `assets/ios/ru/01…04.png` (Russian), in order. Apple scales them down for smaller iPhones, so the 6.9" set is the only one required. No iPad set is needed, because the app is iPhone-only.
+1. **Screenshots → iPhone 6.1" or 6.3" display** (the required slot; it accepts 1206 × 2622): upload `assets/ios/6.3in/en/01…04.png` (English) or `assets/ios/6.3in/ru/01…04.png` (Russian), in order. Optional: also fill the **6.9"** slot with `assets/ios/6.9in/<lang>/`; otherwise Apple shows the 6.3" set on larger iPhones. No iPad set is needed, because the app is iPhone-only.
 2. **Promotional text**, **Description**, **Keywords**, **Support URL**, **Marketing URL**: from listing.md.
 
 Then, once:
