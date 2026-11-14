@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { inviteToken, PLATFORM_ADMIN } from './org';
 
-test('Edildy staff create an organisation; the owner accepts the invitation, creates a site and a worker, and finds the worker after logging back in', async ({
+test('Edildy staff create an organisation; the owner accepts the invitation, adds a zone to the default branch and a worker, and finds the worker after logging back in', async ({
   page,
   request,
 }) => {
@@ -33,9 +33,14 @@ test('Edildy staff create an organisation; the owner accepts the invitation, cre
   // Basic has no tasks (BR-01.03).
   await expect(page.getByRole('link', { name: 'Tapşırıqlar' })).toHaveCount(0);
 
+  // Every new organisation starts with one branch named after it (feedback 2026-11-14); Basic allows only that one,
+  // so the owner adds a zone inside it.
   await page.getByRole('link', { name: 'Filiallar' }).click();
-  await page.getByRole('button', { name: 'Yeni filial', exact: true }).click();
+  const branch = page.getByRole('treeitem', { name: 'E2E MMC' });
+  await expect(branch).toBeVisible();
+  await branch.getByRole('button', { name: 'Zona / bölmə' }).first().click();
   await page.getByLabel('Ad', { exact: true }).fill('Anbar №1');
+  await expect(page.getByRole('dialog').getByLabel('Növ')).toHaveValue(/.+/);
   await page.getByRole('button', { name: 'Yadda saxla' }).click();
   await expect(page.getByRole('treeitem').getByText('Anbar №1')).toBeVisible();
 

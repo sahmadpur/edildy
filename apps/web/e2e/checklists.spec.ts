@@ -90,7 +90,7 @@ test('owner builds a checklist from a template, publishes v1 and v2, and v1 stay
   const inspector = page.getByRole('complementary');
   await expect(inspector.getByLabel('Sualın mətni')).toHaveValue('Soyuducu qapısı açıq qalıb?');
   await expect(inspector.getByRole('checkbox', { name: 'Bəli' })).toBeChecked();
-  await expect(inspector.getByLabel('Problem')).toHaveValue('critical');
+  await expect(inspector.getByRole('radiogroup', { name: 'Problem' }).getByRole('radio', { name: 'Kritik' })).toHaveAttribute('aria-checked', 'true');
   await expect(inspector.getByRole('checkbox', { name: 'Foto tələb et' })).toBeChecked();
 });
 

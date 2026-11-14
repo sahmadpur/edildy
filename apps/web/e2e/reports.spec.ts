@@ -137,7 +137,8 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   await expect(detail.getByRole('group', { name: 'Yoxlamalar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
   const homeRows = detail.getByRole('table').getByRole('row');
   await expect(homeRows).toHaveCount(2);
-  for (const text of ['E2E hesabat', 'Anbar №1', 'Gecikib', 'Nigar Səfərli']) await expect(homeRows.nth(1)).toContainText(text);
+  // Göstəricilər shortens names to "Ad S." (feedback 2026-11-14).
+  for (const text of ['E2E hesabat', 'Anbar №1', 'Gecikib', 'Nigar S.']) await expect(homeRows.nth(1)).toContainText(text);
   await expect(page).toHaveURL(/\/$/);
 
   // The runs report, overdue bucket, same period.
