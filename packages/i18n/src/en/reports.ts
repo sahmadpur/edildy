@@ -21,13 +21,13 @@ export default {
     period: 'Period',
     from: 'From',
     to: 'To',
-    site: 'Site',
+    site: 'Branch',
     employee: 'Employee',
     checklist: 'Checklist',
     bucket: 'Runs',
     severity: 'Type',
     showInactive: 'Show inactive',
-    allSites: 'All sites',
+    allSites: 'All branches',
     allEmployees: 'All employees',
     allChecklists: 'All checklists',
   },
@@ -59,14 +59,14 @@ export default {
     planned: 'Planned',
     all: 'All',
   },
-  tabs: { summary: 'Overview', sites: 'Sites', employees: 'Employees', runs: 'Runs', problems: 'Problems', tasks: 'Tasks' },
+  tabs: { summary: 'Overview', sites: 'Branches', employees: 'Employees', runs: 'Runs', problems: 'Problems', tasks: 'Tasks' },
   columns: {
     measure: 'Measure',
     value: 'Value',
     date: 'Date',
     dueAt: 'Due by',
     checklist: 'Checklist',
-    site: 'Site',
+    site: 'Branch',
     path: 'Location',
     active: 'Active',
     status: 'Status',
@@ -97,7 +97,7 @@ export default {
   },
   employees: {
     unassigned: 'Unassigned',
-    overCountNote: 'A run assigned to several people and not yet completed is counted once per assignee, so the total can exceed the sites table.',
+    overCountNote: 'A run assigned to several people and not yet completed is counted once per assignee, so the total can exceed the branches table.',
   },
   problems: { total: 'Total problems', critical: 'Critical' },
   tasks: { overdueOpen: 'Overdue (open)', completedOnTime: 'Completed on time', completedLate: 'Completed late' },
@@ -114,7 +114,7 @@ export default {
   /** Export document titles (PDF header). */
   titles: {
     summary: 'Summary report',
-    sites: 'Sites report',
+    sites: 'Branches report',
     employees: 'Employees report',
     runs: 'Runs report',
     problems: 'Problems report',
@@ -125,7 +125,7 @@ export default {
   sheets: {
     summary: 'Summary',
     trend: 'Daily',
-    sites: 'Sites',
+    sites: 'Branches',
     employees: 'Employees',
     runs: 'Runs',
     overdue: 'Late runs',
@@ -160,6 +160,12 @@ export default {
   },
   chart: {
     table: 'Daily runs table',
+    planned: 'Planned',
+    completed: 'Completed',
+    late: 'Late',
+    pie: 'Completed and late',
+    pieEmpty: 'No completed or late checks in this period.',
+    lateHint: 'Late — checks not done on time and not completed: overdue now or missed.',
   },
   /** The web home page: four period boxes, then the selected period's charts and runs. */
   home: {

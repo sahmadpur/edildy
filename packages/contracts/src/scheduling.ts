@@ -58,6 +58,9 @@ export type Recurrence = z.infer<typeof recurrenceSchema>;
 export type RecurrenceKind = Recurrence['kind'];
 export const RECURRENCE_KINDS = ['once', 'daily', 'weekly', 'monthly', 'dates'] as const satisfies readonly RecurrenceKind[];
 
+/** At most this many start times for one fixed-time assignment. */
+export const FIXED_MAX_TIMES = 12;
+
 export const REPEAT_LIMITS = { minEveryMinutes: 15, maxEveryMinutes: 720 } as const;
 
 const graceMinutes = z.number().int().min(0).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes);
@@ -65,6 +68,11 @@ export const timingSchema = z.discriminatedUnion('mode', [
   z.object({
     mode: z.literal('fixed'),
     startTime: localTimeSchema,
+    /**
+     * "Sabit vaxt" with several times a day (feedback 2026-11-14): more start times besides `startTime`, e.g. 08:00,
+     * 13:00 and 18:00. Each time is its own run with the same length; absent on assignments made before.
+     */
+    extraTimes: z.array(localTimeSchema).max(FIXED_MAX_TIMES - 1).optional(),
     dueAfterMinutes: z.number().int().min(1).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes),
     graceMinutes,
   }),
@@ -131,6 +139,11 @@ export interface Slot {
 /** The longest period of the shift: the window of its longest run. */
 export function shiftDurationMinutes(s: ShiftHours): number {
   return Math.max(...s.ranges.map(rangeMinutes));
+}
+
+/** Every start time of a fixed-time assignment, sorted, without repeats. */
+export function fixedStartTimes(timing: Extract<Timing, { mode: 'fixed' }>): LocalTime[] {
+  return [...new Set([timing.startTime, ...(timing.extraTimes ?? [])])].sort();
 }
 
 /** Start → close length of every slot (FR-09.05). */
@@ -206,6 +219,9 @@ export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | nu
     if (!shift) throw new Error('shift timing needs the shift hours');
     return shift.ranges.map((range) => rangeSlot(date, range, timing.graceMinutes, tz)).sort((a, b) => +a.startsAt - +b.startsAt);
   }
+  if (timing.mode === 'fixed') {
+    return fixedStartTimes(timing).map((time) => fixedSlot(date, time, timing, tz));
+  }
   if (timing.mode !== 'repeat') return [slotFor(date, timing, shift, tz)];
   const end = timeToMinutes(timing.endTime);
   return repeatStarts(timing).map((m) => {
@@ -215,18 +231,20 @@ export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | nu
   });
 }
 
-/** One slot for a day; "repeat" timing and a shift with several periods give their first run (use `slotsFor` for all). */
+function fixedSlot(date: LocalDate, time: LocalTime, timing: Extract<Timing, { mode: 'fixed' }>, tz: string): Slot {
+  const startsAt = zonedTimeToUtc(date, timeToMinutes(time), tz);
+  const dueAt = new Date(+startsAt + timing.dueAfterMinutes * 60_000);
+  return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + timing.graceMinutes * 60_000) };
+}
+
+/** One slot for a day; "repeat", several fixed times and a shift with several periods give their first run (use `slotsFor` for all). */
 export function slotFor(date: LocalDate, timing: Timing, shift: ShiftHours | null, tz: string): Slot {
   if (timing.mode === 'repeat' || timing.mode === 'shift') {
     const first = slotsFor(date, timing, shift, tz)[0];
     if (!first) throw new Error(`${timing.mode} timing has no run`);
     return first;
   }
-  if (timing.mode === 'fixed') {
-    const startsAt = zonedTimeToUtc(date, timeToMinutes(timing.startTime), tz);
-    const dueAt = new Date(+startsAt + timing.dueAfterMinutes * 60_000);
-    return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + timing.graceMinutes * 60_000) };
-  }
+  if (timing.mode === 'fixed') return fixedSlot(date, fixedStartTimes(timing)[0]!, timing, tz);
   if (timing.mode === 'anytime') {
     // Midnight to the next midnight in the tenant's zone: due when the day ends, nothing after.
     const startsAt = zonedTimeToUtc(date, 0, tz);
@@ -259,6 +277,8 @@ export const SCHEDULING_ISSUE_CODES = [
   'scheduling.issues.rangeTooLong',
   'scheduling.issues.dateOutOfRange',
   'scheduling.issues.repeatEndBeforeStart',
+  'scheduling.issues.duplicateTime',
+  'scheduling.issues.timesTooClose',
 ] as const;
 export type SchedulingIssueCode = (typeof SCHEDULING_ISSUE_CODES)[number];
 
@@ -283,6 +303,21 @@ export function validateSchedule(r: Recurrence): ContentIssue[] {
 
 /** Cross-field timing checks. Paths are relative to the timing. */
 export function validateTiming(timing: Timing): ContentIssue[] {
+  if (timing.mode === 'fixed') {
+    const issues: ContentIssue[] = [];
+    const extra = timing.extraTimes ?? [];
+    const seen = new Set([timing.startTime]);
+    extra.forEach((time, i) => {
+      if (seen.has(time)) issues.push({ path: ['extraTimes', i], code: 'scheduling.issues.duplicateTime' });
+      seen.add(time);
+    });
+    // Each run is due before the next one starts, so two runs of one assignment never overlap their working time.
+    const minutes = fixedStartTimes(timing).map(timeToMinutes);
+    if (minutes.some((m, i) => i > 0 && m - minutes[i - 1]! < timing.dueAfterMinutes)) {
+      issues.push({ path: ['dueAfterMinutes'], code: 'scheduling.issues.timesTooClose' });
+    }
+    return issues;
+  }
   if (timing.mode !== 'repeat') return [];
   return timeToMinutes(timing.endTime) <= timeToMinutes(timing.startTime) ? [{ path: ['endTime'], code: 'scheduling.issues.repeatEndBeforeStart' }] : [];
 }

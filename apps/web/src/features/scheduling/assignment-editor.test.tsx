@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   api: {
     checklists: { list: vi.fn() },
     sites: { list: vi.fn() },
+    siteTypes: { list: vi.fn().mockResolvedValue([]) },
     users: { list: vi.fn() },
     shifts: { list: vi.fn() },
     assignments: { create: vi.fn(), update: vi.fn(), preview: vi.fn() },
@@ -35,6 +36,7 @@ const detail = (over: Partial<AssignmentDetail> = {}) =>
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
   vi.resetAllMocks();
+  mocks.api.siteTypes.list.mockResolvedValue([]);
   mocks.api.checklists.list.mockResolvedValue({
     items: [
       { id: 'c1', name: 'Açılış', currentVersionNumber: 1 },
@@ -58,11 +60,37 @@ async function fillBasics() {
   await screen.findByRole('option', { name: 'Açılış' });
   await userEvent.selectOptions(await screen.findByLabelText('Yoxlama vərəqəsi'), 'c1');
   await screen.findByRole('option', { name: 'Anbar' });
-  await userEvent.selectOptions(await screen.findByLabelText('Obyekt'), 'site1');
+  await userEvent.selectOptions(await screen.findByLabelText('Filial'), 'site1');
   await userEvent.click(await screen.findByRole('checkbox', { name: 'Elvin' }));
 }
 
 describe('AssignmentEditor', () => {
+  it('takes the only branch and asks for a zone or section inside it (feedback 2026-11-14)', async () => {
+    mocks.api.sites.list.mockResolvedValue([
+      { id: 'b1', parentId: null, typeId: 'tb', name: 'Baş filial', address: null, active: true, path: 'b1', depth: 0 },
+      { id: 'z1', parentId: 'b1', typeId: 'tz', name: 'Mətbəx', address: null, active: true, path: 'b1.z1', depth: 1 },
+      { id: 's1', parentId: 'z1', typeId: 'ts', name: 'Soyuducu', address: null, active: true, path: 'b1.z1.s1', depth: 2 },
+    ]);
+    mocks.api.siteTypes.list.mockResolvedValue([
+      { id: 'tz', name: 'Zona', sortOrder: 1, active: true },
+      { id: 'ts', name: 'Bölmə', sortOrder: 2, active: true },
+    ]);
+    mocks.api.assignments.create.mockResolvedValue(detail());
+    renderWithProviders(<AssignmentEditor today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
+    const branch = await screen.findByLabelText('Filial');
+    await waitFor(() => expect(branch).toHaveValue('b1'));
+    expect(branch).toBeDisabled();
+    const place = await screen.findByLabelText('Zona / bölmə');
+    expect(await screen.findByRole('option', { name: 'Mətbəx · Zona' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Soyuducu · Bölmə/ })).toBeInTheDocument();
+    await userEvent.selectOptions(await screen.findByLabelText('Yoxlama vərəqəsi'), 'c1');
+    expect(screen.getByRole('button', { name: 'Yadda saxla' })).toBeDisabled();
+    await userEvent.selectOptions(place, 's1');
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'Elvin' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+    await waitFor(() => expect(mocks.api.assignments.create).toHaveBeenCalledWith(expect.objectContaining({ siteId: 's1' })));
+  });
+
   it('creates an assignment with a live preview', async () => {
     const onSaved = vi.fn();
     mocks.api.assignments.create.mockResolvedValue(detail());
@@ -86,7 +114,7 @@ describe('AssignmentEditor', () => {
     renderWithProviders(<AssignmentEditor today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
     await fillBasics();
     expect(screen.getByRole('button', { name: 'Yadda saxla' })).toBeEnabled();
-    await userEvent.selectOptions(screen.getByLabelText('Obyekt'), 'site2');
+    await userEvent.selectOptions(screen.getByLabelText('Filial'), 'site2');
     expect(await screen.findByRole('checkbox', { name: 'Elvin' })).not.toBeChecked();
     expect(screen.getByRole('button', { name: 'Yadda saxla' })).toBeDisabled();
   });
@@ -98,7 +126,7 @@ describe('AssignmentEditor', () => {
     renderWithProviders(<AssignmentEditor today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
     await fillBasics();
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
-    expect(await screen.findByText('Seçilmiş icraçılardan biri bu obyektə aid deyil. (Elvin)')).toBeInTheDocument();
+    expect(await screen.findByText('Seçilmiş icraçılardan biri bu filiala aid deyil. (Elvin)')).toBeInTheDocument();
   });
 
   it('shows schedule issues and preview errors', async () => {
@@ -117,7 +145,7 @@ describe('AssignmentEditor', () => {
     mocks.api.assignments.update.mockResolvedValue(detail({ revision: 4 }));
     renderWithProviders(<AssignmentEditor initial={detail()} today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
     expect(await screen.findByLabelText('Yoxlama vərəqəsi')).toBeDisabled();
-    expect(screen.getByLabelText('Obyekt')).toBeDisabled();
+    expect(screen.getByLabelText('Filial')).toBeDisabled();
     const name = screen.getByLabelText('Ad (istəyə bağlı)');
     await userEvent.clear(name);
     await userEvent.type(name, 'Axşam');
@@ -130,7 +158,7 @@ describe('AssignmentEditor', () => {
   it('copies to another site without the old site and assignees', async () => {
     renderWithProviders(<AssignmentEditor preset={{ copyFrom: detail() }} today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
     await waitFor(() => expect(screen.getByLabelText('Yoxlama vərəqəsi')).toHaveValue('c1'));
-    expect(screen.getByLabelText('Obyekt')).toHaveValue('');
+    expect(screen.getByLabelText('Filial')).toHaveValue('');
     expect(screen.getByLabelText('Ad (istəyə bağlı)')).toHaveValue('Səhər');
   });
 
@@ -138,7 +166,7 @@ describe('AssignmentEditor', () => {
     mocks.api.assignments.update.mockResolvedValue(detail({ revision: 4 }));
     const initial = detail({ assignees: [{ id: 'u1', fullName: 'Elvin' }, { id: 'gone', fullName: 'Kamran' }] });
     renderWithProviders(<AssignmentEditor initial={initial} today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
-    const stale = await screen.findByRole('checkbox', { name: 'Kamran (artıq bu obyektdə deyil)' });
+    const stale = await screen.findByRole('checkbox', { name: 'Kamran (artıq bu filialda deyil)' });
     expect(stale).toBeChecked();
     await userEvent.click(stale);
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
@@ -151,7 +179,7 @@ describe('AssignmentEditor', () => {
     );
     const initial = detail({ assignees: [{ id: 'u1', fullName: 'Elvin' }, { id: 'gone', fullName: 'Kamran' }] });
     renderWithProviders(<AssignmentEditor initial={initial} today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
-    await screen.findByRole('checkbox', { name: 'Kamran (artıq bu obyektdə deyil)' });
+    await screen.findByRole('checkbox', { name: 'Kamran (artıq bu filialda deyil)' });
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
     expect(await screen.findByText(/\(Kamran\)$/)).toBeInTheDocument();
   });

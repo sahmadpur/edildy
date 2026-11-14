@@ -104,7 +104,7 @@ describe('ProblemsPage', () => {
     const [, first, second] = screen.getAllByRole('row');
     for (const text of ['Anbar', 'Açılış', 'Temperatur', 'Kritik', 'Aysel', '2 fayl']) expect(first).toHaveTextContent(text);
     // The owner's column order, with the time of day and without Mənbə (feedback 2026-11-11, item 5).
-    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Tarix', 'İcraçı', 'Obyekt', 'Növ', 'Sual', 'Qeyd', 'Vərəqə', 'Fayllar', 'Nəticə']);
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Tarix', 'İcraçı', 'Filial', 'Növ', 'Sual', 'Qeyd', 'Vərəqə', 'Fayllar', 'Nəticə']);
     expect(first).not.toHaveTextContent('Əl ilə qeyd');
     expect(within(first!).getAllByRole('cell')[0]!.textContent).toMatch(/\d\d:\d\d/);
     for (const text of ['Silinmiş sual', 'Adi']) expect(second).toHaveTextContent(text);
@@ -129,14 +129,14 @@ describe('ProblemsPage', () => {
     expect(mocks.api.problems.list).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: 'p1' }));
     expect(screen.queryByRole('button', { name: 'Daha çox göstər' })).not.toBeInTheDocument();
     await waitFor(() => expect(mocks.api.checklists.list).toHaveBeenCalled());
-    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Bütün obyektlər');
+    expect(screen.getByRole('button', { name: 'Filial' })).toHaveTextContent('Bütün filiallar');
     await tickOptions('Növ', ['Kritik']);
     await tickOptions('Mənbə', ['Əl ilə qeyd']);
-    await tickOptions('Obyekt', ['Anbar', 'Mağaza']);
+    await tickOptions('Filial', ['Anbar', 'Mağaza']);
     await tickOptions('Yoxlama vərəqəsi', ['Açılış']);
     expect(screen.getByRole('button', { name: 'Yoxlama vərəqəsi' })).toHaveTextContent('Açılış');
     // Every site ticked is "all": no site filter is sent.
-    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Bütün obyektlər');
+    expect(screen.getByRole('button', { name: 'Filial' })).toHaveTextContent('Bütün filiallar');
     await waitFor(() =>
       expect(mocks.api.problems.list).toHaveBeenLastCalledWith(
         expect.objectContaining({ severity: 'critical', source: 'manual', siteId: undefined, checklistId: 'c1', from: '2026-10-06', to: '2026-11-04' }),
@@ -189,8 +189,8 @@ describe('ProblemsPage resolution', () => {
     await userEvent.click(create!);
     const dialog = await screen.findByRole('dialog', { name: 'Problemdən tapşırıq' });
     expect(within(dialog).getByLabelText('Başlıq')).toHaveValue('Temperatur');
-    expect(within(dialog).getByLabelText('Prioritet')).toHaveValue('high');
-    expect(within(dialog).getByText('Obyekt problemdən götürülür: Anbar')).toBeInTheDocument();
+    expect(within(within(dialog).getByRole('radiogroup', { name: 'Prioritet' })).getByRole('radio', { name: 'Yüksək' })).toBeChecked();
+    expect(within(dialog).getByText('Filial problemdən götürülür: Anbar')).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('combobox', { name: 'İcraçı' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Nigar Səfərli' }));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Göndər' }));

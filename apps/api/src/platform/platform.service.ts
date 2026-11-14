@@ -105,7 +105,7 @@ export class PlatformService {
           .insert(tenants)
           .values({ id: tenantId, name: input.name, orgCode: input.orgCode, timezone: input.timezone, locale: input.locale, ...subscriptionValues(input.subscription) })
           .returning();
-        const roleIds = await seedTenantDefaults(tx, tenantId);
+        const roleIds = await seedTenantDefaults(tx, tenantId, input.name);
         await tx.insert(users).values({
           id: ownerId,
           tenantId,

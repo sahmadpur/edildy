@@ -2,7 +2,7 @@ export default {
   home: 'Indicators',
   users: 'Employees',
   roles: 'Roles',
-  sites: 'Sites',
+  sites: 'Branches',
   teams: 'Teams',
   audit: 'Usage log',
   settings: 'Settings',
@@ -18,10 +18,11 @@ export default {
   notifications: 'Notifications',
   messages: 'Messages',
   reports: 'Reports',
+  faq: 'FAQ',
   audits: 'Audit',
   logout: 'Log out',
   welcome: 'Welcome, {{name}}!',
   intro:
-    'Set up your organisation, sites, teams and people, then create and publish checklists. Scheduling and runs come in the next stages.',
+    'Set up your organisation, branches, teams and people, then create and publish checklists. Scheduling and runs come in the next stages.',
   groups: { overview: 'Main', operations: 'Operations', admin: 'Administration', other: 'Other' },
 } as const;

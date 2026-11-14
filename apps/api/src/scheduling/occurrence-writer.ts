@@ -9,6 +9,7 @@ import {
   SCHEDULING_LIMITS,
   type ShiftHours,
   type Slot,
+  fixedStartTimes,
   timingSchema,
   zonedTimeToUtc,
 } from '@edildy/contracts';
@@ -19,6 +20,7 @@ import { DomainEvents } from '../common/domain-events';
 import { DbService } from '../db/db.service';
 import { assignments, occurrenceAssignees, occurrences, occurrenceStatusHistory, shifts, tenants } from '../db/schema';
 import { sortRanges } from './mappers';
+import { worksAt } from '../common/site-membership';
 
 export type SnapshotScope = { assignmentId: string } | { siteId: string; from: string; to: string } | { userId: string };
 
@@ -72,8 +74,9 @@ export class OccurrenceWriter {
     const candidates = expandSchedule(recurrenceSchema.parse(a.schedule), timing, shift, tz, from, addDays(today, SCHEDULING_LIMITS.horizonDays)).filter(
       (s) => (!until || s.startsAt >= until) && s.closesAt > now,
     );
-    // Several runs a day (repeat, or a shift with several periods) are told apart by their windows, not their day.
-    const slots = await this.withoutClashes(a.id, timing.mode === 'repeat' || (shift?.ranges.length ?? 0) > 1, candidates);
+    // Several runs a day (repeat, several fixed times, or a shift with several periods) are told apart by their windows, not their day.
+    const multi = timing.mode === 'repeat' || (timing.mode === 'fixed' && fixedStartTimes(timing).length > 1) || (shift?.ranges.length ?? 0) > 1;
+    const slots = await this.withoutClashes(a.id, multi, candidates);
     let created: { id: string }[] = [];
     if (slots.length) {
       created = await tx
@@ -232,7 +235,7 @@ export class OccurrenceWriter {
     }
   }
 
-  /** Eligible users: active assignees linked to the site, and for shift timing also rostered that day (FR-09.09). */
+  /** Eligible users: active assignees who work at the site (linked to it or to a site above it), and for shift timing also rostered that day (FR-09.09). */
   private async insertSnapshots(occurrenceIds: string[]): Promise<void> {
     await this.db.tx().execute(sql`
       insert into occurrence_assignees (tenant_id, occurrence_id, user_id)
@@ -240,8 +243,8 @@ export class OccurrenceWriter {
       from occurrences
       join assignment_assignees aa on aa.assignment_id = occurrences.assignment_id
       join users u on u.id = aa.user_id and u.status = 'active'
-      join user_sites us on us.user_id = aa.user_id and us.site_id = occurrences.site_id
       where ${inArray(occurrences.id, occurrenceIds)}
+        and ${worksAt(sql`aa.user_id`, sql`occurrences.site_id`)}
         and (occurrences.shift_id is null or exists (
           select 1 from shift_roster r
           where r.user_id = aa.user_id and r.shift_id = occurrences.shift_id

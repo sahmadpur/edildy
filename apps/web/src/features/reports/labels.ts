@@ -133,5 +133,5 @@ export function exportErrorText(t: TFunction, e: unknown): string {
 }
 
 /** Who did or is to do a run: the executor, else the assignees, else Unassigned. */
-export const runPeople = (t: TFunction, r: ReportRun): string =>
-  r.executor?.fullName ?? (r.assignees.map((a) => a.fullName).join(', ') || t('reports.employees.unassigned'));
+export const runPeople = (t: TFunction, r: ReportRun, name: (fullName: string) => string = (n) => n): string =>
+  (r.executor ? name(r.executor.fullName) : r.assignees.map((a) => name(a.fullName)).join(', ')) || t('reports.employees.unassigned');

@@ -5,6 +5,7 @@ import { CountTiles } from './count-tiles';
 import { isSingleDay, SUMMARY_TILES, type TileKey } from './labels';
 import { useReportSummary } from './queries';
 import type { ReportSearch } from './search';
+import { StatusPie } from './status-pie';
 import { TrendChart } from './trend-chart';
 import { LoadingState, EmptyState } from '@/components/states';
 
@@ -30,7 +31,18 @@ export function SummaryView({
     <div className="grid gap-4">
       <CountTiles summary={summary} search={search} keys={tiles} onSelect={onSelectTile} selected={selectedTile} />
       {summary.counts.planned === 0 && <EmptyState title={t('reports.empty')} />}
-      {!isSingleDay(filters) && <TrendChart trend={summary.trend} />}
+      {summary.counts.planned > 0 &&
+        (isSingleDay(filters) ? (
+          <div className="grid gap-4 lg:grid-cols-3">
+            <StatusPie counts={summary.counts} />
+          </div>
+        ) : (
+          // The bars and the ring side by side, the same height (feedback 2026-11-14).
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <TrendChart trend={summary.trend} />
+            <StatusPie counts={summary.counts} />
+          </div>
+        ))}
     </div>
   );
 }

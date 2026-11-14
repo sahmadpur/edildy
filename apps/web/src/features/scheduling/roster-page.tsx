@@ -4,6 +4,7 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { NativeSelect } from '@/components/native-select';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -97,23 +98,25 @@ export function RosterPage({ initialDate, tabs }: { initialDate?: string; tabs?:
   return (
     <div className="grid gap-4">
       <div>
-        <PageHeader
-          title={t('scheduling.shifts.title')} description={t('pages.shifts')}
+        <PageHeader title={t('scheduling.shifts.title')} description={t('pages.shifts')} />
+        <TabRow
+          className="mb-0"
           actions={
             canManage &&
             siteId && (
               <>
-                <Button variant="outline" disabled={dirty || !roster.data} onClick={() => setCopying(true)}>
+                <button type="button" className={tabActionClass('secondary')} disabled={dirty || !roster.data} onClick={() => setCopying(true)}>
                   {t('scheduling.roster.copy')}
-                </Button>
-                <Button disabled={!dirty} onClick={() => void save()}>
+                </button>
+                <button type="button" className={tabActionClass()} disabled={!dirty} onClick={() => void save()}>
                   {t('common.save')}
-                </Button>
+                </button>
               </>
             )
           }
-        />
-        {tabs}
+        >
+          {tabs}
+        </TabRow>
       </div>
       <div className="flex flex-wrap items-end gap-3">
         <div className="grid gap-1.5">

@@ -105,7 +105,7 @@ describe('NewReportScreen (2026-11-06 design §7.5)', () => {
     await found(fix);
     await fireEvent.press(await screen.findByRole('button', { name: 'Göndər' }));
     expect(await screen.findByText('Təsvir yazın.')).toBeTruthy();
-    expect(screen.getByText('Obyekt seçin.')).toBeTruthy();
+    expect(screen.getByText('Filial seçin.')).toBeTruthy();
     expect(await t.services.reports.reports()).toEqual([]);
   });
 });

@@ -600,7 +600,7 @@ describe('report endpoints', () => {
   }
   const range = { from: '2026-11-02', to: '2026-11-04' };
   const zero = { planned: 0, due: 0, completed: 0, inProgress: 0, pending: 0, overdue: 0, partial: 0, missed: 0, withProblems: 0, withCritical: 0 };
-  const summary = { counts: zero, completionPercent: null, averageScore: null, trend: [{ date: '2026-11-02', due: 0, completed: 0, completionPercent: null }] };
+  const summary = { counts: zero, completionPercent: null, averageScore: null, trend: [{ date: '2026-11-02', planned: 0, due: 0, completed: 0, late: 0, completionPercent: null }] };
   const empty = { items: [], nextCursor: null };
   const problems = { counts: { total: 0, critical: 0, resolution: { none: 0, open: 0, resolved: 0, cancelled: 0 } }, ...empty };
   const tasks = {

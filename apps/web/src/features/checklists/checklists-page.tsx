@@ -3,6 +3,7 @@ import { formatDateTime } from '@edildy/i18n';
 import { useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,9 +39,18 @@ export function ChecklistsPage() {
     <div>
       <PageHeader
         title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} description={t('pages.checklists')}
-        actions={ws.can.manage && <Button onClick={() => setCreating(true)}>{t('checklists.new')}</Button>}
       />
-      <ChecklistTabs active="checklists" />
+      <TabRow
+        actions={
+          ws.can.manage && (
+            <button type="button" className={tabActionClass()} onClick={() => setCreating(true)}>
+              {t('checklists.new')}
+            </button>
+          )
+        }
+      >
+        <ChecklistTabs active="checklists" />
+      </TabRow>
       <div className="mb-4 flex flex-wrap gap-2">
         <Input
           type="search"

@@ -4,6 +4,7 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmButton } from '@/components/confirm-button';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,9 +38,18 @@ export function TeamsPage({ tabs }: { tabs?: ReactNode } = {}) {
     <div>
       <PageHeader
         title={t('users.title')} description={t('pages.users')}
-        actions={canManage && <Button onClick={() => setEditing('new')}>{t('teams.add')}</Button>}
       />
-      {tabs}
+      <TabRow
+        actions={
+          canManage && (
+            <button type="button" className={tabActionClass()} onClick={() => setEditing('new')}>
+              {t('teams.add')}
+            </button>
+          )
+        }
+      >
+        {tabs}
+      </TabRow>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {(teams.data ?? []).map((team) => {
           return (

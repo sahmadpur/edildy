@@ -64,7 +64,7 @@ beforeEach(() => {
 async function openSite() {
   renderWithProviders(<RosterPage initialDate="2026-11-04" />);
   await screen.findByRole('option', { name: 'Anbar' });
-  await userEvent.selectOptions(await screen.findByLabelText('Obyekt'), 'site1');
+  await userEvent.selectOptions(await screen.findByLabelText('Filial'), 'site1');
   await waitFor(() =>
     expect(mocks.api.roster.get).toHaveBeenCalledWith({
       siteId: 'site1',

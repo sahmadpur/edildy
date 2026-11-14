@@ -19,7 +19,7 @@ describe('report tables', () => {
       counts: { ...emptyRunCounts(), planned: 15, due: 13, completed: 7 },
       completionPercent: 53.8,
       averageScore: null,
-      trend: [{ date: '2026-11-02', due: 6, completed: 4, completionPercent: 66.7 }],
+      trend: [{ date: '2026-11-02', planned: 7, due: 6, completed: 4, late: 1, completionPercent: 66.7 }],
     };
     const [measures, trend] = summaryTables(s);
     expect(measures!.title).toBe('Xülasə');
@@ -45,7 +45,7 @@ describe('report tables', () => {
     const t = runsTable([run], runsTitle('all'));
     expect(t.title).toBe('Yoxlamalar');
     expect(t.columns.map((c) => c.label)).toEqual([
-      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Obyekt', 'Status', 'İcraçılar', 'Yoxlayan', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
+      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Filial', 'Status', 'İcraçılar', 'Yoxlayan', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
     ]);
     expect(t.rows[0]).toEqual([
       '2026-11-02', '2026-11-02T06:00:00.000Z', 'Açılış yoxlaması', 'Zona A1', 'Tamamlanıb', 'Aynur, Kamran', 'Kamran',
@@ -91,7 +91,7 @@ describe('report table languages', () => {
     };
     const en = T.runsTable([run], T.runsTitle('missed', 'en'), 'en');
     expect(en.title).toBe('Runs (Missed)');
-    expect(en.columns.slice(0, 5).map((c) => c.label)).toEqual(['Date', 'Due by', 'Checklist', 'Site', 'Status']);
+    expect(en.columns.slice(0, 5).map((c) => c.label)).toEqual(['Date', 'Due by', 'Checklist', 'Branch', 'Status']);
     expect(en.rows[0]![4]).toBe('Completed');
     expect(en.rows[0]![15]).toBe('Audit passed');
     const ru = T.runsTable([run], T.runsTitle('all', 'ru'), 'ru');

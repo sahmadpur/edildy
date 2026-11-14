@@ -1,4 +1,5 @@
-import { formatShiftRanges, isoWeekday, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@edildy/contracts';
+import { FIXED_MAX_TIMES, formatShiftRanges, isoWeekday, minutesToTime, timeToMinutes, validateTiming, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@edildy/contracts';
+import { Plus, X } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -340,14 +341,7 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
           )}
         </div>
       ) : value.mode === 'fixed' ? (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor={`${id}-start`}>{t('scheduling.builder.startTime')}</Label>
-            <Input id={`${id}-start`} type="time" value={value.startTime} onChange={(e) => e.target.value && onChange({ ...value, startTime: e.target.value })} />
-          </div>
-          <NumberField id={`${id}-due`} label={t('scheduling.builder.dueAfter')} value={value.dueAfterMinutes} min={1} max={max} onChange={(dueAfterMinutes) => onChange({ ...value, dueAfterMinutes })} />
-          <NumberField id={`${id}-grace`} label={t('scheduling.builder.grace')} value={value.graceMinutes} min={0} max={max} onChange={(graceMinutes) => onChange({ ...value, graceMinutes })} />
-        </div>
+        <FixedTimes value={value} onChange={onChange} max={max} />
       ) : (
         <div className="grid grid-cols-2 gap-3">
           <Field id={`${id}-shift`} label={t('scheduling.builder.shift')} required empty={!value.shiftId}>
@@ -362,9 +356,66 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
                 ))}
             </NativeSelect>
           </Field>
-          <NumberField id={`${id}-grace`} label={t('scheduling.builder.grace')} value={value.graceMinutes} min={0} max={max} onChange={(graceMinutes) => onChange({ ...value, graceMinutes })} />
         </div>
       )}
     </fieldset>
+  );
+}
+
+type FixedTiming = Extract<Timing, { mode: 'fixed' }>;
+
+/**
+ * "Sabit vaxt" with one or more start times (feedback 2026-11-14): each time is its own run of the same length.
+ * The grace ("Gecikmə icazəsi") is no longer asked: it keeps its default, or the value an older assignment stored.
+ */
+function FixedTimes({ value, onChange, max }: { value: FixedTiming; onChange: (t: Timing) => void; max: number }) {
+  const { t } = useTranslation();
+  const id = useId();
+  const times = [value.startTime, ...(value.extraTimes ?? [])];
+  const set = (next: string[]) => {
+    const [first, ...rest] = next;
+    const { extraTimes: _drop, ...base } = value;
+    onChange(rest.length ? { ...base, startTime: first!, extraTimes: rest } : { ...base, startTime: first! });
+  };
+  const nextTime = () => minutesToTime(Math.min(timeToMinutes(times[times.length - 1]!) + Math.max(value.dueAfterMinutes, 60), 23 * 60 + 59));
+  const issues = validateTiming(value);
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-1.5" role="group" aria-label={t('scheduling.builder.startTimes')}>
+        <span className="text-sm font-medium">{t('scheduling.builder.startTimes')}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {times.map((time, i) => (
+            <div key={i} className="flex items-center gap-1">
+              <Input
+                id={i === 0 ? `${id}-start` : undefined}
+                type="time"
+                className="w-32"
+                aria-label={times.length === 1 ? t('scheduling.builder.startTime') : t('scheduling.builder.startTimeN', { n: i + 1 })}
+                value={time}
+                onChange={(e) => e.target.value && set(times.map((x, j) => (j === i ? e.target.value : x)))}
+              />
+              {times.length > 1 && (
+                <Button type="button" variant="ghost" size="icon" className="size-8" aria-label={t('scheduling.builder.removeTime', { time })} onClick={() => set(times.filter((_, j) => j !== i))}>
+                  <X className="size-3.5" />
+                </Button>
+              )}
+            </div>
+          ))}
+          {times.length < FIXED_MAX_TIMES && (
+            <Button type="button" variant="outline" size="sm" onClick={() => set([...times, nextTime()])}>
+              <Plus className="size-3.5" /> {t('scheduling.builder.addTime')}
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <NumberField id={`${id}-due`} label={t('scheduling.builder.dueAfter')} value={value.dueAfterMinutes} min={1} max={max} onChange={(dueAfterMinutes) => onChange({ ...value, dueAfterMinutes })} />
+      </div>
+      {issues.map((i) => (
+        <p key={`${i.code}-${i.path.join('.')}`} className="text-destructive text-sm">
+          {t(i.code)}
+        </p>
+      ))}
+    </div>
   );
 }

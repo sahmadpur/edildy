@@ -49,7 +49,7 @@ export default {
     title: 'Audit report',
     checklist: 'Checklist',
     version: 'Version {{number}}',
-    site: 'Site',
+    site: 'Branch',
     run: 'Run',
     executor: 'Run by',
     window: 'Run window',

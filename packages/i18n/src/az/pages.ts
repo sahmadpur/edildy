@@ -2,7 +2,7 @@
 export default {
   home: 'Yoxlama, problem və tapşırıqlar üzrə xülasə.',
   problems: 'Yoxlamalarda qeydə alınan və əməkdaşların bildirdiyi problemlər. Problemdən tapşırıq yaradıb həllini izləyin.',
-  reports: 'Dövr, obyekt, əməkdaş və yoxlama vərəqəsi üzrə nəticələr. Cədvəlləri yükləyə bilərsiniz.',
+  reports: 'Dövr, filial, əməkdaş və yoxlama vərəqəsi üzrə nəticələr. Cədvəlləri yükləyə bilərsiniz.',
   assignments: 'Kim, harada, hansı yoxlamanı və nə vaxt edəcək. Yeni təyinat yaradın və ya mövcud olanı dəyişin.',
   schedule: 'Təyinatlardan yaranan icralar həftə üzrə. İcranın üzərinə klikləyib cavablarına baxın.',
   calendar: 'Ay üzrə planlaşdırılmış və keçirilmiş yoxlamalar. Üzərinə gəlib təfərrüatlara baxın.',
@@ -17,8 +17,8 @@ export default {
   roles: 'Hər rol üçün icazələri seçin. Əməkdaşın görə və edə bildikləri onun rolundan asılıdır.',
   auditLog: 'Sistemdə kimin, nə vaxt, nəyi dəyişdiyinin tam qeydi.',
   settings: 'Təşkilatın əsas məlumatları, şifrəniz, bildiriş qaydaları və əməkdaş rolları.',
-  messages: 'Əməkdaşlara, komandalara və ya obyektlərə mesaj göndərin.',
+  messages: 'Əməkdaşlara, komandalara və ya filiallara mesaj göndərin.',
   notifications: 'Sizə gələn bütün bildirişlər. Bildirişin üzərinə klikləyib əlaqəli səhifəyə keçin.',
-  newAssignment: 'Yoxlama vərəqəsini, obyekti, icraçıları və vaxtı seçin.',
+  newAssignment: 'Yoxlama vərəqəsini, filialı, icraçıları və vaxtı seçin.',
   globalTemplates: 'Bütün təşkilatlara görünən Edildy şablonları.',
 } as const;

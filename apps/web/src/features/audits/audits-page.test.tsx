@@ -58,7 +58,7 @@ describe('AuditsPage', () => {
     expect(screen.getByRole('tab', { name: az.audits.queues.waiting })).toHaveAttribute('aria-selected', 'true');
     const rows = await screen.findAllByRole('row');
     expect(mocks.api.audits.list).toHaveBeenCalledWith({ queue: 'waiting' });
-    expect(within(rows[0]!).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Tarix', 'Yoxlama vərəqəsi', 'Obyekt', 'İcraçı', 'Tamamlanıb', 'Əməliyyatlar']);
+    expect(within(rows[0]!).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Tarix', 'Yoxlama vərəqəsi', 'Filial', 'İcraçı', 'Tamamlanıb', 'Əməliyyatlar']);
     for (const text of ['Açılış yoxlaması', 'Anbar №1', 'Nigar Səfərli', '09:00']) expect(rows[1]).toHaveTextContent(text);
     // A waiting run has no auditor and no result yet: those filters are not offered.
     expect(screen.queryByLabelText('Auditor')).not.toBeInTheDocument();
@@ -103,7 +103,7 @@ describe('AuditsPage', () => {
     await tickOptions('Nəticə', ['Uğursuz']);
     await tickOptions('Auditor', ['Rəşad Kazımov']);
     await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
-    await tickOptions('Obyekt', [/Zona A1/]);
+    await tickOptions('Filial', [/Zona A1/]);
     await tickOptions('Yoxlama vərəqəsi', ['Açılış yoxlaması']);
     await waitFor(() =>
       expect(mocks.api.audits.list).toHaveBeenLastCalledWith({ queue: 'finished', result: 'failed', auditorId: AUDIT_IDS.auditor, siteId: IDS.zoneA, checklistId: IDS.checklist }),
@@ -136,7 +136,7 @@ describe('AuditsPage', () => {
     mocks.api.audits.list.mockResolvedValue(page([]));
     renderWithRouter(<AuditsPage />, '/audits');
     expect(await screen.findByText('Audit gözləyən icra yoxdur.')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Filial')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Yoxlama vərəqəsi')).not.toBeInTheDocument();
     expect(mocks.api.sites.list).not.toHaveBeenCalled();
   });

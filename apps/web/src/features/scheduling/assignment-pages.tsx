@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
 import { ConfirmButton } from '@/components/confirm-button';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -82,15 +83,18 @@ export function AssignmentsPage({ tabs }: { tabs?: ReactNode } = {}) {
     <div>
       <PageHeader
         title={t(tabs ? 'nav.assignments' : 'scheduling.assignments.title')} description={t('pages.assignments')}
+      />
+      <TabRow
         actions={
           canManage && (
-            <Link to="/assignments/new" className={buttonVariants()}>
+            <Link to="/assignments/new" className={tabActionClass()}>
               {t('scheduling.assignments.add')}
             </Link>
           )
         }
-      />
-      {tabs}
+      >
+        {tabs}
+      </TabRow>
       <div className="mb-4 flex flex-wrap gap-3">
         <Input type="search" aria-label={t('common.search')} placeholder={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} className="w-64" />
         <MultiSelectFilter

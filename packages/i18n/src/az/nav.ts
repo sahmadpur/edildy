@@ -2,7 +2,7 @@ export default {
   home: 'Göstəricilər',
   users: 'Əməkdaşlar',
   roles: 'Rollar',
-  sites: 'Obyektlər',
+  sites: 'Filiallar',
   teams: 'Komandalar',
   audit: 'İstifadə jurnalı',
   settings: 'Parametrlər',
@@ -18,10 +18,11 @@ export default {
   notifications: 'Bildirişlər',
   messages: 'Mesajlar',
   reports: 'Hesabatlar',
+  faq: 'Tez-tez verilən suallar',
   audits: 'Audit',
   logout: 'Çıxış',
   welcome: 'Xoş gəlmisiniz, {{name}}!',
   intro:
-    'Təşkilatınızı, obyektləri, komandaları və əməkdaşları qurun, yoxlama vərəqələrini yaradın və dərc edin. Planlaşdırma və icra növbəti mərhələlərdə əlavə olunacaq.',
+    'Təşkilatınızı, filialları, komandaları və əməkdaşları qurun, yoxlama vərəqələrini yaradın və dərc edin. Planlaşdırma və icra növbəti mərhələlərdə əlavə olunacaq.',
   groups: { overview: 'Əsas', operations: 'Əməliyyatlar', admin: 'İdarəetmə', other: 'Digər' },
 } as const;

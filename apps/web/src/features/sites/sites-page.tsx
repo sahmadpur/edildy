@@ -3,8 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { TabActions, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { errorText } from '@/lib/errors';
 import { api, useCan } from '@/lib/session';
@@ -40,9 +40,11 @@ export function SitesPage() {
         title={t('sites.title')} description={t('pages.sites')}
         actions={
           canManage && (
-            <Button onClick={() => setDialog({ kind: 'create', parent: null })}>
-              {t('sites.tree.addRoot')}
-            </Button>
+            <TabActions>
+              <button type="button" className={tabActionClass()} onClick={() => setDialog({ kind: 'create', parent: null })}>
+                {t('sites.tree.addRoot')}
+              </button>
+            </TabActions>
           )
         }
       />

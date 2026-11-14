@@ -1,4 +1,4 @@
-import type { Recurrence, Timing } from './scheduling.js';
+import { fixedStartTimes, type Recurrence, type Timing } from './scheduling.js';
 import { minutesToTime, timeToMinutes } from './scheduling-time.js';
 
 /** The caller's translate function, so contracts stays free of UI strings. */
@@ -44,6 +44,8 @@ function describeTime(timing: Timing, shiftName: string | null, t: Translate): s
       : t('scheduling.summary.everyMinutes', { n: timing.everyMinutes });
     return t('scheduling.summary.repeat', { every, range: `${timing.startTime}–${timing.endTime}` });
   }
+  const times = fixedStartTimes(timing);
+  if (times.length > 1) return times.join(', ');
   const end = timeToMinutes(timing.startTime) + timing.dueAfterMinutes;
   const range = `${timing.startTime}–${minutesToTime(end)}`;
   const days = Math.floor(end / 1440);

@@ -62,9 +62,9 @@ describe('TaskDialog from a problem report (2026-11-06 design §8)', () => {
     renderDialog({ problemReport: problemReportDto() });
     expect(screen.getByRole('dialog', { name: 'Bildirilən problemdən tapşırıq' })).toBeInTheDocument();
     expect(screen.getByLabelText('Başlıq')).toHaveValue('Anbarın qapısı bağlanmır, kilid sınıb');
-    expect(screen.getByLabelText('Prioritet')).toHaveValue('high');
+    expect(within(screen.getByRole('radiogroup', { name: 'Prioritet' })).getByRole('radio', { name: 'Yüksək' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' })).toBeChecked();
-    expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Filial')).not.toBeInTheDocument();
     await pickAssignee('Nigar Səfərli');
     await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(mocks.api.tasks.create).toHaveBeenCalled());
@@ -86,15 +86,15 @@ describe('TaskDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Yeni tapşırıq' })).toBeInTheDocument();
     await paste('Başlıq', '  Soyuducunun qapısını təmir edin ');
     await paste('Təlimat', 'Rezini dəyişin');
-    await userEvent.selectOptions(screen.getByLabelText('Prioritet'), 'high');
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Prioritet' })).getByRole('radio', { name: 'Yüksək' }));
     await pickAssignee('Nigar Səfərli');
-    await within(screen.getByLabelText('Obyekt')).findByRole('option', { name: 'Anbar №1' }, { timeout: 3000 });
-    await userEvent.selectOptions(screen.getByLabelText('Obyekt'), 'site1');
+    await within(screen.getByLabelText('Filial')).findByRole('option', { name: 'Anbar №1' }, { timeout: 3000 });
+    await userEvent.selectOptions(screen.getByLabelText('Filial'), 'site1');
     fireEvent.change(screen.getByLabelText('Son tarix'), { target: { value: '2026-11-02' } });
     fireEvent.change(screen.getByLabelText('Saat'), { target: { value: '09:00' } });
     expect(screen.getByText(/Europe\/Berlin/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' }));
-    await userEvent.selectOptions(screen.getByLabelText('Foto'), 'required');
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Foto' })).getByRole('radio', { name: 'Mütləq' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Yalnız kamera ilə çəkilmiş (qalereyadan yox)' }));
     await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -143,10 +143,10 @@ describe('TaskDialog', () => {
     expect(screen.getByRole('dialog', { name: 'Problemdən tapşırıq' })).toBeInTheDocument();
     expect(screen.getByLabelText('Başlıq')).toHaveValue('Temperatur');
     expect(screen.getByLabelText('Təlimat')).toHaveValue('Kondisioner xarabdır');
-    expect(screen.getByLabelText('Prioritet')).toHaveValue('high');
+    expect(within(screen.getByRole('radiogroup', { name: 'Prioritet' })).getByRole('radio', { name: 'Yüksək' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' })).toBeChecked();
-    expect(screen.getByText('Obyekt problemdən götürülür: Anbar №1')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    expect(screen.getByText('Filial problemdən götürülür: Anbar №1')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Filial')).not.toBeInTheDocument();
     // No site list for a problem task: nothing is asked for until the picker opens.
     expect(mocks.api.tasks.assignees).not.toHaveBeenCalled();
     await pickAssignee('Nigar Səfərli');
@@ -214,7 +214,7 @@ describe('TaskDialog', () => {
 
   it("offers the sites from GET /tasks/assignees, and keeps an edited task's current site selectable", async () => {
     renderDialog({ task: taskDetail({ site: { id: 'old', name: 'Köhnə anbar' } }) });
-    const select = screen.getByLabelText('Obyekt');
+    const select = screen.getByLabelText('Filial');
     await within(select).findByRole('option', { name: 'Anbar №1' }, { timeout: 3000 });
     expect(within(select).getByRole('option', { name: 'Köhnə anbar' })).toBeInTheDocument();
     expect(select).toHaveValue('old');
@@ -318,7 +318,7 @@ describe('TaskDialog', () => {
     view.rerender(dialog({ ...opened, priority: 'high', media: [...media, taskMediaDto({ id: 'm4', role: 'instruction' })] }));
     // Three stored + one queued = four of five: one more fits (a double count would say five).
     expect(screen.getByLabelText('Təlimat faylları')).toBeEnabled();
-    expect(screen.getByLabelText('Prioritet')).toHaveValue('normal');
+    expect(within(screen.getByRole('radiogroup', { name: 'Prioritet' })).getByRole('radio', { name: 'Adi' })).toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
     await waitFor(() => expect(mocks.api.tasks.update).toHaveBeenCalled());
     expect(mocks.api.tasks.update).toHaveBeenCalledWith('t1', { title: 'Qapı 2' });
@@ -347,7 +347,8 @@ describe('TaskDialog', () => {
     await userEvent.upload(screen.getByLabelText('Təlimat faylları'), photo());
     await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
     await screen.findByRole('button', { name: 'Faylları yenidən yüklə' });
-    for (const label of ['Başlıq', 'Təlimat', 'Prioritet', 'Son tarix', 'Saat']) expect(screen.getByLabelText(label)).toBeDisabled();
+    for (const label of ['Başlıq', 'Təlimat', 'Son tarix', 'Saat']) expect(screen.getByLabelText(label)).toBeDisabled();
+    for (const radio of within(screen.getByRole('radiogroup', { name: 'Prioritet' })).getAllByRole('radio')) expect(radio).toBeDisabled();
     expect(screen.getByRole('combobox', { name: 'İcraçı' })).toBeDisabled();
     expect(screen.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' })).toBeDisabled();
     expect(screen.getByLabelText('Təlimat faylları')).toBeEnabled();
@@ -358,11 +359,11 @@ describe('TaskDialog', () => {
     mocks.api.tasks.create.mockRejectedValue(new ApiError(422, 'VALIDATION_FAILED', 'errors.VALIDATION_FAILED', { siteId: 'errors.SITE_INACTIVE' }));
     renderDialog();
     await fillMinimum();
-    await within(screen.getByLabelText('Obyekt')).findByRole('option', { name: 'Anbar №1' }, { timeout: 3000 });
-    await userEvent.selectOptions(screen.getByLabelText('Obyekt'), 'site1');
+    await within(screen.getByLabelText('Filial')).findByRole('option', { name: 'Anbar №1' }, { timeout: 3000 });
+    await userEvent.selectOptions(screen.getByLabelText('Filial'), 'site1');
     await userEvent.click(screen.getByRole('button', { name: 'Göndər' }));
-    await waitFor(() => expect(screen.getByLabelText('Obyekt')).toHaveAttribute('aria-invalid', 'true'));
-    expect(screen.getAllByText('Obyekt aktiv deyil.').length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByLabelText('Filial')).toHaveAttribute('aria-invalid', 'true'));
+    expect(screen.getAllByText('Filial aktiv deyil.').length).toBeGreaterThan(0);
   });
 
   it('after an edit that changes nothing, sends the picked time, and on CLOCK_INVALID once the task\'s own updatedAt', async () => {

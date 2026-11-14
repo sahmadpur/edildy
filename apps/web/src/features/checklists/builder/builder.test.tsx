@@ -19,7 +19,7 @@ describe('Builder', () => {
     const save = vi.fn(async (_c: ChecklistContent, revision: number) => ({ revision: revision + 1, issues: [] }));
     const onPublish = vi.fn(async () => undefined);
     renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={4} readOnly={false} save={save} onPublish={onPublish} onBack={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Yeni ad' } });
+    fireEvent.change(screen.getByLabelText('Birinci bölmənin adı'), { target: { value: 'Yeni ad' } });
     await userEvent.click(screen.getByRole('button', { name: 'Dərc et' }));
     await userEvent.type(screen.getByLabelText('Dəyişiklik qeydi (istəyə bağlı)'), 'Ad dəyişdi');
     await userEvent.click(screen.getAllByRole('button', { name: 'Dərc et' }).at(-1)!);
@@ -38,7 +38,7 @@ describe('Builder', () => {
   it('read-only and no-publish modes', () => {
     const save = vi.fn();
     const { unmount } = renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={1} readOnly save={save} onPublish={vi.fn()} onBack={vi.fn()} />);
-    expect(screen.getByLabelText('Bölmənin adı')).toBeDisabled();
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Dərc et' })).toBeNull();
     expect(screen.getByText('Yalnız baxış')).toBeInTheDocument();
     unmount();
@@ -49,11 +49,11 @@ describe('Builder', () => {
 
   it('undoes with the button and keyboard', async () => {
     renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={1} readOnly={false} save={vi.fn(async () => ({ revision: 2, issues: [] }))} onBack={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Z' } });
+    fireEvent.change(screen.getByLabelText('Birinci bölmənin adı'), { target: { value: 'Z' } });
     await userEvent.click(screen.getByRole('button', { name: 'Geri al' }));
-    expect(screen.getByLabelText('Bölmənin adı')).toHaveValue('Bölmə');
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toHaveValue('Bölmə');
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true, shiftKey: true });
-    expect(screen.getByLabelText('Bölmənin adı')).toHaveValue('Z');
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toHaveValue('Z');
   });
 
   it('shows the conflict banner and reload action', async () => {
@@ -63,7 +63,7 @@ describe('Builder', () => {
     const onReload = vi.fn();
     vi.stubGlobal('confirm', () => true);
     renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={1} readOnly={false} save={save} onReload={onReload} onBack={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Z' } });
+    fireEvent.change(screen.getByLabelText('Birinci bölmənin adı'), { target: { value: 'Z' } });
     await act(() => vi.advanceTimersByTimeAsync(1600));
     expect(screen.getByRole('alert')).toHaveTextContent('Bu qaralama başqa yerdə dəyişdirilib.');
     await userEvent.click(screen.getByRole('button', { name: 'Yenidən yüklə' }));
@@ -75,28 +75,28 @@ describe('Builder', () => {
     const { ApiError } = await import('@edildy/api-client');
     const save = vi.fn().mockRejectedValue(new ApiError(409, 'CHECKLIST_DRAFT_CONFLICT', 'x'));
     renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={1} readOnly={false} save={save} onBack={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Z' } });
+    fireEvent.change(screen.getByLabelText('Birinci bölmənin adı'), { target: { value: 'Z' } });
     await act(() => vi.advanceTimersByTimeAsync(1600));
     expect(screen.getByRole('alert')).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
-    expect(screen.getByLabelText('Bölmənin adı')).toHaveValue('Z');
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toHaveValue('Z');
   });
 
   it('ignores keyboard undo while the preview is open', async () => {
     renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={1} readOnly={false} save={vi.fn(async () => ({ revision: 2, issues: [] }))} onBack={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Z' } });
+    fireEvent.change(screen.getByLabelText('Birinci bölmənin adı'), { target: { value: 'Z' } });
     await userEvent.click(screen.getByRole('button', { name: 'Önizləmə' }));
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
     await userEvent.click(screen.getByRole('button', { name: 'Redaktora qayıt' }));
-    expect(screen.getByLabelText('Bölmənin adı')).toHaveValue('Z');
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toHaveValue('Z');
   });
 
   it('ignores keyboard undo while the publish dialog is open', async () => {
     renderWithProviders(<Builder title="X" initialContent={validContent()} initialRevision={1} readOnly={false} save={vi.fn(async () => ({ revision: 2, issues: [] }))} onPublish={vi.fn()} onBack={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText('Bölmənin adı'), { target: { value: 'Z' } });
+    fireEvent.change(screen.getByLabelText('Birinci bölmənin adı'), { target: { value: 'Z' } });
     await userEvent.click(screen.getByRole('button', { name: 'Dərc et' }));
     fireEvent.keyDown(window, { key: 'z', ctrlKey: true });
     await userEvent.click(screen.getByRole('button', { name: 'İmtina et' }));
-    expect(screen.getByLabelText('Bölmənin adı')).toHaveValue('Z');
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toHaveValue('Z');
   });
 });

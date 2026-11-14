@@ -18,13 +18,13 @@ export default {
   },
   scopes: {
     all: 'Bütün təşkilat',
-    site_subtree: 'Öz obyektləri və onların alt obyektləri',
+    site_subtree: 'Öz filialları, onların zona və bölmələri',
     subordinates: 'Tabeliyindəki əməkdaşlar',
     own: 'Yalnız özü',
   },
   groups: {
     tenant: 'Təşkilat',
-    sites: 'Obyektlər',
+    sites: 'Filiallar',
     teams: 'Komandalar',
     users: 'Əməkdaşlar',
     roles: 'Rollar',
@@ -41,8 +41,8 @@ export default {
   },
   keys: {
     tenant_manage: 'Təşkilat parametrlərini idarə etmək',
-    sites_view: 'Obyektlərə baxmaq',
-    sites_manage: 'Obyektləri idarə etmək',
+    sites_view: 'Filiallara baxmaq',
+    sites_manage: 'Filialları idarə etmək',
     teams_view: 'Komandalara baxmaq',
     teams_manage: 'Komandaları idarə etmək',
     users_view: 'Əməkdaşlara baxmaq',

@@ -117,9 +117,9 @@ test('a closed run’s problem becomes a task on the web; the worker answers thr
   const dialog = page.getByRole('dialog', { name: 'Problemdən tapşırıq' });
   await expect(dialog.getByLabel('Başlıq', { exact: true })).toHaveValue('Giriş qapısının şüşələri təmizdir?');
   await expect(dialog.getByLabel('Təlimat', { exact: true })).toHaveValue('Şüşədə çat var');
-  await expect(dialog.getByLabel('Prioritet', { exact: true })).toHaveValue('high');
+  await expect(dialog.getByRole('radiogroup', { name: 'Prioritet' }).getByRole('radio', { name: 'Yüksək' })).toHaveAttribute('aria-checked', 'true');
   await expect(dialog.getByRole('checkbox', { name: 'Tamamlandıqdan sonra yoxlama tələb olunur' })).toBeChecked();
-  await expect(dialog.getByText('Obyekt problemdən götürülür: Anbar №1')).toBeVisible();
+  await expect(dialog.getByText('Filial problemdən götürülür: Anbar №1')).toBeVisible();
   // Wait for the filtered option and the search response before clicking (ruling W9).
   const assignees = page.waitForResponse((res) => res.url().includes('/tasks/assignees') && res.url().includes('q='));
   // By label, like the fields above: the required asterisk (CSS) joins the accessible name in Chromium.

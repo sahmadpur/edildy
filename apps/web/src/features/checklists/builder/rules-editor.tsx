@@ -1,6 +1,7 @@
 import { CONTENT_LIMITS, type Item, NUMBER_OPS, RANGE_OPS, type Rule, type RuleItem } from '@edildy/contracts';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Segmented } from '@/components/segmented';
 import { NativeSelect } from '@/components/native-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -113,17 +114,17 @@ function RuleCard({ item, rule, n, depth, dispatch, readOnly }: { item: RuleItem
         </div>
       )}
 
-      <Label htmlFor={`${id}-problem`}>{t('checklists.builder.rules.problem')}</Label>
-      <NativeSelect
-        id={`${id}-problem`}
+      <Segmented
+        label={t('checklists.builder.rules.problem')}
         disabled={readOnly}
+        options={[
+          { value: 'none', label: t('checklists.builder.rules.problemNone') },
+          { value: 'normal', label: t('checklists.builder.rules.problemNormal') },
+          { value: 'critical', label: t('checklists.builder.rules.problemCritical') },
+        ]}
         value={rule.then.problem ?? 'none'}
-        onChange={(e) => update({ then: { problem: e.target.value === 'none' ? null : (e.target.value as 'normal' | 'critical') } })}
-      >
-        <option value="none">{t('checklists.builder.rules.problemNone')}</option>
-        <option value="normal">{t('checklists.builder.rules.problemNormal')}</option>
-        <option value="critical">{t('checklists.builder.rules.problemCritical')}</option>
-      </NativeSelect>
+        onChange={(v) => update({ then: { problem: v === 'none' ? null : v } })}
+      />
       <CheckField id={`${id}-note`} label={t('checklists.builder.rules.requireNote')} checked={rule.then.requireNote} disabled={readOnly} onChange={(v) => update({ then: { requireNote: v } })} />
       <CheckField id={`${id}-photo`} label={t('checklists.builder.rules.requirePhoto')} checked={rule.then.requirePhoto} disabled={readOnly} onChange={(v) => update({ then: { requirePhoto: v } })} />
       <CheckField id={`${id}-video`} label={t('checklists.builder.rules.requireVideo')} checked={rule.then.requireVideo} disabled={readOnly} onChange={(v) => update({ then: { requireVideo: v } })} />

@@ -94,7 +94,7 @@ describe('report responses', () => {
   });
 
   it('parses a summary with a zero day in its trend', () => {
-    const s = { counts: zero, completionPercent: null, averageScore: null, trend: [{ date: '2026-11-02', due: 0, completed: 0, completionPercent: null }] };
+    const s = { counts: zero, completionPercent: null, averageScore: null, trend: [{ date: '2026-11-02', planned: 0, due: 0, completed: 0, late: 0, completionPercent: null }] };
     expect(reportSummarySchema.parse(s)).toEqual(s);
     expect(reportSummarySchema.safeParse({ ...s, counts: { ...zero, planned: -1 } }).success).toBe(false);
   });

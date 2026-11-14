@@ -5,11 +5,12 @@ import { AppError } from '../common/app-error';
 import { DomainEvents } from '../common/domain-events';
 import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
-import { shiftRoster, shifts, sites, userSites, users } from '../db/schema';
+import { shiftRoster, shifts, sites, users } from '../db/schema';
 import type { Actor } from './actor';
 import type { CopyRosterDto, PutRosterDto, RosterQueryDto } from './dto';
 import { SchedulingScope } from './scheduling-scope';
 import { ShiftsService } from './shifts.service';
+import { worksAt } from '../common/site-membership';
 
 const rowKey = (r: RosterRow) => `${r.userId}|${r.shiftId}|${r.date}`;
 
@@ -29,8 +30,7 @@ export class RosterService {
     const people = await tx
       .select({ id: users.id, fullName: users.fullName })
       .from(users)
-      .innerJoin(userSites, and(eq(userSites.userId, users.id), eq(userSites.siteId, q.siteId)))
-      .where(and(eq(users.status, 'active'), this.scope.rosterUsers(a)))
+      .where(and(eq(users.status, 'active'), worksAt(users.id, q.siteId), this.scope.rosterUsers(a)))
       .orderBy(asc(users.fullName), asc(users.id));
     const rows = await tx
       .select({ userId: shiftRoster.userId, shiftId: shiftRoster.shiftId, date: shiftRoster.date })
@@ -78,9 +78,8 @@ export class RosterService {
       .select({ userId: shiftRoster.userId, shiftId: shiftRoster.shiftId, date: shiftRoster.date })
       .from(shiftRoster)
       .innerJoin(users, and(eq(users.id, shiftRoster.userId), eq(users.status, 'active')))
-      .innerJoin(userSites, and(eq(userSites.userId, shiftRoster.userId), eq(userSites.siteId, input.siteId)))
       .innerJoin(shifts, and(eq(shifts.id, shiftRoster.shiftId), eq(shifts.active, true)))
-      .where(and(eq(shiftRoster.siteId, input.siteId), between(shiftRoster.date, input.sourceWeekStart, addDays(input.sourceWeekStart, 6))));
+      .where(and(eq(shiftRoster.siteId, input.siteId), worksAt(shiftRoster.userId, input.siteId), between(shiftRoster.date, input.sourceWeekStart, addDays(input.sourceWeekStart, 6))));
     const targets = [...new Set(input.targetWeekStarts)].sort();
     let rowCount = 0;
     for (const target of targets) {
@@ -116,8 +115,7 @@ export class RosterService {
       const ok = await tx
         .select({ id: users.id })
         .from(users)
-        .innerJoin(userSites, and(eq(userSites.userId, users.id), eq(userSites.siteId, siteId)))
-        .where(and(inArray(users.id, userIds), eq(users.status, 'active')));
+        .where(and(inArray(users.id, userIds), eq(users.status, 'active'), worksAt(users.id, siteId)));
       const okIds = new Set(ok.map((r) => r.id));
       const bad = userIds.filter((id) => !okIds.has(id));
       if (bad.length) throw new AppError('ROSTER_USER_NOT_AT_SITE', { details: { userIds: bad } });

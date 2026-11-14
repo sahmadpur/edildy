@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
     assignments: { list: vi.fn(), get: vi.fn(), pause: vi.fn(), resume: vi.fn(), end: vi.fn(), preview: vi.fn(), update: vi.fn(), create: vi.fn() },
     checklists: { list: vi.fn() },
     sites: { list: vi.fn() },
+    siteTypes: { list: vi.fn().mockResolvedValue([]) },
     users: { list: vi.fn() },
     shifts: { list: vi.fn() },
   },
@@ -40,6 +41,7 @@ const detail = (over: Partial<AssignmentDetail> = {}) =>
 beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
   vi.resetAllMocks();
+  mocks.api.siteTypes.list.mockResolvedValue([]);
   mocks.api.assignments.list.mockResolvedValue({ items: [detail()], nextCursor: null });
   mocks.api.assignments.get.mockResolvedValue(detail());
   mocks.api.assignments.preview.mockResolvedValue({ slots: [], warnings: [] });
@@ -102,7 +104,7 @@ describe('AssignmentDetailPage', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Təsdiqlə' }));
     await waitFor(() => expect(mocks.api.assignments.end).toHaveBeenCalledWith('a1'));
-    await userEvent.click(screen.getByRole('button', { name: 'Digər obyektlərə köçür' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Digər filiallara köçür' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/assignments/new'));
     expect(router.state.location.search).toMatchObject({ copyFrom: 'a1' });
   });

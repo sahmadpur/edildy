@@ -21,13 +21,13 @@ export default {
     period: 'Dövr',
     from: 'Başlama',
     to: 'Son',
-    site: 'Obyekt',
+    site: 'Filial',
     employee: 'Əməkdaş',
     checklist: 'Yoxlama vərəqəsi',
     bucket: 'Yoxlamalar',
     severity: 'Növ',
     showInactive: 'Deaktivləri göstər',
-    allSites: 'Bütün obyektlər',
+    allSites: 'Bütün filiallar',
     allEmployees: 'Bütün əməkdaşlar',
     allChecklists: 'Bütün yoxlama vərəqələri',
   },
@@ -59,14 +59,14 @@ export default {
     planned: 'Planlaşdırılmış',
     all: 'Hamısı',
   },
-  tabs: { summary: 'Ümumi', sites: 'Obyektlər', employees: 'Əməkdaşlar', runs: 'Yoxlamalar', problems: 'Problemlər', tasks: 'Tapşırıqlar' },
+  tabs: { summary: 'Ümumi', sites: 'Filiallar', employees: 'Əməkdaşlar', runs: 'Yoxlamalar', problems: 'Problemlər', tasks: 'Tapşırıqlar' },
   columns: {
     measure: 'Göstərici',
     value: 'Dəyər',
     date: 'Tarix',
     dueAt: 'Son vaxt',
     checklist: 'Yoxlama vərəqəsi',
-    site: 'Obyekt',
+    site: 'Filial',
     path: 'Yerləşmə',
     active: 'Aktiv',
     status: 'Status',
@@ -97,7 +97,7 @@ export default {
   },
   employees: {
     unassigned: 'Təyin edilməyib',
-    overCountNote: 'Bir neçə icraçıya təyin olunmuş və keçirilməmiş yoxlama hər icraçı üçün ayrıca sayılır, ona görə cəm obyektlər cədvəlindəkindən çox ola bilər.',
+    overCountNote: 'Bir neçə icraçıya təyin olunmuş və keçirilməmiş yoxlama hər icraçı üçün ayrıca sayılır, ona görə cəm filiallar cədvəlindəkindən çox ola bilər.',
   },
   problems: { total: 'Cəmi problem', critical: 'Kritik' },
   tasks: { overdueOpen: 'Gecikmiş (açıq)', completedOnTime: 'Vaxtında tamamlanıb', completedLate: 'Gecikmə ilə tamamlanıb' },
@@ -114,7 +114,7 @@ export default {
   /** Export document titles (PDF header). */
   titles: {
     summary: 'Xülasə hesabatı',
-    sites: 'Obyektlər üzrə hesabat',
+    sites: 'Filiallar üzrə hesabat',
     employees: 'Əməkdaşlar üzrə hesabat',
     runs: 'Yoxlamalar hesabatı',
     problems: 'Problemlər hesabatı',
@@ -125,7 +125,7 @@ export default {
   sheets: {
     summary: 'Xülasə',
     trend: 'Gündəlik',
-    sites: 'Obyektlər',
+    sites: 'Filiallar',
     employees: 'Əməkdaşlar',
     runs: 'Yoxlamalar',
     overdue: 'Gecikmiş yoxlamalar',
@@ -160,6 +160,12 @@ export default {
   },
   chart: {
     table: 'Gündəlik yoxlama cədvəli',
+    planned: 'Planlanan',
+    completed: 'Tamamlanan',
+    late: 'Gecikən',
+    pie: 'Tamamlanan və gecikən',
+    pieEmpty: 'Bu dövrdə tamamlanan və ya gecikən yoxlama yoxdur.',
+    lateHint: 'Gecikən — vaxtında edilməmiş və tamamlanmamış yoxlamalar: hazırda gecikən və buraxılmış.',
   },
   /** The web home page: four period boxes, then the selected period's charts and runs. */
   home: {

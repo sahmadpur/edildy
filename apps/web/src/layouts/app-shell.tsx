@@ -1,6 +1,6 @@
 import type { FeatureKey, PermissionKey } from '@edildy/contracts';
 import { Link, Outlet, useNavigate, useRouterState } from '@tanstack/react-router';
-import { Building2, ChartColumn, ChevronDown, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, ShieldCheck, TriangleAlert, Users, X } from 'lucide-react';
+import { Building2, ChartColumn, ChevronDown, CircleHelp, ClipboardCheck, ClipboardList, Clock, Home, ListChecks, LogOut, type LucideIcon, Megaphone, Menu, Settings, ShieldCheck, TriangleAlert, Users, X } from 'lucide-react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageMenu } from '@/components/language-menu';
@@ -15,7 +15,7 @@ import { UserMenu } from './user-menu';
 import { VerifyEmailBanner } from './verify-email-banner';
 
 export interface NavItem {
-  to: '/' | '/users' | '/sites' | '/teams' | '/audit' | '/settings' | '/checklists' | '/assignments' | '/problems' | '/tasks' | '/audits' | '/reports' | '/roster';
+  to: '/' | '/users' | '/sites' | '/teams' | '/audit' | '/settings' | '/checklists' | '/assignments' | '/problems' | '/tasks' | '/audits' | '/reports' | '/roster' | '/faq';
   /** When the user may not open `to`, the first of these they may open is linked instead (a merged page's other tab). */
   fallbacks?: readonly { to: NavItem['to']; permission: PermissionKey }[];
   labelKey: string;
@@ -60,6 +60,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/roster', labelKey: 'nav.shifts', icon: Clock, permission: 'shifts.view', group: 'admin', also: ['/shifts'] },
   { to: '/audit', labelKey: 'nav.audit', icon: ClipboardList, permission: 'audit.view', group: 'admin', feature: 'usage_log' },
   { to: '/settings', labelKey: 'nav.settings', icon: Settings, group: 'admin' },
+  // Open to everyone (feedback 2026-11-14), so Digər always shows.
+  { to: '/faq', labelKey: 'nav.faq', icon: CircleHelp, group: 'other' },
 ];
 
 const GROUPS: NavItem['group'][] = ['overview', 'operations', 'admin', 'other'];

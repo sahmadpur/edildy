@@ -49,7 +49,7 @@ export default {
     title: 'Отчёт аудита',
     checklist: 'Чек-лист',
     version: 'Версия {{number}}',
-    site: 'Объект',
+    site: 'Филиал',
     run: 'Выполнение',
     executor: 'Исполнитель',
     window: 'Окно выполнения',

@@ -2,8 +2,8 @@
 export default {
   page: {
     filters: {
-      site: 'Obyekt',
-      allSites: 'Bütün obyektlər',
+      site: 'Filial',
+      allSites: 'Bütün filiallar',
       checklist: 'Yoxlama vərəqəsi',
       allChecklists: 'Bütün yoxlama vərəqələri',
       auditor: 'Auditor',
@@ -20,7 +20,7 @@ export default {
     columns: {
       date: 'Tarix',
       checklist: 'Yoxlama vərəqəsi',
-      site: 'Obyekt',
+      site: 'Filial',
       executor: 'İcraçı',
       completedAt: 'Tamamlanıb',
       auditor: 'Auditor',

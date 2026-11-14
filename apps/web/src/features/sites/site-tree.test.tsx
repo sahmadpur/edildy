@@ -38,7 +38,7 @@ describe('SiteTree', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Ləğv et' }));
     expect(onToggleActive).not.toHaveBeenCalled();
     expect(
-      screen.getByText('«Alfa» ləğv edilsin? Alt obyektlər avtomatik dəyişməyəcək.'),
+      screen.getByText('«Alfa» ləğv edilsin? İçindəki zona və bölmələr avtomatik dəyişməyəcək.'),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Təsdiqlə' }));
     expect(onToggleActive).toHaveBeenCalledWith(expect.objectContaining({ id: 'a' }));

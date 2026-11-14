@@ -13,9 +13,9 @@ export interface FilterOption {
 }
 
 interface Props {
-  /** The filter's name: the trigger's accessible name ("Obyekt"). */
+  /** The filter's name: the trigger's accessible name ("Filial"). */
   label: string;
-  /** The first tick, on by default: "Bütün obyektlər". */
+  /** The first tick, on by default: "Bütün filiallar". */
   allLabel: string;
   options: readonly FilterOption[];
   /** The ticked values; empty means all. */

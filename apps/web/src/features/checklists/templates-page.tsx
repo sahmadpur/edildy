@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,8 +39,18 @@ export function TemplatesPage() {
 
   return (
     <div>
-      <PageHeader title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} description={t('pages.templates')} actions={ws.can.templates && <Button onClick={() => setCreating(true)}>{t('checklists.templates.new')}</Button>} />
-      <ChecklistTabs active="templates" />
+      <PageHeader title={t(ws.tabs === 'work' ? 'nav.assignments' : 'checklists.title')} description={t('pages.templates')} />
+      <TabRow
+        actions={
+          ws.can.templates && (
+            <button type="button" className={tabActionClass()} onClick={() => setCreating(true)}>
+              {t('checklists.templates.new')}
+            </button>
+          )
+        }
+      >
+        <ChecklistTabs active="templates" />
+      </TabRow>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         {/* Pills: a filter inside the Şablonlar tab, not another row of page tabs. */}
         <Tabs value={source} onValueChange={(v) => setSource(v as TemplateSource)}>

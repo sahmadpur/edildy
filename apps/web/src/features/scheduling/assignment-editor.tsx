@@ -1,5 +1,5 @@
 import { ApiError } from '@edildy/api-client';
-import { type AssignmentDetail, expandSchedule, type PreviewAssignmentInput, type Recurrence, type Slot, type Timing } from '@edildy/contracts';
+import { type AssignmentDetail, expandSchedule, type SiteDto, type PreviewAssignmentInput, type Recurrence, type Slot, type Timing } from '@edildy/contracts';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { useMemo, useState } from 'react';
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSites } from '@/features/sites/queries';
+import { useSites, useSiteTypes } from '@/features/sites/queries';
 import { errorText } from '@/lib/errors';
 import { api, useMe } from '@/lib/session';
 import { MonthCalendar } from '@/components/month-calendar';
@@ -30,6 +30,31 @@ export interface AssignmentEditorProps {
   today?: string;
   onSaved: (a: AssignmentDetail) => void;
   onCancel: () => void;
+}
+
+/**
+ * Where a check happens (feedback 2026-11-14): first the branch (Filial), then a zone or section inside it.
+ * A branch is the top of what the user can see; its active descendants are the places to choose from.
+ */
+function branchesOf(sites: SiteDto[]) {
+  const ids = new Set(sites.map((s) => s.id));
+  return sites.filter((s) => !s.parentId || !ids.has(s.parentId));
+}
+const isUnder = (site: SiteDto, branch: SiteDto) => Boolean(site.path && branch.path && site.path.startsWith(`${branch.path}.`));
+
+/** The branch, the places inside it and the site the assignment goes to; one branch (the usual case) is picked for the user. */
+function placeOf(all: SiteDto[], siteId: string, branchId: string, initialSiteId: string | undefined) {
+  const visible = all.filter((s) => s.active || s.id === initialSiteId);
+  const branches = branchesOf(visible);
+  const stored = visible.find((s) => s.id === siteId);
+  const branch =
+    branches.find((b) => b.id === branchId) ??
+    (stored ? branches.find((b) => b.id === stored.id || isUnder(stored, b)) : undefined) ??
+    (branches.length === 1 ? branches[0] : undefined);
+  const locations = branch ? visible.filter((s) => isUnder(s, branch)) : [];
+  // A branch without zones yet: the check goes to the branch itself.
+  const effectiveSiteId = siteId || (branch && locations.length === 0 ? branch.id : '');
+  return { branches, branch, locations, effectiveSiteId };
 }
 
 /** Turns API errors into one line: schedule issues by text, user errors with the people's names. */
@@ -53,6 +78,7 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
   const [name, setName] = useState(source?.name ?? '');
   const [checklistId, setChecklistId] = useState(source?.checklistId ?? preset?.checklistId ?? '');
   const [siteId, setSiteId] = useState(initial?.siteId ?? '');
+  const [branchId, setBranchId] = useState('');
   const [assigneeIds, setAssigneeIds] = useState<string[]>(initial?.assignees.map((u) => u.id) ?? []);
   const [schedule, setSchedule] = useState<Recurrence>(source?.schedule ?? defaultRecurrence('daily', today));
   const [timing, setTiming] = useState<Timing>(source?.timing ?? defaultTiming('fixed', []));
@@ -61,11 +87,14 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
 
   const checklists = useAssignableChecklists();
   const sites = useSites();
-  const users = useSiteUsers(siteId || null);
-  const shifts = useShifts(siteId || null);
+  const siteTypes = useSiteTypes();
+  const { branches, branch, locations, effectiveSiteId } = useMemo(() => placeOf(sites.data ?? [], siteId, branchId, initial?.siteId), [sites.data, siteId, branchId, initial?.siteId]);
+  const typeName = (s: SiteDto) => siteTypes.data?.find((ty) => ty.id === s.typeId)?.name;
+  const users = useSiteUsers(effectiveSiteId || null);
+  const shifts = useShifts(effectiveSiteId || null);
   const people = users.data ?? [];
   // Stored assignees who have since left the site or been deactivated: still listed so they can be unticked.
-  const staleAssignees = users.data && siteId === initial?.siteId ? initial.assignees.filter((u) => !people.some((p) => p.id === u.id)) : [];
+  const staleAssignees = users.data && effectiveSiteId === initial?.siteId ? initial.assignees.filter((u) => !people.some((p) => p.id === u.id)) : [];
   const assigneeOptions = [
     ...people.map((u) => ({ value: u.id, label: u.fullName })),
     ...staleAssignees.map((u) => ({ value: u.id, label: `${u.fullName} (${t('scheduling.assignments.notAtSite')})` })),
@@ -75,8 +104,8 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
 
   // Memoised so the debounce only restarts when the input really changes.
   const liveInput = useMemo<PreviewAssignmentInput | null>(
-    () => (siteId && !shiftMissing ? { siteId, schedule, timing, assigneeIds } : null),
-    [siteId, shiftMissing, schedule, timing, assigneeIds],
+    () => (effectiveSiteId && !shiftMissing ? { siteId: effectiveSiteId, schedule, timing, assigneeIds } : null),
+    [effectiveSiteId, shiftMissing, schedule, timing, assigneeIds],
   );
   const previewInput = useDebounced(liveInput);
   const preview = useQuery({
@@ -110,20 +139,24 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
   const firstUpcoming = preview.data?.slots[0]?.localDate ?? null;
   const day = pickedDay ?? (firstUpcoming && monthOf(firstUpcoming) === month ? firstUpcoming : null);
 
+  const changeBranch = (id: string) => {
+    setBranchId(id);
+    changeSite('');
+  };
   const changeSite = (id: string) => {
     setSiteId(id);
     setAssigneeIds([]);
     if (timing.mode === 'shift') setTiming(defaultTiming('fixed', []));
   };
 
-  const canSave = Boolean(checklistId && siteId && assigneeIds.length > 0 && !shiftMissing) && !saving;
+  const canSave = Boolean(checklistId && effectiveSiteId && assigneeIds.length > 0 && !shiftMissing) && !saving;
   const save = async () => {
     setError(null);
     setSaving(true);
     try {
       const result = initial
         ? await api.assignments.update(initial.id, { revision: initial.revision, name: name.trim() || null, assigneeIds, schedule, timing })
-        : await api.assignments.create({ name: name.trim() || null, checklistId, siteId, assigneeIds, schedule, timing });
+        : await api.assignments.create({ name: name.trim() || null, checklistId, siteId: effectiveSiteId, assigneeIds, schedule, timing });
       onSaved(result);
     } catch (e) {
       setError(describeError(t, e, [...people, ...(initial?.assignees ?? [])]));
@@ -153,19 +186,45 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
               ))}
           </NativeSelect>
         </Field>
-        <Field id="assignment-site" label={t('scheduling.assignments.site')} required empty={!siteId}>
-          <NativeSelect id="assignment-site" value={siteId} aria-required disabled={Boolean(initial)} onChange={(e) => changeSite(e.target.value)}>
-            <option value="">{t('scheduling.assignments.chooseSite')}</option>
-            {(sites.data ?? [])
-              .filter((s) => s.active || s.id === initial?.siteId)
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="assignment-branch" label={t('scheduling.assignments.site')} required empty={!branch}>
+            <NativeSelect
+              id="assignment-branch"
+              value={branch?.id ?? ''}
+              aria-required
+              disabled={Boolean(initial) || branches.length <= 1}
+              onChange={(e) => changeBranch(e.target.value)}
+            >
+              {!branch && <option value="">{t('scheduling.assignments.chooseSite')}</option>}
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
                 </option>
               ))}
-          </NativeSelect>
-        </Field>
-        {siteId && (
+            </NativeSelect>
+          </Field>
+          {branch && locations.length > 0 && (
+            <Field id="assignment-site" label={t('scheduling.assignments.location')} required empty={!siteId}>
+              <NativeSelect id="assignment-site" value={siteId} aria-required disabled={Boolean(initial)} onChange={(e) => changeSite(e.target.value)}>
+                <option value="">{t('scheduling.assignments.chooseLocation')}</option>
+                {initial && siteId === branch.id && <option value={branch.id}>{branch.name}</option>}
+                {locations.map((s) => {
+                  const type = typeName(s);
+                  const indent = '\u00a0\u00a0'.repeat(Math.max(0, s.depth - branch.depth - 1));
+                  return (
+                    <option key={s.id} value={s.id}>
+                      {indent}
+                      {s.name}
+                      {type ? ` · ${type}` : ''}
+                    </option>
+                  );
+                })}
+              </NativeSelect>
+            </Field>
+          )}
+        </div>
+        {branch && locations.length === 0 && !initial && <p className="text-muted-foreground text-sm">{t('scheduling.assignments.noLocations')}</p>}
+        {effectiveSiteId && (
           <CheckboxList
             label={t('scheduling.assignments.assignees')}
             options={assigneeOptions}

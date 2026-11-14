@@ -32,18 +32,21 @@ export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubm
   const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const activeTypes = types.filter((ty) => ty.active || ty.id === site?.typeId);
+  // A new place inside another starts one level down (Filial → Zona → Bölmə, feedback 2026-11-14); a new top-level one as the first type.
+  const parentOrder = parent ? types.find((ty) => ty.id === parent.typeId)?.sortOrder : undefined;
+  const nextLevel = parentOrder === undefined ? undefined : [...activeTypes].sort((x, y) => x.sortOrder - y.sortOrder).find((ty) => ty.sortOrder > parentOrder);
+  const firstTypeId = site?.typeId ?? nextLevel?.id ?? activeTypes[0]?.id;
   // The dialog is mounted only while open, so the defaults are read once; `values` would re-sync (and wipe) the form
   // whenever the site types arrive after the user started typing.
   const form = useForm<z.input<typeof schema>, unknown, SiteFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: site?.name ?? '',
-      typeId: site?.typeId ?? activeTypes[0]?.id ?? '',
+      typeId: firstTypeId ?? '',
       address: site?.address ?? '',
     },
   });
   const typeId = useWatch({ control: form.control, name: 'typeId' });
-  const firstTypeId = activeTypes[0]?.id;
   useEffect(() => {
     if (firstTypeId && !form.getValues('typeId')) form.setValue('typeId', firstTypeId);
   }, [firstTypeId, form]);

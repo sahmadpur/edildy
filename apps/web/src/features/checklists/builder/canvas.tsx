@@ -1,6 +1,6 @@
 import { type ChecklistContent, countItems, hasRules, ITEM_TYPES, type Item, type ItemType } from '@edildy/contracts';
-import { Copy, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Copy, Plus, Trash2, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfirmButton } from '@/components/confirm-button';
 import { Badge } from '@/components/ui/badge';
@@ -51,19 +51,28 @@ interface Props {
   readOnly: boolean;
 }
 
+/** "Birinci bölmənin adı", "İkinci …": ordinal words up to ten, then "11. bölmənin adı". */
+function sectionTitleLabel(t: (k: string, o?: Record<string, unknown>) => string, index: number) {
+  const n = index + 1;
+  return n <= 10 ? t('checklists.builder.sectionTitleNth', { nth: t(`checklists.builder.ordinals.n${n}`) }) : t('checklists.builder.sectionTitleN', { n });
+}
+
 export function Canvas({ content, selected, issues, dispatch, readOnly }: Props) {
   const { t } = useTranslation();
+  // The section whose (still empty) guidance box the user opened with "+".
+  const [guidanceOpenFor, setGuidanceOpenFor] = useState<string | null>(null);
   const sectionId = selected.kind === 'section' ? selected.id : selected.kind === 'item' ? findItem(content, selected.id)?.sectionId : undefined;
   const section = content.sections.find((s) => s.id === sectionId) ?? content.sections[0];
   if (!section) return <div className="text-muted-foreground rounded-md border p-6">{t('checklists.issues.noSections')}</div>;
   const root = selected.kind === 'item' ? rootItemId(content, selected.id) : null;
   const container = { kind: 'section', sectionId: section.id } as const;
   const sectionIssues = issues.byNode.get(section.id) ?? [];
+  const showGuidance = section.instructions !== null || guidanceOpenFor === section.id;
 
   return (
     <section aria-label={section.title || t('checklists.builder.untitledSection')} className="min-h-0 overflow-y-auto rounded-md border p-4">
       <div className="grid gap-2">
-        <Label htmlFor="section-title">{t('checklists.builder.sectionTitle')}</Label>
+        <Label htmlFor="section-title">{sectionTitleLabel(t, content.sections.indexOf(section))}</Label>
         <Input
           id="section-title"
           value={section.title}
@@ -72,14 +81,26 @@ export function Canvas({ content, selected, issues, dispatch, readOnly }: Props)
           aria-invalid={sectionIssues.some((i) => i.field === 'title')}
           onChange={(e) => dispatch({ type: 'updateSection', sectionId: section.id, patch: { title: e.target.value } })}
         />
-        <Label htmlFor="section-instructions">{t('checklists.builder.sectionInstructions')}</Label>
-        <Textarea
-          id="section-instructions"
-          value={section.instructions ?? ''}
-          maxLength={2000}
-          disabled={readOnly}
-          onChange={(e) => dispatch({ type: 'updateSection', sectionId: section.id, patch: { instructions: e.target.value || null } })}
-        />
+        {showGuidance ? (
+          <GuidanceField
+            value={section.instructions ?? ''}
+            readOnly={readOnly}
+            focus={guidanceOpenFor === section.id}
+            onChange={(v) => dispatch({ type: 'updateSection', sectionId: section.id, patch: { instructions: v || null } })}
+            onRemove={() => {
+              setGuidanceOpenFor(null);
+              dispatch({ type: 'updateSection', sectionId: section.id, patch: { instructions: null } });
+            }}
+          />
+        ) : (
+          !readOnly && (
+            <div>
+              <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => setGuidanceOpenFor(section.id)}>
+                <Plus className="size-3.5" /> {t('checklists.builder.sectionInstructions')}
+              </Button>
+            </div>
+          )
+        )}
         {sectionIssues.map((i) => (
           <p key={i.code} className="text-destructive text-sm">
             {t(i.code)}
@@ -118,6 +139,33 @@ export function Canvas({ content, selected, issues, dispatch, readOnly }: Props)
   );
 }
 
+function GuidanceField(props: {
+  value: string;
+  readOnly: boolean;
+  focus: boolean;
+  onChange: (v: string) => void;
+  onRemove: () => void;
+}) {
+  const { t } = useTranslation();
+  const own = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (props.focus) own.current?.focus();
+  }, [props.focus]);
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center gap-2">
+        <Label htmlFor="section-instructions">{t('checklists.builder.sectionInstructions')}</Label>
+        {!props.readOnly && (
+          <Button type="button" variant="ghost" size="icon" className="ml-auto size-7" aria-label={t('checklists.builder.removeSectionInstructions')} onClick={props.onRemove}>
+            <X className="size-3.5" />
+          </Button>
+        )}
+      </div>
+      <Textarea id="section-instructions" ref={own} value={props.value} maxLength={2000} disabled={props.readOnly} onChange={(e) => props.onChange(e.target.value)} />
+    </div>
+  );
+}
+
 function ItemCard(props: { item: Item; selected: boolean; containsSelection: boolean; issueCodes: string[]; dispatch: (a: BuilderAction) => void; readOnly: boolean }) {
   const { t } = useTranslation();
   const { item, dispatch } = props;
@@ -144,15 +192,10 @@ function ItemCard(props: { item: Item; selected: boolean; containsSelection: boo
           </div>
         )}
       </div>
-      <Input
-        value={item.label}
-        maxLength={500}
-        placeholder={t('checklists.builder.untitledItem')}
-        aria-label={t('checklists.builder.item.label')}
-        disabled={props.readOnly}
-        aria-invalid={props.issueCodes.length > 0}
-        onChange={(e) => dispatch({ type: 'updateItem', itemId: item.id, patch: { label: e.target.value } })}
-      />
+      {/* The question itself is written in Detallar; the card only shows it and selects it. */}
+      <button type="button" className={cn('text-left text-sm', !item.label.trim() && 'text-muted-foreground italic')} aria-invalid={props.issueCodes.length > 0}>
+        {item.label.trim() || t('checklists.builder.noLabel')}
+      </button>
       {props.issueCodes.map((code) => (
         <p key={code} className="text-destructive text-xs">
           {t(code)}

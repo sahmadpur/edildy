@@ -20,6 +20,7 @@ import { checklists, shifts, sites, users } from '../db/schema';
 import type { Actor } from './actor';
 import { sortRanges } from './mappers';
 import { SchedulingScope } from './scheduling-scope';
+import { worksAt } from '../common/site-membership';
 
 /** Checks shared by create, update, resume and preview (spec §4.2). */
 @Injectable()
@@ -55,7 +56,7 @@ export class AssignmentRules {
       .select({
         id: users.id,
         status: users.status,
-        atSite: sql<boolean>`exists (select 1 from user_sites us where us.user_id = "users"."id" and us.site_id = ${siteId})`,
+        atSite: sql<boolean>`${worksAt(users.id, siteId)}`,
       })
       .from(users)
       .where(inArray(users.id, unique));

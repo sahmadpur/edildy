@@ -18,13 +18,13 @@ export default {
   },
   scopes: {
     all: 'Whole organisation',
-    site_subtree: 'Own sites and their sub-sites',
+    site_subtree: 'Own branches, their zones and sections',
     subordinates: 'Subordinate employees',
     own: 'Self only',
   },
   groups: {
     tenant: 'Organisation',
-    sites: 'Sites',
+    sites: 'Branches',
     teams: 'Teams',
     users: 'Users',
     roles: 'Roles',
@@ -41,8 +41,8 @@ export default {
   },
   keys: {
     tenant_manage: 'Manage organisation settings',
-    sites_view: 'View sites',
-    sites_manage: 'Manage sites',
+    sites_view: 'View branches',
+    sites_manage: 'Manage branches',
     teams_view: 'View teams',
     teams_manage: 'Manage teams',
     users_view: 'View users',

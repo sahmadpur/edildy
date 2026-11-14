@@ -34,7 +34,7 @@ describe('TemplateEditorPage', () => {
     ws.templates.get.mockResolvedValue(template('active'));
     renderInWorkspace(<TemplateEditorPage source="global" templateId="t1" />, ws);
     expect(await screen.findByText('Yalnız baxış')).toBeInTheDocument();
-    expect(screen.getByLabelText('Bölmənin adı')).toBeDisabled();
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toBeDisabled();
     expect(ws.templates.saveContent).not.toHaveBeenCalled();
   });
 
@@ -43,7 +43,7 @@ describe('TemplateEditorPage', () => {
     ws.templates.get.mockResolvedValue(template('deactivated'));
     renderInWorkspace(<TemplateEditorPage source="tenant" templateId="t1" />, ws);
     expect(await screen.findByText('Yalnız baxış')).toBeInTheDocument();
-    expect(screen.getByLabelText('Bölmənin adı')).toBeDisabled();
+    expect(screen.getByLabelText('Birinci bölmənin adı')).toBeDisabled();
   });
 
   it('is read-only without templates.manage', async () => {
@@ -57,7 +57,7 @@ describe('TemplateEditorPage', () => {
     const ws = fakeWorkspace();
     ws.templates.get.mockResolvedValue(template('active'));
     renderInWorkspace(<TemplateEditorPage source="tenant" templateId="t1" />, ws);
-    expect(await screen.findByLabelText('Bölmənin adı')).toBeEnabled();
+    expect(await screen.findByLabelText('Birinci bölmənin adı')).toBeEnabled();
     expect(screen.queryByText('Yalnız baxış')).toBeNull();
   });
 
