@@ -23,6 +23,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Segmented } from '@/components/segmented';
 import { Textarea } from '@/components/ui/textarea';
 import { formatLocalDate } from '@/features/scheduling/labels';
 import { errorText } from '@/lib/errors';
@@ -190,16 +191,12 @@ export function TaskDialog({ task: latest, problem, problemReport, onClose, onSa
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-1.5">
-                <Label htmlFor="task-priority">{t('tasks.dialog.priority')}</Label>
-                <NativeSelect id="task-priority" value={values.priority} onChange={(e) => set('priority', e.target.value as TaskPriority)}>
-                  {TASK_PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
-                      {t(`tasks.priorities.${p}`)}
-                    </option>
-                  ))}
-                </NativeSelect>
-              </div>
+              <Segmented
+                label={t('tasks.dialog.priority')}
+                options={TASK_PRIORITIES.map((p) => ({ value: p, label: t(`tasks.priorities.${p}`) }))}
+                value={values.priority}
+                onChange={(p: TaskPriority) => set('priority', p)}
+              />
               <div className="grid gap-1.5">
                 {fixedSite !== null ? (
                   <>
@@ -249,22 +246,22 @@ export function TaskDialog({ task: latest, problem, problemReport, onClose, onSa
             </div>
             <fieldset className="grid gap-2">
               <legend className="text-sm font-medium">{t('tasks.dialog.evidence')}</legend>
-              <div className="flex flex-wrap items-center gap-3">
-                {(['photo', 'video'] as const).map((kind) => (
-                  <NativeSelect
-                    key={kind}
-                    aria-label={t(kind === 'photo' ? 'tasks.dialog.evidencePhoto' : 'tasks.dialog.evidenceVideo')}
-                    value={values.evidence[kind]}
-                    onChange={(e) => set('evidence', { ...values.evidence, [kind]: e.target.value as EvidenceLevel })}
-                    className="w-44"
-                  >
-                    {EVIDENCE_LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {t(`tasks.evidenceLevels.${level}`)}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                ))}
+              <div className="grid gap-2">
+                {(['photo', 'video'] as const).map((kind) => {
+                  const label = t(kind === 'photo' ? 'tasks.dialog.evidencePhoto' : 'tasks.dialog.evidenceVideo');
+                  return (
+                    <div key={kind} className="flex flex-wrap items-center gap-3">
+                      <span className="w-12 text-sm">{label}</span>
+                      <Segmented
+                        label={label}
+                        showLabel={false}
+                        options={EVIDENCE_LEVELS.map((level) => ({ value: level, label: t(`tasks.evidenceLevels.${level}`) }))}
+                        value={values.evidence[kind]}
+                        onChange={(level: EvidenceLevel) => set('evidence', { ...values.evidence, [kind]: level })}
+                      />
+                    </div>
+                  );
+                })}
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox

@@ -47,7 +47,7 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
 
   // Roster: Nigar on the morning shift all week.
   await page.getByRole('link', { name: 'Növbə cədvəli' }).click();
-  await page.getByLabel('Obyekt').selectOption({ label: 'Anbar №1' });
+  await page.getByLabel('Filial').selectOption({ label: 'Anbar №1' });
   const cells = page.getByRole('checkbox', { name: /^Səhər — Nigar Səfərli, / });
   await expect(cells).toHaveCount(7);
   for (let i = 0; i < 7; i++) await cells.nth(i).click();
@@ -58,7 +58,7 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await page.getByRole('link', { name: 'Yoxlamalar' }).click();
   await page.getByRole('link', { name: 'Yeni təyinat' }).click();
   await page.getByLabel('Yoxlama vərəqəsi').selectOption({ label: 'E2E açılış' });
-  await page.getByLabel('Obyekt').selectOption({ label: 'Anbar №1' });
+  await page.getByLabel('Filial').selectOption({ label: 'Anbar №1' });
   await page.getByRole('checkbox', { name: 'Nigar Səfərli' }).click();
   await page.getByRole('checkbox', { name: 'Növbəyə görə' }).click();
   const preview = page.getByRole('complementary', { name: 'Növbəti yoxlamalar' });

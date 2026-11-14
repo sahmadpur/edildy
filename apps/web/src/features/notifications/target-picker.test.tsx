@@ -40,7 +40,7 @@ describe('TargetPicker', () => {
     const list = await screen.findByRole('listbox', { name: 'Alıcılar' });
     expect(await within(list).findByRole('group', { name: 'Əməkdaşlar' })).toHaveTextContent('Texnik');
     expect(within(list).getByRole('group', { name: 'Komandalar' })).toHaveTextContent('3 üzv');
-    expect(within(within(list).getByRole('group', { name: 'Obyektlər' })).getAllByRole('option')).toHaveLength(2);
+    expect(within(within(list).getByRole('group', { name: 'Filiallar' })).getAllByRole('option')).toHaveLength(2);
     expect(mocks.api.messages.options).toHaveBeenCalledWith({});
     mocks.api.messages.options.mockResolvedValue(targetOptions({ users: [], teams: [] }));
     await userEvent.type(screen.getByRole('combobox', { name: 'Alıcılar' }), 'anbar');
@@ -94,9 +94,9 @@ describe('TargetPicker', () => {
     expect(await screen.findByText(refine)).toBeInTheDocument();
     expect(screen.queryByText(sitesCapped)).not.toBeInTheDocument();
     // Searching cannot bring back the sites past the cap (the API ignores q for them), so they get their own note.
-    const places = Array.from({ length: 200 }, (_, i) => ({ id: `s${i}`, name: `Obyekt ${i}` }));
+    const places = Array.from({ length: 200 }, (_, i) => ({ id: `s${i}`, name: `Filial ${i}` }));
     mocks.api.messages.options.mockResolvedValue(targetOptions({ sites: places }));
-    await userEvent.type(screen.getByRole('combobox', { name: 'Alıcılar' }), 'Obyekt');
+    await userEvent.type(screen.getByRole('combobox', { name: 'Alıcılar' }), 'Filial');
     expect(await screen.findByText(sitesCapped)).toBeInTheDocument();
     expect(screen.queryByText(refine)).not.toBeInTheDocument();
     // Under every cap: neither.

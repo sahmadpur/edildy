@@ -129,7 +129,7 @@ export function AuditPage() {
               {open === e.id && (
                 <TableRow>
                   <TableCell colSpan={6} className="bg-muted/30">
-                    <AuditDiff before={e.before} after={e.after} />
+                    <AuditDiff before={e.before} after={e.after} formatDateTime={formatDateTime} />
                   </TableCell>
                 </TableRow>
               )}

@@ -57,16 +57,16 @@ describe('notification recipients', () => {
   it('applies every data scope of a role holder and needs assignments.view', async () => {
     const { w, occurrenceId } = await checklistWorld();
     const rAll = await role(w.api, 'Hamısı', 'all', ['assignments.view']);
-    const rSubtree = await role(w.api, 'Obyekt', 'site_subtree', ['assignments.view']);
+    const rSubtree = await role(w.api, 'Filial', 'site_subtree', ['assignments.view']);
     const rSubs = await role(w.api, 'Rəhbər', 'subordinates', ['assignments.view']);
     const rOwn = await role(w.api, 'Özü', 'own', ['assignments.view']);
     const rNoView = await role(w.api, 'Baxışsız', 'all', []);
     const user = (roleId: string, fullName: string) => createUserDirect(t, w.s.tenantId, { kind: 'staff', roleId, fullName });
     const all = await user(rAll, 'Hamısı');
-    const subtreeHere = await user(rSubtree, 'Obyekt 1');
+    const subtreeHere = await user(rSubtree, 'Filial 1');
     expect((await w.api.put(`/api/v1/users/${subtreeHere.id}/sites`, { siteIds: [w.siteId] })).status).toBe(200);
     // Left out: a site_subtree holder elsewhere, a boss without subordinates on the run, an "own" stranger, a role without assignments.view.
-    const subtreeThere = await user(rSubtree, 'Obyekt 2');
+    const subtreeThere = await user(rSubtree, 'Filial 2');
     expect((await w.api.put(`/api/v1/users/${subtreeThere.id}/sites`, { siteIds: [w.otherSiteId] })).status).toBe(200);
     const boss = await user(rSubs, 'Rəhbər');
     await ownerQuery('update users set manager_id = $1 where id = $2', [boss.id, w.workers[0]]);

@@ -20,6 +20,7 @@ import { assertNoEscalation, assertNoScopeEscalation } from '../roles/roles.serv
 import type { CreateWorkerDto, InviteStaffDto, ResetCredentialDto, UpdateUserDto, UserListQueryDto } from './dto';
 import { selectUsers, toUserDto } from './user-mapper';
 import { assertWithinLimit } from '../tenancy/subscription';
+import { worksAt } from '../common/site-membership';
 
 @Injectable()
 export class UsersService {
@@ -39,7 +40,8 @@ export class UsersService {
     if (q.kind) conditions.push(eq(users.kind, q.kind));
     if (q.roleId) conditions.push(inArray(users.roleId, q.roleId));
     if (q.teamId) conditions.push(sql`exists (select 1 from user_teams ut where ut.user_id = ${users.id} and ut.team_id = ${q.teamId})`);
-    if (q.siteId) conditions.push(sql`exists (select 1 from user_sites us where us.user_id = ${users.id} and us.site_id = ${q.siteId})`);
+    // People who work there: linked to the site or to one above it (a branch's staff work in its zones).
+    if (q.siteId) conditions.push(worksAt(users.id, q.siteId));
     if (q.q) {
       const like = `%${escapeLike(q.q)}%`;
       conditions.push(or(ilike(users.fullName, like), ilike(users.username, like), ilike(users.email, like)));

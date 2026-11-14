@@ -1,5 +1,5 @@
 import { blankContent, type ChecklistContent, newItem, newSection, type NumberItem, type SingleChoiceItem, type YesNoItem } from '@edildy/contracts';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useReducer } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -24,7 +24,7 @@ describe('Inspector', () => {
     renderWithProviders(<Harness content={doc(item)} itemId={item.id} />);
     fireEvent.change(screen.getByLabelText('Sualın mətni'), { target: { value: 'Qapı bağlıdır?' } });
     await userEvent.click(screen.getByRole('checkbox', { name: 'Məcburi' }));
-    await userEvent.selectOptions(screen.getByLabelText('Foto'), 'required');
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Foto' })).getByRole('radio', { name: 'Məcburi' }));
     fireEvent.change(screen.getByLabelText('Çəki (bal)'), { target: { value: '3' } });
     expect(findItem(last.content, item.id)!.item).toMatchObject({ label: 'Qapı bağlıdır?', required: false, weight: 3, evidence: { photo: 'required' } });
   });
@@ -45,7 +45,7 @@ describe('Inspector', () => {
     renderWithProviders(<Harness content={doc(item)} itemId={item.id} />);
     await userEvent.click(screen.getByRole('button', { name: 'Qayda əlavə et' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Bəli' }));
-    await userEvent.selectOptions(screen.getByLabelText('Problem'), 'critical');
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Problem' })).getByRole('radio', { name: 'Kritik' }));
     await userEvent.click(screen.getByRole('checkbox', { name: 'Foto tələb et' }));
     await userEvent.click(screen.getByRole('button', { name: '+ Əlavə sual' }));
     await userEvent.click(screen.getByRole('button', { name: 'Şərh' }));

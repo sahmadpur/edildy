@@ -47,7 +47,7 @@ describe('Problemlər', () => {
     const t = await createTestServices();
     await t.seed(syncResponse({ checklistVersions: [versionOf(t.c.content)], reportSites: [] }));
     await renderWithServices(t.services, <ProblemsScreen />);
-    expect(await screen.findByText('Sizə heç bir obyekt təyin edilməyib.')).toBeTruthy();
+    expect(await screen.findByText('Sizə heç bir filial təyin edilməyib.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Problem bildir' })).toBeNull();
     await t.seed(syncResponse({ checklistVersions: [versionOf(t.c.content)] }));
     await fireEvent.press(await screen.findByRole('button', { name: 'Problem bildir' }));

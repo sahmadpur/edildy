@@ -49,9 +49,9 @@ export const reportSummary = (over: Partial<ReportSummary> = {}): ReportSummary 
   completionPercent: 70,
   averageScore: 87.5,
   trend: [
-    { date: '2026-11-02', due: 4, completed: 3, completionPercent: 75 },
-    { date: '2026-11-03', due: 0, completed: 0, completionPercent: null },
-    { date: TODAY, due: 6, completed: 4, completionPercent: 66.7 },
+    { date: '2026-11-02', planned: 5, due: 4, completed: 3, late: 1, completionPercent: 75 },
+    { date: '2026-11-03', planned: 0, due: 0, completed: 0, late: 0, completionPercent: null },
+    { date: TODAY, planned: 7, due: 6, completed: 4, late: 0, completionPercent: 66.7 },
   ],
   ...over,
 });

@@ -33,8 +33,8 @@ test('Edildy staff create an organisation; the owner accepts the invitation, cre
   // Basic has no tasks (BR-01.03).
   await expect(page.getByRole('link', { name: 'Tapşırıqlar' })).toHaveCount(0);
 
-  await page.getByRole('link', { name: 'Obyektlər' }).click();
-  await page.getByRole('button', { name: 'Yeni obyekt', exact: true }).click();
+  await page.getByRole('link', { name: 'Filiallar' }).click();
+  await page.getByRole('button', { name: 'Yeni filial', exact: true }).click();
   await page.getByLabel('Ad', { exact: true }).fill('Anbar №1');
   await page.getByRole('button', { name: 'Yadda saxla' }).click();
   await expect(page.getByRole('treeitem').getByText('Anbar №1')).toBeVisible();

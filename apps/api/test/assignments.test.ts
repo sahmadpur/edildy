@@ -4,7 +4,7 @@ import { DbService } from '../src/db/db.service';
 import { OccurrenceWriter } from '../src/scheduling/occurrence-writer';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
-import { createUserDirect } from './fixtures';
+import { createUserDirect, siteTypeIdOf } from './fixtures';
 import { ownerQuery } from './owner-db';
 import {
   createAssignment,
@@ -92,6 +92,27 @@ describe('assignments', () => {
     expect(rows.slice(0, 3).map((r) => r.assignees)).toEqual([[w0], sorted([w0, w1]), []]);
     expect(a.upcoming[0]).toMatchObject({ startsAt: '2026-11-02T04:00:00.000Z', dueAt: '2026-11-02T12:00:00.000Z', closesAt: '2026-11-02T12:30:00.000Z' });
     expect(a.upcoming.map((o) => o.unassigned)).toEqual([false, false, true, true, true]);
+  });
+
+  it('lets a branch’s people do checks in its zones, several fixed times a day (feedback 2026-11-14)', async () => {
+    const w = await schedulingWorld(t);
+    const typeId = await siteTypeIdOf(w.s.tenantId);
+    const zone = (await w.api.post('/api/v1/sites', { parentId: w.siteId, typeId, name: 'Mətbəx' })).body.id as string;
+    const section = (await w.api.post('/api/v1/sites', { parentId: zone, typeId, name: 'Soyuducu' })).body.id as string;
+    // The workers are linked to the branch only; they are offered for its zones and sections.
+    const people = async (siteId: string) => (await w.api.get(`/api/v1/users?siteId=${siteId}&status=active`)).body.items.map((u: { id: string }) => u.id);
+    expect(sorted(await people(section))).toEqual(sorted(w.workers));
+    const a = await createAssignment(w, { siteId: section, timing: { ...fixed('08:00', 60, 0), extraTimes: ['18:00', '13:00'] } });
+    const today = (await occurrenceRows(a.id)).filter((r) => r.local_date === TODAY);
+    expect(today.map((r) => r.starts_at.toISOString())).toEqual(['2026-11-02T04:00:00.000Z', '2026-11-02T09:00:00.000Z', '2026-11-02T14:00:00.000Z']);
+    expect(today.map((r) => r.assignees)).toEqual([sorted(w.workers), sorted(w.workers), sorted(w.workers)]);
+    // Membership goes down the tree, not up: someone linked to the zone is not at the branch.
+    const zoneOnly = await createUserDirect(t, w.s.tenantId, { fullName: 'Zona işçisi' });
+    expect((await w.api.put(`/api/v1/users/${zoneOnly.id}/sites`, { siteIds: [zone] })).status).toBe(200);
+    expect(await people(section)).toContain(zoneOnly.id);
+    expect(await people(w.siteId)).not.toContain(zoneOnly.id);
+    const up = await post(w, { assigneeIds: [zoneOnly.id] });
+    expect(up.body.error).toMatchObject({ code: 'ASSIGNEE_NOT_AT_SITE', userIds: [zoneOnly.id] });
   });
 
   it('lists and reads assignments with filters', async () => {

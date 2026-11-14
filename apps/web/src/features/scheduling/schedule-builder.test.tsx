@@ -87,17 +87,17 @@ describe('input validity', () => {
   });
 
   it('keeps number fields valid while typing', () => {
-    render(<TimingHarness initial={defaultTiming('shift', shifts)} />);
-    const grace = screen.getByLabelText('Gecikmə icazəsi (dəqiqə)');
+    render(<TimingHarness initial={defaultTiming('fixed', [])} />);
+    const due = screen.getByLabelText('İcra müddəti (dəqiqə)');
     const before = json();
-    fireEvent.change(grace, { target: { value: '' } });
+    fireEvent.change(due, { target: { value: '' } });
     expect(json()).toEqual(before);
-    fireEvent.change(grace, { target: { value: '30' } });
-    expect(json().graceMinutes).toBe(30);
-    fireEvent.change(grace, { target: { value: '99999' } });
-    expect(json().graceMinutes).toBe(30);
-    fireEvent.blur(grace);
-    expect(json().graceMinutes).toBe(10080);
+    fireEvent.change(due, { target: { value: '30' } });
+    expect(json().dueAfterMinutes).toBe(30);
+    fireEvent.change(due, { target: { value: '99999' } });
+    expect(json().dueAfterMinutes).toBe(30);
+    fireEvent.blur(due);
+    expect(json().dueAfterMinutes).toBe(10080);
   });
 
   it('keeps an inactive selected shift as an option', () => {
@@ -120,8 +120,21 @@ describe('TimingEditor', () => {
     await userEvent.click(modes.getByRole('checkbox', { name: 'Növbəyə görə' }));
     expect(json()).toEqual({ mode: 'shift', shiftId: 's1', graceMinutes: 0 });
     expect(modes.getByRole('checkbox', { name: 'Sabit vaxt' })).not.toBeChecked();
-    fireEvent.change(screen.getByLabelText('Gecikmə icazəsi (dəqiqə)'), { target: { value: '30' } });
-    expect(json().graceMinutes).toBe(30);
+    // "Gecikmə icazəsi" is no longer asked (feedback 2026-11-14); the default stays.
+    expect(screen.queryByLabelText('Gecikmə icazəsi (dəqiqə)')).toBeNull();
+  });
+
+  it('takes several fixed times, each its own run (feedback 2026-11-14)', async () => {
+    render(<TimingHarness initial={defaultTiming('fixed', [])} />);
+    expect(screen.queryByLabelText('Gecikmə icazəsi (dəqiqə)')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
+    expect(json()).toEqual({ mode: 'fixed', startTime: '08:00', extraTimes: ['10:00'], dueAfterMinutes: 120, graceMinutes: 60 });
+    fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '09:00' } });
+    expect(screen.getByText('Vaxtlar arasındakı fasilə icra müddətindən az ola bilməz.')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '13:00' } });
+    expect(screen.queryByText('Vaxtlar arasındakı fasilə icra müddətindən az ola bilməz.')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: '08:00 vaxtını sil' }));
+    expect(json()).toEqual({ mode: 'fixed', startTime: '13:00', dueAfterMinutes: 120, graceMinutes: 60 });
   });
 
   it('offers any time of the day, with no time fields', async () => {

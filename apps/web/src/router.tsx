@@ -11,6 +11,7 @@ import {
   TenantWorkspaceLayout,
 } from '@/features/checklists/routes';
 import { AuditPage } from '@/features/audit/audit-page';
+import { FaqPage } from '@/features/faq/faq-page';
 import { ProblemsPage } from '@/features/executions/problems-page';
 import { problemsSearch } from '@/features/problem-reports/routes';
 import { AuditRoute } from '@/features/audits/audit-screen';
@@ -170,6 +171,7 @@ const rolesRoute = createRoute({
   },
 });
 
+const faqRoute = createRoute({ getParentRoute: () => appLayout, path: '/faq', component: FaqPage });
 const auditRoute = createRoute({ getParentRoute: () => appLayout, path: '/audit', beforeLoad: requireFeature('usage_log'), component: AuditPage });
 const checklistsWs = createRoute({
   getParentRoute: () => appLayout,
@@ -288,6 +290,7 @@ export const routeTree = rootRoute.addChildren([
     usersRoute,
     userDetailRoute,
     auditRoute,
+    faqRoute,
     checklistsWs.addChildren([
       checklistsRoute,
       checklistDetailRoute,

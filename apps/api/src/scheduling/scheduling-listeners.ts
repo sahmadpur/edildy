@@ -7,6 +7,7 @@ import { AuditService } from '../db/audit.service';
 import { DbService } from '../db/db.service';
 import { assignments, shiftRoster } from '../db/schema';
 import { OccurrenceWriter } from './occurrence-writer';
+import { worksAt } from '../common/site-membership';
 
 /** Keeps occurrences in step with changes made elsewhere (spec §5.1, §5.3). Handlers run in the caller's transaction. */
 @Injectable()
@@ -36,7 +37,7 @@ export class SchedulingListeners implements OnModuleInit {
           eq(shiftRoster.userId, userId),
           gte(shiftRoster.date, today),
           sql`(not exists (select 1 from users u where u.id = ${userId} and u.status = 'active')
-            or not exists (select 1 from user_sites us where us.user_id = ${userId} and us.site_id = ${shiftRoster.siteId}))`,
+            or not ${worksAt(userId, shiftRoster.siteId)})`,
         ),
       );
     await this.writer.refreshSnapshots({ userId });

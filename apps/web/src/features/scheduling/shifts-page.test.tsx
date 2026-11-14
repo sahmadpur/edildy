@@ -28,7 +28,7 @@ describe('ShiftsPage', () => {
     renderWithProviders(<ShiftsPage />);
     expect(await screen.findByText('08:00–16:00')).toBeInTheDocument();
     expect(screen.getByText('22:00–06:00 (növbəti gün bitir)')).toBeInTheDocument();
-    expect(screen.getByText('Bütün obyektlər')).toBeInTheDocument();
+    expect(screen.getByText('Bütün filiallar')).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'Anbar' })).toBeInTheDocument();
   });
 
@@ -43,7 +43,7 @@ describe('ShiftsPage', () => {
     fireEvent.change(within(dialog).getByLabelText('Bitmə'), { target: { value: '06:00' } });
     expect(within(dialog).getByText('növbəti gün bitir')).toBeInTheDocument();
     await within(dialog).findByRole('option', { name: 'Anbar' });
-    await userEvent.selectOptions(within(dialog).getByLabelText('Obyekt'), 'site1');
+    await userEvent.selectOptions(within(dialog).getByLabelText('Filial'), 'site1');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Yadda saxla' }));
     await waitFor(() => expect(mocks.api.shifts.create).toHaveBeenCalledWith({ name: 'Gecə', ranges: [{ startTime: '22:00', endTime: '06:00' }], siteId: 'site1' }));
   });
@@ -108,7 +108,7 @@ describe('ShiftsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Düzəliş et' }));
     const dialog = screen.getByRole('dialog');
     await within(dialog).findByRole('option', { name: 'Anbar' });
-    expect(within(dialog).getByLabelText('Obyekt')).toHaveValue('old');
+    expect(within(dialog).getByLabelText('Filial')).toHaveValue('old');
     await userEvent.clear(within(dialog).getByLabelText('Ad'));
     await userEvent.type(within(dialog).getByLabelText('Ad'), 'Səhər 2');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Yadda saxla' }));
@@ -122,7 +122,7 @@ describe('ShiftsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Düzəliş et' }));
     const dialog = screen.getByRole('dialog');
     await within(dialog).findByRole('option', { name: 'Anbar' });
-    await userEvent.selectOptions(within(dialog).getByLabelText('Obyekt'), '');
+    await userEvent.selectOptions(within(dialog).getByLabelText('Filial'), '');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Yadda saxla' }));
     await waitFor(() => expect(mocks.api.shifts.update).toHaveBeenCalledWith('s1', { name: 'Səhər', ranges: [{ startTime: '08:00', endTime: '16:00' }], siteId: null }));
   });

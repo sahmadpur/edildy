@@ -11,9 +11,9 @@ describe('XLSX writer', () => {
   it('writes one sheet per section with typed number, date and time cells', async () => {
     const out = await toXlsx(doc([
       {
-        title: 'Obyektlər',
+        title: 'Filiallar',
         columns: [
-          { label: 'Obyekt', type: 'text' }, { label: 'Planlaşdırılıb', type: 'int' }, { label: 'Tamamlanma faizi', type: 'decimal' },
+          { label: 'Filial', type: 'text' }, { label: 'Planlaşdırılıb', type: 'int' }, { label: 'Tamamlanma faizi', type: 'decimal' },
           { label: 'Tarix', type: 'date' }, { label: 'Son vaxt', type: 'datetime' }, { label: 'Aktiv', type: 'bool' },
         ],
         rows: [
@@ -24,9 +24,9 @@ describe('XLSX writer', () => {
       { title: 'Gündəlik', columns: [{ label: 'Tarix', type: 'date' }], rows: [] },
     ]));
     const sheets = await readXlsxFile(out);
-    expect(sheets.map((s) => s.sheet)).toEqual(['Obyektlər', 'Gündəlik']);
+    expect(sheets.map((s) => s.sheet)).toEqual(['Filiallar', 'Gündəlik']);
     const [header, a1, a2] = sheets[0]!.data;
-    expect(header).toEqual(['Obyekt', 'Planlaşdırılıb', 'Tamamlanma faizi', 'Tarix', 'Son vaxt', 'Aktiv']);
+    expect(header).toEqual(['Filial', 'Planlaşdırılıb', 'Tamamlanma faizi', 'Tarix', 'Son vaxt', 'Aktiv']);
     expect([a1![0], a1![1], a1![2], a1![3], a1![5]]).toEqual(['Zona A1', 7, 57.1, new Date('2026-11-02T00:00:00.000Z'), 'Bəli']);
     // 07:00Z is 11:00 in Baku: the cell holds the tenant's wall clock. Excel stores a fraction of a day, so allow a millisecond.
     expect(a1![4]).toBeInstanceOf(Date);

@@ -8,6 +8,7 @@ import common from './common.js';
 import corrections from './corrections.js';
 import errors from './errors.js';
 import executions from './executions.js';
+import faq from './faq.js';
 import landing from './landing.js';
 import mail from './mail.js';
 import mobile from './mobile.js';
@@ -26,4 +27,4 @@ import teams from './teams.js';
 import users from './users.js';
 
 // Mirrors az/index.ts: every namespace with the same keys (checked by `satisfies` here and by i18n.test.ts at runtime).
-export const en = { common, errors, executions, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, pages, platform, reports, roles, scheduling, settings, sites, subscription, tasks, teams, users } satisfies Shape<Translations>;
+export const en = { common, errors, executions, faq, landing, audit, audits, auth, checklists, corrections, mail, mobile, nav, notifications, pages, platform, reports, roles, scheduling, settings, sites, subscription, tasks, teams, users } satisfies Shape<Translations>;

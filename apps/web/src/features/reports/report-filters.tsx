@@ -69,7 +69,7 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
         aria-label={t('reports.filters.period')}
         value={period}
         onChange={(e) => choosePeriod(e.target.value as PeriodChoice)}
-        className="w-44"
+        className="w-36"
       >
         {PERIOD_CHOICES.map((p) => (
           <option key={p} value={p}>
@@ -81,11 +81,11 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
         <>
           <div className="grid gap-1">
             <Label htmlFor={fromId}>{t('reports.filters.from')}</Label>
-            <Input id={fromId} type="date" value={value.from ?? ''} onChange={(e) => set({ from: e.target.value })} className="w-44" />
+            <Input id={fromId} type="date" value={value.from ?? ''} onChange={(e) => set({ from: e.target.value })} className="w-36" />
           </div>
           <div className="grid gap-1">
             <Label htmlFor={toId}>{t('reports.filters.to')}</Label>
-            <Input id={toId} type="date" value={value.to ?? ''} onChange={(e) => set({ to: e.target.value })} className="w-44" />
+            <Input id={toId} type="date" value={value.to ?? ''} onChange={(e) => set({ to: e.target.value })} className="w-36" />
           </div>
         </>
       )}
@@ -100,7 +100,7 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
           )}
           value={siteIds}
           onChange={(ids) => set({ siteId: toListParam(ids) })}
-          className="w-56"
+          className="w-40"
         />
       )}
       <MultiSelectFilter
@@ -113,7 +113,7 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
         )}
         value={userIds}
         onChange={(ids) => set({ userId: toListParam(ids) })}
-        className="w-56"
+        className="w-40"
       />
       {canSeeChecklists && (
         <MultiSelectFilter
@@ -126,7 +126,7 @@ export function ReportFilters({ value, today, onChange }: { value: ReportSearch;
           )}
           value={checklistIds}
           onChange={(ids) => set({ checklistId: toListParam(ids) })}
-          className="w-56"
+          className="w-40"
         />
       )}
       <div className="flex h-9 items-center gap-2">

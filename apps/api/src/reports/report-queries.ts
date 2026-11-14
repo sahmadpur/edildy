@@ -282,7 +282,14 @@ export class ReportQueries {
       ...measuresOf(total),
       trend: periodDays(f.from, f.to).map((date) => {
         const d = byDay.get(date);
-        return { date, due: d?.due ?? 0, completed: d?.completed ?? 0, completionPercent: d ? completionPercent(d.completed, d.due) : null };
+        return {
+          date,
+          planned: d?.planned ?? 0,
+          due: d?.due ?? 0,
+          completed: d?.completed ?? 0,
+          late: (d?.overdue ?? 0) + (d?.missed ?? 0),
+          completionPercent: d ? completionPercent(d.completed, d.due) : null,
+        };
       }),
     };
   }

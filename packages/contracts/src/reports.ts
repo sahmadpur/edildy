@@ -95,7 +95,11 @@ export const runCountsSchema = z.object({
   withCritical: count,
 });
 
-export const reportTrendDaySchema = z.object({ date: localDateSchema, due: count, completed: count, completionPercent: percent });
+/**
+ * One day of the trend. `late` (feedback 2026-11-14) = runs not done on time and not completed: overdue now or missed;
+ * the Hesabatlar bar chart shows planned, completed and late side by side.
+ */
+export const reportTrendDaySchema = z.object({ date: localDateSchema, planned: count, due: count, completed: count, late: count, completionPercent: percent });
 export type ReportTrendDay = z.infer<typeof reportTrendDaySchema>;
 
 /** GET /reports/summary. The trend has one entry per day of the range, zero days included. */

@@ -97,14 +97,14 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           <ReportsTab highlight={report} />
         </TabsContent>
         <TabsContent value="checklist" className="mt-4 grid gap-4">
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-2">
         <div className="grid gap-1">
           <Label htmlFor="problems-from">{t('executions.problemsPage.from')}</Label>
-          <Input id="problems-from" type="date" value={range.from} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} className="w-44" />
+          <Input id="problems-from" type="date" value={range.from} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} className="w-[8.5rem]" />
         </div>
         <div className="grid gap-1">
           <Label htmlFor="problems-to">{t('executions.problemsPage.to')}</Label>
-          <Input id="problems-to" type="date" value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} className="w-44" />
+          <Input id="problems-to" type="date" value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} className="w-[8.5rem]" />
         </div>
         <MultiSelectFilter
           label={t('executions.problemsPage.site')}
@@ -112,7 +112,7 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           options={(sites.data ?? []).map((s) => ({ value: s.id, label: s.name }))}
           value={siteId}
           onChange={setSiteId}
-          className="w-52"
+          className="w-[7.25rem]"
         />
         <MultiSelectFilter
           label={t('executions.problemsPage.severity')}
@@ -120,7 +120,7 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           options={PROBLEM_SEVERITIES.map((s) => ({ value: s, label: t(`executions.severities.${s}`) }))}
           value={severity}
           onChange={setSeverity}
-          className="w-44"
+          className="w-[7.25rem]"
         />
         <MultiSelectFilter
           label={t('executions.problemsPage.checklist')}
@@ -128,7 +128,7 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           options={(checklists.data ?? []).map((cl) => ({ value: cl.id, label: cl.name }))}
           value={checklistId}
           onChange={setChecklistId}
-          className="w-56"
+          className="w-[7.25rem]"
         />
         <MultiSelectFilter
           label={t('executions.problemsPage.source')}
@@ -136,7 +136,7 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           options={PROBLEM_SOURCES.map((s) => ({ value: s, label: t(`executions.problemSources.${s}`) }))}
           value={source}
           onChange={setSource}
-          className="w-44"
+          className="w-[7.25rem]"
         />
         <MultiSelectFilter
           label={t('tasks.problems.resolution')}
@@ -144,11 +144,11 @@ export function ProblemsPage({ today: fixedToday, tab = 'checklist', report }: {
           options={PROBLEM_RESOLUTIONS.map((r) => ({ value: r, label: t(`tasks.resolutions.${r}`) }))}
           value={resolution}
           onChange={setResolution}
-          className="w-44"
+          className="w-[7.25rem]"
         />
         <div className="flex h-9 items-center gap-2">
           <Checkbox id="problems-show-cleared" checked={showCleared} onCheckedChange={(c) => setShowCleared(c === true)} />
-          <Label htmlFor="problems-show-cleared" className="font-normal">
+          <Label htmlFor="problems-show-cleared" className="font-normal whitespace-nowrap">
             {t('corrections.web.showCleared')}
           </Label>
         </div>

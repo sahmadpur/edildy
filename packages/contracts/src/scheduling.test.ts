@@ -170,6 +170,31 @@ describe('validateSchedule and warnings', () => {
   });
 });
 
+describe('several fixed times (feedback 2026-11-14)', () => {
+  const fixed = { mode: 'fixed', startTime: '08:00', extraTimes: ['18:00', '13:00'], dueAfterMinutes: 120, graceMinutes: 60 } as const;
+
+  it('parses with and without extra times', () => {
+    expect(timingSchema.parse(fixed)).toEqual(fixed);
+    expect(timingSchema.parse({ mode: 'fixed', startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 60 })).not.toHaveProperty('extraTimes');
+  });
+
+  it('makes one run per time, in time order', () => {
+    const slots = slotsFor('2026-11-02', fixed, null, 'UTC');
+    expect(slots.map((s) => [s.startsAt.toISOString(), s.dueAt.toISOString(), s.closesAt.toISOString()])).toEqual([
+      ['2026-11-02T08:00:00.000Z', '2026-11-02T10:00:00.000Z', '2026-11-02T11:00:00.000Z'],
+      ['2026-11-02T13:00:00.000Z', '2026-11-02T15:00:00.000Z', '2026-11-02T16:00:00.000Z'],
+      ['2026-11-02T18:00:00.000Z', '2026-11-02T20:00:00.000Z', '2026-11-02T21:00:00.000Z'],
+    ]);
+    expect(slotFor('2026-11-02', fixed, null, 'UTC').startsAt.toISOString()).toBe('2026-11-02T08:00:00.000Z');
+  });
+
+  it('rejects a repeated time and times closer than the time to complete', () => {
+    expect(validateTiming(fixed)).toEqual([]);
+    expect(validateTiming({ ...fixed, extraTimes: ['08:00'] })).toEqual([{ path: ['extraTimes', 0], code: 'scheduling.issues.duplicateTime' }]);
+    expect(validateTiming({ ...fixed, extraTimes: ['09:00'] })).toEqual([{ path: ['dueAfterMinutes'], code: 'scheduling.issues.timesTooClose' }]);
+  });
+});
+
 describe('repeat timing', () => {
   const repeat = { mode: 'repeat' as const, startTime: '08:00', endTime: '20:00', everyMinutes: 60 };
   it('makes a run every interval within the day, each open until the next starts', () => {

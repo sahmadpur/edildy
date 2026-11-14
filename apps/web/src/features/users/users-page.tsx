@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { type ReactNode, useDeferredValue, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { ConfirmButton } from '@/components/confirm-button';
 import { Badge } from '@/components/ui/badge';
@@ -54,18 +55,23 @@ export function UsersPage({ tabs }: { tabs?: ReactNode } = {}) {
     <div>
       <PageHeader
         title={t('users.title')} description={t('pages.users')}
+      />
+      <TabRow
         actions={
           canManage && (
             <>
-              <Button variant="outline" onClick={() => setDialog('invite')}>
+              <button type="button" className={tabActionClass('secondary')} onClick={() => setDialog('invite')}>
                 {t('users.invite')}
-              </Button>
-              <Button onClick={() => setDialog('worker')}>{t('users.newWorker')}</Button>
+              </button>
+              <button type="button" className={tabActionClass()} onClick={() => setDialog('worker')}>
+                {t('users.newWorker')}
+              </button>
             </>
           )
         }
-      />
-      {tabs}
+      >
+        {tabs}
+      </TabRow>
       <div className="mb-4 flex flex-wrap gap-3">
         <Input type="search" className="max-w-sm" placeholder={t('users.search')} aria-label={t('common.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
         <MultiSelectFilter

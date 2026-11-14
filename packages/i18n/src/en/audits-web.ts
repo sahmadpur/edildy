@@ -2,8 +2,8 @@
 export default {
   page: {
     filters: {
-      site: 'Site',
-      allSites: 'All sites',
+      site: 'Branch',
+      allSites: 'All branches',
       checklist: 'Checklist',
       allChecklists: 'All checklists',
       auditor: 'Auditor',
@@ -20,7 +20,7 @@ export default {
     columns: {
       date: 'Date',
       checklist: 'Checklist',
-      site: 'Site',
+      site: 'Branch',
       executor: 'Run by',
       completedAt: 'Completed',
       auditor: 'Auditor',

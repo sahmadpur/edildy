@@ -9,7 +9,7 @@ import { percentText, type TileKey, tileSearch } from './labels';
 import type { ReportSearch } from './search';
 import { useLocale } from '@/lib/i18n';
 
-const TILE = 'bg-card shadow-card grid content-start gap-1 rounded-xl p-4';
+const TILE = 'bg-card shadow-card grid min-w-0 content-start gap-1 rounded-xl px-3 py-3';
 
 const COUNT_TILE = cn(TILE, 'text-left hover:bg-muted focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none');
 
@@ -39,15 +39,15 @@ export function CountTiles({
   const average = t('reports.measures.averageScore');
   const hint = t('reports.measures.completionHint');
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))]">
       {keys.map((key) => {
         const label = t(`reports.counts.${key}`);
         const value = count.format(summary.counts[key]);
         const name = t('reports.tiles.link', { label, value });
         const body = (
           <>
-            <span className="text-muted-foreground text-sm">{label}</span>
-            <span className="text-[28px] leading-none font-semibold tabular-nums">{value}</span>
+            <span className="text-muted-foreground truncate text-sm" title={label}>{label}</span>
+            <span className="text-2xl leading-none font-semibold tabular-nums">{value}</span>
           </>
         );
         return onSelect ? (
@@ -68,14 +68,14 @@ export function CountTiles({
             <Info className="size-3.5" aria-hidden />
           </span>
         </span>
-        <span className="text-[28px] leading-none font-semibold tabular-nums">{percentText(t, summary.completionPercent, locale)}</span>
+        <span className="text-2xl leading-none font-semibold tabular-nums">{percentText(t, summary.completionPercent, locale)}</span>
         <span id={hintId} className="sr-only">
           {hint}
         </span>
       </div>
       <div role="group" aria-label={average} className={TILE}>
         <span className="text-muted-foreground text-sm">{average}</span>
-        <span className="text-[28px] leading-none font-semibold tabular-nums">{percentText(t, summary.averageScore, locale)}</span>
+        <span className="text-2xl leading-none font-semibold tabular-nums">{percentText(t, summary.averageScore, locale)}</span>
       </div>
     </div>
   );

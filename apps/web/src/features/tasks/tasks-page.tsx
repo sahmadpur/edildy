@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MultiSelectFilter } from '@/components/multi-select-filter';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,16 +47,27 @@ export function TasksPage() {
 
   return (
     <div className="grid gap-4">
-      <PageHeader title={t('tasks.page.title')} description={t('pages.tasks')} actions={canManage && <Button onClick={() => setCreating(true)}>{t('tasks.page.new')}</Button>} />
-      <Tabs value={tab} onValueChange={(v) => setTab(v as TaskTab)}>
-        <TabsList>
-          {TASK_TABS.map((k) => (
-            <TabsTrigger key={k} value={k}>
-              {t(`tasks.page.tabs.${k}`)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <PageHeader title={t('tasks.page.title')} description={t('pages.tasks')} />
+      <TabRow
+        className="mb-0"
+        actions={
+          canManage && (
+            <button type="button" className={tabActionClass()} onClick={() => setCreating(true)}>
+              {t('tasks.page.new')}
+            </button>
+          )
+        }
+      >
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TaskTab)}>
+          <TabsList>
+            {TASK_TABS.map((k) => (
+              <TabsTrigger key={k} value={k}>
+                {t(`tasks.page.tabs.${k}`)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </TabRow>
       <div className="flex flex-wrap items-end gap-3">
         <MultiSelectFilter
           label={t('tasks.page.status')}

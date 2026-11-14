@@ -34,7 +34,7 @@ describe('report exports (spec §5.4)', () => {
     expect([...f.body.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
     const rows = csvRows(f.body);
     expect(rows[0]).toEqual([
-      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Obyekt', 'Status', 'İcraçılar', 'Yoxlayan', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
+      'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Filial', 'Status', 'İcraçılar', 'Yoxlayan', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
     ]);
     expect(rows).toHaveLength(17);
     // r7: done on the phone at 11:00 Baku on Monday, received by the server on Wednesday at 09:00 (FR-10.14).
@@ -47,13 +47,13 @@ describe('report exports (spec §5.4)', () => {
     await ownerQuery('update users set locale = $2 where id = $1', [w.s.ownerId, 'en']);
     try {
       const csv = csvRows((await file(w.owner, 'runs', { ...PERIOD, format: 'csv' })).body);
-      expect(csv[0]!.slice(0, 5)).toEqual(['Date', 'Due by', 'Checklist', 'Site', 'Status']);
+      expect(csv[0]!.slice(0, 5)).toEqual(['Date', 'Due by', 'Checklist', 'Branch', 'Status']);
       expect(csv.find((r) => r[9] === '04.11.2026 09:00')?.slice(13, 15)).toEqual(['Yes', 'No']);
       await ownerQuery('update users set locale = $2 where id = $1', [w.s.ownerId, 'ru']);
       const text = await pdfText((await file(w.owner, 'summary', { ...PERIOD, format: 'pdf' })).body);
       for (const s of ['Сводный отчёт', 'Период: 02.11.2026 – 04.11.2026', 'Фильтры: нет']) expect(text, s).toContain(s);
       const sheets = await readXlsxFile((await file(w.owner, 'sites', { ...PERIOD, format: 'xlsx' })).body);
-      expect(sheets[0]!.sheet).toBe('Объекты');
+      expect(sheets[0]!.sheet).toBe('Филиалы');
     } finally {
       await ownerQuery('update users set locale = null where id = $1', [w.s.ownerId]);
     }
@@ -71,7 +71,7 @@ describe('report exports (spec §5.4)', () => {
     expect(f.disposition).toBe('attachment; filename="edildy-full-2026-11-02_2026-11-04.xlsx"');
     const sheets = await readXlsxFile(f.body);
     expect(sheets.map((s) => [s.sheet, s.data.length])).toEqual([
-      ['Xülasə', 13], ['Gündəlik', 4], ['Obyektlər', 5], ['Əməkdaşlar', 6],
+      ['Xülasə', 13], ['Gündəlik', 4], ['Filiallar', 5], ['Əməkdaşlar', 6],
       ['Gecikmiş yoxlamalar', 2], ['Yarımçıq yoxlamalar', 2], ['Buraxılmış yoxlamalar', 4], ['Problemlər', 5], ['Tapşırıqlar', 10],
     ]);
     const sites = sheets[2]!.data;
@@ -90,7 +90,7 @@ describe('report exports (spec §5.4)', () => {
     expect(f.disposition).toBe('attachment; filename="edildy-summary-2026-11-02_2026-11-04.pdf"');
     expect(f.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     const text = await pdfText(f.body);
-    for (const s of ['Acme MMC', 'Xülasə hesabatı', 'Dövr: 02.11.2026 – 04.11.2026', 'Filtrlər: Obyekt: Zona A1', 'Hazırlanma vaxtı: 04.11.2026 12:00', 'Tamamlanma faizi 57.1', 'Gündəlik']) {
+    for (const s of ['Acme MMC', 'Xülasə hesabatı', 'Dövr: 02.11.2026 – 04.11.2026', 'Filtrlər: Filial: Zona A1', 'Hazırlanma vaxtı: 04.11.2026 12:00', 'Tamamlanma faizi 57.1', 'Gündəlik']) {
       expect(text, s).toContain(s);
     }
   });
@@ -113,13 +113,13 @@ describe('report exports (spec §5.4)', () => {
 
   it('names filter entities in the PDF header only inside the viewer’s scope', async () => {
     const scoped = await pdfText((await file(w.leyla.api, 'summary', { ...PERIOD, format: 'pdf', userId: w.nigar.id, siteId: w.sites.branchB })).body);
-    expect(scoped).toContain('Obyekt: —');
+    expect(scoped).toContain('Filial: —');
     expect(scoped).toContain('Əməkdaş: —');
     expect(scoped).not.toContain('Nigar');
     expect(scoped).not.toContain('Filial B');
     // Inside her scope the names still print.
     const inside = await pdfText((await file(w.leyla.api, 'summary', { ...PERIOD, format: 'pdf', userId: w.aynur.id, siteId: w.sites.zoneA1 })).body);
-    expect(inside).toContain('Obyekt: Zona A1');
+    expect(inside).toContain('Filial: Zona A1');
     expect(inside).toContain('Əməkdaş: Aynur Quliyeva');
     // A subordinates viewer sees the sites of their people's runs, not other branches.
     const role = await w.owner.post('/api/v1/roles', { name: 'Nəzarətçi ixrac', dataScope: 'subordinates', permissions: ['reports.view', 'reports.export'] });
@@ -127,7 +127,7 @@ describe('report exports (spec §5.4)', () => {
     const user = await createUserDirect(t, w.s.tenantId, { kind: 'staff', roleId: role.body.id as string, fullName: 'Rauf İxrac', managerId: w.leyla.id, emailVerified: true });
     const api = as(t, (await loginStaff(t, user.email!, user.secret, 'web')).accessToken);
     const outside = await pdfText((await file(api, 'summary', { ...PERIOD, format: 'pdf', siteId: w.sites.branchB })).body);
-    expect(outside).toContain('Obyekt: —');
+    expect(outside).toContain('Filial: —');
     expect(outside).not.toContain('Filial B');
   });
 

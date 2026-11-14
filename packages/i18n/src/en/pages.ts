@@ -1,7 +1,7 @@
 export default {
   home: 'An overview of checks, problems and tasks.',
   problems: 'Problems recorded during checks and reported by staff. Create a task from a problem and follow it up.',
-  reports: 'Results by period, site, employee and checklist. You can download the tables.',
+  reports: 'Results by period, branch, employee and checklist. You can download the tables.',
   assignments: 'Who does which check, where and when. Create a new assignment or change an existing one.',
   schedule: 'The runs your assignments create, week by week. Click a run to see its answers.',
   calendar: 'Planned and completed checks by month. Hover over a check to see its details.',
@@ -16,8 +16,8 @@ export default {
   roles: 'Choose the permissions of each role. What a person can see and do depends on their role.',
   auditLog: 'A full record of who changed what and when.',
   settings: 'Your organisation\'s details, your password, the notification rules and the employee roles.',
-  messages: 'Send a message to people, teams or sites.',
+  messages: 'Send a message to people, teams or branches.',
   notifications: 'Every notification you received. Click one to open the related page.',
-  newAssignment: 'Choose the checklist, the site, who does it and when.',
+  newAssignment: 'Choose the checklist, the branch, who does it and when.',
   globalTemplates: 'Edildy templates every organisation can see.',
 } as const;

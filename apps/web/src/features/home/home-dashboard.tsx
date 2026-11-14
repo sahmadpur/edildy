@@ -316,7 +316,7 @@ function PeriodDetail({
       {query.error && <p className="text-destructive">{errorText(t, query.error)}</p>}
       {!summary && !query.error && <LoadingState />}
       <div className="bg-card shadow-card grid gap-4 rounded-xl p-5">
-        <RunsTab filters={filters} bucket={bucket} onBucket={onBucket} />
+        <RunsTab filters={filters} bucket={bucket} onBucket={onBucket} compact />
       </div>
     </section>
   );

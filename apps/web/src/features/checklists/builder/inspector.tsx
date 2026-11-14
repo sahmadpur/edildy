@@ -3,12 +3,14 @@ import { ArrowDown, ArrowUp, Copy, Trash2, X } from 'lucide-react';
 import { type ReactNode, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from './number-input';
 import { Label } from '@/components/ui/label';
 import { FieldLabel } from '@/components/field';
+import { Segmented } from '@/components/segmented';
 import { Textarea } from '@/components/ui/textarea';
 import type { IssueIndex } from './issues';
 import type { BuilderAction } from './reducer';
@@ -40,7 +42,7 @@ export function Inspector({ content, selected, issues, dispatch, readOnly }: Pro
   return (
     <aside className="min-h-0 overflow-y-auto rounded-md border p-4">
       {found ? (
-        <ItemPanel item={found.item} depth={found.depth} scoring={content.scoring.enabled} issues={issues} dispatch={dispatch} readOnly={readOnly} />
+        <ItemPanel key={found.item.id} item={found.item} depth={found.depth} scoring={content.scoring.enabled} issues={issues} dispatch={dispatch} readOnly={readOnly} />
       ) : (
         <SettingsPanel content={content} dispatch={dispatch} readOnly={readOnly} />
       )}
@@ -53,7 +55,7 @@ function SettingsPanel({ content, dispatch, readOnly }: { content: ChecklistCont
   const id = useId();
   return (
     <div className="grid gap-3">
-      <h2 className="font-semibold">{t('checklists.builder.settings')}</h2>
+      <h2 className="font-semibold">{t('checklists.builder.details')}</h2>
       <Field id={`${id}-ins`} label={t('checklists.builder.instructions')}>
         <Textarea
           id={`${id}-ins`}
@@ -98,7 +100,8 @@ function ItemPanel({ item, depth, scoring, issues, dispatch, readOnly }: { item:
   return (
     <div className="grid gap-3">
       <div className="flex items-center gap-2">
-        <h2 className="font-semibold">{t(`checklists.itemTypes.${item.type}`)}</h2>
+        <h2 className="font-semibold">{t('checklists.builder.details')}</h2>
+        <Badge variant="secondary">{t(`checklists.itemTypes.${item.type}`)}</Badge>
         {!readOnly && (
           <div className="ml-auto flex gap-1">
             <Button variant="ghost" size="icon" className="size-7" aria-label={t('checklists.builder.duplicate')} onClick={() => dispatch({ type: 'duplicateItem', itemId: item.id })}>
@@ -111,7 +114,7 @@ function ItemPanel({ item, depth, scoring, issues, dispatch, readOnly }: { item:
         )}
       </div>
       <Field id={`${id}-label`} label={t('checklists.builder.item.label')} required empty={!item.label.trim()}>
-        <Textarea id={`${id}-label`} maxLength={500} disabled={readOnly} value={item.label} aria-required onChange={(e) => patch({ label: e.target.value })} />
+        <Textarea id={`${id}-label`} maxLength={500} disabled={readOnly} value={item.label} aria-required autoFocus={!readOnly && !item.label} onChange={(e) => patch({ label: e.target.value })} />
       </Field>
       <Field id={`${id}-help`} label={t('checklists.builder.item.helpText')}>
         <Textarea id={`${id}-help`} maxLength={2000} disabled={readOnly} value={item.helpText ?? ''} onChange={(e) => patch({ helpText: e.target.value || null })} />
@@ -128,22 +131,16 @@ function ItemPanel({ item, depth, scoring, issues, dispatch, readOnly }: { item:
         </Field>
       )}
       {!media && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid gap-2">
           {(['photo', 'video'] as const).map((kind) => (
-            <Field key={kind} id={`${id}-${kind}`} label={t(`checklists.builder.item.${kind}`)}>
-              <NativeSelect
-                id={`${id}-${kind}`}
-                disabled={readOnly}
-                value={item.evidence[kind]}
-                onChange={(e) => patch({ evidence: { ...item.evidence, [kind]: e.target.value } as Item['evidence'] })}
-              >
-                {EVIDENCE_LEVELS.map((l) => (
-                  <option key={l} value={l}>
-                    {t(`checklists.builder.evidence.${l}`)}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
+            <Segmented
+              key={kind}
+              label={t(`checklists.builder.item.${kind}`)}
+              disabled={readOnly}
+              options={EVIDENCE_LEVELS.map((l) => ({ value: l, label: t(`checklists.builder.evidence.${l}`) }))}
+              value={item.evidence[kind]}
+              onChange={(l) => patch({ evidence: { ...item.evidence, [kind]: l } as Item['evidence'] })}
+            />
           ))}
         </div>
       )}

@@ -9,7 +9,7 @@ const doc: ReportDocument = {
   tenantName: 'Acme MMC',
   from: '2026-11-02',
   to: '2026-11-04',
-  filters: ['Obyekt: Zona A1'],
+  filters: ['Filial: Zona A1'],
   generatedAt: new Date('2026-11-04T08:00:00Z'),
   timezone: 'Asia/Baku',
   locale: 'az',
@@ -30,7 +30,7 @@ describe('PDF writer', () => {
     const { text } = await extractText(new Uint8Array(out), { mergePages: true });
     const flat = text.replace(/\s+/g, ' ');
     for (const s of [
-      'Acme MMC', 'Xülasə hesabatı', 'Dövr: 02.11.2026 – 04.11.2026', 'Filtrlər: Obyekt: Zona A1', 'Hazırlanma vaxtı: 04.11.2026 12:00',
+      'Acme MMC', 'Xülasə hesabatı', 'Dövr: 02.11.2026 – 04.11.2026', 'Filtrlər: Filial: Zona A1', 'Hazırlanma vaxtı: 04.11.2026 12:00',
       'Tamamlanma faizi 53.8', 'Planlaşdırılıb 15', 'Orta bal —', 'Tapşırıqlar', 'Məlumat yoxdur.', 'Səhifə 1 / 1',
     ]) {
       expect(flat, s).toContain(s);

@@ -111,7 +111,7 @@ describe('ReportsPage', () => {
     );
     expect(screen.getByRole('tab', { name: 'Yoxlamalar' })).toHaveAttribute('aria-selected', 'true');
 
-    await userEvent.click(screen.getByRole('tab', { name: 'Obyektlər' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Filiallar' }));
     await waitFor(() =>
       expect(router.state.location.search).toEqual({
         period: 'last_7',

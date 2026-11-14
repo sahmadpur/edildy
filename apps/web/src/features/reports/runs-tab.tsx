@@ -1,4 +1,10 @@
-import { type ReportFiltersQuery as ReportFilters, RUN_AUDIT_STATES, RUN_BUCKETS, type RunAuditState, type RunBucket } from '@edildy/contracts';
+import {
+  type ReportFiltersQuery as ReportFilters,
+  RUN_AUDIT_STATES,
+  RUN_BUCKETS,
+  type RunAuditState,
+  type RunBucket,
+} from '@edildy/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -9,18 +15,29 @@ import { runAuditStateVariant } from '@/features/audits/labels';
 import { receiptDiffers } from '@/features/executions/labels';
 import { formatLocalDate, occurrenceVariant, useTimeFormat } from '@/features/scheduling/labels';
 import { errorText } from '@/lib/errors';
-import { useFormatDateTime } from '@/lib/format';
+import { shortName, useFormatDateTime } from '@/lib/format';
 import { ChipGroup } from './chip-group';
 import { RunDrawer } from './drawers';
 import { percentText, runPeople } from './labels';
 import { useReportRuns } from './queries';
 import { useLocale } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { LoadingState, EmptyState } from '@/components/states';
 
 /** The bucket chips: Hamısı first, then the rest in the API's order. */
 const BUCKET_CHIPS: readonly RunBucket[] = ['all', ...RUN_BUCKETS.filter((b) => b !== 'all')];
 
-const COLUMNS = ['date', 'dueAt', 'checklist', 'site', 'status', 'executor', 'completedAt', 'score', 'problemCount'] as const;
+const COLUMNS = [
+  'date',
+  'dueAt',
+  'checklist',
+  'site',
+  'status',
+  'executor',
+  'completedAt',
+  'score',
+  'problemCount',
+] as const;
 
 /**
  * Spec §6.2 "Runs": bucket chips and a paged list; a row opens the run drawer. Device times with the server receipt
@@ -32,6 +49,7 @@ export function RunsTab({
   onBucket,
   auditState = null,
   onAuditState,
+  compact,
 }: {
   filters: ReportFilters;
   bucket: RunBucket;
@@ -39,12 +57,19 @@ export function RunsTab({
   /** SP8: the audit state filter; without `onAuditState` the select is not shown. */
   auditState?: RunAuditState | null;
   onAuditState?: (state: RunAuditState | null) => void;
+  /** The home page: see RunsTable. */
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <ChipGroup label={t('reports.filters.bucket')} options={BUCKET_CHIPS.map((b) => ({ value: b, label: t(`reports.buckets.${b}`) }))} value={bucket} onChange={onBucket} />
+        <ChipGroup
+          label={t('reports.filters.bucket')}
+          options={BUCKET_CHIPS.map((b) => ({ value: b, label: t(`reports.buckets.${b}`) }))}
+          value={bucket}
+          onChange={onBucket}
+        />
         {onAuditState && (
           <NativeSelect
             aria-label={t('audits.audit')}
@@ -61,13 +86,26 @@ export function RunsTab({
           </NativeSelect>
         )}
       </div>
-      <RunsTable filters={filters} bucket={bucket} auditState={auditState} />
+      <RunsTable filters={filters} bucket={bucket} auditState={auditState} compact={compact} />
     </div>
   );
 }
 
-/** The runs of one bucket: a paged table whose rows open the run drawer. Shared by the Runs tab and the home page's tiles. */
-export function RunsTable({ filters, bucket, auditState = null }: { filters: ReportFilters; bucket: RunBucket; auditState?: RunAuditState | null }) {
+/**
+ * The runs of one bucket: a paged table whose rows open the run drawer. Shared by the Runs tab and the home page.
+ * `compact` (the home page, feedback 2026-11-14): names as "Ad S." and no device completion time column.
+ */
+export function RunsTable({
+  filters,
+  bucket,
+  auditState = null,
+  compact = false,
+}: {
+  filters: ReportFilters;
+  bucket: RunBucket;
+  auditState?: RunAuditState | null;
+  compact?: boolean;
+}) {
   const { t } = useTranslation();
   const locale = useLocale();
   const time = useTimeFormat();
@@ -75,6 +113,7 @@ export function RunsTable({ filters, bucket, auditState = null }: { filters: Rep
   const runs = useReportRuns(filters, bucket, auditState);
   const [open, setOpen] = useState<string | null>(null);
   const items = runs.data?.pages.flatMap((p) => p.items) ?? [];
+  const columns = compact ? COLUMNS.filter((k) => k !== 'completedAt') : COLUMNS;
 
   return (
     <div className="grid gap-4">
@@ -85,7 +124,7 @@ export function RunsTable({ filters, bucket, auditState = null }: { filters: Rep
         <Table>
           <TableHeader>
             <TableRow>
-              {COLUMNS.map((k) => (
+              {columns.map((k) => (
                 <TableHead key={k}>{t(`reports.columns.${k}`)}</TableHead>
               ))}
               <TableHead>{t('audits.audit')}</TableHead>
@@ -97,31 +136,43 @@ export function RunsTable({ filters, bucket, auditState = null }: { filters: Rep
                 <TableCell>{formatLocalDate(r.localDate, locale)}</TableCell>
                 <TableCell className="tabular-nums">{time(r.dueAt)}</TableCell>
                 <TableCell>
-                  <button type="button" className="font-medium underline-offset-4 hover:underline" onClick={() => setOpen(r.occurrenceId)}>
+                  <button
+                    type="button"
+                    className="font-medium underline-offset-4 hover:underline"
+                    onClick={() => setOpen(r.occurrenceId)}
+                  >
                     {r.checklist.name}
                   </button>
                 </TableCell>
                 <TableCell>{r.site.name}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant={occurrenceVariant(r.status)}>{t(`scheduling.statuses.${r.status}`)}</Badge>
+                    <Badge variant={occurrenceVariant(r.status)}>
+                      {t(`scheduling.statuses.${r.status}`)}
+                    </Badge>
                     {r.late && <Badge variant="destructive">{t('executions.flags.late')}</Badge>}
                     {r.clockSuspect && <Badge variant="outline">{t('executions.flags.clockSuspect')}</Badge>}
                   </div>
                 </TableCell>
-                <TableCell>{runPeople(t, r)}</TableCell>
-                <TableCell>
-                  {r.completedAt ? (
-                    <div className="grid">
-                      <span>{formatDateTime(r.completedAt)}</span>
-                      {r.completedReceivedAt && receiptDiffers(r.completedAt, r.completedReceivedAt) && (
-                        <span className="text-muted-foreground text-xs">{t('reports.table.receivedAt', { time: formatDateTime(r.completedReceivedAt) })}</span>
-                      )}
-                    </div>
-                  ) : (
-                    t('reports.noValue')
-                  )}
+                <TableCell className={cn(compact && 'whitespace-nowrap')}>
+                  {runPeople(t, r, compact ? shortName : undefined)}
                 </TableCell>
+                {!compact && (
+                  <TableCell>
+                    {r.completedAt ? (
+                      <div className="grid">
+                        <span>{formatDateTime(r.completedAt)}</span>
+                        {r.completedReceivedAt && receiptDiffers(r.completedAt, r.completedReceivedAt) && (
+                          <span className="text-muted-foreground text-xs">
+                            {t('reports.table.receivedAt', { time: formatDateTime(r.completedReceivedAt) })}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      t('reports.noValue')
+                    )}
+                  </TableCell>
+                )}
                 <TableCell className="tabular-nums">
                   <span className="flex flex-wrap items-center gap-1">
                     {percentText(t, r.score, locale)}
@@ -131,17 +182,32 @@ export function RunsTable({ filters, bucket, auditState = null }: { filters: Rep
                 <TableCell>
                   <span className="flex flex-wrap items-center gap-1 tabular-nums">
                     {r.problemCount}
-                    {r.criticalCount > 0 && <Badge variant="destructive">{`${t('executions.severities.critical')}: ${r.criticalCount}`}</Badge>}
+                    {r.criticalCount > 0 && (
+                      <Badge variant="destructive">{`${t('executions.severities.critical')}: ${r.criticalCount}`}</Badge>
+                    )}
                   </span>
                 </TableCell>
-                <TableCell>{r.auditState ? <Badge variant={runAuditStateVariant(r.auditState)}>{t(`audits.runAuditStates.${r.auditState}`)}</Badge> : t('reports.noValue')}</TableCell>
+                <TableCell>
+                  {r.auditState ? (
+                    <Badge variant={runAuditStateVariant(r.auditState)}>
+                      {t(`audits.runAuditStates.${r.auditState}`)}
+                    </Badge>
+                  ) : (
+                    t('reports.noValue')
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       )}
       {runs.hasNextPage && (
-        <Button variant="outline" className="w-fit" disabled={runs.isFetchingNextPage} onClick={() => void runs.fetchNextPage()}>
+        <Button
+          variant="outline"
+          className="w-fit"
+          disabled={runs.isFetchingNextPage}
+          onClick={() => void runs.fetchNextPage()}
+        >
           {t('reports.table.more')}
         </Button>
       )}

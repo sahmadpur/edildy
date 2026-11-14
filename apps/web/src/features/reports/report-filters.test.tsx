@@ -120,15 +120,15 @@ describe('ReportFilters', () => {
       .mockResolvedValueOnce({ items: [CHECKLISTS[1]], nextCursor: null });
     const onChange = renderBar();
     await waitFor(() => expect(mocks.api.checklists.list).toHaveBeenCalledTimes(2));
-    await waitFor(async () => expect(await filterOptions('Obyekt')).toEqual(['Bütün obyektlər', 'Filial A', '\u00a0\u00a0Zona A1']));
+    await waitFor(async () => expect(await filterOptions('Filial')).toEqual(['Bütün filiallar', 'Filial A', '\u00a0\u00a0Zona A1']));
     expect(await filterOptions('Yoxlama vərəqəsi')).toEqual(['Bütün yoxlama vərəqələri', 'Açılış yoxlaması']);
     expect(mocks.api.checklists.list).toHaveBeenNthCalledWith(1, { limit: 200 });
     expect(mocks.api.checklists.list).toHaveBeenNthCalledWith(2, { limit: 200, cursor: IDS.checklist });
 
     await userEvent.click(screen.getByRole('checkbox', { name: 'Deaktivləri göstər' }));
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true });
-    expect(await filterOptions('Obyekt')).toEqual([
-      'Bütün obyektlər',
+    expect(await filterOptions('Filial')).toEqual([
+      'Bütün filiallar',
       'Filial A',
       '\u00a0\u00a0Zona A1',
       '\u00a0\u00a0Zona B (köhnə) (Deaktiv)',
@@ -140,12 +140,12 @@ describe('ReportFilters', () => {
     ]);
 
     // Multi-select (feedback 2026-11-07): several sites go to the URL as a comma list; "all" clears it.
-    await tickOptions('Obyekt', [/Zona A1/]);
+    await tickOptions('Filial', [/Zona A1/]);
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true, siteId: IDS.zoneA });
-    await tickOptions('Obyekt', ['Filial A']);
+    await tickOptions('Filial', ['Filial A']);
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true, siteId: `${IDS.zoneA},${IDS.branch}` });
-    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Filial A +1');
-    await tickOptions('Obyekt', ['Bütün obyektlər']);
+    expect(screen.getByRole('button', { name: 'Filial' })).toHaveTextContent('Filial A +1');
+    await tickOptions('Filial', ['Bütün filiallar']);
     expect(onChange).toHaveBeenLastCalledWith({ inactive: true });
   });
 
@@ -168,7 +168,7 @@ describe('ReportFilters', () => {
   it('keeps a selected inactive or unlisted site, employee and checklist visible', async () => {
     renderBar({ siteId: IDS.zoneB, userId: IDS.rauf, checklistId: IDS.oldChecklist });
     await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Zona B (köhnə) (Deaktiv)'),
+      expect(screen.getByRole('button', { name: 'Filial' })).toHaveTextContent('Zona B (köhnə) (Deaktiv)'),
     );
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Əməkdaş' })).toHaveTextContent('Rauf Həsənov (Deaktiv)'),
@@ -189,9 +189,9 @@ describe('ReportFilters', () => {
   it('never reads as "all" while the site list is loading or failed: the selected id shows as unlisted', async () => {
     mocks.api.sites.list.mockRejectedValue(new Error('boom'));
     renderBar({ siteId: IDS.zoneA });
-    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Seçilmiş (siyahıda yoxdur)');
+    expect(screen.getByRole('button', { name: 'Filial' })).toHaveTextContent('Seçilmiş (siyahıda yoxdur)');
     await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
-    expect(screen.getByRole('button', { name: 'Obyekt' })).toHaveTextContent('Seçilmiş (siyahıda yoxdur)');
+    expect(screen.getByRole('button', { name: 'Filial' })).toHaveTextContent('Seçilmiş (siyahıda yoxdur)');
   });
 
   it('keeps the selected person visible when an invalid custom range asks for no employee report', () => {
@@ -213,7 +213,7 @@ describe('ReportFilters', () => {
     mocks.me.current = meWith(['reports.view']);
     renderBar();
     expect(await screen.findByLabelText('Əməkdaş')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Filial')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Yoxlama vərəqəsi')).not.toBeInTheDocument();
     expect(mocks.api.sites.list).not.toHaveBeenCalled();
     expect(mocks.api.checklists.list).not.toHaveBeenCalled();

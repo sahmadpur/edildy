@@ -42,7 +42,7 @@ describe('PlatformTenantPage', () => {
     expect(screen.getByText('Paket: Pro')).toBeInTheDocument();
     expect(screen.getByText('8 / 60')).toBeInTheDocument();
     expect(screen.getByText('Tapşırıqlar')).toBeInTheDocument();
-    expect(screen.getByText('Obyektlər').nextSibling).toHaveTextContent('9');
+    expect(screen.getByText('Filial, zona və bölmələr').nextSibling).toHaveTextContent('9');
     const section = await screen.findByRole('region', { name: 'Aktivlik' });
     expect(within(section).getByText('6 / 11')).toBeInTheDocument();
     expect(within(section).getByText('40 / 170')).toBeInTheDocument();

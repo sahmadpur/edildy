@@ -72,7 +72,7 @@ export const reportSummary = (over: Partial<ReportSummary> = {}): ReportSummary 
   counts: counts(),
   completionPercent: null,
   averageScore: null,
-  trend: [{ date: '2026-11-02', due: 0, completed: 0, completionPercent: null }],
+  trend: [{ date: '2026-11-02', planned: 0, due: 0, completed: 0, late: 0, completionPercent: null }],
   ...over,
 });
 

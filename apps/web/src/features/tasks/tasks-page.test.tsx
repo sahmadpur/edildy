@@ -83,7 +83,7 @@ describe('TasksPage', () => {
     renderWithRouter(<TasksPage />, '/tasks');
     await waitFor(() => expect(mocks.api.sites.list).toHaveBeenCalled());
     await tickOptions('Status', ['İcradadır', 'Yeni']);
-    await tickOptions('Obyekt', ['Anbar №1']);
+    await tickOptions('Filial', ['Anbar №1']);
     await userEvent.click(screen.getByRole('combobox', { name: 'İcraçı və ya komanda' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Texniki xidmət' }));
     fireEvent.change(screen.getByLabelText('Başlama'), { target: { value: '2026-11-01' } });
@@ -145,7 +145,7 @@ describe('TasksPage', () => {
     expect(await within(drawer).findByText('Məlumat tapılmadı.')).toBeInTheDocument();
     expect(mocks.api.tasks.assignees).not.toHaveBeenCalled();
     expect(mocks.api.sites.list).not.toHaveBeenCalled();
-    expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Filial')).not.toBeInTheDocument();
   });
 
   it('shows no site filter and does not ask for sites without sites.view', async () => {
@@ -153,7 +153,7 @@ describe('TasksPage', () => {
     mocks.api.tasks.list.mockResolvedValue(empty);
     renderWithRouter(<TasksPage />, '/tasks');
     expect(await screen.findByText('Tapşırıq tapılmadı.')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Filial')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Status')).toBeInTheDocument();
     expect(mocks.api.sites.list).not.toHaveBeenCalled();
   });

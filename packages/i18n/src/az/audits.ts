@@ -49,7 +49,7 @@ export default {
     title: 'Audit hesabatı',
     checklist: 'Yoxlama vərəqəsi',
     version: 'Versiya {{number}}',
-    site: 'Obyekt',
+    site: 'Filial',
     run: 'İcra',
     executor: 'İcra edən',
     window: 'İcra müddəti',

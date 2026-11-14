@@ -7,6 +7,7 @@ import type { Principal, TaskReader } from '../common/request';
 import { DbService } from '../db/db.service';
 import { problemReports, sites } from '../db/schema';
 import { chain, inSubtree, SchedulingScope } from '../scheduling/scheduling-scope';
+import { worksAt } from '../common/site-membership';
 
 export type ProblemReportRow = typeof problemReports.$inferSelect;
 
@@ -57,7 +58,7 @@ export class ProblemReportScope {
     const from = localDateOf(new Date(+now - PROBLEM_REPORT_LIMITS.reportableOccurrencePastDays * DAY), 'UTC');
     const to = localDateOf(new Date(+now + PROBLEM_REPORT_LIMITS.reportableOccurrenceFutureDays * DAY), 'UTC');
     return or(
-      sql`exists (select 1 from user_sites us where us.user_id = ${p.userId} and us.site_id = ${sites.id})`,
+      worksAt(p.userId, sites.id),
       sql`exists (select 1 from occurrence_assignees oa join occurrences o on o.id = oa.occurrence_id
             where oa.user_id = ${p.userId} and o.site_id = ${sites.id} and o.local_date between ${from} and ${to})`,
     )!;

@@ -87,9 +87,9 @@ describe('ReportsTab (2026-11-06 design §8)', () => {
     const dialog = await screen.findByRole('dialog', { name: az.tasks.dialog.fromReport });
     expect(within(dialog).getByLabelText('Başlıq')).toHaveValue('Anbarın qapısı bağlanmır, kilid sınıb');
     expect(within(dialog).getByLabelText('Təlimat')).toHaveValue('Anbarın qapısı bağlanmır, kilid sınıb');
-    expect(within(dialog).getByLabelText('Prioritet')).toHaveValue('high');
+    expect(within(within(dialog).getByRole('radiogroup', { name: 'Prioritet' })).getByRole('radio', { name: 'Yüksək' })).toBeChecked();
     expect(within(dialog).getByText(az.tasks.dialog.siteFromProblem.replace('{{site}}', 'Anbar №1'))).toBeInTheDocument();
-    expect(within(dialog).queryByLabelText('Obyekt')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Filial')).not.toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('combobox', { name: 'İcraçı' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Nigar Səfərli' }, { timeout: 3000 }));
     await userEvent.click(within(dialog).getByRole('button', { name: 'Göndər' }));

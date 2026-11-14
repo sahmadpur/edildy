@@ -30,7 +30,7 @@ describe('SitesTab', () => {
     expect(mocks.api.reports.sites).toHaveBeenCalledWith(FILTERS);
     expect(rows).toHaveLength(4);
     expect(within(rows[0]!).getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
-      'Obyekt',
+      'Filial',
       'Planlaşdırılıb',
       'Tamamlanıb',
       'Gecikib',
@@ -60,12 +60,12 @@ describe('SitesTab', () => {
     await userEvent.click(sort);
     expect(names()).toEqual(['Filial A', 'Zona A1', 'Zona B (köhnə)']);
     expect(screen.getByRole('columnheader', { name: 'Tamamlanma faizi' })).toHaveAttribute('aria-sort', 'ascending');
-    await userEvent.click(sortButton('Obyekt'));
+    await userEvent.click(sortButton('Filial'));
     expect(names()).toEqual(['Filial A', 'Zona A1', 'Zona B (köhnə)']);
-    expect(screen.getByRole('columnheader', { name: 'Obyekt' })).toHaveAttribute('aria-sort', 'ascending');
-    await userEvent.click(sortButton('Obyekt'));
+    expect(screen.getByRole('columnheader', { name: 'Filial' })).toHaveAttribute('aria-sort', 'ascending');
+    await userEvent.click(sortButton('Filial'));
     expect(names()).toEqual(['Zona B (köhnə)', 'Zona A1', 'Filial A']);
-    expect(screen.getByRole('columnheader', { name: 'Obyekt' })).toHaveAttribute('aria-sort', 'descending');
+    expect(screen.getByRole('columnheader', { name: 'Filial' })).toHaveAttribute('aria-sort', 'descending');
   });
 
   it('says so when no site had a run in the period', async () => {

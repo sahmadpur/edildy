@@ -23,12 +23,12 @@ test('owner builds a checklist from a template, publishes v1 and v2, and v1 stay
   await expect(page.getByRole('heading', { name: 'E2E təmizlik' })).toBeVisible();
 
   // Add a yes/no item with "Yes → critical problem + photo" and a follow-up.
-  await page.getByRole('button', { name: '+ Bənd əlavə et' }).first().click();
+  await page.getByRole('button', { name: '+ Sual əlavə et' }).first().click();
   await page.getByRole('button', { name: 'Bəli / Xeyr' }).click();
   await page.getByRole('complementary').getByLabel('Sualın mətni').fill('Soyuducu qapısı açıq qalıb?');
   await page.getByRole('button', { name: 'Qayda əlavə et' }).click();
   await page.getByRole('complementary').getByRole('checkbox', { name: 'Bəli' }).click();
-  await page.getByRole('complementary').getByLabel('Problem').selectOption('critical');
+  await page.getByRole('complementary').getByRole('radiogroup', { name: 'Problem' }).getByRole('radio', { name: 'Kritik' }).click();
   await page.getByRole('complementary').getByRole('checkbox', { name: 'Foto tələb et' }).click();
   await page.getByRole('button', { name: '+ Əlavə sual' }).click();
   await page.getByRole('button', { name: 'Şərh', exact: true }).click();

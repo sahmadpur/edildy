@@ -2,8 +2,8 @@
 export default {
   page: {
     filters: {
-      site: 'Объект',
-      allSites: 'Все объекты',
+      site: 'Филиал',
+      allSites: 'Все филиалы',
       checklist: 'Чек-лист',
       allChecklists: 'Все чек-листы',
       auditor: 'Аудитор',
@@ -20,7 +20,7 @@ export default {
     columns: {
       date: 'Дата',
       checklist: 'Чек-лист',
-      site: 'Объект',
+      site: 'Филиал',
       executor: 'Исполнитель',
       completedAt: 'Завершено',
       auditor: 'Аудитор',

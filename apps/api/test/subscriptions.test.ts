@@ -63,7 +63,8 @@ describe('subscriptions', () => {
         plan: 'pro',
         subscriptionState: 'active',
         subscription: { plan: 'pro', period: 'yearly', branchLimit: 3, extraFeatures: ['tasks'] },
-        usage: { staff: 1, workers: 0, branches: 0 },
+        // Every new organisation starts with one branch (feedback 2026-11-14).
+        usage: { staff: 1, workers: 0, branches: 1 },
         owners: [{ fullName: 'Leyla Məmmədova', email, status: 'invited' }],
       });
       // The owner sets a password through the invitation and signs in on Pro + Tasks.

@@ -21,13 +21,13 @@ export default {
     period: 'Период',
     from: 'С',
     to: 'По',
-    site: 'Объект',
+    site: 'Филиал',
     employee: 'Сотрудник',
     checklist: 'Чек-лист',
     bucket: 'Выполнения',
     severity: 'Тип',
     showInactive: 'Показать неактивные',
-    allSites: 'Все объекты',
+    allSites: 'Все филиалы',
     allEmployees: 'Все сотрудники',
     allChecklists: 'Все чек-листы',
   },
@@ -59,14 +59,14 @@ export default {
     planned: 'Запланированные',
     all: 'Все',
   },
-  tabs: { summary: 'Общее', sites: 'Объекты', employees: 'Сотрудники', runs: 'Выполнения', problems: 'Проблемы', tasks: 'Задачи' },
+  tabs: { summary: 'Общее', sites: 'Филиалы', employees: 'Сотрудники', runs: 'Выполнения', problems: 'Проблемы', tasks: 'Задачи' },
   columns: {
     measure: 'Показатель',
     value: 'Значение',
     date: 'Дата',
     dueAt: 'Срок',
     checklist: 'Чек-лист',
-    site: 'Объект',
+    site: 'Филиал',
     path: 'Расположение',
     active: 'Активен',
     status: 'Статус',
@@ -97,7 +97,7 @@ export default {
   },
   employees: {
     unassigned: 'Не назначено',
-    overCountNote: 'Выполнение, назначенное нескольким исполнителям и ещё не завершённое, считается отдельно для каждого из них, поэтому итог может быть больше, чем в таблице объектов.',
+    overCountNote: 'Выполнение, назначенное нескольким исполнителям и ещё не завершённое, считается отдельно для каждого из них, поэтому итог может быть больше, чем в таблице филиалов.',
   },
   problems: { total: 'Всего проблем', critical: 'Критичные' },
   tasks: { overdueOpen: 'Просрочено (открытые)', completedOnTime: 'Завершено вовремя', completedLate: 'Завершено с опозданием' },
@@ -114,7 +114,7 @@ export default {
   /** Export document titles (PDF header). */
   titles: {
     summary: 'Сводный отчёт',
-    sites: 'Отчёт по объектам',
+    sites: 'Отчёт по филиалам',
     employees: 'Отчёт по сотрудникам',
     runs: 'Отчёт по выполнениям',
     problems: 'Отчёт по проблемам',
@@ -125,7 +125,7 @@ export default {
   sheets: {
     summary: 'Сводка',
     trend: 'По дням',
-    sites: 'Объекты',
+    sites: 'Филиалы',
     employees: 'Сотрудники',
     runs: 'Выполнения',
     overdue: 'Выполнения с опозданием',
@@ -160,6 +160,12 @@ export default {
   },
   chart: {
     table: 'Таблица выполнений по дням',
+    planned: 'Запланировано',
+    completed: 'Выполнено',
+    late: 'Просрочено',
+    pie: 'Выполненные и просроченные',
+    pieEmpty: 'В этом периоде нет выполненных или просроченных проверок.',
+    lateHint: 'Просрочено — проверки, не выполненные вовремя и не завершённые: просроченные сейчас и пропущенные.',
   },
   /** The web home page: four period boxes, then the selected period's charts and runs. */
   home: {

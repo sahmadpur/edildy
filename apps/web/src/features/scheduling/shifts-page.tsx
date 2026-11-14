@@ -4,6 +4,7 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { ConfirmButton } from '@/components/confirm-button';
+import { TabRow, tabActionClass } from '@/components/tab-row';
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,8 +36,18 @@ export function ShiftsPage({ tabs }: { tabs?: ReactNode } = {}) {
 
   return (
     <div>
-      <PageHeader title={t('scheduling.shifts.title')} description={t('pages.shifts')} actions={canManage && <Button onClick={() => setEditing('new')}>{t('scheduling.shifts.add')}</Button>} />
-      {tabs}
+      <PageHeader title={t('scheduling.shifts.title')} description={t('pages.shifts')} />
+      <TabRow
+        actions={
+          canManage && (
+            <button type="button" className={tabActionClass()} onClick={() => setEditing('new')}>
+              {t('scheduling.shifts.add')}
+            </button>
+          )
+        }
+      >
+        {tabs}
+      </TabRow>
       <Table>
         <TableHeader>
           <TableRow>

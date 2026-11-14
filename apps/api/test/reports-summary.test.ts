@@ -33,10 +33,11 @@ describe('GET /reports/summary', () => {
       // 80, 100, 60, 90, 50, 70, 100: the scoring-off and open runs have no score, and Aynur's lost claim (10) is ignored.
       averageScore: 78.6,
       trend: [
-        { date: '2026-11-02', due: 6, completed: 4, completionPercent: 66.7 },
-        { date: '2026-11-03', due: 4, completed: 2, completionPercent: 50 },
+        // Late = overdue now + missed (feedback 2026-11-14): 1 + 3 over the period.
+        { date: '2026-11-02', planned: 6, due: 6, completed: 4, late: 1, completionPercent: 66.7 },
+        { date: '2026-11-03', planned: 4, due: 4, completed: 2, late: 2, completionPercent: 50 },
         // r15 finished early: due and completed; r13 and r14 are not due yet.
-        { date: '2026-11-04', due: 3, completed: 1, completionPercent: 33.3 },
+        { date: '2026-11-04', planned: 5, due: 3, completed: 1, late: 1, completionPercent: 33.3 },
       ],
     });
   });
@@ -56,7 +57,7 @@ describe('GET /reports/summary', () => {
     expect(s.completionPercent).toBe(completionPercent(s.counts.completed, s.counts.due));
     for (const day of s.trend) {
       const c = tallyRuns(facts.filter((f) => f.date === day.date), now);
-      expect(day, day.date).toEqual({ date: day.date, due: c.due, completed: c.completed, completionPercent: completionPercent(c.completed, c.due) });
+      expect(day, day.date).toEqual({ date: day.date, planned: c.planned, due: c.due, completed: c.completed, late: c.overdue + c.missed, completionPercent: completionPercent(c.completed, c.due) });
     }
   });
 
@@ -97,7 +98,7 @@ describe('GET /reports/summary', () => {
       counts: counts(),
       completionPercent: null,
       averageScore: null,
-      trend: ['2026-12-01', '2026-12-02', '2026-12-03'].map((date) => ({ date, due: 0, completed: 0, completionPercent: null })),
+      trend: ['2026-12-01', '2026-12-02', '2026-12-03'].map((date) => ({ date, planned: 0, due: 0, completed: 0, late: 0, completionPercent: null })),
     });
   });
 

@@ -59,7 +59,7 @@ describe('AppShell', () => {
     state.current = { status: 'authenticated', me: me(['users.view', 'sites.view']) };
     renderShell();
     expect(await screen.findByRole('link', { name: 'Əməkdaşlar' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Obyektlər' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Filiallar' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Rollar' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'İstifadə jurnalı' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Problemlər' })).not.toBeInTheDocument();
@@ -77,14 +77,15 @@ describe('AppShell', () => {
     const nav = within(await screen.findByRole('navigation', { name: 'Menyu' }));
     expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Əsas', 'Əməliyyatlar', 'İdarəetmə', 'Digər']);
     // Problemlər sits right under Göstəricilər; Növbələr and Əməkdaşlar are administration; Audit is in Digər, last.
-    expect(nav.getAllByRole('link').map((l) => l.textContent)).toEqual(['Göstəricilər', 'Problemlər', 'Hesabatlar', 'Yoxlamalar', 'Əməkdaşlar', 'Növbələr', 'Parametrlər', 'Audit']);
+    expect(nav.getAllByRole('link').map((l) => l.textContent)).toEqual(['Göstəricilər', 'Problemlər', 'Hesabatlar', 'Yoxlamalar', 'Əməkdaşlar', 'Növbələr', 'Parametrlər', 'Audit', 'Tez-tez verilən suallar']);
   });
 
   it('hides a group whose pages the user may not open', async () => {
     state.current = { status: 'authenticated', me: me(['users.view']) };
     renderShell();
     const nav = within(await screen.findByRole('navigation', { name: 'Menyu' }));
-    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Əsas', 'İdarəetmə']);
+    // No Əməliyyatlar; Digər stays for the FAQ, which everyone may open.
+    expect(nav.getAllByRole('button').map((b) => b.textContent)).toEqual(['Əsas', 'İdarəetmə', 'Digər']);
   });
 
   it('collapses a group on its heading and remembers that', async () => {
