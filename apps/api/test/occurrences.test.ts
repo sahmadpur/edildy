@@ -117,7 +117,7 @@ describe('occurrences', () => {
     expect(paused.body.items.filter((i: { assignmentId: string }) => i.assignmentId === a.id)).toHaveLength(0);
   });
 
-  it('calendar drops cancelled yoxlamalar but keeps their completed runs (feedback 2026-11-11, item 1)', async () => {
+  it('calendar never shows cancelled yoxlamalar but keeps their completed runs (feedback 2026-11-11 item 1, 2026-11-15)', async () => {
     const w = await schedulingWorld(t);
     const a = await createAssignment(w);
     const rows = await occurrenceRows(a.id);
@@ -127,7 +127,9 @@ describe('occurrences', () => {
     const mine = async (q = '') =>
       (await w.api.get(`/api/v1/occurrences/calendar?${RANGE}${q}`)).body.items.filter((i: { assignmentId: string; kind: string }) => i.assignmentId === a.id && i.kind === 'run');
     expect((await mine()).map((i: { occurrenceId: string }) => i.occurrenceId)).not.toContain(rows[3]!.id);
-    expect((await mine('&status=cancelled')).map((i: { occurrenceId: string }) => i.occurrenceId)).toEqual([rows[3]!.id]);
+    // Never on the calendar, even by filter (feedback 2026-11-15): `cancelled` is not a calendar status filter.
+    expect((await w.api.get(`/api/v1/occurrences/calendar?${RANGE}&status=cancelled`)).status).toBe(400);
+    expect((await mine('&status=pending,completed')).map((i: { occurrenceId: string }) => i.occurrenceId)).not.toContain(rows[3]!.id);
 
     // Ending the assignment leaves only the completed run; the open one of today goes too.
     await w.api.post(`/api/v1/assignments/${a.id}/end`, {});

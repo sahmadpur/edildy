@@ -1,4 +1,4 @@
-import { CALENDAR_STATUSES, type CalendarItem, type CalendarStatus, isWholeDayWindow, toListParam } from '@edildy/contracts';
+import { CALENDAR_FILTER_STATUSES, type CalendarItem, type CalendarStatus, isWholeDayWindow, toListParam } from '@edildy/contracts';
 import { formatLocalDate, formatMonthYear } from '@edildy/i18n';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
@@ -250,7 +250,7 @@ export function CalendarPage({ tabs, initialDate, initialOccurrenceId, initialTa
           <MultiSelectFilter
             label={t('scheduling.calendar.status')}
             allLabel={t('scheduling.calendar.allStatuses')}
-            options={CALENDAR_STATUSES.map((s) => ({ value: s, label: statusText(t, s) }))}
+            options={CALENDAR_FILTER_STATUSES.map((s) => ({ value: s, label: statusText(t, s) }))}
             value={status}
             onChange={setStatus}
             className="w-44"

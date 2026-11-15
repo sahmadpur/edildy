@@ -30,8 +30,8 @@ export function SummaryView({
   return (
     <div className="grid gap-4">
       <CountTiles summary={summary} search={search} keys={tiles} onSelect={onSelectTile} selected={selectedTile} />
-      {summary.counts.planned === 0 && <EmptyState title={t('reports.empty')} />}
-      {summary.counts.planned > 0 &&
+      {summary.counts.total === 0 && <EmptyState title={t('reports.empty')} />}
+      {summary.counts.total > 0 &&
         (isSingleDay(filters) ? (
           <div className="grid gap-4 lg:grid-cols-3">
             <StatusPie counts={summary.counts} />

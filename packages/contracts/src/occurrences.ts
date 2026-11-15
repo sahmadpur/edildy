@@ -94,6 +94,9 @@ export type CancelOccurrenceInput = z.input<typeof cancelOccurrenceInputSchema>;
 export const CALENDAR_STATUSES = [...OCCURRENCE_STATUSES, 'planned'] as const;
 export const calendarStatusSchema = z.enum(CALENDAR_STATUSES);
 export type CalendarStatus = z.infer<typeof calendarStatusSchema>;
+/** The calendar's status filter: cancelled runs never show on a calendar (feedback 2026-11-15), so they are no filter either. */
+export const CALENDAR_FILTER_STATUSES = CALENDAR_STATUSES.filter((s): s is Exclude<CalendarStatus, 'cancelled'> => s !== 'cancelled');
+export const calendarFilterStatusSchema = z.enum(CALENDAR_FILTER_STATUSES as [Exclude<CalendarStatus, 'cancelled'>, ...Exclude<CalendarStatus, 'cancelled'>[]]);
 
 export const calendarItemSchema = z.object({
   kind: z.enum(['run', 'planned']),
@@ -126,7 +129,7 @@ export const calendarQuerySchema = z
     status: z
       .string()
       .transform((s) => s.split(',').filter(Boolean))
-      .pipe(z.array(calendarStatusSchema).min(1))
+      .pipe(z.array(calendarFilterStatusSchema).min(1))
       .optional(),
   })
   .superRefine(localRangeCheck(SCHEDULING_LIMITS.maxListDays));

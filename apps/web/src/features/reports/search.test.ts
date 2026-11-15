@@ -41,7 +41,7 @@ describe('reportsPageSearch', () => {
         userId: 42,
         checklistId: '',
         tab: 'audit',
-        bucket: 'late',
+        bucket: 'soon',
         severity: 'major',
         inactive: 'yes',
       }),

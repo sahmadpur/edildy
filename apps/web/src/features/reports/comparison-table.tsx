@@ -6,12 +6,12 @@ import { nextSort, percentText, type SortState, sortRows } from './labels';
 import { SortableHead } from './sortable-head';
 import { useLocale } from '@/lib/i18n';
 
-export type ComparisonKey = 'name' | 'planned' | 'completed' | 'overdue' | 'partial' | 'missed' | 'withProblems' | 'completionPercent' | 'averageScore';
+export type ComparisonKey = 'name' | 'planned' | 'completed' | 'late' | 'withProblems' | 'completionPercent' | 'averageScore';
 
-/** Spec §5.3 columns of the site and employee comparisons. */
-export const COMPARISON_COLUMNS: readonly ComparisonKey[] = ['name', 'planned', 'completed', 'overdue', 'partial', 'missed', 'withProblems', 'completionPercent', 'averageScore'];
+/** The site and employee comparisons: the three Göstəricilər and Problemli (feedback 2026-11-15), then the percentages. */
+export const COMPARISON_COLUMNS: readonly ComparisonKey[] = ['name', 'planned', 'completed', 'late', 'withProblems', 'completionPercent', 'averageScore'];
 
-const COUNT_COLUMNS = ['planned', 'completed', 'overdue', 'partial', 'missed', 'withProblems'] as const;
+const COUNT_COLUMNS = ['planned', 'completed', 'late', 'withProblems'] as const;
 
 interface ComparisonRow extends RunCounts {
   name: string;

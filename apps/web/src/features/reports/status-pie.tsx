@@ -5,8 +5,6 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useLocale } from '@/lib/i18n';
 import { CHART_COLOR, TOOLTIP_STYLE } from './trend-chart';
 
-/** Late = not done on time and not completed: overdue now, or missed (feedback 2026-11-14). */
-export const lateCount = (c: Pick<RunCounts, 'overdue' | 'missed'>) => c.overdue + c.missed;
 
 /** Completed vs late for the period, as a ring with the counts and shares beside it. */
 export function StatusPie({ counts }: { counts: RunCounts }) {
@@ -15,7 +13,7 @@ export function StatusPie({ counts }: { counts: RunCounts }) {
   const titleId = useId();
   const slices = [
     { key: 'completed', label: t('reports.chart.completed'), value: counts.completed, color: CHART_COLOR.completed },
-    { key: 'late', label: t('reports.chart.late'), value: lateCount(counts), color: CHART_COLOR.late },
+    { key: 'late', label: t('reports.chart.late'), value: counts.late, color: CHART_COLOR.late },
   ] as const;
   const total = slices[0].value + slices[1].value;
   const share = (v: number) => new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(total ? v / total : 0);

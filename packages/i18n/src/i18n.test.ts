@@ -328,9 +328,9 @@ describe('mobile execution translations', () => {
   it('uses the spec wording', () => {
     expect(az.mobile.checklists.sections).toEqual({
       rework: 'Düzəliş tələb olunur',
-      now: 'İndi',
+      now: 'İşə başla',
       inProgress: 'Davam edən',
-      upcoming: 'Gələcək',
+      upcoming: 'Planlanmış',
       done: 'Bitmiş',
     });
     expect(az.mobile.checklists.claimedBy.replace('{{name}}', 'Murad')).toBe('Murad icra edir');

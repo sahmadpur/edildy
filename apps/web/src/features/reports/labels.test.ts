@@ -25,13 +25,10 @@ describe('tiles', () => {
     expect(SUMMARY_TILES.map((k) => [k, tileSearch(search, k).bucket])).toEqual([
       ['planned', 'planned'],
       ['completed', 'completed'],
-      ['inProgress', 'in_progress'],
-      ['overdue', 'overdue'],
-      ['partial', 'partial'],
-      ['missed', 'missed'],
+      ['late', 'late'],
       ['withProblems', 'problems'],
     ]);
-    expect(tileSearch(search, 'overdue')).toEqual({ period: 'last_7', siteId: IDS.zoneA, inactive: true, tab: 'runs', bucket: 'overdue' });
+    expect(tileSearch(search, 'late')).toEqual({ period: 'last_7', siteId: IDS.zoneA, inactive: true, tab: 'runs', bucket: 'late' });
   });
 
   it('shows percentages with one decimal, and a dash when there is none', () => {

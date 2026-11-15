@@ -31,8 +31,9 @@ describe('GET /reports/runs', () => {
     expect(await bucket('problems')).toEqual(runs('r9', 'r4', 'r1'));
     expect(await bucket('completed')).toEqual(runs('r15', 'r11', 'r9', 'r7', 'r4', 'r2', 'r1'));
     expect(await bucket('in_progress')).toEqual(runs('r13', 'r16'));
-    // `planned` is every run that is not cancelled (r6 is the fixture's only cancelled run).
-    expect(await bucket('planned')).toEqual(runs('r15', 'r14', 'r13', 'r16', 'r12', 'r11', 'r10', 'r9', 'r8', 'r7', 'r5', 'r4', 'r3', 'r2', 'r1'));
+    // The Göstəricilər (feedback 2026-11-15): planned = pending, started, in progress, partial; late = overdue, missed.
+    expect(await bucket('planned')).toEqual(runs('r14', 'r13', 'r16', 'r5'));
+    expect(await bucket('late')).toEqual(runs('r12', 'r10', 'r8', 'r3'));
     // `all` (the default) includes the cancelled r6.
     expect(await bucket()).toEqual(runs('r15', 'r14', 'r13', 'r16', 'r12', 'r11', 'r10', 'r9', 'r8', 'r7', 'r6', 'r5', 'r4', 'r3', 'r2', 'r1'));
   });
@@ -91,6 +92,6 @@ describe('GET /reports/runs', () => {
   });
 
   it('refuses an unknown bucket', async () => {
-    expect((await w.owner.get(`/api/v1/reports/runs?${qs({ ...PERIOD, bucket: 'late' })}`)).status).toBe(400);
+    expect((await w.owner.get(`/api/v1/reports/runs?${qs({ ...PERIOD, bucket: 'soon' })}`)).status).toBe(400);
   });
 });

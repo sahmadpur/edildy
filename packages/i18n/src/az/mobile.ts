@@ -34,9 +34,10 @@ export default {
   home: {
     greeting: 'Salam, {{name}}!',
     myTasks: 'Tapşırıqlar',
-    overdue: 'Gecikən',
+    /** The three Göstərici boxes (feedback 2026-11-15): same rule as the web, INDICATOR_STATUSES in contracts. */
+    late: 'Gecikən',
     completed: 'Tamamlanan',
-    upcoming: 'Gələcək',
+    planned: 'Planlanmış',
     /** Older finished runs, paged from the server (the phone keeps about a week). */
     archive: {
       more: 'Daha əvvəlkilər',
@@ -186,7 +187,7 @@ export default {
     failed: 'Telefondakı məlumat bazası açıla bilmədi. Tətbiqi bağlayıb yenidən açın.',
   },
   checklists: {
-    sections: { rework: 'Düzəliş tələb olunur', now: 'İndi', inProgress: 'Davam edən', upcoming: 'Gələcək', done: 'Bitmiş' },
+    sections: { rework: 'Düzəliş tələb olunur', now: 'İşə başla', inProgress: 'Davam edən', upcoming: 'Planlanmış', done: 'Bitmiş' },
     window: '{{from}}–{{to}}',
     overdue: 'Gecikir',
     claimedBy: '{{name}} icra edir',

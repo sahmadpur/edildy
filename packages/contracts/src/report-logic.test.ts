@@ -7,6 +7,8 @@ import {
   completionPercent,
   emptyRunCounts,
   IN_PROGRESS_STATUSES,
+  INDICATOR_STATUSES,
+  indicatorOf,
   OCCURRENCE_STATUSES,
   type OccurrenceStatus,
   PERIOD_PRESETS,
@@ -29,17 +31,17 @@ const on = (...keys: RunCountKey[]) => Object.fromEntries(RUN_COUNT_KEYS.map((k)
 describe('classifyRun (spec §3.1)', () => {
   it('puts every status in its buckets once its due time has passed', () => {
     const expected: Record<OccurrenceStatus, RunCountKey[]> = {
-      pending: ['planned', 'due', 'pending'],
-      started: ['planned', 'due', 'inProgress'],
-      in_progress: ['planned', 'due', 'inProgress'],
-      completed: ['planned', 'due', 'completed'],
-      partial: ['planned', 'due', 'partial'],
-      overdue: ['planned', 'due', 'overdue'],
-      missed: ['planned', 'due', 'missed'],
+      pending: ['total', 'planned', 'due', 'pending'],
+      started: ['total', 'planned', 'due', 'inProgress'],
+      in_progress: ['total', 'planned', 'due', 'inProgress'],
+      completed: ['total', 'due', 'completed'],
+      partial: ['total', 'planned', 'due', 'partial'],
+      overdue: ['total', 'due', 'late', 'overdue'],
+      missed: ['total', 'due', 'late', 'missed'],
       cancelled: [],
-      audit_pending: ['planned', 'due', 'completed'],
-      audited: ['planned', 'due', 'completed'],
-      correction_required: ['planned', 'due', 'completed'],
+      audit_pending: ['total', 'due', 'completed'],
+      audited: ['total', 'due', 'completed'],
+      correction_required: ['total', 'due', 'late'],
     };
     for (const s of OCCURRENCE_STATUSES) expect(classifyRun(run(s), NOW), s).toEqual(on(...expected[s]));
   });
@@ -48,7 +50,7 @@ describe('classifyRun (spec §3.1)', () => {
     expect(classifyRun(run('pending', FUTURE), NOW).due).toBe(false);
     expect(classifyRun(run('in_progress', FUTURE), NOW).due).toBe(false);
     // Finished early: in the numerator and the denominator, so completion never exceeds 100%.
-    expect(classifyRun(run('completed', FUTURE), NOW)).toMatchObject({ planned: true, due: true, completed: true });
+    expect(classifyRun(run('completed', FUTURE), NOW)).toMatchObject({ total: true, due: true, completed: true });
     expect(classifyRun(run('audited', FUTURE), NOW)).toMatchObject({ due: true, completed: true });
     // Exactly at the due time is due.
     expect(classifyRun(run('pending', '2026-11-04T08:00:00Z'), NOW).due).toBe(true);
@@ -67,14 +69,41 @@ describe('classifyRun (spec §3.1)', () => {
   it('names the status groups the SQL mirrors', () => {
     expect(COMPLETED_STATUSES).toEqual(['completed', 'audit_pending', 'audited', 'correction_required']);
     expect(IN_PROGRESS_STATUSES).toEqual(['started', 'in_progress']);
-    expect(RUN_COUNT_KEYS).toEqual(['planned', 'due', 'completed', 'inProgress', 'pending', 'overdue', 'partial', 'missed', 'withProblems', 'withCritical']);
+    expect(RUN_COUNT_KEYS).toEqual(['total', 'planned', 'due', 'completed', 'late', 'inProgress', 'pending', 'overdue', 'partial', 'missed', 'withProblems', 'withCritical']);
+  });
+});
+
+describe('indicatorOf (feedback 2026-11-15)', () => {
+  it('puts every status but cancelled in exactly one Göstərici', () => {
+    const expected: Record<OccurrenceStatus, string | null> = {
+      pending: 'planned',
+      started: 'planned',
+      in_progress: 'planned',
+      partial: 'planned',
+      overdue: 'late',
+      missed: 'late',
+      correction_required: 'late',
+      completed: 'completed',
+      audit_pending: 'completed',
+      audited: 'completed',
+      cancelled: null,
+    };
+    for (const s of OCCURRENCE_STATUSES) expect(indicatorOf(s), s).toBe(expected[s]);
+    const listed = Object.values(INDICATOR_STATUSES).flat();
+    expect(new Set(listed).size).toBe(listed.length);
+  });
+
+  it('splits the total into the three indicators', () => {
+    const c = tallyRuns(OCCURRENCE_STATUSES.map((s) => run(s)), NOW);
+    expect(c.planned + c.late + c.completed).toBe(c.total);
+    expect(c).toMatchObject({ total: 10, planned: 4, late: 3, completed: 3 });
   });
 });
 
 describe('tallyRuns', () => {
   it('sums the flags of every run', () => {
     const c = tallyRuns([run('completed', FUTURE), run('completed'), run('missed'), run('pending', FUTURE), run('cancelled')], NOW);
-    expect(c).toEqual({ ...emptyRunCounts(), planned: 4, due: 3, completed: 2, missed: 1, pending: 1 });
+    expect(c).toEqual({ ...emptyRunCounts(), total: 4, planned: 1, due: 3, completed: 2, late: 1, missed: 1, pending: 1 });
     expect(completionPercent(c.completed, c.due)).toBe(66.7);
   });
 

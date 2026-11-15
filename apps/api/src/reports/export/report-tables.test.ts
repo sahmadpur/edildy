@@ -16,7 +16,7 @@ const ID = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f';
 describe('report tables', () => {
   it('lays out the summary as measures and a daily trend', () => {
     const s: ReportSummary = {
-      counts: { ...emptyRunCounts(), planned: 15, due: 13, completed: 7 },
+      counts: { ...emptyRunCounts(), total: 15, planned: 4, due: 13, completed: 7, late: 4 },
       completionPercent: 53.8,
       averageScore: null,
       trend: [{ date: '2026-11-02', planned: 7, due: 6, completed: 4, late: 1, completionPercent: 66.7 }],
@@ -24,12 +24,12 @@ describe('report tables', () => {
     const [measures, trend] = summaryTables(s);
     expect(measures!.title).toBe('Xülasə');
     expect(measures!.columns.map((c) => c.label)).toEqual(['Göstərici', 'Dəyər']);
-    expect(measures!.rows).toHaveLength(12);
-    expect(measures!.rows.slice(0, 3)).toEqual([['Planlaşdırılıb', 15], ['Vaxtı çatıb', 13], ['Tamamlanıb', 7]]);
+    expect(measures!.rows).toHaveLength(14);
+    expect(measures!.rows.slice(0, 5)).toEqual([['Cəmi', 15], ['Planlanmış', 4], ['Vaxtı çatıb', 13], ['Tamamlanan', 7], ['Gecikən', 4]]);
     expect(measures!.rows.slice(-2)).toEqual([['Tamamlanma faizi', 53.8], ['Orta bal', null]]);
     expect(trend).toEqual({
       title: 'Gündəlik',
-      columns: [{ label: 'Tarix', type: 'date' }, { label: 'Vaxtı çatıb', type: 'int' }, { label: 'Tamamlanıb', type: 'int' }, { label: 'Tamamlanma faizi', type: 'decimal' }],
+      columns: [{ label: 'Tarix', type: 'date' }, { label: 'Vaxtı çatıb', type: 'int' }, { label: 'Tamamlanan', type: 'int' }, { label: 'Tamamlanma faizi', type: 'decimal' }],
       rows: [['2026-11-02', 6, 4, 66.7]],
     });
   });
@@ -55,7 +55,7 @@ describe('report tables', () => {
   });
 
   it('joins a site’s ancestors and labels the Unassigned employee', () => {
-    const site: SiteReportRow = { ...emptyRunCounts(), planned: 7, siteId: ID, name: 'Zona A1', path: ['Filial A', 'Mərkəz'], active: false, completionPercent: 57.1, averageScore: 85 };
+    const site: SiteReportRow = { ...emptyRunCounts(), total: 7, siteId: ID, name: 'Zona A1', path: ['Filial A', 'Mərkəz'], active: false, completionPercent: 57.1, averageScore: 85 };
     const t = sitesTable([site]);
     expect(t.rows[0]!.slice(0, 4)).toEqual(['Zona A1', 'Filial A › Mərkəz', false, 7]);
     expect(t.rows[0]!.slice(-2)).toEqual([57.1, 85]);

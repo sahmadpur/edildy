@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import {
   type AuditResult,
   type AuditStatus,
-  COMPLETED_STATUSES,
   completionPercent,
   type EmployeeReportRow,
   FINAL_TASK_STATUSES,
   IN_PROGRESS_STATUSES,
+  INDICATOR_STATUSES,
   type OccurrenceStatus,
   type Page,
   periodDays,
@@ -45,9 +45,11 @@ export function inFilterSubtree(f: ResolvedFilters, siteCol: AnyPgColumn): SQL |
 
 /** The spec §3.1 buckets as one row of counts over `runs r`, plus the score sum and count. */
 export type CountRow = {
+  total: number;
   planned: number;
   due: number;
   completed: number;
+  late: number;
   in_progress: number;
   pending: number;
   overdue: number;
@@ -61,11 +63,13 @@ export type CountRow = {
 
 /** classifyRun (report-logic.ts) in SQL; the cross-check test in reports-summary.test.ts keeps the two equal. */
 export function countColumns(now: Date): SQL {
-  const completed = statusList(COMPLETED_STATUSES);
+  const completed = statusList(INDICATOR_STATUSES.completed);
   return sql`
-    (count(*) filter (where r.status <> 'cancelled'))::int as planned,
+    (count(*) filter (where r.status <> 'cancelled'))::int as total,
+    (count(*) filter (where r.status in ${statusList(INDICATOR_STATUSES.planned)}))::int as planned,
     (count(*) filter (where r.status <> 'cancelled' and (r.status in ${completed} or r.due_at <= ${now})))::int as due,
     (count(*) filter (where r.status in ${completed}))::int as completed,
+    (count(*) filter (where r.status in ${statusList(INDICATOR_STATUSES.late)}))::int as late,
     (count(*) filter (where r.status in ${statusList(IN_PROGRESS_STATUSES)}))::int as in_progress,
     (count(*) filter (where r.status = 'pending'))::int as pending,
     (count(*) filter (where r.status = 'overdue'))::int as overdue,
@@ -78,9 +82,11 @@ export function countColumns(now: Date): SQL {
 }
 
 export const toCounts = (r: CountRow): RunCounts => ({
+  total: r.total,
   planned: r.planned,
   due: r.due,
   completed: r.completed,
+  late: r.late,
   inProgress: r.in_progress,
   pending: r.pending,
   overdue: r.overdue,
@@ -96,7 +102,7 @@ export const measuresOf = (r: CountRow): { completionPercent: number | null; ave
   averageScore: r.score_count ? roundOne(r.score_sum / r.score_count) : null,
 });
 
-const ZERO: CountRow = { planned: 0, due: 0, completed: 0, in_progress: 0, pending: 0, overdue: 0, partial: 0, missed: 0, with_problems: 0, with_critical: 0, score_sum: 0, score_count: 0 };
+const ZERO: CountRow = { total: 0, planned: 0, due: 0, completed: 0, late: 0, in_progress: 0, pending: 0, overdue: 0, partial: 0, missed: 0, with_problems: 0, with_critical: 0, score_sum: 0, score_count: 0 };
 const addRows = (a: CountRow, b: CountRow): CountRow => Object.fromEntries(Object.keys(ZERO).map((k) => [k, a[k as keyof CountRow] + b[k as keyof CountRow]])) as unknown as CountRow;
 
 /**
@@ -150,11 +156,13 @@ export function bucketCondition(b: RunBucket): SQL {
     case 'problems':
       return sql`r.status <> 'cancelled' and r.has_problems`;
     case 'completed':
-      return sql`r.status in ${statusList(COMPLETED_STATUSES)}`;
+      return sql`r.status in ${statusList(INDICATOR_STATUSES.completed)}`;
+    case 'late':
+      return sql`r.status in ${statusList(INDICATOR_STATUSES.late)}`;
     case 'in_progress':
       return sql`r.status in ${statusList(IN_PROGRESS_STATUSES)}`;
     case 'planned':
-      return sql`r.status <> 'cancelled'`;
+      return sql`r.status in ${statusList(INDICATOR_STATUSES.planned)}`;
     case 'all':
       return sql`true`;
   }
@@ -287,7 +295,7 @@ export class ReportQueries {
           planned: d?.planned ?? 0,
           due: d?.due ?? 0,
           completed: d?.completed ?? 0,
-          late: (d?.overdue ?? 0) + (d?.missed ?? 0),
+          late: d?.late ?? 0,
           completionPercent: d ? completionPercent(d.completed, d.due) : null,
         };
       }),

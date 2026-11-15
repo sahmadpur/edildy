@@ -29,7 +29,7 @@ describe('EmployeesTab', () => {
     expect(mocks.api.reports.employees).toHaveBeenCalledWith(FILTERS);
     expect(firstCells()).toEqual(['Aynur Quliyeva', 'Kamran Əliyev', 'Rauf HəsənovDeaktiv', 'Təyin edilməyib']);
     expect(within(rows[4]!).queryByRole('button')).not.toBeInTheDocument();
-    expect(within(rows[4]!).getAllByRole('cell')[1]).toHaveTextContent('9');
+    expect(within(rows[4]!).getAllByRole('cell')[3]).toHaveTextContent('9');
     expect(
       screen.getByText(
         'Bir neçə icraçıya təyin olunmuş və keçirilməmiş yoxlama hər icraçı üçün ayrıca sayılır, ona görə cəm filiallar cədvəlindəkindən çox ola bilər.',
@@ -42,9 +42,9 @@ describe('EmployeesTab', () => {
   it('keeps the Unassigned row last whatever the sort', async () => {
     renderWithRouter(<EmployeesTab filters={FILTERS} onDrill={vi.fn()} />);
     await screen.findAllByRole('row');
-    // Unassigned has the most planned runs (9), yet stays at the bottom.
-    await userEvent.click(sortButton('Planlaşdırılıb'));
-    expect(firstCells()).toEqual(['Aynur Quliyeva', 'Kamran Əliyev', 'Rauf HəsənovDeaktiv', 'Təyin edilməyib']);
+    // Unassigned has the most late runs (9), yet stays at the bottom.
+    await userEvent.click(sortButton('Gecikən'));
+    expect(firstCells()).toEqual(['Kamran Əliyev', 'Aynur Quliyeva', 'Rauf HəsənovDeaktiv', 'Təyin edilməyib']);
     await userEvent.click(sortButton('Əməkdaş'));
     await userEvent.click(sortButton('Əməkdaş'));
     expect(firstCells()).toEqual(['Rauf HəsənovDeaktiv', 'Kamran Əliyev', 'Aynur Quliyeva', 'Təyin edilməyib']);

@@ -31,11 +31,9 @@ describe('SitesTab', () => {
     expect(rows).toHaveLength(4);
     expect(within(rows[0]!).getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
       'Filial',
-      'Planlaşdırılıb',
-      'Tamamlanıb',
-      'Gecikib',
-      'Yarımçıq',
-      'Buraxılıb',
+      'Planlanmış',
+      'Tamamlanan',
+      'Gecikən',
       'Problemli',
       'Tamamlanma faizi',
       'Orta bal',
@@ -43,7 +41,7 @@ describe('SitesTab', () => {
     expect(names()).toEqual(['Filial A', 'Zona A1', 'Zona B (köhnə)']);
     const zone = within(rows[2]!).getAllByRole('cell');
     expect(zone[0]).toHaveTextContent('Filial A');
-    expect(zone.slice(1).map((c) => c.textContent)).toEqual(['8', '5', '1', '0', '0', '0', '83,3%', '90%']);
+    expect(zone.slice(1).map((c) => c.textContent)).toEqual(['2', '5', '1', '0', '83,3%', '90%']);
     expect(rows[3]).toHaveTextContent('Deaktiv');
     expect(within(rows[3]!).getAllByRole('cell').slice(-2).map((c) => c.textContent)).toEqual(['—', '—']);
     await userEvent.click(within(rows[2]!).getByRole('button', { name: 'Zona A1' }));

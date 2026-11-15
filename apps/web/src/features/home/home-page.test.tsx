@@ -92,7 +92,7 @@ describe('HomeDashboard', () => {
     expect(mocks.api.reports.summary).toHaveBeenCalledWith({ from: '2026-10-06', to: TODAY });
 
     const week = await box('Son 7 gün');
-    expect(await week.findByRole('button', { name: 'Gələcək: 12' })).toBeInTheDocument();
+    expect(await week.findByRole('button', { name: 'Planlanmış: 4' })).toBeInTheDocument();
     for (const name of ['Tamamlanan: 7', 'Problemli: 2', 'Gecikən: 1'])
       expect(week.getByRole('button', { name })).toBeInTheDocument();
     // Only the four figures: no in-progress tile, no percentages inside a box.
@@ -167,12 +167,12 @@ describe('HomeDashboard', () => {
       expect(mocks.api.reports.runs).toHaveBeenCalledWith({
         from: '2026-10-06',
         to: TODAY,
-        bucket: 'overdue',
+        bucket: 'late',
       }),
     );
     expect(
       panel.getByRole('group', { name: 'Yoxlamalar' }).querySelector('[aria-pressed="true"]'),
-    ).toHaveTextContent('Gecikmiş');
+    ).toHaveTextContent('Gecikən');
 
     await userEvent.click((await box('Bu gün')).getByRole('button', { name: 'Problemli: 2' }));
     await waitFor(() =>
@@ -186,7 +186,7 @@ describe('HomeDashboard', () => {
 
     await userEvent.click(
       within(detail('Bu gün').getByRole('group', { name: 'Yoxlamalar' })).getByRole('button', {
-        name: 'Tamamlanmış',
+        name: 'Tamamlanan',
       }),
     );
     await waitFor(() =>
