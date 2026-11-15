@@ -5,7 +5,20 @@ import { addDays, dayNumber, fromDayNumber, isoWeekday, type LocalDate } from '.
  * Sub-project 7 spec §3: THE metric rules. apps/api/src/reports/report-queries.ts implements the same rules in SQL;
  * its cross-check test (reports-summary.test.ts) keeps the two equal. Change both together.
  */
-export const RUN_COUNT_KEYS = ['planned', 'due', 'completed', 'inProgress', 'pending', 'overdue', 'partial', 'missed', 'withProblems', 'withCritical'] as const;
+export const RUN_COUNT_KEYS = [
+  'total',
+  'planned',
+  'due',
+  'completed',
+  'late',
+  'inProgress',
+  'pending',
+  'overdue',
+  'partial',
+  'missed',
+  'withProblems',
+  'withCritical',
+] as const;
 export type RunCountKey = (typeof RUN_COUNT_KEYS)[number];
 export type RunCounts = Record<RunCountKey, number>;
 export type RunFlags = Record<RunCountKey, boolean>;
@@ -13,7 +26,26 @@ export type RunFlags = Record<RunCountKey, boolean>;
 export const COMPLETED_STATUSES = ['completed', 'audit_pending', 'audited', 'correction_required'] as const satisfies readonly OccurrenceStatus[];
 export const IN_PROGRESS_STATUSES = ['started', 'in_progress'] as const satisfies readonly OccurrenceStatus[];
 
-const isCompleted = (s: OccurrenceStatus): boolean => (COMPLETED_STATUSES as readonly OccurrenceStatus[]).includes(s);
+/**
+ * Owner feedback 2026-11-15: THE Göstərici rule. Every run that is not cancelled shows in exactly one of the three
+ * indicators — Planlanmış (still to be done), Gecikən (not done on time, or sent back for correction) and Tamamlanan.
+ * Web home, mobile home, report tiles, charts, tables and exports all count with it. COMPLETED_STATUSES above stays
+ * the wider "was finished once" set used for calendar visibility and audits.
+ */
+export const INDICATOR_STATUSES = {
+  planned: ['pending', 'started', 'in_progress', 'partial'],
+  late: ['overdue', 'missed', 'correction_required'],
+  completed: ['completed', 'audit_pending', 'audited'],
+} as const satisfies Record<string, readonly OccurrenceStatus[]>;
+export type Indicator = keyof typeof INDICATOR_STATUSES;
+export const INDICATORS = ['planned', 'late', 'completed'] as const satisfies readonly Indicator[];
+
+/** The indicator a run status counts under; null for a cancelled run. */
+export function indicatorOf(status: OccurrenceStatus): Indicator | null {
+  for (const k of INDICATORS) if ((INDICATOR_STATUSES[k] as readonly OccurrenceStatus[]).includes(status)) return k;
+  return null;
+}
+
 const isInProgress = (s: OccurrenceStatus): boolean => (IN_PROGRESS_STATUSES as readonly OccurrenceStatus[]).includes(s);
 
 export interface RunFacts {
@@ -25,22 +57,25 @@ export interface RunFacts {
   hasCritical: boolean;
 }
 
-/** The buckets a run falls into at instant `now` (spec §3.1). A cancelled run falls into none. */
+/** The buckets a run falls into at instant `now` (spec §3.1, indicators per feedback 2026-11-15). A cancelled run falls into none. */
 export function classifyRun(run: RunFacts, now: Date): RunFlags {
-  const planned = run.status !== 'cancelled';
-  const completed = isCompleted(run.status);
+  const total = run.status !== 'cancelled';
+  const indicator = indicatorOf(run.status);
+  const completed = indicator === 'completed';
   return {
-    planned,
+    total,
+    planned: indicator === 'planned',
     // A run that finished before its due time is due too, so completion % never exceeds 100.
-    due: planned && (completed || +new Date(run.dueAt) <= +now),
+    due: total && (completed || +new Date(run.dueAt) <= +now),
     completed,
+    late: indicator === 'late',
     inProgress: isInProgress(run.status),
     pending: run.status === 'pending',
     overdue: run.status === 'overdue',
     partial: run.status === 'partial',
     missed: run.status === 'missed',
-    withProblems: planned && run.hasProblems,
-    withCritical: planned && run.hasCritical,
+    withProblems: total && run.hasProblems,
+    withCritical: total && run.hasCritical,
   };
 }
 

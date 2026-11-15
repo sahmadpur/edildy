@@ -33,9 +33,11 @@ export default {
   },
   /** Tile labels and column headings, one per RUN_COUNT_KEYS entry. */
   counts: {
+    total: 'Total',
     planned: 'Planned',
     due: 'Due',
     completed: 'Completed',
+    late: 'Late',
     inProgress: 'In progress',
     pending: 'Pending',
     overdue: 'Late',
@@ -55,6 +57,7 @@ export default {
     missed: 'Missed',
     problems: 'With problems',
     completed: 'Completed',
+    late: 'Late',
     in_progress: 'In progress',
     planned: 'Planned',
     all: 'All',
@@ -165,13 +168,13 @@ export default {
     late: 'Late',
     pie: 'Completed and late',
     pieEmpty: 'No completed or late checks in this period.',
-    lateHint: 'Late — checks not done on time and not completed: overdue now or missed.',
+    lateHint: 'Late — checks not done on time: overdue now, missed or sent back for correction.',
   },
   /** The web home page: four period boxes, then the selected period's charts and runs. */
   home: {
     periods: 'Periods',
     completed: 'Completed',
-    planned: 'Upcoming',
+    planned: 'Planned',
     late: 'Late',
     problems: 'With problems',
     selectPeriod: 'Select the period {{period}}',

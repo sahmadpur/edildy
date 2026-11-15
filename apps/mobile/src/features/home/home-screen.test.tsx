@@ -54,32 +54,35 @@ describe('My checklists', () => {
     await t.services.store.start(OCC, ME);
     t.clock.set('2026-11-02T06:30:00.000Z'); // 10:30 in Baku: past due, before close
     await renderWithServices(t.services, <HomeScreen />);
-    // 8 Nov 2026: the Tapşırıqlar box is gone; its runs are always listed under "İndi" with the count.
+    // 15 Nov 2026: the runs to work on now sit under "İşə başla" with the count.
     const now = within(await screen.findByTestId('section-myTasks'));
     expect(screen.queryByTestId('stat-myTasks')).toBeNull();
-    expect(now.getByRole('header', { name: 'İndi' })).toBeTruthy();
+    expect(now.getByRole('header', { name: 'İşə başla' })).toBeTruthy();
     expect(now.getByText('2')).toBeTruthy();
-    expect(within(screen.getByTestId('stat-overdue')).getByText('Gecikən')).toBeTruthy();
-    expect(within(screen.getByTestId('stat-overdue')).getByText('2')).toBeTruthy();
+    // The Göstərici rule (feedback 2026-11-15): OCC5 past due is late; my OCC in progress and the later OCC3 are
+    // planned; OCC4 is completed; Murad's OCC2 counts in none.
+    expect(within(screen.getByTestId('stat-late')).getByText('Gecikən')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-late')).getByText('1')).toBeTruthy();
     expect(within(screen.getByTestId('stat-completed')).getByText('Tamamlanan')).toBeTruthy();
     expect(within(screen.getByTestId('stat-completed')).getByText('1')).toBeTruthy();
-    expect(within(screen.getByTestId('stat-upcoming')).getByText('Gələcək')).toBeTruthy();
-    expect(within(screen.getByTestId('stat-upcoming')).getByText('1')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-planned')).getByText('Planlanmış')).toBeTruthy();
+    expect(within(screen.getByTestId('stat-planned')).getByText('2')).toBeTruthy();
     expect(screen.queryByTestId('stat-issues')).toBeNull();
     // The open list: my run in progress, the overdue open one, and the one Murad holds (listed, not counted).
     expect(now.getAllByTestId(/^occurrence-/)).toHaveLength(3);
     // No box list is open at first.
     expect(screen.queryByTestId('section-toggle-myTasks')).toBeNull();
-    expect(screen.getByTestId('section-toggle-overdue').props.accessibilityState).toEqual({ expanded: false });
+    expect(screen.getByTestId('section-toggle-late').props.accessibilityState).toEqual({ expanded: false });
     expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByRole('button', { name: 'Davam et: Açılış yoxlaması' })).toBeTruthy();
     expect(within(screen.getByTestId(`occurrence-${OCC5}`)).getByText('Gecikir')).toBeTruthy();
     expect(screen.getByText('Murad Həsənov icra edir')).toBeTruthy();
     expect(screen.queryByTestId(`occurrence-${OCC3}`)).toBeNull();
     // A box opens its list and folds the others (point 10); the open list on top stays.
-    await fireEvent.press(screen.getByTestId('stat-overdue'));
-    expect(within(screen.getByTestId('section-overdue')).getAllByTestId(/^occurrence-/)).toHaveLength(2);
-    await fireEvent.press(screen.getByTestId('stat-upcoming'));
-    expect(within(screen.getByTestId('section-overdue')).queryAllByTestId(/^occurrence-/)).toHaveLength(0);
+    await fireEvent.press(screen.getByTestId('stat-late'));
+    expect(within(screen.getByTestId('section-late')).getAllByTestId(/^occurrence-/)).toHaveLength(1);
+    await fireEvent.press(screen.getByTestId('stat-planned'));
+    expect(within(screen.getByTestId('section-late')).queryAllByTestId(/^occurrence-/)).toHaveLength(0);
+    expect(within(screen.getByTestId('section-planned')).getAllByTestId(/^occurrence-/)).toHaveLength(2);
     expect(within(screen.getByTestId('section-myTasks')).getAllByTestId(/^occurrence-/)).toHaveLength(3);
     const upcoming = within(screen.getByTestId(`occurrence-${OCC3}`));
     expect(upcoming.getByText(formatDateTime('2026-11-02T14:00:00.000Z', { locale: 'az', timeZone: 'Asia/Baku' }))).toBeTruthy();
@@ -93,18 +96,36 @@ describe('My checklists', () => {
     expect(screen.queryByTestId(`occurrence-${OCC4}`)).toBeNull();
   });
 
-  it('puts the three count boxes above the İndi list, and every card is the same height whatever it shows', async () => {
+  it('puts the three count boxes above the İşə başla panel, and every card is the same height whatever it shows', async () => {
     const t = await world();
     await t.services.store.start(OCC, ME);
     t.clock.set('2026-11-02T06:30:00.000Z');
     await renderWithServices(t.services, <HomeScreen />);
-    const order = (await screen.findAllByTestId(/^(stat-overdue|stat-completed|stat-upcoming|section-myTasks)$/)).map((n) => n.props.testID);
-    expect(order).toEqual(['stat-overdue', 'stat-completed', 'stat-upcoming', 'section-myTasks']);
+    const order = (await screen.findAllByTestId(/^(stat-late|stat-completed|stat-planned|section-myTasks)$/)).map((n) => n.props.testID);
+    expect(order).toEqual(['stat-late', 'stat-completed', 'stat-planned', 'section-myTasks']);
     // A run in progress, an overdue one with a chip and a colleague's: one fixed height, one-line rows.
     const cards = within(screen.getByTestId('section-myTasks')).getAllByTestId(/^occurrence-/);
     const heights = cards.map((c) => StyleSheet.flatten(typeof c.props.style === 'function' ? c.props.style({ pressed: false }) : c.props.style).height);
     expect(new Set(heights)).toEqual(new Set([98]));
     expect(within(screen.getByTestId(`occurrence-${OCC}`)).getByText('Açılış yoxlaması').props.numberOfLines).toBe(1);
+  });
+
+  it('shows İşə başla only while it holds a run', async () => {
+    const t = await createTestServices();
+    await t.seed(
+      syncResponse({
+        occurrences: [
+          occurrence({ status: 'completed' }),
+          occurrence({ id: OCC3, checklistName: 'Bağlanış yoxlaması', startsAt: '2026-11-02T14:00:00.000Z', dueAt: '2026-11-02T16:00:00.000Z', closesAt: '2026-11-02T17:00:00.000Z' }),
+        ],
+        checklistVersions: [versionOf(t.c.content)],
+      }),
+    );
+    await renderWithServices(t.services, <HomeScreen />);
+    expect(within(await screen.findByTestId('stat-planned')).getByText('1')).toBeTruthy();
+    expect(screen.queryByTestId('section-myTasks')).toBeNull();
+    expect(screen.queryByRole('header', { name: 'İşə başla' })).toBeNull();
+    expect(screen.queryByText('Burada heç nə yoxdur.')).toBeNull();
   });
 
   it('keeps the site name whole and lets a long checklist name shrink', async () => {
@@ -173,7 +194,8 @@ describe('My checklists', () => {
     const id = await t.services.store.start(OCC, ME);
     await t.db.run(`UPDATE executions SET state = 'partial', sync_note = 'errors.EXECUTION_NOT_ACTIVE' WHERE id = ?`, [id]);
     await renderWithServices(t.services, <HomeScreen />);
-    await fireEvent.press(await screen.findByTestId('stat-completed'));
+    // A partial run is Planlanmış under the Göstərici rule (feedback 2026-11-15).
+    await fireEvent.press(await screen.findByTestId('stat-planned'));
     expect(await within(await screen.findByTestId(`occurrence-${OCC}`)).findByText('Server qəbul etmədi: Bu icra artıq bağlanıb və dəyişdirilə bilməz.')).toBeTruthy();
   });
 });

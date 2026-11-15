@@ -4,6 +4,7 @@
     { "name": "api", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@edildy/api", "dev"], "port": 3000 },
     { "name": "web", "runtimeExecutable": "pnpm", "runtimeArgs": ["--filter", "@edildy/web", "dev"], "port": 5173 },
     { "name": "api-alt", "runtimeExecutable": "env", "runtimeArgs": ["PORT=3100", "pnpm", "--filter", "@edildy/api", "dev"], "port": 3100 },
+    { "name": "metro", "runtimeExecutable": "env", "runtimeArgs": ["EXPO_PUBLIC_API_URL=http://localhost:3000", "pnpm", "--filter", "@edildy/mobile", "exec", "expo", "start", "--dev-client", "--port", "8081"], "port": 8081 },
     { "name": "web-alt", "runtimeExecutable": "env", "runtimeArgs": ["API_PORT=3100", "pnpm", "--filter", "@edildy/web", "exec", "vite", "--port", "5174"], "port": 5174 }
   ]
 }

@@ -1,6 +1,6 @@
 import { type DataScope, PERIOD_PRESETS, type PermissionKey, RUN_BUCKETS } from '@edildy/contracts';
 import { OCC, OCC2, OCC3 } from '@/offline/testing/fixtures';
-import { canSeeTeam, CHIP_BUCKETS, employeeChoices, notCompleted, TEAM_CHIPS, TEAM_PERIODS, teamPeriod, uniqueRuns } from './team-rules';
+import { canSeeTeam, CHIP_BUCKETS, employeeChoices, TEAM_CHIPS, TEAM_PERIODS, teamPeriod, uniqueRuns } from './team-rules';
 import { employeeRow, KAMRAN, reportRun, unassignedRow, WORKER_A, WORKER_B } from './testing/fixtures';
 
 const viewer = (permissions: PermissionKey[], dataScope: DataScope) => ({ permissions, role: { dataScope } });
@@ -39,16 +39,12 @@ describe('periods', () => {
 
 describe('status chips', () => {
   it('map onto the runs buckets of the same name, all first', () => {
-    expect(TEAM_CHIPS.map((c) => CHIP_BUCKETS[c])).toEqual(['all', 'overdue', 'partial', 'missed', 'problems']);
+    expect(TEAM_CHIPS.map((c) => CHIP_BUCKETS[c])).toEqual(['all', 'late', 'planned', 'completed', 'problems']);
     for (const c of TEAM_CHIPS) expect(RUN_BUCKETS).toContain(CHIP_BUCKETS[c]);
   });
 });
 
 describe('tiles and people', () => {
-  it('counts the due runs that are not completed', () => {
-    expect(notCompleted({ due: 10, completed: 7 })).toBe(3);
-    expect(notCompleted({ due: 0, completed: 0 })).toBe(0);
-  });
 
   it('offers every employee row but the Unassigned one, active people first', () => {
     const rows = [employeeRow({ userId: WORKER_B, name: KAMRAN.fullName, active: false }), employeeRow(), unassignedRow()];

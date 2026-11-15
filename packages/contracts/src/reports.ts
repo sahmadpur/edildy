@@ -21,8 +21,11 @@ export const REPORT_FORMATS = ['csv', 'xlsx', 'pdf'] as const;
 export const reportFormatSchema = z.enum(REPORT_FORMATS);
 export type ReportFormat = z.infer<typeof reportFormatSchema>;
 
-/** /reports/runs lists. `planned` = every run not cancelled; `problems` = with problems, not cancelled; `all` includes cancelled runs (Spec decision 6). */
-export const RUN_BUCKETS = ['overdue', 'partial', 'missed', 'problems', 'completed', 'in_progress', 'planned', 'all'] as const;
+/**
+ * /reports/runs lists. `planned`, `late` and `completed` are the three Göstəricilər (INDICATOR_STATUSES, feedback
+ * 2026-11-15); `problems` = with problems, not cancelled; `all` includes cancelled runs (Spec decision 6).
+ */
+export const RUN_BUCKETS = ['overdue', 'partial', 'missed', 'problems', 'completed', 'late', 'in_progress', 'planned', 'all'] as const;
 export const runBucketSchema = z.enum(RUN_BUCKETS);
 export type RunBucket = z.infer<typeof runBucketSchema>;
 
@@ -83,9 +86,11 @@ const refSchema = z.object({ id: idSchema, name: z.string() });
 
 /** One number per RUN_COUNT_KEYS entry, in that order (report-logic.ts). */
 export const runCountsSchema = z.object({
+  total: count,
   planned: count,
   due: count,
   completed: count,
+  late: count,
   inProgress: count,
   pending: count,
   overdue: count,
@@ -96,8 +101,8 @@ export const runCountsSchema = z.object({
 });
 
 /**
- * One day of the trend. `late` (feedback 2026-11-14) = runs not done on time and not completed: overdue now or missed;
- * the Hesabatlar bar chart shows planned, completed and late side by side.
+ * One day of the trend: the three Göstəricilər (planned, completed, late — INDICATOR_STATUSES, feedback 2026-11-15)
+ * side by side in the Hesabatlar bar chart, plus `due` for the completion %.
  */
 export const reportTrendDaySchema = z.object({ date: localDateSchema, planned: count, due: count, completed: count, late: count, completionPercent: percent });
 export type ReportTrendDay = z.infer<typeof reportTrendDaySchema>;

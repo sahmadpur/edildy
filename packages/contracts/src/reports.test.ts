@@ -39,7 +39,7 @@ describe('report catalogue', () => {
     expect(REPORT_KINDS).toEqual(['summary', 'sites', 'employees', 'runs', 'problems', 'tasks']);
     expect(REPORT_EXPORT_KINDS).toEqual([...REPORT_KINDS, 'full']);
     expect(REPORT_FORMATS).toEqual(['csv', 'xlsx', 'pdf']);
-    expect(RUN_BUCKETS).toEqual(['overdue', 'partial', 'missed', 'problems', 'completed', 'in_progress', 'planned', 'all']);
+    expect(RUN_BUCKETS).toEqual(['overdue', 'partial', 'missed', 'problems', 'completed', 'late', 'in_progress', 'planned', 'all']);
     expect(REPORT_ISSUE_CODES).toEqual(['reports.issues.toBeforeFrom', 'reports.issues.fullNotCsv']);
   });
 
@@ -71,7 +71,8 @@ describe('report queries', () => {
   it('defaults the runs bucket to all and takes a cursor', () => {
     expect(reportRunsQuerySchema.parse(range)).toEqual({ ...range, bucket: 'all' });
     expect(reportRunsQuerySchema.parse({ ...range, bucket: 'missed', cursor: ID })).toEqual({ ...range, bucket: 'missed', cursor: ID });
-    expect(reportRunsQuerySchema.safeParse({ ...range, bucket: 'late' }).success).toBe(false);
+    expect(reportRunsQuerySchema.parse({ ...range, bucket: 'late' })).toEqual({ ...range, bucket: 'late' });
+    expect(reportRunsQuerySchema.safeParse({ ...range, bucket: 'soon' }).success).toBe(false);
     expect(reportRunsQuerySchema.safeParse({ from: '2026-11-04', to: '2026-11-02' }).success).toBe(false);
   });
 

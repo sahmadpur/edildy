@@ -28,16 +28,17 @@ describe('GET /reports/summary', () => {
 
   it('counts the period’s runs by bucket, with completion and average score (spec §3.1)', async () => {
     expect(await summary(w.owner, PERIOD)).toEqual({
-      counts: counts({ planned: 15, due: 13, completed: 7, inProgress: 2, pending: 1, overdue: 1, partial: 1, missed: 3, withProblems: 3, withCritical: 2 }),
+      // The Göstəricilər (feedback 2026-11-15): 4 planned + 4 late + 7 completed = the 15 runs not cancelled.
+      counts: counts({ total: 15, planned: 4, due: 13, completed: 7, late: 4, inProgress: 2, pending: 1, overdue: 1, partial: 1, missed: 3, withProblems: 3, withCritical: 2 }),
       completionPercent: 53.8,
       // 80, 100, 60, 90, 50, 70, 100: the scoring-off and open runs have no score, and Aynur's lost claim (10) is ignored.
       averageScore: 78.6,
       trend: [
-        // Late = overdue now + missed (feedback 2026-11-14): 1 + 3 over the period.
-        { date: '2026-11-02', planned: 6, due: 6, completed: 4, late: 1, completionPercent: 66.7 },
-        { date: '2026-11-03', planned: 4, due: 4, completed: 2, late: 2, completionPercent: 50 },
+        // The three Göstəricilər per day: planned (pending, started, in progress, partial), completed, late (overdue, missed).
+        { date: '2026-11-02', planned: 1, due: 6, completed: 4, late: 1, completionPercent: 66.7 },
+        { date: '2026-11-03', planned: 0, due: 4, completed: 2, late: 2, completionPercent: 50 },
         // r15 finished early: due and completed; r13 and r14 are not due yet.
-        { date: '2026-11-04', planned: 5, due: 3, completed: 1, late: 1, completionPercent: 33.3 },
+        { date: '2026-11-04', planned: 3, due: 3, completed: 1, late: 1, completionPercent: 33.3 },
       ],
     });
   });
@@ -57,7 +58,7 @@ describe('GET /reports/summary', () => {
     expect(s.completionPercent).toBe(completionPercent(s.counts.completed, s.counts.due));
     for (const day of s.trend) {
       const c = tallyRuns(facts.filter((f) => f.date === day.date), now);
-      expect(day, day.date).toEqual({ date: day.date, planned: c.planned, due: c.due, completed: c.completed, late: c.overdue + c.missed, completionPercent: completionPercent(c.completed, c.due) });
+      expect(day, day.date).toEqual({ date: day.date, planned: c.planned, due: c.due, completed: c.completed, late: c.late, completionPercent: completionPercent(c.completed, c.due) });
     }
   });
 
@@ -81,12 +82,12 @@ describe('GET /reports/summary', () => {
   });
 
   it('narrows by site subtree, checklist and employee (spec §3.3, §4)', async () => {
-    expect((await summary(w.owner, { ...PERIOD, siteId: w.sites.branchA })).counts.planned).toBe(13);
-    expect((await summary(w.owner, { ...PERIOD, siteId: w.sites.zoneA1 })).counts.planned).toBe(7);
-    expect((await summary(w.owner, { ...PERIOD, checklistId: w.checklists.stock.id })).counts).toEqual(counts({ planned: 2, due: 2, partial: 1, missed: 1 }));
+    expect((await summary(w.owner, { ...PERIOD, siteId: w.sites.branchA })).counts.total).toBe(13);
+    expect((await summary(w.owner, { ...PERIOD, siteId: w.sites.zoneA1 })).counts.total).toBe(7);
+    expect((await summary(w.owner, { ...PERIOD, checklistId: w.checklists.stock.id })).counts).toEqual(counts({ total: 2, planned: 1, due: 2, late: 1, partial: 1, missed: 1 }));
     // Aynur: her three completions, the shared missed run, the overdue and the pending one; not r16 (her claim lost), not r6 (cancelled).
     expect(await summary(w.owner, { ...PERIOD, userId: w.aynur.id })).toMatchObject({
-      counts: counts({ planned: 6, due: 5, completed: 3, pending: 1, overdue: 1, missed: 1, withProblems: 1 }),
+      counts: counts({ total: 6, planned: 1, due: 5, completed: 3, late: 2, pending: 1, overdue: 1, missed: 1, withProblems: 1 }),
       completionPercent: 60,
       averageScore: 90,
     });

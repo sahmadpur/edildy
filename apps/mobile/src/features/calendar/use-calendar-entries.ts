@@ -8,6 +8,8 @@ import { useOffline } from '@/offline/context';
 import { useLiveQuery, useNow, useSyncStatus } from '@/offline/hooks';
 import { type CalendarEntry, localEntries, mergeEntries, remoteEntry } from './calendar-model';
 
+const notCancelled = (o: { status: string }) => o.status !== 'cancelled';
+
 /** Every page of my runs in a range (at most 62 days, the API's list limit; a month view asks for 42). */
 async function myRuns(from: string, to: string): Promise<OccurrenceDto[]> {
   const rows: OccurrenceDto[] = [];
@@ -48,10 +50,14 @@ export function useCalendarEntries(from: string, to: string): CalendarEntries {
     enabled: online,
     staleTime: 60_000,
   });
-  const local = useMemo(() => (list ? localEntries(groupOccurrences(list, services.userId, now, today), services.timeZone) : null), [list, services.userId, services.timeZone, now, today]);
+  // Cancelled runs never show on the calendar (feedback 2026-11-15), whether the phone or the server holds them.
+  const local = useMemo(
+    () => (list ? localEntries(groupOccurrences(list.filter(notCancelled), services.userId, now, today), services.timeZone) : null),
+    [list, services.userId, services.timeZone, now, today],
+  );
   const entries = useMemo(() => {
     if (!local) return null;
-    const server = (remote.data ?? []).map((o) => remoteEntry(o, services.timeZone, now, myName));
+    const server = (remote.data ?? []).filter(notCancelled).map((o) => remoteEntry(o, services.timeZone, now, myName));
     // The day before too: a night run that started then continues into the first column.
     const first = addDays(from, -1);
     return mergeEntries(local, server).filter((e) => e.localDate >= first && e.localDate <= to);

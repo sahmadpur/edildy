@@ -1,7 +1,7 @@
 import type { OccurrenceView } from '@/offline/execution-store';
 import type { LocalExecution } from '@/offline/local-model';
 import { ME, OCC, OTHER, OTHER_EXECUTION, REWORK_DUE, reworkRequest, T, VERSION } from '@/offline/testing/fixtures';
-import { groupOccurrences, homeSections, homeStats } from './group-occurrences';
+import { type CardModel, effectiveStatus, groupOccurrences, homeSections, homeStats } from './group-occurrences';
 
 const view = (over: Partial<OccurrenceView> = {}): OccurrenceView => ({
   id: OCC, checklistId: 'c', checklistName: 'Açılış', siteId: 's', siteName: 'Filial', shiftName: null, localDate: '2026-11-02',
@@ -43,7 +43,7 @@ describe('groupOccurrences', () => {
     if (placed) expect(placed.card).toMatchObject(card);
   });
 
-  it('counts my open and in-progress work, overdue ones (with today\'s missed), the finished ones and the upcoming ones', () => {
+  it('counts my open and in-progress work, then sorts the runs into the three Göstəricilər by status (feedback 2026-11-15)', () => {
     const list = [
       view({ id: 'a' }),
       view({ id: 'b', execution: execution({ id: 'eb', occurrenceId: 'b' }) }),
@@ -53,10 +53,13 @@ describe('groupOccurrences', () => {
       view({ id: 'u', startsAt: '2026-11-02T14:00:00.000Z' }),
     ];
     const g = groupOccurrences(list, ME, at('2026-11-02T06:30:00.000Z'), '2026-11-02');
-    const sections = homeSections(g);
-    expect(homeStats(sections)).toEqual({ myTasks: 2, overdue: 3, completed: 1, upcoming: 1 });
-    expect(sections.overdue.map((c) => c.occurrence.id)).toEqual(['a', 'b', 'm']);
+    const sections = homeSections(g, at('2026-11-02T06:30:00.000Z'));
+    // a is past due (overdue) and m missed: Gecikən. b is my execution in progress and u not open yet: Planlanmış.
+    // c is a colleague's: in none.
+    expect(homeStats(sections)).toEqual({ myTasks: 2, late: 2, completed: 1, planned: 2 });
+    expect(sections.late.map((c) => c.occurrence.id)).toEqual(['a', 'm']);
     expect(sections.completed.map((c) => c.occurrence.id)).toEqual(['d']);
+    expect(sections.planned.map((c) => c.occurrence.id)).toEqual(['b', 'u']);
   });
 
   it('lists the finished runs newest first', () => {
@@ -90,12 +93,31 @@ describe('groupOccurrences', () => {
     expect(place(o, T.open)).toMatchObject({ key: 'done', card: { action: 'view', rework: null } });
   });
 
-  it('counts runs to correct as my tasks, and as overdue once past their due date', () => {
+  it('counts runs to correct as my tasks, and as late (correction_required is Gecikən)', () => {
     const list = [
       view({ id: 'r', status: 'correction_required', execution: execution({ id: 'er', occurrenceId: 'r', state: 'rework', reworkRound: 1, rework: reworkRequest({ dueAt: T.before }) }) }),
       view({ id: 'a' }),
     ];
     const g = groupOccurrences(list, ME, at('2026-11-02T06:30:00.000Z'), '2026-11-02');
-    expect(homeStats(homeSections(g))).toEqual({ myTasks: 2, overdue: 2, completed: 0, upcoming: 0 });
+    expect(homeStats(homeSections(g, at('2026-11-02T06:30:00.000Z')))).toEqual({ myTasks: 2, late: 2, completed: 0, planned: 0 });
+  });
+});
+
+describe('effectiveStatus', () => {
+  const card = (o: OccurrenceView): CardModel => ({ occurrence: o, group: 'now', overdue: false, late: false, claimedBy: null, action: 'start', rework: null });
+  it.each<[string, OccurrenceView, string, string]>([
+    ['pending before due', view(), T.open, 'pending'],
+    ['pending past due: overdue', view(), '2026-11-02T06:30:00.000Z', 'overdue'],
+    ['pending past closes: missed', view(), T.closes, 'missed'],
+    ['my execution open: in progress', view({ execution: execution() }), T.open, 'in_progress'],
+    ['my execution open past closes: partial', view({ execution: execution() }), T.closes, 'partial'],
+    ['a colleague started it, past closes: partial', view({ status: 'started' }), T.closes, 'partial'],
+    ['finished here, not synced yet: completed', view({ status: 'in_progress', execution: execution({ state: 'completed', completedAt: T.open }) }), T.open, 'completed'],
+    ['finished and waiting for audit', view({ status: 'audit_pending', execution: execution({ state: 'completed', completedAt: T.open }) }), T.open, 'audit_pending'],
+    ['resubmitted correction: completed', view({ status: 'correction_required', execution: execution({ state: 'completed', completedAt: T.open, rework: reworkRequest() }) }), T.open, 'completed'],
+    ['sent back to me', view({ status: 'correction_required', execution: execution({ state: 'rework', reworkRound: 1, rework: reworkRequest() }) }), T.open, 'correction_required'],
+    ['cancelled', view({ status: 'cancelled' }), T.open, 'cancelled'],
+  ])('%s', (_name, o, now, status) => {
+    expect(effectiveStatus(card(o), at(now))).toBe(status);
   });
 });

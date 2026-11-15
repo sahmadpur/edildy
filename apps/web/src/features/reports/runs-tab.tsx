@@ -24,8 +24,9 @@ import { useLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { LoadingState, EmptyState } from '@/components/states';
 
-/** The bucket chips: Hamısı first, then the rest in the API's order. */
-const BUCKET_CHIPS: readonly RunBucket[] = ['all', ...RUN_BUCKETS.filter((b) => b !== 'all')];
+/** The bucket chips: Hamısı, the three Göstəricilər and Problemli (feedback 2026-11-15), then the single statuses. */
+const LEADING: readonly RunBucket[] = ['all', 'planned', 'completed', 'late', 'problems'];
+const BUCKET_CHIPS: readonly RunBucket[] = [...LEADING, ...RUN_BUCKETS.filter((b) => !LEADING.includes(b))];
 
 const COLUMNS = [
   'date',

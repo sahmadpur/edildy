@@ -34,9 +34,9 @@ export default {
   home: {
     greeting: 'Hello, {{name}}!',
     myTasks: 'Tasks',
-    overdue: 'Late',
+    late: 'Late',
     completed: 'Completed',
-    upcoming: 'Upcoming',
+    planned: 'Planned',
     archive: {
       more: 'Show older',
       none: 'No older checks.',
@@ -184,7 +184,7 @@ export default {
     failed: 'The database on this phone could not be opened. Close the app and open it again.',
   },
   checklists: {
-    sections: { rework: 'Needs correction', now: 'Now', inProgress: 'In progress', upcoming: 'Upcoming', done: 'Finished' },
+    sections: { rework: 'Needs correction', now: 'Start work', inProgress: 'In progress', upcoming: 'Planned', done: 'Finished' },
     window: '{{from}}–{{to}}',
     overdue: 'Late',
     claimedBy: '{{name}} is running this',

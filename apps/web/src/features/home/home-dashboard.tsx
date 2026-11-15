@@ -34,7 +34,7 @@ const PRESSED = 'border-saffron! ';
 
 /** A box's figures: the count shown, the runs list it opens, and the colour of its number. */
 type BoxStat = {
-  key: Extract<RunCountKey, 'planned' | 'completed' | 'withProblems' | 'overdue'>;
+  key: Extract<RunCountKey, 'planned' | 'completed' | 'withProblems' | 'late'>;
   bucket: RunBucket;
   labelKey: string;
   tone: string;
@@ -58,7 +58,7 @@ const OUTCOMES: readonly BoxStat[] = [
     labelKey: 'reports.home.problems',
     tone: 'text-status-bad-text',
   },
-  { key: 'overdue', bucket: 'overdue', labelKey: 'reports.home.late', tone: 'text-status-late-text' },
+  { key: 'late', bucket: 'late', labelKey: 'reports.home.late', tone: 'text-status-late-text' },
 ];
 
 /**

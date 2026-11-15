@@ -71,7 +71,7 @@ describe('report exports (spec §5.4)', () => {
     expect(f.disposition).toBe('attachment; filename="edildy-full-2026-11-02_2026-11-04.xlsx"');
     const sheets = await readXlsxFile(f.body);
     expect(sheets.map((s) => [s.sheet, s.data.length])).toEqual([
-      ['Xülasə', 13], ['Gündəlik', 4], ['Filiallar', 5], ['Əməkdaşlar', 6],
+      ['Xülasə', 15], ['Gündəlik', 4], ['Filiallar', 5], ['Əməkdaşlar', 6],
       ['Gecikmiş yoxlamalar', 2], ['Yarımçıq yoxlamalar', 2], ['Buraxılmış yoxlamalar', 4], ['Problemlər', 5], ['Tapşırıqlar', 10],
     ]);
     const sites = sheets[2]!.data;

@@ -25,14 +25,15 @@ describe('reports after audits and corrections (spec §3.1, §8.3)', () => {
     return res.body.items as { occurrenceId: string; status: string; auditState: string | null; corrected: boolean; completedAt: string; late: boolean }[];
   };
 
-  it('counts a sent-back run as completed, with its first completion time', async () => {
+  it('counts a sent-back run as late (feedback 2026-11-15), keeping its first completion time', async () => {
     const a = await auditWorld(t, clock);
     clock.set('2026-11-02T05:00:00Z');
     await sendBack(a.manager.api, a.executionId, { items: [{ itemId: a.w.c.temp.id, comment: 'Yenidən ölçün' }] });
     clock.set('2026-11-02T12:00:00Z');
     const summary = (await a.w.owner.get(`/api/v1/reports/summary?${q(DAY)}`)).body;
-    expect(summary.counts).toMatchObject({ completed: 1 });
-    expect(await runs(a.w.owner, { bucket: 'completed' })).toEqual([
+    expect(summary.counts).toMatchObject({ total: 1, planned: 0, completed: 0, late: 1 });
+    expect(await runs(a.w.owner, { bucket: 'completed' })).toEqual([]);
+    expect(await runs(a.w.owner, { bucket: 'late' })).toEqual([
       expect.objectContaining({ occurrenceId: a.w.occurrenceId, status: 'correction_required', completedAt: '2026-11-02T04:20:00.000Z', late: false }),
     ]);
   });

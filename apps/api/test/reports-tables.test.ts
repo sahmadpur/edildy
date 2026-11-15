@@ -31,10 +31,10 @@ describe('GET /reports/sites and /reports/employees', () => {
   it('compares the sites that had planned runs, in tree order with their ancestors', async () => {
     expect(await sites(w.owner, PERIOD)).toEqual([
       // Only the pending r14 (r6 is cancelled): planned, not due yet.
-      { siteId: w.sites.branchA, name: 'Filial A', path: [], active: true, ...counts({ planned: 1, pending: 1 }), completionPercent: null, averageScore: null },
-      { siteId: w.sites.zoneA1, name: 'Zona A1', path: ['Filial A'], active: true, ...counts({ planned: 7, due: 7, completed: 4, overdue: 1, missed: 2, withProblems: 1 }), completionPercent: 57.1, averageScore: 85 },
-      { siteId: w.sites.zoneA2, name: 'Zona A2', path: ['Filial A'], active: true, ...counts({ planned: 5, due: 4, completed: 2, inProgress: 2, partial: 1, withProblems: 1, withCritical: 1 }), completionPercent: 50, averageScore: 75 },
-      { siteId: w.sites.branchB, name: 'Filial B', path: [], active: true, ...counts({ planned: 2, due: 2, completed: 1, missed: 1, withProblems: 1, withCritical: 1 }), completionPercent: 50, averageScore: 60 },
+      { siteId: w.sites.branchA, name: 'Filial A', path: [], active: true, ...counts({ total: 1, planned: 1, pending: 1 }), completionPercent: null, averageScore: null },
+      { siteId: w.sites.zoneA1, name: 'Zona A1', path: ['Filial A'], active: true, ...counts({ total: 7, due: 7, completed: 4, late: 3, overdue: 1, missed: 2, withProblems: 1 }), completionPercent: 57.1, averageScore: 85 },
+      { siteId: w.sites.zoneA2, name: 'Zona A2', path: ['Filial A'], active: true, ...counts({ total: 5, planned: 3, due: 4, completed: 2, inProgress: 2, partial: 1, withProblems: 1, withCritical: 1 }), completionPercent: 50, averageScore: 75 },
+      { siteId: w.sites.branchB, name: 'Filial B', path: [], active: true, ...counts({ total: 2, due: 2, completed: 1, late: 1, missed: 1, withProblems: 1, withCritical: 1 }), completionPercent: 50, averageScore: 60 },
     ]);
   });
 
@@ -42,16 +42,16 @@ describe('GET /reports/sites and /reports/employees', () => {
     const rows = await employees(w.owner, PERIOD);
     expect(rows).toEqual([
       // r1, r7, r15 done; r3 shared and missed; r12 overdue; r14 pending. Not r16: her claim lost.
-      { userId: w.aynur.id, name: 'Aynur Quliyeva', active: true, ...counts({ planned: 6, due: 5, completed: 3, pending: 1, overdue: 1, missed: 1, withProblems: 1 }), completionPercent: 60, averageScore: 90 },
+      { userId: w.aynur.id, name: 'Aynur Quliyeva', active: true, ...counts({ total: 6, planned: 1, due: 5, completed: 3, late: 2, pending: 1, overdue: 1, missed: 1, withProblems: 1 }), completionPercent: 60, averageScore: 90 },
       // r2 (shared, done by him), r5, r9, r13, r16; and the shared missed r3.
-      { userId: w.kamran.id, name: 'Kamran Əliyev', active: true, ...counts({ planned: 6, due: 5, completed: 2, inProgress: 2, partial: 1, missed: 1, withProblems: 1, withCritical: 1 }), completionPercent: 40, averageScore: 75 },
-      { userId: w.nigar.id, name: 'Nigar Həsənova', active: true, ...counts({ planned: 2, due: 2, completed: 1, missed: 1, withProblems: 1, withCritical: 1 }), completionPercent: 50, averageScore: 60 },
+      { userId: w.kamran.id, name: 'Kamran Əliyev', active: true, ...counts({ total: 6, planned: 3, due: 5, completed: 2, late: 1, inProgress: 2, partial: 1, missed: 1, withProblems: 1, withCritical: 1 }), completionPercent: 40, averageScore: 75 },
+      { userId: w.nigar.id, name: 'Nigar Həsənova', active: true, ...counts({ total: 2, due: 2, completed: 1, late: 1, missed: 1, withProblems: 1, withCritical: 1 }), completionPercent: 50, averageScore: 60 },
       // Deactivated: history kept, marked inactive (FR-04.11).
-      { userId: w.samir.id, name: 'Samir Məmmədov', active: false, ...counts({ planned: 2, due: 2, completed: 1, missed: 1 }), completionPercent: 50, averageScore: 70 },
-      { userId: null, name: 'Təyin edilməyib', active: true, ...counts({ planned: 1, due: 1, missed: 1 }), completionPercent: 0, averageScore: null },
+      { userId: w.samir.id, name: 'Samir Məmmədov', active: false, ...counts({ total: 2, due: 2, completed: 1, late: 1, missed: 1 }), completionPercent: 50, averageScore: 70 },
+      { userId: null, name: 'Təyin edilməyib', active: true, ...counts({ total: 1, due: 1, late: 1, missed: 1 }), completionPercent: 0, averageScore: null },
     ]);
-    // The shared missed r3 counts three times: 17 planned against the sites' 15.
-    expect(rows.reduce((n, r) => n + r.planned, 0)).toBe(17);
+    // The shared missed r3 counts three times: 17 runs against the sites' 15.
+    expect(rows.reduce((n, r) => n + r.total, 0)).toBe(17);
   });
 
   it('marks only deactivated people inactive: an invited person is still active', async () => {
@@ -70,9 +70,9 @@ describe('GET /reports/sites and /reports/employees', () => {
   });
 
   it('narrows both tables by employee, and never matches the Unassigned row', async () => {
-    expect((await employees(w.owner, { ...PERIOD, userId: w.kamran.id })).map((r) => [r.name, r.planned])).toEqual([['Kamran Əliyev', 6]]);
-    expect((await sites(w.owner, { ...PERIOD, userId: w.kamran.id })).map((r) => [r.name, r.planned])).toEqual([['Zona A1', 1], ['Zona A2', 5]]);
-    expect((await employees(w.owner, { ...PERIOD, siteId: w.sites.zoneA1 })).map((r) => [r.name, r.planned])).toEqual([
+    expect((await employees(w.owner, { ...PERIOD, userId: w.kamran.id })).map((r) => [r.name, r.total])).toEqual([['Kamran Əliyev', 6]]);
+    expect((await sites(w.owner, { ...PERIOD, userId: w.kamran.id })).map((r) => [r.name, r.total])).toEqual([['Zona A1', 1], ['Zona A2', 5]]);
+    expect((await employees(w.owner, { ...PERIOD, siteId: w.sites.zoneA1 })).map((r) => [r.name, r.total])).toEqual([
       ['Aynur Quliyeva', 5], ['Kamran Əliyev', 1], ['Samir Məmmədov', 2], ['Təyin edilməyib', 1],
     ]);
   });

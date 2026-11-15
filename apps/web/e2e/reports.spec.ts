@@ -112,7 +112,7 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
   });
   await expect
     .poll(async () => (await owner<ReportSummary>('GET', `/reports/summary?from=${yesterday}&to=${yesterday}`)).counts, { timeout: 90_000, intervals: [2_000] })
-    .toMatchObject({ planned: 2, due: 2, completed: 1, inProgress: 0, overdue: 1, withProblems: 1, withCritical: 1 });
+    .toMatchObject({ total: 2, planned: 0, due: 2, completed: 1, late: 1, inProgress: 0, overdue: 1, withProblems: 1, withCritical: 1 });
 
   // The owner on the web: four period boxes on the home page, today selected on arrival.
   await page.goto('/login');
@@ -124,17 +124,17 @@ test('the dashboard shows the seeded runs; Overdue opens the runs report on its 
 
   // Last 7 days covers yesterday whatever the time of day (decision 18).
   const week = page.getByRole('article', { name: 'Son 7 gün' });
-  for (const name of ['Gələcək: 2', 'Tamamlanan: 1', 'Problemli: 1', 'Gecikən: 1']) {
+  for (const name of ['Planlanmış: 0', 'Tamamlanan: 1', 'Problemli: 1', 'Gecikən: 1']) {
     await expect(week.getByRole('button', { name })).toBeVisible();
   }
 
-  // Late → that box is selected and its overdue runs open under the boxes; the URL does not change.
+  // Late → that box is selected and its late runs open under the boxes; the URL does not change.
   await week.getByRole('button', { name: 'Gecikən: 1' }).click();
   await expect(week.getByRole('button', { name: 'Son 7 gün dövrünü seç' })).toHaveAttribute('aria-pressed', 'true');
   const detail = page.getByRole('region', { name: 'Son 7 gün' });
   await expect(detail.getByRole('group', { name: 'Tamamlanma faizi' })).toContainText('50%');
   await expect(detail.getByRole('group', { name: 'Orta bal' })).toContainText(/87[,.]5%/);
-  await expect(detail.getByRole('group', { name: 'Yoxlamalar' }).getByRole('button', { name: 'Gecikmiş' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(detail.getByRole('group', { name: 'Yoxlamalar' }).getByRole('button', { name: 'Gecikən' })).toHaveAttribute('aria-pressed', 'true');
   const homeRows = detail.getByRole('table').getByRole('row');
   await expect(homeRows).toHaveCount(2);
   // Göstəricilər shortens names to "Ad S." (feedback 2026-11-14).

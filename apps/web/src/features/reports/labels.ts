@@ -20,22 +20,18 @@ import { errorText } from '@/lib/errors';
 import { filterSearch, type ReportSearch, type ReportsPageSearch } from './search';
 
 /** The counts shown as tiles; each one opens the runs list of its bucket (Part 1 decision 6). */
-export type TileKey = Extract<RunCountKey, 'planned' | 'completed' | 'inProgress' | 'overdue' | 'partial' | 'missed' | 'withProblems'>;
+export type TileKey = Extract<RunCountKey, 'planned' | 'completed' | 'late' | 'withProblems'>;
 
 export const TILE_BUCKETS: Record<TileKey, RunBucket> = {
   planned: 'planned',
   completed: 'completed',
-  inProgress: 'in_progress',
-  overdue: 'overdue',
-  partial: 'partial',
-  missed: 'missed',
+  late: 'late',
   withProblems: 'problems',
 };
 
-/** Spec §6.1: Planned, Completed, In progress, Overdue, With problems (then the two percentages). */
-export const DASHBOARD_TILES: readonly TileKey[] = ['planned', 'completed', 'inProgress', 'overdue', 'withProblems'];
-/** The Summary tab also shows Partial and Missed (decision 6). */
-export const SUMMARY_TILES: readonly TileKey[] = ['planned', 'completed', 'inProgress', 'overdue', 'partial', 'missed', 'withProblems'];
+/** The three Göstəricilər and Problemli (feedback 2026-11-15: one rule everywhere), then the two percentages. */
+export const DASHBOARD_TILES: readonly TileKey[] = ['planned', 'completed', 'late', 'withProblems'];
+export const SUMMARY_TILES: readonly TileKey[] = DASHBOARD_TILES;
 
 /** `/reports?tab=runs&bucket=…` with the same filters. */
 export const tileSearch = (s: ReportSearch, key: TileKey): ReportsPageSearch => ({ ...filterSearch(s), tab: 'runs', bucket: TILE_BUCKETS[key] });

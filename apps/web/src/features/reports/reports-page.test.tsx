@@ -74,7 +74,7 @@ describe('ReportsPage', () => {
       <ReportsPage today={TODAY} />,
       `/reports?period=this_week&siteId=${IDS.zoneA}&inactive=true`,
     );
-    expect(await screen.findByRole('link', { name: 'Gecikib: 1' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Gecikən: 1' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Hesabatlar' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Ümumi' })).toHaveAttribute('aria-selected', 'true');
     expect(mocks.api.reports.summary).toHaveBeenCalledWith({
@@ -82,8 +82,8 @@ describe('ReportsPage', () => {
       to: TODAY,
       siteId: IDS.zoneA,
     });
-    // Summary adds the partial and missed tiles, and a multi-day period has its trend.
-    expect(screen.getByRole('link', { name: 'Yarımçıq: 1' })).toBeInTheDocument();
+    // The three Göstəricilər and Problemli, and a multi-day period has its trend.
+    expect(screen.getByRole('link', { name: 'Planlanmış: 4' })).toBeInTheDocument();
     expect(screen.getByRole('figure', { name: 'Gündəlik yoxlamalar' })).toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByLabelText('Dövr'), 'last_7');
@@ -99,14 +99,14 @@ describe('ReportsPage', () => {
     );
 
     // A tile opens the runs tab with its bucket and the same filters.
-    await userEvent.click(screen.getByRole('link', { name: 'Gecikib: 1' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Gecikən: 1' }));
     await waitFor(() =>
       expect(router.state.location.search).toEqual({
         period: 'last_7',
         siteId: IDS.zoneA,
         inactive: true,
         tab: 'runs',
-        bucket: 'overdue',
+        bucket: 'late',
       }),
     );
     expect(screen.getByRole('tab', { name: 'Yoxlamalar' })).toHaveAttribute('aria-selected', 'true');
@@ -118,7 +118,7 @@ describe('ReportsPage', () => {
         siteId: IDS.zoneA,
         inactive: true,
         tab: 'sites',
-        bucket: 'overdue',
+        bucket: 'late',
       }),
     );
   });
@@ -222,7 +222,7 @@ describe('ReportsPage', () => {
 
   it('shows no export menu without reports.export', async () => {
     renderWithRouter(<ReportsPage today={TODAY} />, '/reports');
-    expect(await screen.findByRole('link', { name: 'Gecikib: 1' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Gecikən: 1' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'İxrac et' })).not.toBeInTheDocument();
   });
 

@@ -33,9 +33,11 @@ export default {
   },
   /** Tile labels and column headings, one per RUN_COUNT_KEYS entry. */
   counts: {
+    total: 'Всего',
     planned: 'Запланировано',
     due: 'Срок наступил',
     completed: 'Завершено',
+    late: 'Просрочено',
     inProgress: 'В процессе',
     pending: 'Ожидает',
     overdue: 'Опоздание',
@@ -55,6 +57,7 @@ export default {
     missed: 'Пропущенные',
     problems: 'С проблемами',
     completed: 'Завершённые',
+    late: 'Просроченные',
     in_progress: 'В процессе',
     planned: 'Запланированные',
     all: 'Все',
@@ -165,13 +168,13 @@ export default {
     late: 'Просрочено',
     pie: 'Выполненные и просроченные',
     pieEmpty: 'В этом периоде нет выполненных или просроченных проверок.',
-    lateHint: 'Просрочено — проверки, не выполненные вовремя и не завершённые: просроченные сейчас и пропущенные.',
+    lateHint: 'Просрочено — проверки, не выполненные вовремя: просроченные сейчас, пропущенные и возвращённые на исправление.',
   },
   /** The web home page: four period boxes, then the selected period's charts and runs. */
   home: {
     periods: 'Периоды',
     completed: 'Выполненные',
-    planned: 'Предстоящие',
+    planned: 'Запланированные',
     late: 'Просроченные',
     problems: 'С проблемами',
     selectPeriod: 'Выбрать период {{period}}',

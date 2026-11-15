@@ -7,7 +7,6 @@ import {
   type CalendarResponse,
   expandSchedule,
   localDateOf,
-  type OccurrenceStatus,
   recurrenceSchema,
   timingSchema,
 } from '@edildy/contracts';
@@ -39,7 +38,7 @@ export class OccurrenceCalendar {
 
   async list(a: Actor, q: CalendarQueryDto): Promise<CalendarResponse> {
     const statuses = q.status ?? null;
-    const runStatuses = statuses?.filter((s): s is OccurrenceStatus => s !== 'planned') ?? null;
+    const runStatuses = statuses?.filter((s): s is Exclude<typeof s, 'planned'> => s !== 'planned') ?? null;
     const wantPlanned = !statuses || statuses.includes('planned');
     const items: CalendarItem[] = [];
     let truncated = false;
@@ -50,9 +49,9 @@ export class OccurrenceCalendar {
       if (q.checklistId) conds.push(inArray(occurrences.checklistId, q.checklistId));
       if (q.assigneeId) conds.push(sql`exists (select 1 from occurrence_assignees oa where oa.occurrence_id = ${occurrences.id} and oa.user_id in ${sqlList(q.assigneeId)})`);
       if (runStatuses) conds.push(inArray(occurrences.status, runStatuses));
-      // Cancelled yoxlamalar leave the calendar (feedback 2026-11-11, item 1): cancelled runs show only when asked for, and
-      // a cancelled (ended) assignment or deactivated checklist keeps only the runs that were actually done.
-      else conds.push(ne(occurrences.status, 'cancelled'));
+      // Cancelled yoxlamalar never show on the calendar (feedback 2026-11-11 item 1, 2026-11-15 item 1), and a cancelled
+      // (ended) assignment or deactivated checklist keeps only the runs that were actually done.
+      conds.push(ne(occurrences.status, 'cancelled'));
       conds.push(or(and(ne(assignments.status, 'ended'), eq(checklists.status, 'active')), inArray(occurrences.status, [...COMPLETED_STATUSES])));
       const rows = await this.queries
         .select()

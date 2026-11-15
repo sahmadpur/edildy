@@ -34,9 +34,9 @@ export default {
   home: {
     greeting: 'Здравствуйте, {{name}}!',
     myTasks: 'Задачи',
-    overdue: 'Просрочено',
+    late: 'Просрочено',
     completed: 'Завершено',
-    upcoming: 'Предстоящие',
+    planned: 'Запланировано',
     archive: {
       more: 'Показать более ранние',
       none: 'Более ранних проверок нет.',
@@ -184,7 +184,7 @@ export default {
     failed: 'Не удалось открыть базу данных на телефоне. Закройте приложение и откройте его снова.',
   },
   checklists: {
-    sections: { rework: 'Требуется исправление', now: 'Сейчас', inProgress: 'В процессе', upcoming: 'Предстоящие', done: 'Завершённые' },
+    sections: { rework: 'Требуется исправление', now: 'Начать работу', inProgress: 'В процессе', upcoming: 'Запланированные', done: 'Завершённые' },
     window: '{{from}}–{{to}}',
     overdue: 'Опоздание',
     claimedBy: 'Выполняет {{name}}',

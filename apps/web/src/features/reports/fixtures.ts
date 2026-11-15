@@ -43,9 +43,9 @@ const KAMRAN = { id: IDS.kamran, fullName: 'Kamran Əliyev' };
 
 export const counts = (over: Partial<RunCounts> = {}): RunCounts => ({ ...emptyRunCounts(), ...over });
 
-/** 12 planned, 10 due (7 completed, 1 in progress, 1 overdue, 1 partial), 2 pending; three days of trend. */
+/** 12 runs: 4 planned (1 in progress, 2 pending, 1 partial), 7 completed, 1 late (overdue); 10 due; three days of trend. */
 export const reportSummary = (over: Partial<ReportSummary> = {}): ReportSummary => ({
-  counts: counts({ planned: 12, due: 10, completed: 7, inProgress: 1, pending: 2, overdue: 1, partial: 1, withProblems: 2, withCritical: 1 }),
+  counts: counts({ total: 12, planned: 4, due: 10, completed: 7, late: 1, inProgress: 1, pending: 2, overdue: 1, partial: 1, withProblems: 2, withCritical: 1 }),
   completionPercent: 70,
   averageScore: 87.5,
   trend: [
@@ -57,7 +57,7 @@ export const reportSummary = (over: Partial<ReportSummary> = {}): ReportSummary 
 });
 
 export const siteRow = (over: Partial<SiteReportRow> = {}): SiteReportRow => ({
-  ...counts({ planned: 8, due: 6, completed: 5, overdue: 1 }),
+  ...counts({ total: 8, planned: 2, due: 6, completed: 5, late: 1, overdue: 1 }),
   siteId: IDS.zoneA,
   name: 'Zona A1',
   path: ['Filial A'],
@@ -69,13 +69,13 @@ export const siteRow = (over: Partial<SiteReportRow> = {}): SiteReportRow => ({
 
 /** In tree order: the branch, its active zone, its deactivated zone (no due runs, so no percentages). */
 export const SITE_ROWS: SiteReportRow[] = [
-  siteRow({ siteId: IDS.branch, name: 'Filial A', path: [], planned: 4, due: 4, completed: 2, overdue: 0, missed: 2, completionPercent: 50, averageScore: 70 }),
+  siteRow({ siteId: IDS.branch, name: 'Filial A', path: [], total: 4, planned: 0, due: 4, completed: 2, late: 2, overdue: 0, missed: 2, completionPercent: 50, averageScore: 70 }),
   siteRow(),
-  siteRow({ siteId: IDS.zoneB, name: 'Zona B (köhnə)', active: false, planned: 1, due: 0, completed: 0, overdue: 0, pending: 1, completionPercent: null, averageScore: null }),
+  siteRow({ siteId: IDS.zoneB, name: 'Zona B (köhnə)', active: false, total: 1, planned: 1, due: 0, completed: 0, late: 0, overdue: 0, pending: 1, completionPercent: null, averageScore: null }),
 ];
 
 export const employeeRow = (over: Partial<EmployeeReportRow> = {}): EmployeeReportRow => ({
-  ...counts({ planned: 5, due: 5, completed: 4, missed: 1 }),
+  ...counts({ total: 5, due: 5, completed: 4, late: 1, missed: 1 }),
   userId: IDS.aynur,
   name: 'Aynur Quliyeva',
   active: true,
@@ -87,9 +87,9 @@ export const employeeRow = (over: Partial<EmployeeReportRow> = {}): EmployeeRepo
 /** By name, a deactivated person among them, the Unassigned row last (Part 1 decision 9). */
 export const EMPLOYEE_ROWS: EmployeeReportRow[] = [
   employeeRow(),
-  employeeRow({ userId: IDS.kamran, name: 'Kamran Əliyev', planned: 3, due: 3, completed: 1, missed: 2, completionPercent: 33.3, averageScore: 75 }),
-  employeeRow({ userId: IDS.rauf, name: 'Rauf Həsənov', active: false, planned: 1, due: 1, completed: 1, missed: 0, completionPercent: 100, averageScore: 60 }),
-  employeeRow({ userId: null, name: 'Təyin edilməyib', planned: 9, due: 9, completed: 0, missed: 9, completionPercent: 0, averageScore: null }),
+  employeeRow({ userId: IDS.kamran, name: 'Kamran Əliyev', total: 3, due: 3, completed: 1, late: 2, missed: 2, completionPercent: 33.3, averageScore: 75 }),
+  employeeRow({ userId: IDS.rauf, name: 'Rauf Həsənov', active: false, total: 1, due: 1, completed: 1, late: 0, missed: 0, completionPercent: 100, averageScore: 60 }),
+  employeeRow({ userId: null, name: 'Təyin edilməyib', total: 9, due: 9, completed: 0, late: 9, missed: 9, completionPercent: 0, averageScore: null }),
 ];
 
 /** Overdue, never started, two assignees; due 10:00 in Baku. */

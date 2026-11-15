@@ -3,21 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, spacing } from '@/lib/theme';
 import { percentText } from './team-format';
-import { notCompleted } from './team-rules';
 
 /**
- * Spec §7.1 (FR-16.03): completed, not completed, overdue, partial, with problems, completion %. One quiet strip of
- * numbers between hairlines, as on Home (three to a line, since six do not fit a phone's width); a number takes its
- * colour only when it is not zero.
+ * The three Göstəricilər (Planlanmış, Tamamlanan, Gecikən — the web's rule, feedback 2026-11-15), with problems and
+ * completion %. One quiet strip of numbers between hairlines, as on Home (three to a line); a number takes its colour
+ * only when it is not zero.
  */
 export function CountTiles({ summary }: { summary: ReportSummary }) {
   const { t } = useTranslation();
   const c = summary.counts;
   const tiles = [
+    { key: 'planned', label: t('reports.counts.planned'), n: c.planned, value: String(c.planned), color: colors.plannedText },
     { key: 'completed', label: t('reports.counts.completed'), n: c.completed, value: String(c.completed), color: colors.successText },
-    { key: 'notCompleted', label: t('reports.notCompleted'), n: notCompleted(c), value: String(notCompleted(c)), color: colors.text },
-    { key: 'overdue', label: t('reports.counts.overdue'), n: c.overdue, value: String(c.overdue), color: colors.dangerText },
-    { key: 'partial', label: t('reports.counts.partial'), n: c.partial, value: String(c.partial), color: colors.warningText },
+    { key: 'late', label: t('reports.counts.late'), n: c.late, value: String(c.late), color: colors.dangerText },
     { key: 'withProblems', label: t('reports.counts.withProblems'), n: c.withProblems, value: String(c.withProblems), color: colors.dangerText },
     {
       key: 'completionPercent',

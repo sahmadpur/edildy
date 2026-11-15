@@ -7,7 +7,6 @@ import {
   type ReportRun,
   resolvePeriod,
   type RunBucket,
-  type RunCounts,
 } from '@edildy/contracts';
 import { hasFeature } from '@/lib/features';
 
@@ -30,15 +29,13 @@ export function teamPeriod(preset: TeamPeriod, nowMs: number, tenantTimeZone: st
   return resolvePeriod(preset, localDateOf(new Date(nowMs), tenantTimeZone));
 }
 
-/** The status chips, in display order (spec §7.1). */
-export const TEAM_CHIPS = ['all', 'overdue', 'partial', 'missed', 'problems'] as const;
+/** The status chips, in display order: the three Göstəricilər and Problemli (feedback 2026-11-15). */
+export const TEAM_CHIPS = ['all', 'late', 'planned', 'completed', 'problems'] as const;
 export type TeamChip = (typeof TEAM_CHIPS)[number];
 
 /** Each chip lists one /reports/runs bucket (decision 5). */
-export const CHIP_BUCKETS: Record<TeamChip, RunBucket> = { all: 'all', overdue: 'overdue', partial: 'partial', missed: 'missed', problems: 'problems' };
+export const CHIP_BUCKETS: Record<TeamChip, RunBucket> = { all: 'all', late: 'late', planned: 'planned', completed: 'completed', problems: 'problems' };
 
-/** The "not completed" tile: due − completed (spec §7.1), never negative. */
-export const notCompleted = (c: Pick<RunCounts, 'due' | 'completed'>): number => Math.max(0, c.due - c.completed);
 
 export interface EmployeeChoice {
   userId: string;

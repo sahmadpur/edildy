@@ -166,7 +166,6 @@ const DONE: ReadonlySet<string> = new Set(['completed', 'partial', 'audit_pendin
 function remoteColor(o: OccurrenceDto, now: number): string {
   if (DONE.has(o.status)) return colors.success;
   if (o.status === 'missed' || o.status === 'overdue') return colors.danger;
-  if (o.status === 'cancelled') return colors.planned;
   return now < Date.parse(o.startsAt) ? colors.planned : colors.primary;
 }
 

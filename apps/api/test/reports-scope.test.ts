@@ -22,7 +22,7 @@ describe('report data scope (spec §4)', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     return res.body as T;
   };
-  const planned = async (api: Api, q: Record<string, string | undefined> = {}) => (await get<ReportSummary>(api, 'summary', q)).counts.planned;
+  const planned = async (api: Api, q: Record<string, string | undefined> = {}) => (await get<ReportSummary>(api, 'summary', q)).counts.total;
   const runIds = async (api: Api) => (await get<Page<ReportRun>>(api, 'runs')).items.map((r) => r.occurrenceId).sort();
   const runs = (...keys: RunKey[]) => keys.map((k) => w.runs[k].occurrenceId).sort();
   const tasks = (...keys: TaskKey[]) => keys.map((k) => w.tasks[k]);

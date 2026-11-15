@@ -19,15 +19,16 @@ import { useStartOccurrence } from './use-start-occurrence';
 
 /** A count takes its colour only when it is not zero, so a calm day reads calm. */
 const TONE: Record<HomeBox, string> = {
-  overdue: colors.dangerText,
+  late: colors.dangerText,
   completed: colors.successText,
-  upcoming: colors.plannedText,
+  planned: colors.plannedText,
 };
 
 /**
  * "My checklists" (spec §7.3, FR-10.01–02), reshaped by the Nov 2026 feedback: three equal boxes with counts
- * (Gecikən, Tamamlanan, Gələcək) come first, then the runs I can work on now (İndi), always listed — the Tapşırıqlar
- * box went on 8 Nov 2026 — then three folding lists named as the boxes. A box opens its list, folds the others and scrolls to it; a list's own
+ * (Gecikən, Tamamlanan, Planlanmış — the web's Göstərici rule since 15 Nov 2026) come first, then the runs I can work
+ * on now (İşə başla) in a tinted panel of its own, shown only when it holds a run, then three folding lists named as
+ * the boxes. A box opens its list, folds the others and scrolls to it; a list's own
  * heading opens or folds it. Nothing is folded open at first.
  */
 export function HomeScreen() {
@@ -39,7 +40,7 @@ export function HomeScreen() {
   const list = useLiveQuery((x) => x.store.occurrences(), []);
   const today = localDate(now, services.timeZone);
   const groups = list ? groupOccurrences(list, services.userId, now, today) : null;
-  const sections = groups ? homeSections(groups) : null;
+  const sections = groups ? homeSections(groups, now) : null;
   const stats = sections ? homeStats(sections) : null;
   const [open, setOpen] = useState<HomeBox | null>(null);
   const scroll = useRef<ScrollView>(null);
@@ -60,7 +61,7 @@ export function HomeScreen() {
     <OccurrenceCard
       key={card.occurrence.id}
       card={card}
-      group={key === 'completed' ? 'done' : key === 'upcoming' ? 'upcoming' : card.rework ? 'rework' : card.action === 'continue' ? 'inProgress' : card.action === 'start' || card.claimedBy ? 'now' : 'done'}
+      group={card.group}
       timeZone={services.timeZone}
       onStart={() => void start(card.occurrence)}
       onOpen={() => openRun(card.occurrence)}
@@ -99,15 +100,18 @@ export function HomeScreen() {
           );
         })}
       </View>
-      {sections && stats ? (
-        <View testID="section-myTasks" style={styles.group}>
-          <View style={styles.sectionRow}>
-            <Text accessibilityRole="header" style={styles.section}>
+      {sections && stats && sections.myTasks.length > 0 ? (
+        <View testID="section-myTasks" style={styles.startPanel}>
+          <View style={styles.startHeader}>
+            <Ionicons name="play-circle" size={22} color={colors.primary} />
+            <Text accessibilityRole="header" style={styles.startTitle}>
               {t('mobile.checklists.sections.now')}
             </Text>
-            <Text style={styles.count}>{stats.myTasks}</Text>
+            <View style={styles.flex} />
+            <View style={styles.startPill}>
+              <Text style={styles.startPillText}>{stats.myTasks}</Text>
+            </View>
           </View>
-          {sections.myTasks.length === 0 ? <Text style={styles.subtitle}>{t('mobile.checklists.emptySection')}</Text> : null}
           {sections.myTasks.map((card) => cardOf('myTasks', card))}
         </View>
       ) : null}
@@ -167,6 +171,12 @@ const styles = StyleSheet.create({
   boxLabel: { fontFamily: font, fontSize: 12, lineHeight: 16, color: colors.muted, textAlign: 'center' },
   boxLabelOn: { color: colors.text, fontWeight: '600' },
   group: { gap: spacing.sm },
+  // İşə başla: a soft blue panel, so the runs to start now stand apart from the boxes and the plain folding lists.
+  startPanel: { backgroundColor: colors.primarySoft, borderRadius: 18, padding: spacing.md, gap: spacing.sm },
+  startHeader: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  startTitle: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.primary },
+  startPill: { minWidth: 28, height: 24, paddingHorizontal: 8, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  startPillText: { fontFamily: font, fontSize: type.sm, fontWeight: '600', color: colors.primaryText },
   sectionRow: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.borderStrong },
   sectionPressed: { opacity: 0.6 },
   section: { fontFamily: font, fontSize: type.md, fontWeight: '600', color: colors.text },

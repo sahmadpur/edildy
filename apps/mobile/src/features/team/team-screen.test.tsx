@@ -42,17 +42,17 @@ const world = (o: { online?: boolean; at?: string } = {}) => createTestServices(
 beforeEach(() => {
   jest.clearAllMocks();
   mockMe = teamMe();
-  mockSummary.mockResolvedValue(reportSummary({ counts: counts({ planned: 12, due: 10, completed: 7, overdue: 2, partial: 1, withProblems: 3 }), completionPercent: 70 }));
+  mockSummary.mockResolvedValue(reportSummary({ counts: counts({ total: 12, planned: 3, due: 10, completed: 7, late: 2, overdue: 2, partial: 1, withProblems: 3 }), completionPercent: 70 }));
   mockEmployees.mockResolvedValue([employeeRow(), employeeRow({ userId: WORKER_B, name: KAMRAN.fullName, active: false }), unassignedRow()]);
   mockRuns.mockResolvedValue(runPage([reportRun()]));
   mockRefreshMe.mockResolvedValue(undefined);
 });
 
 describe('Team screen', () => {
-  it('shows today’s six tiles and asks for every run of the tenant’s day', async () => {
+  it('shows today’s five tiles — the three Göstəricilər, problems, completion — and asks for every run of the tenant’s day', async () => {
     const t = await world();
     await renderTeam(t.services, <TeamScreen />);
-    for (const label of ['Tamamlanıb: 7', 'Tamamlanmayıb: 3', 'Gecikib: 2', 'Yarımçıq: 1', 'Problemli: 3', 'Tamamlanma faizi: 70%']) {
+    for (const label of ['Planlanmış: 3', 'Tamamlanan: 7', 'Gecikən: 2', 'Problemli: 3', 'Tamamlanma faizi: 70%']) {
       expect(await screen.findByLabelText(label)).toBeTruthy();
     }
     expect(mockSummary).toHaveBeenCalledWith(DAY);
@@ -65,7 +65,7 @@ describe('Team screen', () => {
   it('switches the period to 7 and 30 days, and writes — for an empty period', async () => {
     const t = await world();
     await renderTeam(t.services, <TeamScreen />);
-    await screen.findByLabelText('Tamamlanıb: 7');
+    await screen.findByLabelText('Tamamlanan: 7');
     await fireEvent.press(screen.getByRole('radio', { name: '7 gün' }));
     await waitFor(async () => expect(mockSummary).toHaveBeenLastCalledWith({ from: '2026-10-27', to: '2026-11-02' }));
     expect(mockRuns).toHaveBeenLastCalledWith({ from: '2026-10-27', to: '2026-11-02', bucket: 'all' });
@@ -73,7 +73,7 @@ describe('Team screen', () => {
     mockSummary.mockResolvedValue(reportSummary());
     await fireEvent.press(screen.getByRole('radio', { name: '30 gün' }));
     expect(await screen.findByLabelText('Tamamlanma faizi: —')).toBeTruthy();
-    expect(screen.getByLabelText('Tamamlanmayıb: 0')).toBeTruthy();
+    expect(screen.getByLabelText('Gecikən: 0')).toBeTruthy();
     expect(mockSummary).toHaveBeenLastCalledWith({ from: '2026-10-04', to: '2026-11-02' });
   });
 
@@ -83,7 +83,7 @@ describe('Team screen', () => {
     await renderTeam(t.services, <TeamScreen />);
     await waitFor(async () => expect(mockSummary).toHaveBeenCalledWith({ from: '2026-11-03', to: '2026-11-03' }));
     expect(mockRuns).toHaveBeenCalledWith({ from: '2026-11-03', to: '2026-11-03', bucket: 'all' });
-    await screen.findByLabelText('Tamamlanıb: 7'); // let react-query publish its result before the test ends
+    await screen.findByLabelText('Tamamlanan: 7'); // let react-query publish its result before the test ends
   });
 
   it('moves to the new day at the tenant’s midnight while the screen stays open', async () => {
@@ -94,7 +94,7 @@ describe('Team screen', () => {
     await act(async () => t.services.feed.emit());
     await waitFor(async () => expect(mockSummary).toHaveBeenLastCalledWith({ from: '2026-11-03', to: '2026-11-03' }));
     expect(mockRuns).toHaveBeenLastCalledWith({ from: '2026-11-03', to: '2026-11-03', bucket: 'all' });
-    await screen.findByLabelText('Tamamlanıb: 7');
+    await screen.findByLabelText('Tamamlanan: 7');
   });
 
   it('maps each status chip to its runs bucket and keeps the tiles', async () => {
@@ -102,7 +102,7 @@ describe('Team screen', () => {
     const t = await world();
     await renderTeam(t.services, <TeamScreen />);
     expect(await screen.findByText('Yoxlama all')).toBeTruthy();
-    for (const [chip, bucket] of [['Gecikmiş', 'overdue'], ['Yarımçıq', 'partial'], ['Buraxılmış', 'missed'], ['Problemli', 'problems']] as const) {
+    for (const [chip, bucket] of [['Gecikən', 'late'], ['Planlanmış', 'planned'], ['Tamamlanan', 'completed'], ['Problemli', 'problems']] as const) {
       await fireEvent.press(screen.getByRole('radio', { name: chip }));
       expect(await screen.findByText(`Yoxlama ${bucket}`)).toBeTruthy();
       expect(mockRuns).toHaveBeenLastCalledWith({ ...DAY, bucket });
@@ -112,7 +112,7 @@ describe('Team screen', () => {
     expect(await screen.findByText('Yoxlama all')).toBeTruthy();
     expect(mockRuns).toHaveBeenCalledTimes(5);
     expect(mockSummary).toHaveBeenCalledTimes(1);
-    expect(screen.getByLabelText('Tamamlanıb: 7')).toBeTruthy();
+    expect(screen.getByLabelText('Tamamlanan: 7')).toBeTruthy();
   });
 
   it('filters by an employee of the period, never offering the Unassigned row', async () => {
@@ -189,18 +189,18 @@ describe('Team screen', () => {
     expect(mockRuns).not.toHaveBeenCalled();
     t.net.online = true;
     await act(async () => t.services.engine.refresh());
-    expect(await screen.findByLabelText('Tamamlanıb: 7')).toBeTruthy();
+    expect(await screen.findByLabelText('Tamamlanan: 7')).toBeTruthy();
     expect(screen.queryByText('Komandanı görmək üçün internetə qoşulun')).toBeNull();
   });
 
   it('hides the team data it had when the phone goes offline', async () => {
     const t = await world();
     await renderTeam(t.services, <TeamScreen />);
-    await screen.findByLabelText('Tamamlanıb: 7');
+    await screen.findByLabelText('Tamamlanan: 7');
     t.net.online = false;
     await act(async () => t.services.engine.refresh());
     expect(await screen.findByText('Komandanı görmək üçün internetə qoşulun')).toBeTruthy();
-    expect(screen.queryByLabelText('Tamamlanıb: 7')).toBeNull();
+    expect(screen.queryByLabelText('Tamamlanan: 7')).toBeNull();
     expect(screen.queryByTestId(`run-${OCC}`)).toBeNull();
   });
 
@@ -212,7 +212,7 @@ describe('Team screen', () => {
     await settle();
     expect(mockSummary).toHaveBeenCalledTimes(1);
     await fireEvent.press(screen.getByRole('button', { name: 'Yenidən cəhd et' }));
-    expect(await screen.findByLabelText('Tamamlanıb: 7')).toBeTruthy();
+    expect(await screen.findByLabelText('Tamamlanan: 7')).toBeTruthy();
     expect(screen.queryByText(TIMEOUT_TEXT)).toBeNull();
     expect(mockSummary).toHaveBeenCalledTimes(2);
     expect(mockRuns).toHaveBeenCalledTimes(1); // only what failed is asked again
@@ -233,7 +233,7 @@ describe('Team screen', () => {
   it('never shows the previous manager’s numbers to the next one', async () => {
     const t = await world();
     const view = await renderTeam(t.services, <TeamScreen />);
-    await screen.findByLabelText('Tamamlanıb: 7');
+    await screen.findByLabelText('Tamamlanan: 7');
     const next = gate();
     mockSummary.mockImplementation(async () => {
       await next.opened;
@@ -246,8 +246,8 @@ describe('Team screen', () => {
       </TeamProviders>,
     );
     await waitFor(async () => expect(mockSummary).toHaveBeenCalledTimes(2));
-    expect(screen.queryByLabelText('Tamamlanıb: 7')).toBeNull();
+    expect(screen.queryByLabelText('Tamamlanan: 7')).toBeNull();
     await act(async () => next.open());
-    expect(await screen.findByLabelText('Tamamlanıb: 1')).toBeTruthy();
+    expect(await screen.findByLabelText('Tamamlanan: 1')).toBeTruthy();
   });
 });
