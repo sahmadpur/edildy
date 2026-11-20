@@ -47,13 +47,13 @@ export default {
   how: {
     title: 'Necə işləyir',
     step1: { title: 'Yoxlama vərəqəsini qurun və cədvəlləşdirin', body: 'Şablondan başlayın və ya sıfırdan yaradın. Filialları, növbələri və icraçıları təyin edin.' },
-    step2: { title: 'Komanda telefonda icra edir', body: 'İşçi org kodu və PIN ilə daxil olur, siyahını açır, cavablandırır, foto çəkir. Oflayn olsa da.' },
+    step2: { title: 'Komanda telefonda icra edir', body: 'İşçi təşkilat kodu və PIN ilə daxil olur, siyahını açır, cavablandırır, foto çəkir. Oflayn olsa da.' },
     step3: { title: 'Nəticələrə baxın, audit edin, düzəliş tələb edin', body: 'Hesabatlar anında yenilənir. Lazım gəlsə icranı geri qaytarın; işçi yalnız göstərilən bəndləri düzəldir.' },
   },
   mobile: {
     title: 'İşçilər üçün mobil tətbiq',
     lead: 'Əlcəklə də basıla bilən böyük düymələr, günəşdə oxunan kontrast, internetsiz iş.',
-    point1: 'Org kodu və PIN ilə giriş — e-poçt lazım deyil',
+    point1: 'Təşkilat kodu və PIN ilə giriş — e-poçt lazım deyil',
     point2: 'Foto və video birbaşa kameradan, qalereya yalnız icazə verildikdə',
     point3: 'Sinxronlaşma avtomatik, status həmişə görünür',
     appStore: 'App Store',
