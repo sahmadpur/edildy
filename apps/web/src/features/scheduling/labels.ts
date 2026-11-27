@@ -2,6 +2,7 @@ import {
   type AssignmentStatus,
   CANCEL_REASON_CODES,
   describeSchedule,
+  isOpenEnded,
   isWholeDayWindow,
   localDateOf,
   type OccurrenceStatus,
@@ -53,13 +54,21 @@ export function useTimeFormat(): (iso: string) => string {
   return useCallback((iso: string) => formatTime(iso, { locale, timeZone: tenant.timezone }), [locale, tenant.timezone]);
 }
 
-/** A run's window as "08:00–10:00", or "İstənilən vaxt" for a whole local day (feedback 2026-11-07). */
+/**
+ * A run's window as "08:00–10:00", "İstənilən vaxt" for a whole local day (feedback 2026-11-07), or "08:00 · müddətsiz"
+ * for a run with no deadline (feedback 2026-11-27).
+ */
 export function useWindowText(): (startsAt: string, dueAt: string) => string {
   const { tenant } = useMe();
   const { t } = useTranslation();
   const time = useTimeFormat();
   return useCallback(
-    (startsAt: string, dueAt: string) => (isWholeDayWindow(startsAt, dueAt, tenant.timezone) ? t('scheduling.builder.modes.anytime') : `${time(startsAt)}–${time(dueAt)}`),
+    (startsAt: string, dueAt: string) =>
+      isOpenEnded(dueAt)
+        ? t('scheduling.summary.openEnded', { time: time(startsAt) })
+        : isWholeDayWindow(startsAt, dueAt, tenant.timezone)
+          ? t('scheduling.builder.modes.anytime')
+          : `${time(startsAt)}–${time(dueAt)}`,
     [t, time, tenant.timezone],
   );
 }

@@ -1,4 +1,11 @@
-import { AUDIT_LIMITS, type AuditResult, type AuditScore, type AuditVerdict, type ProblemSeverity } from '@edildy/contracts';
+import {
+  isOpenEnded,
+  AUDIT_LIMITS,
+  type AuditResult,
+  type AuditScore,
+  type AuditVerdict,
+  type ProblemSeverity,
+} from '@edildy/contracts';
 import { interpolate, type Language, translationsFor } from '@edildy/i18n';
 import type { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { formatInstant } from '../../reports/export/report-table';
@@ -94,7 +101,13 @@ export function auditReportDefinition(d: AuditReportData): TDocumentDefinitions 
     [L.checklist, `${d.checklistName} · ${interpolate(L.version, { number: d.versionNumber })}`],
     [L.site, d.siteName],
     [L.executor, d.executorName],
-    [L.window, `${formatInstant(d.window.startsAt, tz)} – ${formatInstant(d.window.closesAt, tz)}`],
+    // A run with no deadline (feedback 2026-11-27) only has a start.
+    [
+      L.window,
+      isOpenEnded(d.window.closesAt)
+        ? `${formatInstant(d.window.startsAt, tz)} –`
+        : `${formatInstant(d.window.startsAt, tz)} – ${formatInstant(d.window.closesAt, tz)}`,
+    ],
     [L.startedAt, at(d.startedAt, tz)],
     [L.completedAt, at(d.completedAt, tz)],
     [L.syncedAt, at(d.syncedAt, tz)],

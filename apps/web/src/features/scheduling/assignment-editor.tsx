@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSites, useSiteTypes } from '@/features/sites/queries';
+import { siteTypeLabel } from '@/features/sites/site-types';
 import { errorText } from '@/lib/errors';
 import { api, useMe } from '@/lib/session';
 import { MonthCalendar } from '@/components/month-calendar';
@@ -89,7 +90,10 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
   const sites = useSites();
   const siteTypes = useSiteTypes();
   const { branches, branch, locations, effectiveSiteId } = useMemo(() => placeOf(sites.data ?? [], siteId, branchId, initial?.siteId), [sites.data, siteId, branchId, initial?.siteId]);
-  const typeName = (s: SiteDto) => siteTypes.data?.find((ty) => ty.id === s.typeId)?.name;
+  const typeName = (s: SiteDto) => {
+    const name = siteTypes.data?.find((ty) => ty.id === s.typeId)?.name;
+    return name === undefined ? undefined : siteTypeLabel(t, name);
+  };
   const users = useSiteUsers(effectiveSiteId || null);
   const shifts = useShifts(effectiveSiteId || null);
   const people = users.data ?? [];

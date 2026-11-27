@@ -96,9 +96,8 @@ describe('assignments', () => {
 
   it('lets a branch’s people do checks in its zones, several fixed times a day (feedback 2026-11-14)', async () => {
     const w = await schedulingWorld(t);
-    const typeId = await siteTypeIdOf(w.s.tenantId);
-    const zone = (await w.api.post('/api/v1/sites', { parentId: w.siteId, typeId, name: 'Mətbəx' })).body.id as string;
-    const section = (await w.api.post('/api/v1/sites', { parentId: zone, typeId, name: 'Soyuducu' })).body.id as string;
+    const zone = (await w.api.post('/api/v1/sites', { parentId: w.siteId, typeId: await siteTypeIdOf(w.s.tenantId, 'Zona'), name: 'Mətbəx' })).body.id as string;
+    const section = (await w.api.post('/api/v1/sites', { parentId: zone, typeId: await siteTypeIdOf(w.s.tenantId, 'Bölmə'), name: 'Soyuducu' })).body.id as string;
     // The workers are linked to the branch only; they are offered for its zones and sections.
     const people = async (siteId: string) => (await w.api.get(`/api/v1/users?siteId=${siteId}&status=active`)).body.items.map((u: { id: string }) => u.id);
     expect(sorted(await people(section))).toEqual(sorted(w.workers));

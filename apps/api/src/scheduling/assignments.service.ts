@@ -192,7 +192,7 @@ export class AssignmentsService {
   async end(a: Actor, id: string): Promise<AssignmentDetail> {
     const row = await this.lockWritable(a, id);
     if (row.status !== 'ended') {
-      await this.writer.cancelFuturePending(id, 'assignment_ended');
+      await this.writer.cancelFuturePending(id, 'assignment_ended', { openEnded: true });
       await this.setStatus(row, 'ended', 'assignment.ended');
     }
     return this.get(a, id);

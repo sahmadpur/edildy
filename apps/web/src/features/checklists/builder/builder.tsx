@@ -150,7 +150,7 @@ export function Builder(props: BuilderProps) {
       {preview ? (
         <PreviewPane content={state.content} />
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-[16rem_minmax(0,1fr)_22rem] gap-3">
+        <div className="grid min-h-0 flex-1 grid-cols-[20rem_minmax(0,1fr)_17.5rem] gap-3">
           <Outline content={state.content} selected={state.selected} issues={index} dispatch={dispatch} readOnly={readOnly} />
           <Canvas content={state.content} selected={state.selected} issues={index} dispatch={dispatch} readOnly={readOnly} />
           <Inspector content={state.content} selected={state.selected} issues={index} dispatch={dispatch} readOnly={readOnly} />

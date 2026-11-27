@@ -1,3 +1,4 @@
+import { isOpenEnded } from '@edildy/contracts';
 import { Ionicons } from '@expo/vector-icons';
 import { formatLocalDate } from '@edildy/i18n';
 import { useMemo } from 'react';
@@ -92,7 +93,12 @@ export function MonthView({ selected, today, entries, timeZone, onSelect }: Prop
 function AgendaRow({ entry, timeZone }: { entry: CalendarEntry; timeZone: string }) {
   const { t } = useTranslation();
   const locale = useLocale();
-  const time = entry.allDay ? t('scheduling.builder.modes.anytime') : t('mobile.checklists.window', { from: formatTime(entry.startsAt, timeZone, locale), to: formatTime(entry.closesAt, timeZone, locale) });
+  const from = formatTime(entry.startsAt, timeZone, locale);
+  const time = entry.allDay
+    ? t('scheduling.builder.modes.anytime')
+    : isOpenEnded(entry.closesAt)
+      ? t('scheduling.summary.openEnded', { time: from })
+      : t('mobile.checklists.window', { from, to: formatTime(entry.closesAt, timeZone, locale) });
   return (
     <Pressable
       testID={`agenda-${entry.id}`}

@@ -6,7 +6,12 @@ export default {
     name: 'Type name',
     order: 'Order',
     confirmDeactivate: 'Deactivate the type «{{name}}»? Branches of this type are not changed.',
-    hint: 'Create the levels of your structure: for example branch, zone, section.',
+    hint: 'The structure’s levels: only types below a type can go inside it. Branch is always level 1; reorder the others with the arrows.',
+    level: 'Level {{n}}',
+    root: 'Root',
+    moveUp: 'Move {{name}} up',
+    moveDown: 'Move {{name}} down',
+    defaults: { branch: 'Branch', zone: 'Zone', section: 'Section', checkpoint: 'Checkpoint' },
   },
   list: {
     title: 'Branches',

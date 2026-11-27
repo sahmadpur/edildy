@@ -14,6 +14,7 @@ import { SiteFormDialog } from './site-form-dialog';
 import { SiteList } from './site-list';
 import { SiteTree } from './site-tree';
 import { SiteTypesPanel } from './site-types-panel';
+import { hasLowerLevel, siteTypeLabel } from './site-types';
 import { buildTree } from './tree';
 
 type DialogState =
@@ -30,7 +31,10 @@ export function SitesPage() {
   const types = useSiteTypes();
   const [dialog, setDialog] = useState<DialogState>(null);
   const tree = useMemo(() => buildTree(sites.data ?? []), [sites.data]);
-  const typeName = (id: string) => types.data?.find((ty) => ty.id === id)?.name ?? '';
+  const typeName = (id: string) => {
+    const name = types.data?.find((ty) => ty.id === id)?.name;
+    return name === undefined ? '' : siteTypeLabel(t, name);
+  };
   const refresh = () => qc.invalidateQueries({ queryKey: ['sites'] });
   const close = () => setDialog(null);
 
@@ -65,6 +69,7 @@ export function SitesPage() {
                 nodes={tree}
                 typeName={typeName}
                 canManage={canManage}
+                canAddChild={(n) => hasLowerLevel(types.data ?? [], n.typeId)}
                 onAddChild={(n) => setDialog({ kind: 'create', parent: n })}
                 onEdit={(n) => setDialog({ kind: 'edit', site: n })}
                 onMove={(n) => setDialog({ kind: 'move', site: n })}
@@ -110,6 +115,7 @@ export function SitesPage() {
           onOpenChange={(o) => !o && close()}
           types={types.data ?? []}
           site={dialog.kind === 'edit' ? dialog.site : undefined}
+          sites={sites.data ?? []}
           parent={dialog.kind === 'create' ? dialog.parent : undefined}
           onSubmit={async (v) => {
             const address = v.address || null;
@@ -131,6 +137,7 @@ export function SitesPage() {
           open
           site={dialog.site}
           sites={sites.data ?? []}
+          types={types.data ?? []}
           onOpenChange={(o) => !o && close()}
           onMove={async (parentId) => {
             try {

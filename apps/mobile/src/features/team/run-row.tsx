@@ -1,4 +1,4 @@
-import type { ReportRun } from '@edildy/contracts';
+import { isOpenEnded, type ReportRun } from '@edildy/contracts';
 import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -12,7 +12,9 @@ export function RunRow({ run, timeZone, onPress }: { run: ReportRun; timeZone: s
   const { t } = useTranslation();
   const locale = useLocale();
   const person = runPerson(t, run);
-  const due = t('mobile.team.due', { time: formatDateTime(run.dueAt, { locale, timeZone }) });
+  const due = isOpenEnded(run.dueAt)
+    ? t('scheduling.builder.noDeadline')
+    : t('mobile.team.due', { time: formatDateTime(run.dueAt, { locale, timeZone }) });
   const status = t(`scheduling.statuses.${run.status}`);
   const problems = run.problemCount > 0 ? t('mobile.team.problems', { count: run.problemCount }) : null;
   const critical = run.criticalCount > 0 ? t('mobile.team.critical', { count: run.criticalCount }) : null;

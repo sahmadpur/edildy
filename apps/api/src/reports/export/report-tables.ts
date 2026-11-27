@@ -1,4 +1,5 @@
 import {
+  isOpenEnded,
   type EmployeeReportRow,
   type ReportProblem,
   type ReportRun,
@@ -93,7 +94,8 @@ export function runsTable(rows: ReportRun[], title: string, locale: Language): R
     ],
     rows: rows.map((r) => [
       r.localDate,
-      r.dueAt,
+      // A run with no deadline (feedback 2026-11-27) has no due time to show.
+      isOpenEnded(r.dueAt) ? null : r.dueAt,
       r.checklist.name,
       r.site.name,
       T.scheduling.statuses[r.status],

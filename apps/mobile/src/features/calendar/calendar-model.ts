@@ -1,4 +1,10 @@
-import { addDays, isWholeDayWindow, type OccurrenceDto, zonedTimeToUtc } from '@edildy/contracts';
+import {
+  addDays,
+  isOpenEnded,
+  isWholeDayWindow,
+  type OccurrenceDto,
+  zonedTimeToUtc,
+} from '@edildy/contracts';
 import { cardDot } from '@/features/checklists/occurrence-card';
 import { GROUP_KEYS, type Groups } from '@/features/checklists/group-occurrences';
 import { colors } from '@/lib/theme';
@@ -98,7 +104,10 @@ export function daySegments(entries: readonly CalendarEntry[], day: string, time
   for (const entry of entries) {
     if (entry.allDay) continue;
     const start = Date.parse(entry.startsAt);
-    const end = Math.max(Date.parse(entry.closesAt), start);
+    // A run with no deadline (feedback 2026-11-27) is a short block on its start day, not a bar to the year 2100.
+    const end = isOpenEnded(entry.closesAt)
+      ? start + MIN_BLOCK_MINUTES * 60_000
+      : Math.max(Date.parse(entry.closesAt), start);
     if (start >= dayEnd || (end <= dayStart && !(start === end && start >= dayStart))) continue;
     const top = Math.max(0, (start - dayStart) / 60_000);
     const bottom = Math.min(DAY_MINUTES, Math.max((Math.min(end, dayEnd) - dayStart) / 60_000, top + MIN_BLOCK_MINUTES));

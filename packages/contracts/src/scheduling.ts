@@ -62,8 +62,16 @@ export const RECURRENCE_KINDS = ['once', 'daily', 'weekly', 'monthly', 'dates'] 
 export const FIXED_MAX_TIMES = 12;
 
 export const REPEAT_LIMITS = { minEveryMinutes: 15, maxEveryMinutes: 720 } as const;
+/** At most this many start–end windows for one "repeat" assignment (feedback 2026-11-27). */
+export const REPEAT_MAX_WINDOWS = 4;
 
-const dueAfterMinutes = z.number().int().min(1).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes);
+/**
+ * A run's "Müddət" in minutes, or `null` for no deadline (feedback 2026-11-27): the run is never overdue or missed and
+ * stays open until someone does it (see `OPEN_ENDED_AT`).
+ */
+const dueAfterMinutes = z.number().int().min(1).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes).nullable();
+const everyMinutes = z.number().int().min(REPEAT_LIMITS.minEveryMinutes).max(REPEAT_LIMITS.maxEveryMinutes);
+const repeatWindowSchema = z.object({ startTime: localTimeSchema, endTime: localTimeSchema, everyMinutes });
 const graceMinutes = z.number().int().min(0).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes);
 export const timingSchema = z.discriminatedUnion('mode', [
   z.object({
@@ -76,8 +84,9 @@ export const timingSchema = z.discriminatedUnion('mode', [
     extraTimes: z.array(localTimeSchema).max(FIXED_MAX_TIMES - 1).optional(),
     dueAfterMinutes: dueAfterMinutes,
     /**
-     * Each extra time's own "İcra müddəti" (feedback 2026-11-27), index-aligned with `extraTimes`; a missing entry
-     * (and every assignment made before) uses `dueAfterMinutes`, which stays the first time's length.
+     * Each extra time's own "Müddət" (feedback 2026-11-27), index-aligned with `extraTimes`; a missing entry
+     * (and every assignment made before) uses `dueAfterMinutes`, which stays the first time's length. `null` is an
+     * explicit "no deadline" and does not fall back.
      */
     extraDueAfterMinutes: z.array(dueAfterMinutes).max(FIXED_MAX_TIMES - 1).optional(),
     graceMinutes,
@@ -88,12 +97,18 @@ export const timingSchema = z.discriminatedUnion('mode', [
   /**
    * "Gün ərzində təkrar" (feedback 2026-11-08): runs every `everyMinutes` from `startTime` while the start is before
    * `endTime`, e.g. a toilet check every hour 08:00–20:00. Each run is open until the next one starts; no grace.
+   * `extraWindows` (feedback 2026-11-27) adds more windows the same day, each with its own interval, e.g. 08:00–12:00
+   * every hour and 14:00–18:00 every 30 minutes; absent on assignments made before.
    */
   z.object({
     mode: z.literal('repeat'),
     startTime: localTimeSchema,
     endTime: localTimeSchema,
-    everyMinutes: z.number().int().min(REPEAT_LIMITS.minEveryMinutes).max(REPEAT_LIMITS.maxEveryMinutes),
+    everyMinutes,
+    extraWindows: z
+      .array(repeatWindowSchema)
+      .max(REPEAT_MAX_WINDOWS - 1)
+      .optional(),
   }),
 ]);
 export type TimingMode = Timing['mode'];
@@ -147,17 +162,42 @@ export function shiftDurationMinutes(s: ShiftHours): number {
   return Math.max(...s.ranges.map(rangeMinutes));
 }
 
-/** One run of a fixed-time assignment: its start and its own length. */
+/**
+ * A run with no "Müddət" (feedback 2026-11-27) is due and closes at this instant, so the sweep never makes it overdue
+ * or missed and it stays open until someone does it. The columns stay NOT NULL, so installed phones keep reading dates.
+ */
+export const OPEN_ENDED_AT = new Date('2100-01-01T00:00:00.000Z');
+
+/** Whether a run's due (or close) instant is the no-deadline marker. */
+export function isOpenEnded(at: string | Date): boolean {
+  return +new Date(at) >= +OPEN_ENDED_AT;
+}
+
+/**
+ * Whether a slot can still be done: it has not closed. A slot with no deadline never closes, so only today's and later
+ * ones count; runs are never made for days already gone.
+ */
+export function slotStillOpen(
+  s: Pick<Slot, 'localDate' | 'dueAt' | 'closesAt'>,
+  now: Date,
+  today: LocalDate,
+): boolean {
+  return s.closesAt > now && (!isOpenEnded(s.dueAt) || s.localDate >= today);
+}
+
+/** One run of a fixed-time assignment: its start and its own length, `null` for no deadline. */
 export interface FixedRun {
   time: LocalTime;
-  dueAfterMinutes: number;
+  dueAfterMinutes: number | null;
 }
 
 /** Every run of a fixed-time assignment, sorted by time; a repeated time keeps its first entry. */
 export function fixedRuns(timing: Extract<Timing, { mode: 'fixed' }>): FixedRun[] {
   const runs: FixedRun[] = [{ time: timing.startTime, dueAfterMinutes: timing.dueAfterMinutes }];
   (timing.extraTimes ?? []).forEach((time, i) => {
-    if (!runs.some((r) => r.time === time)) runs.push({ time, dueAfterMinutes: timing.extraDueAfterMinutes?.[i] ?? timing.dueAfterMinutes });
+    const own = timing.extraDueAfterMinutes?.[i];
+    if (!runs.some((r) => r.time === time))
+      runs.push({ time, dueAfterMinutes: own === undefined ? timing.dueAfterMinutes : own });
   });
   return runs.sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
 }
@@ -167,11 +207,14 @@ export function fixedStartTimes(timing: Extract<Timing, { mode: 'fixed' }>): Loc
   return fixedRuns(timing).map((r) => r.time);
 }
 
-/** Start → close length of every slot (FR-09.05). */
+/** Start → close length of every slot (FR-09.05); a run with no deadline has no length and is left out. */
 export function windowMinutes(timing: Timing, shift: ShiftHours | null): number {
-  if (timing.mode === 'fixed') return Math.max(...fixedRuns(timing).map((r) => r.dueAfterMinutes)) + timing.graceMinutes;
+  if (timing.mode === 'fixed') {
+    const lengths = fixedRuns(timing).flatMap((r) => (r.dueAfterMinutes === null ? [] : [r.dueAfterMinutes]));
+    return lengths.length ? Math.max(...lengths) + timing.graceMinutes : 0;
+  }
   if (timing.mode === 'anytime') return ANYTIME_WINDOW_MINUTES;
-  if (timing.mode === 'repeat') return timing.everyMinutes;
+  if (timing.mode === 'repeat') return Math.max(...repeatWindows(timing).map((w) => w.everyMinutes));
   if (!shift) throw new Error('shift timing needs the shift hours');
   return shiftDurationMinutes(shift) + timing.graceMinutes;
 }
@@ -217,13 +260,36 @@ export function scheduleDates(r: Recurrence, from: LocalDate, to: LocalDate): Lo
   return out;
 }
 
-/** Start minutes of each repeat run within the day: startTime, +every, … while before endTime. */
+/** One start–end window of a "repeat" assignment and its interval. */
+export interface RepeatWindow {
+  startTime: LocalTime;
+  endTime: LocalTime;
+  everyMinutes: number;
+}
+
+/** Every window of a "repeat" assignment, sorted by start: the first one plus `extraWindows`. */
+export function repeatWindows(timing: Extract<Timing, { mode: 'repeat' }>): RepeatWindow[] {
+  const first = { startTime: timing.startTime, endTime: timing.endTime, everyMinutes: timing.everyMinutes };
+  return [first, ...(timing.extraWindows ?? [])].sort(
+    (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime),
+  );
+}
+
+/** Each repeat run within the day, in minutes: startTime, +every, … while before endTime, in every window; due at the next start or the window's end. */
+export function repeatRuns(timing: Extract<Timing, { mode: 'repeat' }>): { start: number; due: number }[] {
+  return repeatWindows(timing).flatMap((w) => {
+    const start = timeToMinutes(w.startTime);
+    const end = timeToMinutes(w.endTime);
+    const out: { start: number; due: number }[] = [];
+    for (let m = start; m < end; m += w.everyMinutes)
+      out.push({ start: m, due: Math.min(m + w.everyMinutes, end) });
+    return out;
+  });
+}
+
+/** Start minutes of each repeat run within the day. */
 export function repeatStarts(timing: Extract<Timing, { mode: 'repeat' }>): number[] {
-  const start = timeToMinutes(timing.startTime);
-  const end = timeToMinutes(timing.endTime);
-  const out: number[] = [];
-  for (let m = start; m < end; m += timing.everyMinutes) out.push(m);
-  return out;
+  return repeatRuns(timing).map((r) => r.start);
 }
 
 /** A shift period's slot on a day: start, due at the period's end (next day when it crosses midnight), then the grace. */
@@ -244,16 +310,17 @@ export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | nu
     return fixedRuns(timing).map((run) => fixedSlot(date, run, timing, tz));
   }
   if (timing.mode !== 'repeat') return [slotFor(date, timing, shift, tz)];
-  const end = timeToMinutes(timing.endTime);
-  return repeatStarts(timing).map((m) => {
-    const startsAt = zonedTimeToUtc(date, m, tz);
-    const dueAt = zonedTimeToUtc(date, Math.min(m + timing.everyMinutes, end), tz);
+  return repeatRuns(timing).map((r) => {
+    const startsAt = zonedTimeToUtc(date, r.start, tz);
+    const dueAt = zonedTimeToUtc(date, r.due, tz);
     return { localDate: date, startsAt, dueAt, closesAt: dueAt };
   });
 }
 
 function fixedSlot(date: LocalDate, run: FixedRun, timing: Extract<Timing, { mode: 'fixed' }>, tz: string): Slot {
   const startsAt = zonedTimeToUtc(date, timeToMinutes(run.time), tz);
+  if (run.dueAfterMinutes === null)
+    return { localDate: date, startsAt, dueAt: OPEN_ENDED_AT, closesAt: OPEN_ENDED_AT };
   const dueAt = new Date(+startsAt + run.dueAfterMinutes * 60_000);
   return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + timing.graceMinutes * 60_000) };
 }
@@ -300,6 +367,7 @@ export const SCHEDULING_ISSUE_CODES = [
   'scheduling.issues.repeatEndBeforeStart',
   'scheduling.issues.duplicateTime',
   'scheduling.issues.timesTooClose',
+  'scheduling.issues.repeatWindowsOverlap',
 ] as const;
 export type SchedulingIssueCode = (typeof SCHEDULING_ISSUE_CODES)[number];
 
@@ -333,14 +401,41 @@ export function validateTiming(timing: Timing): ContentIssue[] {
       seen.add(time);
     });
     // Each run is due before the next one starts, so two runs of one assignment never overlap their working time.
+    // A run with no deadline stays open on its own and does not hold the next one back.
     const runs = fixedRuns(timing);
-    if (runs.some((r, i) => i > 0 && timeToMinutes(r.time) - timeToMinutes(runs[i - 1]!.time) < runs[i - 1]!.dueAfterMinutes)) {
+    const tooClose = (r: FixedRun, i: number) => {
+      const prev = runs[i - 1];
+      return (
+        prev !== undefined &&
+        prev.dueAfterMinutes !== null &&
+        timeToMinutes(r.time) - timeToMinutes(prev.time) < prev.dueAfterMinutes
+      );
+    };
+    if (runs.some(tooClose))
       issues.push({ path: ['dueAfterMinutes'], code: 'scheduling.issues.timesTooClose' });
-    }
     return issues;
   }
   if (timing.mode !== 'repeat') return [];
-  return timeToMinutes(timing.endTime) <= timeToMinutes(timing.startTime) ? [{ path: ['endTime'], code: 'scheduling.issues.repeatEndBeforeStart' }] : [];
+  const issues: ContentIssue[] = [];
+  const windows = [timing, ...(timing.extraWindows ?? [])];
+  const at = (i: number): (string | number)[] => (i === 0 ? [] : ['extraWindows', i - 1]);
+  windows.forEach((w, i) => {
+    if (timeToMinutes(w.endTime) <= timeToMinutes(w.startTime))
+      issues.push({ path: [...at(i), 'endTime'], code: 'scheduling.issues.repeatEndBeforeStart' });
+  });
+  // Two windows of one day may not share a minute: their runs would overlap.
+  windows.forEach((w, i) => {
+    const overlaps = windows
+      .slice(0, i)
+      .some(
+        (o) =>
+          timeToMinutes(w.startTime) < timeToMinutes(o.endTime) &&
+          timeToMinutes(o.startTime) < timeToMinutes(w.endTime),
+      );
+    if (i > 0 && overlaps)
+      issues.push({ path: [...at(i), 'startTime'], code: 'scheduling.issues.repeatWindowsOverlap' });
+  });
+  return issues;
 }
 
 export const PREVIEW_WARNINGS = ['NO_ROSTERED_ASSIGNEES', 'SKIP_DATE_OUT_OF_RANGE'] as const;

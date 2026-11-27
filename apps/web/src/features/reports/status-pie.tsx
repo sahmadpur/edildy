@@ -1,4 +1,5 @@
 import type { RunCounts } from '@edildy/contracts';
+import { intlLocale } from '@edildy/i18n';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
@@ -16,7 +17,7 @@ export function StatusPie({ counts }: { counts: RunCounts }) {
     { key: 'late', label: t('reports.chart.late'), value: counts.late, color: CHART_COLOR.late },
   ] as const;
   const total = slices[0].value + slices[1].value;
-  const share = (v: number) => new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(total ? v / total : 0);
+  const share = (v: number) => new Intl.NumberFormat(intlLocale(locale), { style: 'percent', maximumFractionDigits: 0 }).format(total ? v / total : 0);
 
   return (
     <figure aria-labelledby={titleId} className="bg-card shadow-card grid grid-rows-[auto_1fr] gap-2 rounded-xl p-5">
@@ -39,12 +40,13 @@ export function StatusPie({ counts }: { counts: RunCounts }) {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <ul className="grid grid-cols-2 gap-2 text-sm">
+          {/* One row per slice: side by side, a narrow card wrapped "5 · 3%" over the label (feedback 2026-11-27). */}
+          <ul className="grid gap-1.5 text-sm">
             {slices.map((s) => (
               <li key={s.key} className="flex items-center gap-2">
                 <span className="size-2.5 shrink-0 rounded-full" style={{ background: s.color }} aria-hidden />
-                <span className="text-muted-foreground">{s.label}</span>
-                <span className="ml-auto font-medium tabular-nums">
+                <span className="text-muted-foreground min-w-0 truncate">{s.label}</span>
+                <span className="ml-auto font-medium whitespace-nowrap tabular-nums">
                   {s.value} · {share(s.value)}
                 </span>
               </li>

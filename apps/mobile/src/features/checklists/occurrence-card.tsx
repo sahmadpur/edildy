@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { isWholeDayWindow } from '@edildy/contracts';
+import { isOpenEnded, isWholeDayWindow } from '@edildy/contracts';
 import { formatDateTime } from '@edildy/i18n';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -69,7 +69,12 @@ export function OccurrenceCard({ card, group, timeZone, onStart, onOpen }: Props
             {/* An "İstənilən vaxt" run is the whole day: say so instead of 00:00–00:00 (feedback 2026-11-07). */}
             {isWholeDayWindow(o.startsAt, o.dueAt, timeZone)
               ? t('scheduling.builder.modes.anytime')
-              : t('mobile.checklists.window', { from: formatTime(o.startsAt, timeZone, locale), to: formatTime(o.closesAt, timeZone, locale) })}
+              : isOpenEnded(o.closesAt)
+                ? t('scheduling.summary.openEnded', { time: formatTime(o.startsAt, timeZone, locale) })
+                : t('mobile.checklists.window', {
+                    from: formatTime(o.startsAt, timeZone, locale),
+                    to: formatTime(o.closesAt, timeZone, locale),
+                  })}
             {o.shiftName ? ` · ${o.shiftName}` : ''}
           </Text>
         </View>

@@ -7,6 +7,7 @@ import { SiteFormDialog } from './site-form-dialog';
 const filial: SiteTypeDto = {
   id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01',
   name: 'Filial',
+  sortOrder: 0,
   active: true,
 } as SiteTypeDto;
 
@@ -37,5 +38,22 @@ describe('SiteFormDialog', () => {
     // Titled by the type: "Yeni zona", not "Yeni filial"; the address field is a comment (feedback 2026-11-27).
     expect(screen.getByRole('heading', { name: 'Yeni zona' })).toBeInTheDocument();
     expect(screen.getByLabelText('Şərh').tagName).toBe('TEXTAREA');
+  });
+
+  it('offers only lower levels inside a place, only Filial at the top, and keeps a legacy type on edit (feedback 2026-11-27)', () => {
+    const t = (id: string, name: string, sortOrder: number) => ({ id, name, sortOrder, active: true }) as SiteTypeDto;
+    const types = [t('0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e01', 'Filial', 0), t('0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e02', 'Zona', 1), t('0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e03', 'Bölmə', 2)];
+    const options = () => Array.from((screen.getByLabelText('Növ') as HTMLSelectElement).options).map((o) => o.textContent);
+    const zone = { id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e11', parentId: null, typeId: types[1]!.id, name: 'Köhnə zona' } as SiteDto;
+    const { unmount } = render(<SiteFormDialog open onOpenChange={() => {}} types={types} parent={zone} onSubmit={vi.fn()} />);
+    expect(options()).toEqual(['Bölmə']);
+    unmount();
+    const top = render(<SiteFormDialog open onOpenChange={() => {}} types={types} parent={null} onSubmit={vi.fn()} />);
+    expect(options()).toEqual(['Filial']);
+    top.unmount();
+    // A zone at the top, made before levels, keeps its type so a rename still saves.
+    render(<SiteFormDialog open onOpenChange={() => {}} types={types} site={zone} sites={[zone]} onSubmit={vi.fn()} />);
+    expect(options()).toEqual(['Filial', 'Zona']);
+    expect(screen.getByLabelText('Növ')).toHaveValue(types[1]!.id);
   });
 });

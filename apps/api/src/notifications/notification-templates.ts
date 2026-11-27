@@ -1,4 +1,10 @@
-import { isProblemReportType, isProblemType, type NotificationTargetKind, type NotificationType } from '@edildy/contracts';
+import {
+  isOpenEnded,
+  isProblemReportType,
+  isProblemType,
+  type NotificationTargetKind,
+  type NotificationType,
+} from '@edildy/contracts';
 import { interpolate, type Language, translationsFor } from '@edildy/i18n';
 import type { MailMessage } from '../mail/mailer';
 import type { NotificationTarget, OccurrenceTarget, ProblemReportTarget, ProblemTarget, RunTarget, TaskTarget } from './notification-targets';
@@ -51,7 +57,12 @@ const TASK_TYPES: ReadonlySet<NotificationType> = new Set<TaskType>(['task.assig
 const occurrenceText = (T: Templates, type: NotificationType, o: OccurrenceTarget): { title: string; body: string } | null => {
   if (!OCCURRENCE_TYPES.has(type)) return null;
   const t = T[type as OccurrenceType];
-  return { title: t.title, body: interpolate(t.body, { place: place(o), time: time(o.dueAt, o.timezone), date: day(o.localDate) }) };
+  // A run with no deadline (feedback 2026-11-27) has no "Son vaxt" to name; it is never due soon, overdue or missed.
+  if (isOpenEnded(o.dueAt)) return { title: t.title, body: `${place(o)}.` };
+  return {
+    title: t.title,
+    body: interpolate(t.body, { place: place(o), time: time(o.dueAt, o.timezone), date: day(o.localDate) }),
+  };
 };
 
 const problemText = (T: Templates, type: NotificationType, p: ProblemTarget): { title: string; body: string } | null => {

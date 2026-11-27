@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   expandSchedule,
   fixedRuns,
+  isOpenEnded,
+  OPEN_ENDED_AT,
+  slotStillOpen,
   type Recurrence,
   recurrenceSchema,
   scheduleDates,
@@ -257,5 +260,130 @@ describe('repeat timing', () => {
     expect(timingSchema.safeParse({ ...repeat, everyMinutes: 10 }).success).toBe(false);
     expect(validateTiming(repeat)).toEqual([]);
     expect(validateTiming({ ...repeat, endTime: '08:00' })).toEqual([{ path: ['endTime'], code: 'scheduling.issues.repeatEndBeforeStart' }]);
+  });
+});
+
+describe('a fixed time with no Müddət (feedback 2026-11-27)', () => {
+  // 08:00 has no deadline, 13:00 lasts 60 minutes, 18:00 has no deadline either.
+  const fixed = {
+    mode: 'fixed',
+    startTime: '08:00',
+    dueAfterMinutes: null,
+    extraTimes: ['13:00', '18:00'],
+    extraDueAfterMinutes: [60, null],
+    graceMinutes: 30,
+  } as const;
+
+  it('parses null as no deadline and does not fall back to the first length', () => {
+    expect(timingSchema.parse(fixed)).toEqual(fixed);
+    expect(fixedRuns(fixed).map((r) => r.dueAfterMinutes)).toEqual([null, 60, null]);
+    expect(
+      fixedRuns({ ...fixed, dueAfterMinutes: 90, extraDueAfterMinutes: [null] }).map(
+        (r) => r.dueAfterMinutes,
+      ),
+    ).toEqual([90, null, 90]);
+  });
+
+  it('makes an open-ended slot that is due and closes at the marker', () => {
+    const [first, second] = slotsFor('2026-11-02', fixed, null, 'UTC');
+    expect(first).toEqual({
+      localDate: '2026-11-02',
+      startsAt: new Date('2026-11-02T08:00:00Z'),
+      dueAt: OPEN_ENDED_AT,
+      closesAt: OPEN_ENDED_AT,
+    });
+    expect(isOpenEnded(first!.dueAt)).toBe(true);
+    expect(isOpenEnded(second!.dueAt.toISOString())).toBe(false);
+  });
+
+  it('leaves open-ended runs out of the window and the gap check', () => {
+    expect(windowMinutes(fixed, null)).toBe(90);
+    expect(
+      windowMinutes({ mode: 'fixed', startTime: '08:00', dueAfterMinutes: null, graceMinutes: 0 }, null),
+    ).toBe(0);
+    expect(validateTiming(fixed)).toEqual([]);
+    expect(validateTiming({ ...fixed, extraDueAfterMinutes: [360, null] })).toEqual([
+      { path: ['dueAfterMinutes'], code: 'scheduling.issues.timesTooClose' },
+    ]);
+  });
+
+  it('keeps an open-ended slot only from today on', () => {
+    const now = new Date('2026-11-05T12:00:00Z');
+    const slot = (localDate: string) => ({ localDate, dueAt: OPEN_ENDED_AT, closesAt: OPEN_ENDED_AT });
+    expect(slotStillOpen(slot('2026-11-04'), now, '2026-11-05')).toBe(false);
+    expect(slotStillOpen(slot('2026-11-05'), now, '2026-11-05')).toBe(true);
+    const timed = {
+      localDate: '2026-11-05',
+      dueAt: new Date('2026-11-05T13:00:00Z'),
+      closesAt: new Date('2026-11-05T13:00:00Z'),
+    };
+    expect(slotStillOpen(timed, now, '2026-11-05')).toBe(true);
+    expect(slotStillOpen(timed, new Date('2026-11-05T13:00:00Z'), '2026-11-05')).toBe(false);
+  });
+
+  it('describes a run with no deadline', () => {
+    const t = (k: string, v?: Record<string, string | number>) => (v?.time ? `${k}(${v.time})` : k);
+    expect(describeSchedule({ kind: 'daily', every: 1, ...range('2026-11-01') }, fixed, null, t)).toBe(
+      'scheduling.summary.daily, scheduling.summary.noDeadline(08:00), 13:00–14:00, scheduling.summary.noDeadline(18:00)',
+    );
+  });
+});
+
+describe('repeat with several windows (feedback 2026-11-27)', () => {
+  const repeat = {
+    mode: 'repeat' as const,
+    startTime: '14:00',
+    endTime: '16:00',
+    everyMinutes: 30,
+    extraWindows: [{ startTime: '08:00', endTime: '10:00', everyMinutes: 60 }],
+  };
+
+  it('makes runs in every window, in time order, each due within its own window', () => {
+    const slots = slotsFor('2026-11-02', repeat, null, 'UTC');
+    expect(
+      slots.map((s) => [s.startsAt.toISOString().slice(11, 16), s.dueAt.toISOString().slice(11, 16)]),
+    ).toEqual([
+      ['08:00', '09:00'],
+      ['09:00', '10:00'],
+      ['14:00', '14:30'],
+      ['14:30', '15:00'],
+      ['15:00', '15:30'],
+      ['15:30', '16:00'],
+    ]);
+    expect(windowMinutes(repeat, null)).toBe(60);
+  });
+
+  it('checks each window and rejects overlapping ones', () => {
+    expect(validateTiming(repeat)).toEqual([]);
+    expect(
+      validateTiming({
+        ...repeat,
+        extraWindows: [{ startTime: '10:00', endTime: '09:00', everyMinutes: 60 }],
+      }),
+    ).toEqual([{ path: ['extraWindows', 0, 'endTime'], code: 'scheduling.issues.repeatEndBeforeStart' }]);
+    expect(
+      validateTiming({
+        ...repeat,
+        extraWindows: [{ startTime: '15:00', endTime: '17:00', everyMinutes: 60 }],
+      }),
+    ).toEqual([{ path: ['extraWindows', 0, 'startTime'], code: 'scheduling.issues.repeatWindowsOverlap' }]);
+    // Touching windows are fine: 16:00 ends one and starts the next.
+    expect(
+      validateTiming({
+        ...repeat,
+        extraWindows: [{ startTime: '16:00', endTime: '17:00', everyMinutes: 60 }],
+      }),
+    ).toEqual([]);
+    expect(
+      timingSchema.safeParse({ ...repeat, extraWindows: Array(4).fill(repeat.extraWindows[0]) }).success,
+    ).toBe(false);
+  });
+
+  it('describes every window', () => {
+    const t = (k: string, v?: Record<string, string | number>) =>
+      v?.range ? `${v.range} ${v.every}` : v?.n ? `${k}:${v.n}` : k;
+    expect(describeSchedule({ kind: 'daily', every: 1, ...range('2026-11-01') }, repeat, null, t)).toBe(
+      'scheduling.summary.daily, 08:00–10:00 scheduling.summary.everyHours:1, 14:00–16:00 scheduling.summary.everyMinutes:30',
+    );
   });
 });

@@ -17,12 +17,13 @@ const node = (id: string, name: string, active: boolean): SiteNode => ({
   children: [],
 });
 
-function renderTree(nodes: SiteNode[], onToggleActive = vi.fn()) {
+function renderTree(nodes: SiteNode[], onToggleActive = vi.fn(), canAddChild?: (n: SiteNode) => boolean) {
   renderWithProviders(
     <SiteTree
       nodes={nodes}
       typeName={() => 'Filial'}
       canManage
+      canAddChild={canAddChild}
       onAddChild={vi.fn()}
       onEdit={vi.fn()}
       onMove={vi.fn()}
@@ -64,5 +65,18 @@ describe('SiteTree', () => {
     expect(within(alfa).getByRole('treeitem', { name: 'Beta' })).toBeInTheDocument();
     expect(within(alfa).getAllByRole('button', { name: 'Düzəliş et' })[0]).toHaveTextContent('Düzəliş et');
     expect(within(alfa).getAllByRole('button', { name: 'Ləğv et' })[0]).toHaveTextContent('Ləğv et');
+  });
+
+  it('puts an icon before each worded action and hides adding inside the lowest level (feedback 2026-11-27)', () => {
+    const child: SiteNode = { ...node('b', 'Beta', true), parentId: 'a', depth: 1 };
+    renderTree([{ ...node('a', 'Alfa', true), children: [child] }], vi.fn(), (n) => n.id === 'a');
+    const alfa = screen.getByRole('treeitem', { name: 'Alfa' });
+    const beta = within(alfa).getByRole('treeitem', { name: 'Beta' });
+    for (const name of ['Zona / bölmə', 'Düzəliş et', 'Köçür', 'Ləğv et']) {
+      const button = within(alfa).getAllByRole('button', { name })[0]!;
+      expect(button).toHaveTextContent(name);
+      expect(button.querySelector('svg')).not.toBeNull();
+    }
+    expect(within(beta).queryByRole('button', { name: 'Zona / bölmə' })).toBeNull();
   });
 });

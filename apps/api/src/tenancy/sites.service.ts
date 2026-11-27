@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import type { SiteDto } from '@edildy/contracts';
+import { type SiteDto, siteLevelAllowed } from '@edildy/contracts';
 import { and, asc, eq, ne, sql } from 'drizzle-orm';
 import { uuidv7 } from 'uuidv7';
 import { AppError } from '../common/app-error';
 import { AuditService } from '../db/audit.service';
-import { DbService } from '../db/db.service';
+import { DbService, type Tx } from '../db/db.service';
 import { sites, siteTypes } from '../db/schema';
 import { assertWithinLimit } from './subscription';
 import type { CreateSiteDto, MoveSiteDto, UpdateSiteDto } from './dto';
@@ -22,6 +22,14 @@ export function toSiteDto(r: typeof sites.$inferSelect): SiteDto {
     path: r.path,
     depth: r.path.split('.').length - 1,
   };
+}
+
+/**
+ * Serialises path- and level-changing writes within the tenant until the transaction ends, so two concurrent moves
+ * can't both pass the cycle check, a create can't read a stale parent path, and a type reorder can't race a site write.
+ */
+export async function lockSiteTree(tx: Tx, tenantId: string): Promise<void> {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`site-tree:${tenantId}`}, 0))`);
 }
 
 const isSameOrDescendant = (candidatePath: string, ancestorPath: string) =>
@@ -42,8 +50,10 @@ export class SitesService {
   async create(input: CreateSiteDto): Promise<SiteDto> {
     const { tenantId } = this.db.context();
     await this.lockTree();
-    await this.requireActiveType(input.typeId);
+    const level = await this.requireActiveType(input.typeId);
     const parent = input.parentId ? await this.find(input.parentId, 'REFERENCE_NOT_FOUND') : null;
+    // Levels (feedback 2026-11-27): only the root type at the top, and a child is always of a lower level.
+    if (!siteLevelAllowed(parent ? await this.levelOf(parent.typeId) : null, level)) throw new AppError('SITE_LEVEL_INVALID');
     // A top-level site is a branch: the plan caps them (BR-01.05).
     if (!parent) await assertWithinLimit(this.db.tx(), tenantId, 'branches');
     const id = uuidv7();
@@ -67,7 +77,15 @@ export class SitesService {
 
   async update(id: string, input: UpdateSiteDto): Promise<SiteDto> {
     const existing = await this.find(id, 'NOT_FOUND');
-    if (input.typeId && input.typeId !== existing.typeId) await this.requireActiveType(input.typeId);
+    if (input.typeId && input.typeId !== existing.typeId) {
+      // A new type keeps the place between its parent and its children; a place that already broke the levels (made
+      // before them) can still be renamed while it keeps its type.
+      await this.lockTree();
+      const level = await this.requireActiveType(input.typeId);
+      const parentLevel = existing.parentId ? await this.levelOf((await this.find(existing.parentId, 'NOT_FOUND')).typeId) : null;
+      const children = await this.db.tx().select({ level: siteTypes.sortOrder }).from(sites).innerJoin(siteTypes, eq(siteTypes.id, sites.typeId)).where(eq(sites.parentId, id));
+      if (!siteLevelAllowed(parentLevel, level) || children.some((c) => c.level <= level)) throw new AppError('SITE_LEVEL_INVALID');
+    }
     if (input.active === true && !existing.active && existing.parentId === null) await assertWithinLimit(this.db.tx(), existing.tenantId, 'branches');
     const [row] = await this.db
       .tx()
@@ -86,6 +104,7 @@ export class SitesService {
     const node = await this.find(id, 'NOT_FOUND');
     const parent = input.parentId ? await this.find(input.parentId, 'REFERENCE_NOT_FOUND') : null;
     if (parent && isSameOrDescendant(parent.path, node.path)) throw new AppError('SITE_CYCLE');
+    if (!siteLevelAllowed(parent ? await this.levelOf(parent.typeId) : null, await this.levelOf(node.typeId))) throw new AppError('SITE_LEVEL_INVALID');
     if (!parent && node.parentId !== null && node.active) await assertWithinLimit(tx, node.tenantId, 'branches');
     const oldPath = node.path;
     const newPath = parent ? `${parent.path}.${siteLabel(node.id)}` : siteLabel(node.id);
@@ -117,8 +136,13 @@ export class SitesService {
    * concurrent moves can't both pass the cycle check and a create can't read a stale parent path.
    */
   private async lockTree(): Promise<void> {
-    const { tenantId } = this.db.context();
-    await this.db.tx().execute(sql`select pg_advisory_xact_lock(hashtextextended(${`site-tree:${tenantId}`}, 0))`);
+    await lockSiteTree(this.db.tx(), this.db.context().tenantId);
+  }
+
+  private async levelOf(typeId: string): Promise<number> {
+    const [type] = await this.db.tx().select({ level: siteTypes.sortOrder }).from(siteTypes).where(eq(siteTypes.id, typeId));
+    if (!type) throw new AppError('REFERENCE_NOT_FOUND');
+    return type.level;
   }
 
   private async find(id: string, missing: 'NOT_FOUND' | 'REFERENCE_NOT_FOUND') {
@@ -127,12 +151,14 @@ export class SitesService {
     return row;
   }
 
-  private async requireActiveType(typeId: string): Promise<void> {
+  /** The type's level; an unknown or inactive type is refused. */
+  private async requireActiveType(typeId: string): Promise<number> {
     const [type] = await this.db
       .tx()
-      .select({ id: siteTypes.id })
+      .select({ level: siteTypes.sortOrder })
       .from(siteTypes)
       .where(and(eq(siteTypes.id, typeId), eq(siteTypes.active, true)));
     if (!type) throw new AppError('REFERENCE_NOT_FOUND');
+    return type.level;
   }
 }
