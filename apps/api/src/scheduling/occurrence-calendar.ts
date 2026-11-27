@@ -8,6 +8,7 @@ import {
   expandSchedule,
   localDateOf,
   recurrenceSchema,
+  slotStillOpen,
   timingSchema,
 } from '@edildy/contracts';
 import { and, asc, between, eq, inArray, ne, or, type SQL, sql } from 'drizzle-orm';
@@ -128,8 +129,19 @@ export class OccurrenceCalendar {
       const horizon = r.materializedUntil ?? now;
       const from = localDateOf(horizon, tz) > q.from ? localDateOf(horizon, tz) : q.from;
       if (from > q.to) continue;
-      const slots = expandSchedule(recurrenceSchema.parse(r.schedule), timing, shift, tz, addDays(from, -1), q.to).filter(
-        (s) => s.startsAt >= horizon && s.closesAt > now && s.localDate >= q.from && s.localDate <= q.to,
+      const slots = expandSchedule(
+        recurrenceSchema.parse(r.schedule),
+        timing,
+        shift,
+        tz,
+        addDays(from, -1),
+        q.to,
+      ).filter(
+        (s) =>
+          s.startsAt >= horizon &&
+          slotStillOpen(s, now, localDateOf(now, tz)) &&
+          s.localDate >= q.from &&
+          s.localDate <= q.to,
       );
       for (const s of slots) {
         out.push({

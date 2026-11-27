@@ -1,4 +1,5 @@
 import {
+  isOpenEnded,
   type ReportFiltersQuery as ReportFilters,
   RUN_AUDIT_STATES,
   RUN_BUCKETS,
@@ -135,7 +136,9 @@ export function RunsTable({
             {items.map((r) => (
               <TableRow key={r.occurrenceId}>
                 <TableCell>{formatLocalDate(r.localDate, locale)}</TableCell>
-                <TableCell className="tabular-nums">{time(r.dueAt)}</TableCell>
+                <TableCell className="tabular-nums">
+                  {isOpenEnded(r.dueAt) ? t('scheduling.builder.noDeadline') : time(r.dueAt)}
+                </TableCell>
                 <TableCell>
                   <button
                     type="button"

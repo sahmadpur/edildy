@@ -92,6 +92,7 @@ import {
   type SubscriptionInput,
   type UpdateRoleInput,
   type UpdateSiteInput,
+  type ReorderSiteTypesInput,
   type UpdateSiteTypeInput,
   type UpdateTeamInput,
   type UpdateTenantInput,
@@ -191,6 +192,7 @@ export function createEdildyApi(c: ApiClient) {
       list: () => c.request('GET', '/site-types', { schema: z.array(siteTypeDtoSchema) }),
       create: (body: CreateSiteTypeInput) => c.request('POST', '/site-types', { body, schema: siteTypeDtoSchema }),
       update: (id: string, body: UpdateSiteTypeInput) => c.request('PATCH', `/site-types/${id}`, { body, schema: siteTypeDtoSchema }),
+      reorder: (body: ReorderSiteTypesInput) => c.request('POST', '/site-types/order', { body, schema: z.array(siteTypeDtoSchema) }),
     },
     sites: {
       list: () => c.request('GET', '/sites', { schema: z.array(siteDtoSchema) }),

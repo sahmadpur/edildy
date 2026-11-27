@@ -20,6 +20,8 @@ interface Props {
   disabled?: boolean;
   /** With an icon the button shows only the icon; `label` becomes its accessible name and tooltip. */
   icon?: ReactNode;
+  /** An icon shown before the label, which stays visible (feedback 2026-11-27). */
+  leadingIcon?: ReactNode;
 }
 
 export function ConfirmButton({
@@ -31,6 +33,7 @@ export function ConfirmButton({
   size,
   disabled,
   icon,
+  leadingIcon,
 }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -46,7 +49,12 @@ export function ConfirmButton({
         title={icon ? label : undefined}
         onClick={() => setOpen(true)}
       >
-        {icon ?? label}
+        {icon ?? (
+          <>
+            {leadingIcon}
+            {label}
+          </>
+        )}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

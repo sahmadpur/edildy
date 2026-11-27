@@ -1,4 +1,4 @@
-import { zonedTimeToUtc } from '@edildy/contracts';
+import { isOpenEnded, zonedTimeToUtc } from '@edildy/contracts';
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -95,7 +95,14 @@ export function TimeGrid({ days, entries, today, now, timeZone }: Props) {
               {c.segments.map((s) => {
                 const tint = tintOf(s.entry.color);
                 const height = ((s.bottom - s.top) / 60) * HOUR_HEIGHT - 2;
-                const time = t('mobile.checklists.window', { from: formatTime(s.entry.startsAt, timeZone, locale), to: formatTime(s.entry.closesAt, timeZone, locale) });
+                const from = formatTime(s.entry.startsAt, timeZone, locale);
+                // A run with no deadline (feedback 2026-11-27) only has a start.
+                const time = isOpenEnded(s.entry.closesAt)
+                  ? t('scheduling.summary.openEnded', { time: from })
+                  : t('mobile.checklists.window', {
+                      from,
+                      to: formatTime(s.entry.closesAt, timeZone, locale),
+                    });
                 return (
                   <Pressable
                     key={s.entry.id}

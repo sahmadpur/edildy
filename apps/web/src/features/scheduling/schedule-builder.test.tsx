@@ -88,7 +88,7 @@ describe('input validity', () => {
 
   it('keeps number fields valid while typing', () => {
     render(<TimingHarness initial={defaultTiming('fixed', [])} />);
-    const due = screen.getByLabelText('İcra müddəti (dəqiqə)');
+    const due = screen.getByLabelText('Müddət (dəqiqə)');
     const before = json();
     fireEvent.change(due, { target: { value: '' } });
     expect(json()).toEqual(before);
@@ -112,7 +112,7 @@ describe('TimingEditor', () => {
     render(<TimingHarness initial={defaultTiming('fixed', [])} />);
     expect(json()).toEqual({ mode: 'fixed', startTime: '08:00', dueAfterMinutes: 120, graceMinutes: 60 });
     fireEvent.change(screen.getByLabelText('Başlama vaxtı'), { target: { value: '09:30' } });
-    fireEvent.change(screen.getByLabelText('İcra müddəti (dəqiqə)'), { target: { value: '90' } });
+    fireEvent.change(screen.getByLabelText('Müddət (dəqiqə)'), { target: { value: '90' } });
     expect(json()).toMatchObject({ startTime: '09:30', dueAfterMinutes: 90 });
     const modes = within(screen.getByRole('group', { name: 'Vaxt növü' }));
     expect(modes.getAllByRole('checkbox').map((c) => c.closest('label')?.textContent)).toEqual(['Sabit vaxt', 'Növbəyə görə', 'İstənilən vaxt', 'Gün ərzində təkrar']);
@@ -130,9 +130,9 @@ describe('TimingEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
     expect(json()).toEqual({ mode: 'fixed', startTime: '08:00', extraTimes: ['10:00'], extraDueAfterMinutes: [120], dueAfterMinutes: 120, graceMinutes: 60 });
     fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '09:00' } });
-    expect(screen.getByText('Vaxtlar arasındakı fasilə icra müddətindən az ola bilməz.')).toBeInTheDocument();
+    expect(screen.getByText('Vaxtlar arasındakı fasilə müddətdən az ola bilməz.')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '13:00' } });
-    expect(screen.queryByText('Vaxtlar arasındakı fasilə icra müddətindən az ola bilməz.')).toBeNull();
+    expect(screen.queryByText('Vaxtlar arasındakı fasilə müddətdən az ola bilməz.')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: '08:00 vaxtını sil' }));
     expect(json()).toEqual({ mode: 'fixed', startTime: '13:00', dueAfterMinutes: 120, graceMinutes: 60 });
   });
@@ -141,8 +141,15 @@ describe('TimingEditor', () => {
     render(<TimingHarness initial={defaultTiming('fixed', [])} />);
     await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
     fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '13:00' } });
-    fireEvent.change(screen.getByLabelText('İcra müddəti 2 (dəqiqə)'), { target: { value: '30' } });
-    expect(json()).toEqual({ mode: 'fixed', startTime: '08:00', extraTimes: ['13:00'], extraDueAfterMinutes: [30], dueAfterMinutes: 120, graceMinutes: 60 });
+    fireEvent.change(screen.getByLabelText('Müddət 2 (dəqiqə)'), { target: { value: '30' } });
+    expect(json()).toEqual({
+      mode: 'fixed',
+      startTime: '08:00',
+      extraTimes: ['13:00'],
+      extraDueAfterMinutes: [30],
+      dueAfterMinutes: 120,
+      graceMinutes: 60,
+    });
     // A new time starts with the last one's length.
     await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
     expect(json()).toMatchObject({ extraTimes: ['13:00', '14:00'], extraDueAfterMinutes: [30, 30] });
@@ -167,5 +174,47 @@ describe('TimingEditor', () => {
     expect(json().everyMinutes).toBe(30);
     fireEvent.change(screen.getByLabelText('Son vaxt'), { target: { value: '07:00' } });
     expect(screen.getByText('Son vaxt başlama vaxtından sonra olmalıdır.')).toBeInTheDocument();
+  });
+
+  it('lets a fixed time have no Müddət, and gives one back (feedback 2026-11-27)', async () => {
+    render(<TimingHarness initial={defaultTiming('fixed', [])} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
+    const [first] = screen.getAllByRole('button', { name: 'Müddəti sil' });
+    await userEvent.click(first!);
+    expect(json()).toEqual({
+      mode: 'fixed',
+      startTime: '08:00',
+      dueAfterMinutes: null,
+      extraTimes: ['10:00'],
+      extraDueAfterMinutes: [120],
+      graceMinutes: 60,
+    });
+    expect(screen.getByText('Müddətsiz')).toBeInTheDocument();
+    expect(screen.getByText(/gecikmiş sayılmır/)).toBeInTheDocument();
+    // The second time keeps its own length; no gap rule applies after a run with no deadline.
+    fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '08:30' } });
+    expect(screen.queryByText('Vaxtlar arasındakı fasilə müddətdən az ola bilməz.')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Müddət əlavə et' }));
+    expect(json()).toMatchObject({ dueAfterMinutes: 60 });
+    expect(screen.queryByText('Müddətsiz')).toBeNull();
+  });
+
+  it('repeats in several windows, each with its own interval (feedback 2026-11-27)', async () => {
+    render(<TimingHarness initial={defaultTiming('repeat', [])} />);
+    fireEvent.change(screen.getByLabelText('Son vaxt'), { target: { value: '12:00' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Aralıq əlavə et' }));
+    expect(json()).toEqual({
+      mode: 'repeat',
+      startTime: '08:00',
+      endTime: '12:00',
+      everyMinutes: 60,
+      extraWindows: [{ startTime: '13:00', endTime: '17:00', everyMinutes: 60 }],
+    });
+    await userEvent.selectOptions(screen.getByLabelText('Aralıq 2: Hər'), '30');
+    expect(json().extraWindows).toEqual([{ startTime: '13:00', endTime: '17:00', everyMinutes: 30 }]);
+    fireEvent.change(screen.getByLabelText('Aralıq 2: Başlama vaxtı'), { target: { value: '11:00' } });
+    expect(screen.getByText('Vaxt aralıqları bir-birini kəsməməlidir.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '08:00–12:00 aralığını sil' }));
+    expect(json()).toEqual({ mode: 'repeat', startTime: '11:00', endTime: '17:00', everyMinutes: 30 });
   });
 });

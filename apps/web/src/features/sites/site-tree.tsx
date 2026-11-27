@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Ban, ChevronDown, ChevronRight, type LucideIcon, Move, Pencil, Plus, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConfirmButton } from '@/components/confirm-button';
@@ -11,6 +11,8 @@ interface Props {
   nodes: SiteNode[];
   typeName: (typeId: string) => string;
   canManage: boolean;
+  /** Whether a place can hold another: some type is of a lower level (feedback 2026-11-27). */
+  canAddChild?: (node: SiteNode) => boolean;
   onAddChild: (node: SiteNode) => void;
   onEdit: (node: SiteNode) => void;
   onMove: (node: SiteNode) => void;
@@ -35,8 +37,9 @@ function SiteTreeItem({ node, ...props }: Props & { node: SiteNode }) {
   const [open, setOpen] = useState(true);
   const hasChildren = node.children.length > 0;
   const nested = node.depth > 0;
-  const action = (label: string, onClick: () => void) => (
+  const action = (Icon: LucideIcon, label: string, onClick: () => void) => (
     <Button variant="ghost" size="xs" onClick={onClick}>
+      <Icon aria-hidden className="size-3.5" />
       {label}
     </Button>
   );
@@ -63,23 +66,25 @@ function SiteTreeItem({ node, ...props }: Props & { node: SiteNode }) {
         <Badge variant="outline">{props.typeName(node.typeId)}</Badge>
         {!node.active && <Badge variant="secondary">{t('common.inactive')}</Badge>}
         {props.canManage && (
-          // Words, not icons (feedback 2026-11-07); the row wraps them under the name when the box is narrow.
+          // Words (feedback 2026-11-07) with an icon before each (feedback 2026-11-27); the row wraps them under the name
+          // when the box is narrow. Nothing can be added inside a place of the lowest level.
           <div className="ml-auto flex flex-wrap justify-end gap-0.5">
-            {action(t('sites.tree.addChild'), () => props.onAddChild(node))}
-            {action(t('common.edit'), () => props.onEdit(node))}
-            {action(t('sites.tree.move'), () => props.onMove(node))}
+            {(props.canAddChild?.(node) ?? true) && action(Plus, t('sites.tree.addChild'), () => props.onAddChild(node))}
+            {action(Pencil, t('common.edit'), () => props.onEdit(node))}
+            {action(Move, t('sites.tree.move'), () => props.onMove(node))}
             {node.active ? (
               // Spec §4.1: deactivating warns; descendants are not changed automatically and the admin decides.
               <ConfirmButton
                 size="xs"
                 variant="ghost"
                 label={t('common.deactivate')}
+                leadingIcon={<Ban aria-hidden className="size-3.5" />}
                 title={t('common.deactivate')}
                 description={t('sites.tree.confirmDeactivate', { name: node.name })}
                 onConfirm={() => props.onToggleActive(node)}
               />
             ) : (
-              action(t('common.reactivate'), () => props.onToggleActive(node))
+              action(RotateCcw, t('common.reactivate'), () => props.onToggleActive(node))
             )}
           </div>
         )}

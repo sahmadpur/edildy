@@ -91,7 +91,7 @@ describe('manual messages', () => {
   it('refuses a send that reaches nobody or more than 1000 people', async () => {
     const w = await world();
     const typeId = await siteTypeIdOf(w.s.tenantId);
-    const empty = (await w.owner.post('/api/v1/sites', { parentId: w.siteId, typeId, name: 'Boş anbar' })).body.id as string;
+    const empty = (await w.owner.post('/api/v1/sites', { parentId: w.siteId, typeId: await siteTypeIdOf(w.s.tenantId, 'Zona'), name: 'Boş anbar' })).body.id as string;
     expect((await w.manager.api.post('/api/v1/notifications/messages/preview', message({ siteIds: [empty] }))).body).toEqual({ recipientCount: 0 });
     const nobody = await w.manager.api.post('/api/v1/notifications/messages', message({ siteIds: [empty] }));
     expect(nobody.status).toBe(400);

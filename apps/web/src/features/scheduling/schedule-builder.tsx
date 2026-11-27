@@ -1,5 +1,21 @@
-import { FIXED_MAX_TIMES, formatShiftRanges, isoWeekday, minutesToTime, timeToMinutes, validateTiming, type Recurrence, RECURRENCE_KINDS, type RecurrenceKind, SCHEDULING_LIMITS, type ShiftDto, TIMING_MODES, type Timing } from '@edildy/contracts';
-import { Plus, X } from 'lucide-react';
+import {
+  FIXED_MAX_TIMES,
+  formatShiftRanges,
+  isoWeekday,
+  minutesToTime,
+  REPEAT_MAX_WINDOWS,
+  type RepeatWindow,
+  timeToMinutes,
+  validateTiming,
+  type Recurrence,
+  RECURRENCE_KINDS,
+  type RecurrenceKind,
+  SCHEDULING_LIMITS,
+  type ShiftDto,
+  TIMING_MODES,
+  type Timing,
+} from '@edildy/contracts';
+import { Plus, Trash2, X } from 'lucide-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NativeSelect } from '@/components/native-select';
@@ -313,33 +329,7 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
       {value.mode === 'anytime' ? (
         <p className="text-muted-foreground text-sm">{t('scheduling.builder.anytimeHint')}</p>
       ) : value.mode === 'repeat' ? (
-        <div className="grid gap-2">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor={`${id}-rstart`}>{t('scheduling.builder.startTime')}</Label>
-              <Input id={`${id}-rstart`} type="time" value={value.startTime} onChange={(e) => e.target.value && onChange({ ...value, startTime: e.target.value })} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor={`${id}-rend`}>{t('scheduling.builder.endTime')}</Label>
-              <Input id={`${id}-rend`} type="time" value={value.endTime} onChange={(e) => e.target.value && onChange({ ...value, endTime: e.target.value })} />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor={`${id}-every`}>{t('scheduling.builder.every')}</Label>
-              <NativeSelect id={`${id}-every`} value={String(value.everyMinutes)} onChange={(e) => onChange({ ...value, everyMinutes: Number(e.target.value) })}>
-                {REPEAT_EVERY.map((n) => (
-                  <option key={n} value={n}>
-                    {n % 60 === 0 ? t('scheduling.builder.everyHoursOption', { n: n / 60 }) : t('scheduling.builder.everyMinutesOption', { n })}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-          </div>
-          {value.endTime <= value.startTime ? (
-            <p className="text-destructive text-sm">{t('scheduling.issues.repeatEndBeforeStart')}</p>
-          ) : (
-            <p className="text-muted-foreground text-sm">{t('scheduling.builder.repeatHint')}</p>
-          )}
-        </div>
+        <RepeatWindows value={value} onChange={onChange} />
       ) : value.mode === 'fixed' ? (
         <FixedTimes value={value} onChange={onChange} max={max} />
       ) : (
@@ -373,18 +363,26 @@ function FixedTimes({ value, onChange, max }: { value: FixedTiming; onChange: (t
   const { t } = useTranslation();
   const id = useId();
   const extra = value.extraTimes ?? [];
-  const rows = [
+  // `due: null` is "Müddətsiz" (feedback 2026-11-27): no deadline, the run stays open until it is done.
+  const rows: { time: string; due: number | null }[] = [
     { time: value.startTime, due: value.dueAfterMinutes },
-    ...extra.map((time, i) => ({ time, due: value.extraDueAfterMinutes?.[i] ?? value.dueAfterMinutes })),
+    ...extra.map((time, i) => {
+      const own = value.extraDueAfterMinutes?.[i];
+      return { time, due: own === undefined ? value.dueAfterMinutes : own };
+    }),
   ];
-  const set = (next: { time: string; due: number }[]) => {
+  const set = (next: { time: string; due: number | null }[]) => {
     const [first, ...rest] = next;
     const { extraTimes: _times, extraDueAfterMinutes: _dues, ...base } = value;
     const head = { ...base, startTime: first!.time, dueAfterMinutes: first!.due };
     onChange(rest.length ? { ...head, extraTimes: rest.map((r) => r.time), extraDueAfterMinutes: rest.map((r) => r.due) } : head);
   };
   const last = rows[rows.length - 1]!;
-  const nextRow = () => ({ time: minutesToTime(Math.min(timeToMinutes(last.time) + Math.max(last.due, 60), 23 * 60 + 59)), due: last.due });
+  const nextRow = () => ({
+    time: minutesToTime(Math.min(timeToMinutes(last.time) + Math.max(last.due ?? 60, 60), 23 * 60 + 59)),
+    due: last.due ?? 60,
+  });
+  const setDue = (i: number, due: number | null) => set(rows.map((x, j) => (j === i ? { ...x, due } : x)));
   const many = rows.length > 1;
   const issues = validateTiming(value);
   return (
@@ -404,20 +402,64 @@ function FixedTimes({ value, onChange, max }: { value: FixedTiming; onChange: (t
               value={row.time}
               onChange={(e) => e.target.value && set(rows.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))}
             />
-            <div className="w-32">
-              <NumberField
-                id={`${id}-due-${i}`}
-                hideLabel
-                label={many ? t('scheduling.builder.dueAfterN', { n: i + 1 }) : t('scheduling.builder.dueAfter')}
-                value={row.due}
-                min={1}
-                max={max}
-                onChange={(due) => set(rows.map((x, j) => (j === i ? { ...x, due } : x)))}
-              />
-            </div>
+            {row.due === null ? (
+              <div className="flex w-40 items-center gap-1">
+                <span className="text-muted-foreground flex h-9 w-32 items-center rounded-md border border-dashed px-3 text-sm">
+                  {t('scheduling.builder.noDeadline')}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t('scheduling.builder.addDuration')}
+                  title={t('scheduling.builder.addDuration')}
+                  onClick={() => setDue(i, 60)}
+                >
+                  <Plus className="size-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex w-40 items-center gap-1">
+                <div className="w-32">
+                  <NumberField
+                    id={`${id}-due-${i}`}
+                    hideLabel
+                    label={
+                      many
+                        ? t('scheduling.builder.dueAfterN', { n: i + 1 })
+                        : t('scheduling.builder.dueAfter')
+                    }
+                    value={row.due}
+                    min={1}
+                    max={max}
+                    onChange={(due) => setDue(i, due)}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t('scheduling.builder.removeDuration')}
+                  title={t('scheduling.builder.removeDuration')}
+                  onClick={() => setDue(i, null)}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            )}
             {many && (
-              <Button type="button" variant="ghost" size="icon" className="size-8" aria-label={t('scheduling.builder.removeTime', { time: row.time })} onClick={() => set(rows.filter((_, j) => j !== i))}>
-                <X className="size-3.5" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label={t('scheduling.builder.removeTime', { time: row.time })}
+                title={t('scheduling.builder.removeTime', { time: row.time })}
+                onClick={() => set(rows.filter((_, j) => j !== i))}
+              >
+                <Trash2 className="size-3.5" />
               </Button>
             )}
           </div>
@@ -430,11 +472,129 @@ function FixedTimes({ value, onChange, max }: { value: FixedTiming; onChange: (t
           </div>
         )}
       </div>
+      {rows.some((r) => r.due === null) && (
+        <p className="text-muted-foreground text-sm">{t('scheduling.builder.noDeadlineHint')}</p>
+      )}
       {issues.map((i) => (
         <p key={`${i.code}-${i.path.join('.')}`} className="text-destructive text-sm">
           {t(i.code)}
         </p>
       ))}
+    </div>
+  );
+}
+
+type RepeatTiming = Extract<Timing, { mode: 'repeat' }>;
+
+/**
+ * "Gün ərzində təkrar" with one or more start–end windows (feedback 2026-11-27), each with its own interval: one row
+ * per window, start, end, then "Hər". The first row is the timing's own `startTime`/`endTime`/`everyMinutes`.
+ */
+function RepeatWindows({ value, onChange }: { value: RepeatTiming; onChange: (t: Timing) => void }) {
+  const { t } = useTranslation();
+  const id = useId();
+  const rows: RepeatWindow[] = [
+    { startTime: value.startTime, endTime: value.endTime, everyMinutes: value.everyMinutes },
+    ...(value.extraWindows ?? []),
+  ];
+  const set = (next: RepeatWindow[]) => {
+    const [first, ...rest] = next;
+    const { extraWindows: _windows, ...base } = value;
+    const head = { ...base, ...first! };
+    onChange(rest.length ? { ...head, extraWindows: rest } : head);
+  };
+  const setRow = (i: number, patch: Partial<RepeatWindow>) =>
+    set(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const many = rows.length > 1;
+  // A new window starts an hour after the latest end and lasts up to four hours, within the day.
+  const nextRow = (): RepeatWindow => {
+    const lastEnd = Math.max(...rows.map((r) => timeToMinutes(r.endTime)));
+    const start = Math.min(lastEnd + 60, 22 * 60);
+    return {
+      startTime: minutesToTime(start),
+      endTime: minutesToTime(Math.min(start + 240, 23 * 60 + 59)),
+      everyMinutes: rows[rows.length - 1]!.everyMinutes,
+    };
+  };
+  const label = (key: string, i: number) =>
+    many ? `${t('scheduling.builder.windowN', { n: i + 1 })}: ${t(key)}` : t(key);
+  const issues = validateTiming(value);
+  return (
+    <div className="grid gap-2">
+      <div className="grid gap-1.5" role="group" aria-label={t('scheduling.builder.modes.repeat')}>
+        <div
+          className="text-muted-foreground grid grid-cols-[8rem_8rem_8rem] gap-2 text-sm font-medium"
+          aria-hidden
+        >
+          <span>{t('scheduling.builder.startTime')}</span>
+          <span>{t('scheduling.builder.endTime')}</span>
+          <span>{t('scheduling.builder.every')}</span>
+        </div>
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              id={i === 0 ? `${id}-rstart` : undefined}
+              type="time"
+              className="w-32"
+              aria-label={label('scheduling.builder.startTime', i)}
+              value={row.startTime}
+              onChange={(e) => e.target.value && setRow(i, { startTime: e.target.value })}
+            />
+            <Input
+              type="time"
+              className="w-32"
+              aria-label={label('scheduling.builder.endTime', i)}
+              value={row.endTime}
+              onChange={(e) => e.target.value && setRow(i, { endTime: e.target.value })}
+            />
+            <NativeSelect
+              className="w-32"
+              aria-label={label('scheduling.builder.every', i)}
+              value={String(row.everyMinutes)}
+              onChange={(e) => setRow(i, { everyMinutes: Number(e.target.value) })}
+            >
+              {REPEAT_EVERY.map((n) => (
+                <option key={n} value={n}>
+                  {n % 60 === 0
+                    ? t('scheduling.builder.everyHoursOption', { n: n / 60 })
+                    : t('scheduling.builder.everyMinutesOption', { n })}
+                </option>
+              ))}
+            </NativeSelect>
+            {many && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label={t('scheduling.builder.removeWindow', {
+                  range: `${row.startTime}–${row.endTime}`,
+                })}
+                title={t('scheduling.builder.removeWindow', { range: `${row.startTime}–${row.endTime}` })}
+                onClick={() => set(rows.filter((_, j) => j !== i))}
+              >
+                <Trash2 className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        ))}
+        {rows.length < REPEAT_MAX_WINDOWS && (
+          <div>
+            <Button type="button" variant="outline" size="sm" onClick={() => set([...rows, nextRow()])}>
+              <Plus className="size-3.5" /> {t('scheduling.builder.addWindow')}
+            </Button>
+          </div>
+        )}
+      </div>
+      {issues.length ? (
+        [...new Set(issues.map((i) => i.code))].map((code) => (
+          <p key={code} className="text-destructive text-sm">
+            {t(code)}
+          </p>
+        ))
+      ) : (
+        <p className="text-muted-foreground text-sm">{t('scheduling.builder.repeatHint')}</p>
+      )}
     </div>
   );
 }

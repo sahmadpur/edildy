@@ -7,6 +7,7 @@ import {
   SCHEDULING_LIMITS,
   type ShiftHours,
   type Slot,
+  slotStillOpen,
   type Timing,
   validateSchedule,
   validateTiming,
@@ -95,8 +96,15 @@ export class AssignmentRules {
   nextSlots(r: Recurrence, timing: Timing, shift: ShiftHours | null, tz: string, limit: number): Slot[] {
     const now = this.clock.now();
     const today = localDateOf(now, tz);
-    return expandSchedule(r, timing, shift, tz, addDays(today, -8), addDays(today, SCHEDULING_LIMITS.emptyCheckDays))
-      .filter((s) => s.closesAt > now)
+    return expandSchedule(
+      r,
+      timing,
+      shift,
+      tz,
+      addDays(today, -8),
+      addDays(today, SCHEDULING_LIMITS.emptyCheckDays),
+    )
+      .filter((s) => slotStillOpen(s, now, today))
       .slice(0, limit);
   }
 

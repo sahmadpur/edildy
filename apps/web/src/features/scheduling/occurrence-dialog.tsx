@@ -1,4 +1,4 @@
-import type { OccurrenceHistoryEntry } from '@edildy/contracts';
+import { isOpenEnded, type OccurrenceHistoryEntry } from '@edildy/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -77,7 +77,15 @@ export function OccurrenceDialog({ id, onClose, initialTab }: { id: string; onCl
                   <Badge variant={occurrenceVariant(o.status)}>{t(`scheduling.statuses.${o.status}`)}</Badge>
                   {o.unassigned && <Badge variant="destructive">{t('scheduling.schedule.unassigned')}</Badge>}
                 </div>
-                <p>{t('scheduling.schedule.window', { start: formatDateTime(o.startsAt), due: formatDateTime(o.dueAt), close: formatDateTime(o.closesAt) })}</p>
+                <p>
+                  {isOpenEnded(o.dueAt)
+                    ? t('scheduling.summary.openEnded', { time: formatDateTime(o.startsAt) })
+                    : t('scheduling.schedule.window', {
+                        start: formatDateTime(o.startsAt),
+                        due: formatDateTime(o.dueAt),
+                        close: formatDateTime(o.closesAt),
+                      })}
+                </p>
                 <div>
                   <h3 className="font-medium">{t('scheduling.schedule.assignees')}</h3>
                   {o.assignees.length ? (

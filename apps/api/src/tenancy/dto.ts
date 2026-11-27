@@ -2,6 +2,7 @@ import {
   createSiteInputSchema,
   createSiteTypeInputSchema,
   moveSiteInputSchema,
+  reorderSiteTypesInputSchema,
   siteDtoSchema,
   siteTypeDtoSchema,
   tenantDtoSchema,
@@ -16,6 +17,7 @@ export class UpdateTenantDto extends createZodDto(updateTenantInputSchema) {}
 export class TenantResponse extends createZodDto(tenantDtoSchema) {}
 export class CreateSiteTypeDto extends createZodDto(createSiteTypeInputSchema) {}
 export class UpdateSiteTypeDto extends createZodDto(updateSiteTypeInputSchema) {}
+export class ReorderSiteTypesDto extends createZodDto(reorderSiteTypesInputSchema) {}
 export class SiteTypeResponse extends createZodDto(siteTypeDtoSchema) {}
 export class CreateSiteDto extends createZodDto(createSiteInputSchema) {}
 export class UpdateSiteDto extends createZodDto(updateSiteInputSchema) {}

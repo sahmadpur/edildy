@@ -6,7 +6,12 @@ export default {
     name: 'Növün adı',
     order: 'Sıra',
     confirmDeactivate: '«{{name}}» növü ləğv edilsin? Bu növdə olan filiallar dəyişməyəcək.',
-    hint: 'Strukturun səviyyələri üçün növlər yaradın: məsələn, filial, zona, bölmə.',
+    hint: 'Strukturun səviyyələri: yuxarıdakı növün içinə yalnız aşağıdakı növlər əlavə olunur. Filial həmişə birinci səviyyədir; digərlərinin sırasını oxlarla dəyişin.',
+    level: 'Səviyyə {{n}}',
+    root: 'Əsas',
+    moveUp: '«{{name}}» növünü yuxarı qaldır',
+    moveDown: '«{{name}}» növünü aşağı endir',
+    defaults: { branch: 'Filial', zone: 'Zona', section: 'Bölmə', checkpoint: 'Yoxlama nöqtəsi' },
   },
   list: {
     title: 'Filiallar',

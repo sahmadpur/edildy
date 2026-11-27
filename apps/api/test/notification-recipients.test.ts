@@ -149,8 +149,7 @@ describe('notification recipients', () => {
 
   it('expands a message to users, active members of active teams and users of a site subtree, inside the sender’s scope', async () => {
     const w = await schedulingWorld(t);
-    const typeId = await siteTypeIdOf(w.s.tenantId);
-    const child = (await w.api.post('/api/v1/sites', { parentId: w.siteId, typeId, name: 'Filial 1A' })).body.id as string;
+    const child = (await w.api.post('/api/v1/sites', { parentId: w.siteId, typeId: await siteTypeIdOf(w.s.tenantId, 'Zona'), name: 'Filial 1A' })).body.id as string;
     const childWorker = await createUserDirect(t, w.s.tenantId, { fullName: 'İşçi 1A' });
     expect((await w.api.put(`/api/v1/users/${childWorker.id}/sites`, { siteIds: [child] })).status).toBe(200);
     const far = await createUserDirect(t, w.s.tenantId, { fullName: 'Uzaq işçi' });

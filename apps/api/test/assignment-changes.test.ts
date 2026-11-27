@@ -56,6 +56,34 @@ describe('changing assignments', () => {
     expect(after).toEqual(['04:00', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30']);
   });
 
+  it('repeat timing with several windows runs in each one; overlapping windows are rejected (feedback 2026-11-27)', async () => {
+    const w = await schedulingWorld(t);
+    const timing = {
+      mode: 'repeat',
+      startTime: '14:00',
+      endTime: '16:00',
+      everyMinutes: 60,
+      extraWindows: [{ startTime: '08:00', endTime: '10:00', everyMinutes: 30 }],
+    };
+    const a = await createAssignment(w, { timing });
+    const today = (await occurrenceRows(a.id))
+      .filter((r) => r.local_date === TODAY)
+      .map((r) => r.starts_at.toISOString().slice(11, 16));
+    // Baku is UTC+4: 08:00, 08:30, 09:00, 09:30, then 14:00 and 15:00.
+    expect(today).toEqual(['04:00', '04:30', '05:00', '05:30', '10:00', '11:00']);
+    const res = await w.api.post('/api/v1/assignments', {
+      checklistId: w.checklistId,
+      siteId: w.siteId,
+      assigneeIds: w.workers,
+      schedule: daily(),
+      timing: { ...timing, extraWindows: [{ startTime: '15:00', endTime: '17:00', everyMinutes: 60 }] },
+    });
+    expect(res.status).toBe(422);
+    expect(res.body.error.issues).toEqual([
+      { path: ['timing', 'extraWindows', 0, 'startTime'], code: 'scheduling.issues.repeatWindowsOverlap' },
+    ]);
+  });
+
   it('rejects a repeat timing that ends before it starts', async () => {
     const w = await schedulingWorld(t);
     const res = await w.api.post('/api/v1/assignments', {

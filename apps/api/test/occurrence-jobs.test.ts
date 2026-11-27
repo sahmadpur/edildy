@@ -4,7 +4,16 @@ import { OccurrenceJobs } from '../src/scheduling/occurrence-jobs';
 import { createTestApp, type TestApp } from './app';
 import { FakeClock } from './fake-clock';
 import { ownerQuery } from './owner-db';
-import { createAssignment, fixed, live, MONDAY_0800, occurrenceRows, schedulingWorld } from './scheduling-fixtures';
+import {
+  createAssignment,
+  daily,
+  fixed,
+  live,
+  MONDAY_0800,
+  occurrenceRows,
+  schedulingWorld,
+  TODAY,
+} from './scheduling-fixtures';
 
 const historyOf = async (occurrenceId: string) =>
   (
@@ -46,6 +55,52 @@ describe('occurrence jobs', () => {
     const rows = live(await occurrenceRows(a.id));
     expect(rows.map((r) => r.local_date)).not.toContain('2026-11-03');
     expect(rows).toHaveLength(15);
+  });
+
+  it('a time with no Müddət stays open: never overdue or missed, no past days, later times still run (feedback 2026-11-27)', async () => {
+    const w = await schedulingWorld(t);
+    // Started last week: an open-ended run is never made for a day already gone.
+    const timing = {
+      mode: 'fixed',
+      startTime: '08:00',
+      dueAfterMinutes: null,
+      extraTimes: ['13:00'],
+      extraDueAfterMinutes: [60],
+      graceMinutes: 0,
+    };
+    const a = await createAssignment(w, { schedule: daily('2026-10-28'), timing });
+    const rows = live(await occurrenceRows(a.id));
+    const open = await ownerQuery<{ local_date: string; due_at: Date; closes_at: Date }>(
+      "select to_char(local_date, 'YYYY-MM-DD') as local_date, due_at, closes_at from occurrences where assignment_id = $1 and due_at >= '2100-01-01' order by starts_at",
+      [a.id],
+    );
+    expect(open.rows[0]).toMatchObject({
+      local_date: TODAY,
+      due_at: new Date('2100-01-01T00:00:00Z'),
+      closes_at: new Date('2100-01-01T00:00:00Z'),
+    });
+    expect(open.rows.every((r) => r.local_date >= TODAY)).toBe(true);
+    // Both times run every day from today; the 13:00 run is not swallowed by the open 08:00 one.
+    expect(rows.filter((r) => r.local_date === TODAY).map((r) => r.starts_at.toISOString())).toEqual([
+      '2026-11-02T04:00:00.000Z',
+      '2026-11-02T09:00:00.000Z',
+    ]);
+
+    clock.set('2026-11-05T04:00:00Z');
+    await jobs.sweepAll([w.s.tenantId]);
+    await jobs.materializeAll([w.s.tenantId]);
+    const after = live(await occurrenceRows(a.id));
+    const today = after.filter((r) => r.local_date === TODAY);
+    expect(today.map((r) => r.status)).toEqual(['pending', 'missed']);
+    // The cron extends both times by a day and still adds no open-ended runs for the past.
+    expect(
+      after.filter((r) => r.local_date === '2026-11-17').map((r) => r.starts_at.toISOString().slice(11, 16)),
+    ).toEqual(['04:00', '09:00']);
+
+    // Ending the assignment also cancels its open-ended runs, so they don't stay planned for ever.
+    expect((await w.api.post(`/api/v1/assignments/${a.id}/end`, {})).status).toBe(200);
+    const left = live(await occurrenceRows(a.id)).filter((r) => r.status === 'pending');
+    expect(left).toEqual([]);
   });
 
   it('moves pending → overdue → missed with history at the real due and close times', async () => {

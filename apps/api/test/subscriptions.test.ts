@@ -208,10 +208,12 @@ describe('subscriptions', () => {
       const typeId = await siteTypeIdOf(s.tenantId);
       const a = await api.post('/api/v1/sites', { name: 'Filial 1', typeId, parentId: null });
       expect(a.status, JSON.stringify(a.body)).toBe(201);
-      const child = await api.post('/api/v1/sites', { name: 'Zona', typeId, parentId: a.body.id });
+      const child = await api.post('/api/v1/sites', { name: 'Zona', typeId: await siteTypeIdOf(s.tenantId, 'Zona'), parentId: a.body.id });
       expect(child.status).toBe(201);
       const b = await api.post('/api/v1/sites', { name: 'Filial 2', typeId, parentId: null });
       expect(b.body.error).toMatchObject({ code: 'BRANCH_LIMIT_REACHED', limit: 1 });
+      // A Filial-typed sub-site (made before levels, feedback 2026-11-27) may move to the top: then the cap applies.
+      await ownerQuery('update sites set type_id = $1 where id = $2', [typeId, child.body.id]);
       const moved = await api.post(`/api/v1/sites/${child.body.id}/move`, { parentId: null });
       expect(moved.body.error.code).toBe('BRANCH_LIMIT_REACHED');
       expect((await api.patch(`/api/v1/sites/${a.body.id}`, { active: false })).status).toBe(200);

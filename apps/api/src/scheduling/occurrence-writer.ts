@@ -3,17 +3,20 @@ import {
   addDays,
   type CancelReasonCode,
   expandSchedule,
+  isOpenEnded,
   localDateOf,
   type OccurrenceStatus,
+  OPEN_ENDED_AT,
   recurrenceSchema,
   SCHEDULING_LIMITS,
   type ShiftHours,
   type Slot,
   fixedStartTimes,
+  slotStillOpen,
   timingSchema,
   zonedTimeToUtc,
 } from '@edildy/contracts';
-import { and, between, eq, gt, gte, inArray, lte, ne, type SQL, sql } from 'drizzle-orm';
+import { and, between, eq, gt, gte, inArray, lte, ne, or, type SQL, sql } from 'drizzle-orm';
 import { actorColumns } from '../checklists/actor';
 import { Clock } from '../common/clock';
 import { DomainEvents } from '../common/domain-events';
@@ -71,9 +74,14 @@ export class OccurrenceWriter {
     const until = a.materializedUntil;
     // First run: look back far enough for a window of up to 7 days that is still open.
     const from = until ? localDateOf(until, tz) : addDays(today, -8);
-    const candidates = expandSchedule(recurrenceSchema.parse(a.schedule), timing, shift, tz, from, addDays(today, SCHEDULING_LIMITS.horizonDays)).filter(
-      (s) => (!until || s.startsAt >= until) && s.closesAt > now,
-    );
+    const candidates = expandSchedule(
+      recurrenceSchema.parse(a.schedule),
+      timing,
+      shift,
+      tz,
+      from,
+      addDays(today, SCHEDULING_LIMITS.horizonDays),
+    ).filter((s) => (!until || s.startsAt >= until) && slotStillOpen(s, now, today));
     // Several runs a day (repeat, several fixed times, or a shift with several periods) are told apart by their windows, not their day.
     const multi = timing.mode === 'repeat' || (timing.mode === 'fixed' && fixedStartTimes(timing).length > 1) || (shift?.ranges.length ?? 0) > 1;
     const slots = await this.withoutClashes(a.id, multi, candidates);
@@ -122,7 +130,12 @@ export class OccurrenceWriter {
     if (!first) return slots;
     const live = await this.db
       .tx()
-      .select({ localDate: occurrences.localDate, startsAt: occurrences.startsAt, closesAt: occurrences.closesAt })
+      .select({
+        localDate: occurrences.localDate,
+        startsAt: occurrences.startsAt,
+        dueAt: occurrences.dueAt,
+        closesAt: occurrences.closesAt,
+      })
       .from(occurrences)
       .where(
         and(
@@ -137,7 +150,12 @@ export class OccurrenceWriter {
       const days = new Set(live.map((o) => o.localDate));
       return slots.filter((s) => !days.has(s.localDate));
     }
-    return slots.filter((s) => !live.some((o) => s.startsAt < o.closesAt && s.closesAt > o.startsAt));
+    // A run with no deadline (feedback 2026-11-27) never closes, so it clashes only with a run at the same start.
+    const clash = (s: Slot, o: (typeof live)[number]) =>
+      isOpenEnded(s.dueAt) || isOpenEnded(o.dueAt)
+        ? +s.startsAt === +o.startsAt
+        : s.startsAt < o.closesAt && s.closesAt > o.startsAt;
+    return slots.filter((s) => !live.some((o) => clash(s, o)));
   }
 
   /** Recomputes who may do pending occurrences that have not started yet (spec §5.1 snapshot refresh). */
@@ -156,14 +174,24 @@ export class OccurrenceWriter {
     await this.insertSnapshots(ids);
   }
 
-  /** Cancels pending occurrences that start after now; open and overdue ones are kept. */
-  async cancelFuturePending(assignmentId: string, reason: CancelReasonCode): Promise<number> {
+  /**
+   * Cancels pending occurrences that start after now; open and overdue ones are kept. With `openEnded`, pending runs
+   * with no deadline go too: when an assignment ends they would otherwise stay open for ever.
+   */
+  async cancelFuturePending(
+    assignmentId: string,
+    reason: CancelReasonCode,
+    opts: { openEnded?: boolean } = {},
+  ): Promise<number> {
     const now = this.clock.now();
+    const when = opts.openEnded
+      ? or(gt(occurrences.startsAt, now), gte(occurrences.dueAt, OPEN_ENDED_AT))
+      : gt(occurrences.startsAt, now);
     const rows = await this.db
       .tx()
       .update(occurrences)
       .set({ status: 'cancelled', cancelReason: reason, statusChangedAt: now, updatedAt: now })
-      .where(and(eq(occurrences.assignmentId, assignmentId), eq(occurrences.status, 'pending'), gt(occurrences.startsAt, now)))
+      .where(and(eq(occurrences.assignmentId, assignmentId), eq(occurrences.status, 'pending'), when))
       .returning({ id: occurrences.id });
     await this.recordTransitions(rows.map((r) => ({ occurrenceId: r.id, from: 'pending', to: 'cancelled', at: now, reason })));
     return rows.length;

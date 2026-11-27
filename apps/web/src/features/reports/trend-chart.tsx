@@ -36,7 +36,7 @@ export function TrendChart({ trend }: { trend: readonly ReportTrendDay[] }) {
   const label = { planned: t('reports.chart.planned'), completed: t('reports.chart.completed'), late: t('reports.chart.late') };
 
   return (
-    <figure aria-labelledby={titleId} className="bg-card shadow-card grid grid-rows-[auto_1fr] gap-2 rounded-xl p-5">
+    <figure aria-labelledby={titleId} className="bg-card shadow-card relative grid grid-rows-[auto_1fr] gap-2 rounded-xl p-5">
       <figcaption id={titleId} className="font-medium">
         {t('reports.trend')}
       </figcaption>
@@ -55,27 +55,34 @@ export function TrendChart({ trend }: { trend: readonly ReportTrendDay[] }) {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <table className="sr-only">
-        <caption>{t('reports.chart.table')}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t('reports.columns.date')}</th>
-            <th scope="col">{label.planned}</th>
-            <th scope="col">{label.completed}</th>
-            <th scope="col">{label.late}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trend.map((d) => (
-            <tr key={d.date}>
-              <td>{formatLocalDate(d.date, locale)}</td>
-              <td>{d.planned}</td>
-              <td>{d.completed}</td>
-              <td>{d.late}</td>
+      {/*
+        The table for screen readers sits in a clipped box: a table ignores height and overflow, so with sr-only on the
+        table itself it kept a row per day of height and made the page taller than the shell, and the whole page
+        (sidebar included) scrolled on Hesabatlar (feedback 2026-11-27).
+      */}
+      <div className="sr-only">
+        <table>
+          <caption>{t('reports.chart.table')}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t('reports.columns.date')}</th>
+              <th scope="col">{label.planned}</th>
+              <th scope="col">{label.completed}</th>
+              <th scope="col">{label.late}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {trend.map((d) => (
+              <tr key={d.date}>
+                <td>{formatLocalDate(d.date, locale)}</td>
+                <td>{d.planned}</td>
+                <td>{d.completed}</td>
+                <td>{d.late}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }
