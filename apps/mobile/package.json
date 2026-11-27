@@ -61,7 +61,7 @@
     "eas-build-post-install": "pnpm --filter \"@edildy/mobile^...\" run build"
   },
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "jest": {
     "preset": "jest-expo",
     "testTimeout": 30000,
