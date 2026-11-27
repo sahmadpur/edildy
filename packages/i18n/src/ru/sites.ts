@@ -31,10 +31,11 @@ export default {
   },
   form: {
     createTitle: 'Новый филиал',
-    editTitle: 'Редактировать филиал',
+    createTitleOf: 'Добавить: {{type}}',
+    editTitle: 'Изменить: {{name}}',
     name: 'Название',
     type: 'Тип',
-    address: 'Адрес',
+    address: 'Комментарий',
     parent: 'Родительский филиал: {{name}}',
   },
 } as const;

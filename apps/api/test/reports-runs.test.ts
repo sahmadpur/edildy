@@ -34,8 +34,8 @@ describe('GET /reports/runs', () => {
     // The Göstəricilər (feedback 2026-11-15): planned = pending, started, in progress, partial; late = overdue, missed.
     expect(await bucket('planned')).toEqual(runs('r14', 'r13', 'r16', 'r5'));
     expect(await bucket('late')).toEqual(runs('r12', 'r10', 'r8', 'r3'));
-    // `all` (the default) includes the cancelled r6.
-    expect(await bucket()).toEqual(runs('r15', 'r14', 'r13', 'r16', 'r12', 'r11', 'r10', 'r9', 'r8', 'r7', 'r6', 'r5', 'r4', 'r3', 'r2', 'r1'));
+    // `all` (the default) leaves out the cancelled r6 (feedback 2026-11-27).
+    expect(await bucket()).toEqual(runs('r15', 'r14', 'r13', 'r16', 'r12', 'r11', 'r10', 'r9', 'r8', 'r7', 'r5', 'r4', 'r3', 'r2', 'r1'));
   });
 
   it('returns the run row with its people, both completion times and the flags', async () => {

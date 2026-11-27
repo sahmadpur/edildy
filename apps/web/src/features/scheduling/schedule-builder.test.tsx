@@ -128,13 +128,27 @@ describe('TimingEditor', () => {
     render(<TimingHarness initial={defaultTiming('fixed', [])} />);
     expect(screen.queryByLabelText('Gecikmə icazəsi (dəqiqə)')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
-    expect(json()).toEqual({ mode: 'fixed', startTime: '08:00', extraTimes: ['10:00'], dueAfterMinutes: 120, graceMinutes: 60 });
+    expect(json()).toEqual({ mode: 'fixed', startTime: '08:00', extraTimes: ['10:00'], extraDueAfterMinutes: [120], dueAfterMinutes: 120, graceMinutes: 60 });
     fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '09:00' } });
     expect(screen.getByText('Vaxtlar arasındakı fasilə icra müddətindən az ola bilməz.')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '13:00' } });
     expect(screen.queryByText('Vaxtlar arasındakı fasilə icra müddətindən az ola bilməz.')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: '08:00 vaxtını sil' }));
     expect(json()).toEqual({ mode: 'fixed', startTime: '13:00', dueAfterMinutes: 120, graceMinutes: 60 });
+  });
+
+  it('asks the icra müddəti of every fixed time (feedback 2026-11-27)', async () => {
+    render(<TimingHarness initial={defaultTiming('fixed', [])} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
+    fireEvent.change(screen.getByLabelText('Başlama vaxtı 2'), { target: { value: '13:00' } });
+    fireEvent.change(screen.getByLabelText('İcra müddəti 2 (dəqiqə)'), { target: { value: '30' } });
+    expect(json()).toEqual({ mode: 'fixed', startTime: '08:00', extraTimes: ['13:00'], extraDueAfterMinutes: [30], dueAfterMinutes: 120, graceMinutes: 60 });
+    // A new time starts with the last one's length.
+    await userEvent.click(screen.getByRole('button', { name: 'Vaxt əlavə et' }));
+    expect(json()).toMatchObject({ extraTimes: ['13:00', '14:00'], extraDueAfterMinutes: [30, 30] });
+    // Removing the first time keeps the others' own lengths.
+    await userEvent.click(screen.getByRole('button', { name: '08:00 vaxtını sil' }));
+    expect(json()).toEqual({ mode: 'fixed', startTime: '13:00', extraTimes: ['14:00'], extraDueAfterMinutes: [30], dueAfterMinutes: 30, graceMinutes: 60 });
   });
 
   it('offers any time of the day, with no time fields', async () => {

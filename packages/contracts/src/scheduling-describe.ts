@@ -1,4 +1,4 @@
-import { fixedStartTimes, type Recurrence, type Timing } from './scheduling.js';
+import { type FixedRun, fixedRuns, type Recurrence, type Timing } from './scheduling.js';
 import { minutesToTime, timeToMinutes } from './scheduling-time.js';
 
 /** The caller's translate function, so contracts stays free of UI strings. */
@@ -44,10 +44,13 @@ function describeTime(timing: Timing, shiftName: string | null, t: Translate): s
       : t('scheduling.summary.everyMinutes', { n: timing.everyMinutes });
     return t('scheduling.summary.repeat', { every, range: `${timing.startTime}–${timing.endTime}` });
   }
-  const times = fixedStartTimes(timing);
-  if (times.length > 1) return times.join(', ');
-  const end = timeToMinutes(timing.startTime) + timing.dueAfterMinutes;
-  const range = `${timing.startTime}–${minutesToTime(end)}`;
+  // Several times: each one's own window (feedback 2026-11-27), e.g. "08:00–10:00, 13:00–13:30".
+  return fixedRuns(timing).map((run) => runWindow(run, t)).join(', ');
+}
+
+function runWindow(run: FixedRun, t: Translate): string {
+  const end = timeToMinutes(run.time) + run.dueAfterMinutes;
+  const range = `${run.time}–${minutesToTime(end)}`;
   const days = Math.floor(end / 1440);
   return days === 0 ? range : t('scheduling.summary.plusDays', { range, days });
 }

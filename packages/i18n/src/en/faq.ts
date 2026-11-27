@@ -24,7 +24,7 @@ export default {
     },
     severalTimes: {
       q: 'How do I assign a check several times a day?',
-      a: 'In a new assignment choose “Fixed time” and add the hours with “Add a time” (e.g. 08:00, 13:00, 18:00) — each time is its own check. For an even interval (e.g. every hour 08:00–20:00) choose “Repeat during the day”.',
+      a: 'In a new assignment choose “Fixed time” and add the hours with “Add a time” (e.g. 08:00, 13:00, 18:00) — each time is its own check with its own time to complete. For an even interval (e.g. every hour 08:00–20:00) choose “Repeat during the day”.',
     },
     takenByOther: {
       q: 'The phone says another employee is doing this check.',

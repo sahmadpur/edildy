@@ -25,7 +25,7 @@ export default {
     },
     severalTimes: {
       q: 'Bir yoxlamanı gündə bir neçə dəfə necə təyin edim?',
-      a: 'Yeni təyinatda «Sabit vaxt» seçin və «Vaxt əlavə et» ilə lazımi saatları əlavə edin (məsələn, 08:00, 13:00, 18:00) — hər vaxt ayrıca yoxlamadır. Bərabər aralıqla təkrar üçün (məsələn, hər saat 08:00–20:00) «Gün ərzində təkrar» seçin.',
+      a: 'Yeni təyinatda «Sabit vaxt» seçin və «Vaxt əlavə et» ilə lazımi saatları əlavə edin (məsələn, 08:00, 13:00, 18:00) — hər vaxt ayrıca yoxlamadır və öz icra müddəti var. Bərabər aralıqla təkrar üçün (məsələn, hər saat 08:00–20:00) «Gün ərzində təkrar» seçin.',
     },
     takenByOther: {
       q: 'Telefonda «Bu yoxlamanı başqa əməkdaş aparır» yazılır.',

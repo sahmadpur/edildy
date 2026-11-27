@@ -41,6 +41,7 @@ test('Edildy staff create an organisation; the owner accepts the invitation, add
   await branch.getByRole('button', { name: 'Zona / bölmə' }).first().click();
   await page.getByLabel('Ad', { exact: true }).fill('Anbar №1');
   await expect(page.getByRole('dialog').getByLabel('Növ')).toHaveValue(/.+/);
+  await expect(page.getByRole('dialog').getByRole('heading', { name: 'Yeni zona' })).toBeVisible();
   await page.getByRole('button', { name: 'Yadda saxla' }).click();
   await expect(page.getByRole('treeitem').getByText('Anbar №1')).toBeVisible();
 

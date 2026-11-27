@@ -65,7 +65,7 @@ test('owner sets up a shift and a roster, then assigns a checklist by shift', as
   await expect(preview.getByText('Hər gün, Səhər növbəsi')).toBeVisible();
   // The preview is a month calendar with the checks marked on their days (feedback 2026-11-08).
   await expect(preview.getByRole('button', { name: /, 1 yoxlama$/ }).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Yadda saxla' }).click();
+  await page.getByRole('button', { name: 'Təyinat göndər' }).click();
 
   // The assignment page opens; its runs show on the Yoxlama cədvəli month calendar.
   await expect(page.getByRole('heading', { name: 'E2E açılış' })).toBeVisible();

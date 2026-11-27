@@ -31,10 +31,11 @@ export default {
   },
   form: {
     createTitle: 'Yeni filial',
-    editTitle: 'Filialı redaktə et',
+    createTitleOf: 'Yeni {{type}}',
+    editTitle: 'Redaktə et: {{name}}',
     name: 'Ad',
     type: 'Növ',
-    address: 'Ünvan',
+    address: 'Şərh',
     parent: 'Yuxarı filial: {{name}}',
   },
 } as const;

@@ -14,18 +14,22 @@ function isHidden(style: unknown): boolean {
 }
 
 /**
- * The bottom bar: Home is a raised round button fixed in the centre, the other tabs share the two halves evenly
- * (2 | Home | 1 for a worker, 2 | Home | 2 with the team tab), so Home stays in the middle whatever the count.
+ * The bottom bar: Home is a raised round button fixed in the centre and the other tabs, in route order, are split
+ * evenly around it, the extra one on the left when the count is odd. The plan hides tabs (Basic and Pro have no
+ * Tapşırıqlar or Problemlər), so the split is by count, not by where Home sits in the routes (feedback 2026-11-27).
+ * Every tab has the same width and the shorter side is centred in its half, so the bar stays balanced on any plan.
  * Screens that hide the bar (`tabBarStyle: { display: 'none' }`) hide it here too.
  */
 export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {
   const focused = state.routes[state.index];
   if (focused && isHidden(descriptors[focused.key]?.options.tabBarStyle)) return null;
   const visible = state.routes.filter((r) => !isHidden(descriptors[r.key]?.options.tabBarItemStyle));
-  const centreAt = visible.findIndex((r) => r.name === CENTRE_ROUTE);
-  const left = centreAt >= 0 ? visible.slice(0, centreAt) : visible;
-  const right = centreAt >= 0 ? visible.slice(centreAt + 1) : [];
-  const centre = centreAt >= 0 ? visible[centreAt] : null;
+  const centre = visible.find((r) => r.name === CENTRE_ROUTE) ?? null;
+  const others = visible.filter((r) => r !== centre);
+  const leftCount = centre ? Math.ceil(others.length / 2) : others.length;
+  const left = others.slice(0, leftCount);
+  const right = others.slice(leftCount);
+  const width = `${100 / Math.max(left.length, right.length, 1)}%` as const;
 
   const press = (route: Route) => {
     const isFocused = focused?.key === route.key;
@@ -46,7 +50,7 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
         accessibilityLabel={label}
         testID={`tab-${route.name}`}
         onPress={() => press(route)}
-        style={styles.item}
+        style={[styles.item, { width }]}
       >
         {options.tabBarIcon?.({ focused: on, color, size: 24 })}
         <Text numberOfLines={1} style={[styles.label, { color }]}>
@@ -96,9 +100,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: 6,
   },
-  half: { flex: 1, flexDirection: 'row' },
+  half: { flex: 1, flexDirection: 'row', justifyContent: 'center' },
   gap: { width: CENTRE + spacing.md },
-  item: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  item: { minHeight: 48, alignItems: 'center', justifyContent: 'center', gap: 2 },
   label: { fontFamily: font, fontSize: 11, fontWeight: '500' },
   centreWrap: { position: 'absolute', left: 0, right: 0, top: -CENTRE / 2 + 4, alignItems: 'center', gap: 2 },
   centre: {

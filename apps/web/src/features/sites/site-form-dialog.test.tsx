@@ -34,5 +34,8 @@ describe('SiteFormDialog', () => {
     const parent = { id: '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e10', typeId: types[0]!.id, name: 'Baş filial' } as SiteDto;
     render(<SiteFormDialog open onOpenChange={() => {}} types={types} parent={parent} onSubmit={vi.fn()} />);
     expect(screen.getByLabelText('Növ')).toHaveValue(types[1]!.id);
+    // Titled by the type: "Yeni zona", not "Yeni filial"; the address field is a comment (feedback 2026-11-27).
+    expect(screen.getByRole('heading', { name: 'Yeni zona' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Şərh').tagName).toBe('TEXTAREA');
   });
 });

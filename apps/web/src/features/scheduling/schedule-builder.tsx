@@ -49,7 +49,7 @@ export function defaultTiming(mode: Timing['mode'], shifts: ShiftDto[]): Timing 
 /** Interval choices of "Gün ərzində təkrar", in minutes. */
 const REPEAT_EVERY = [15, 30, 60, 120, 180, 240, 360] as const;
 
-function NumberField({ id, label, value, min, max, onChange }: { id: string; label: string; value: number; min: number; max: number; onChange: (n: number) => void }) {
+function NumberField({ id, label, value, min, max, onChange, hideLabel }: { id: string; label: string; value: number; min: number; max: number; onChange: (n: number) => void; hideLabel?: boolean }) {
   // The draft is what the user is typing; it re-syncs whenever `value` changes from outside.
   const [state, setState] = useState({ draft: String(value), seen: value });
   const draft = state.seen === value ? state.draft : String(value);
@@ -59,7 +59,7 @@ function NumberField({ id, label, value, min, max, onChange }: { id: string; lab
   };
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} className={hideLabel ? 'sr-only' : undefined}>{label}</Label>
       <Input
         id={id}
         type="number"
@@ -365,51 +365,70 @@ export function TimingEditor({ value, onChange, shifts, disabled }: TimingEditor
 type FixedTiming = Extract<Timing, { mode: 'fixed' }>;
 
 /**
- * "Sabit vaxt" with one or more start times (feedback 2026-11-14): each time is its own run of the same length.
- * The grace ("Gecikmə icazəsi") is no longer asked: it keeps its default, or the value an older assignment stored.
+ * "Sabit vaxt" with one or more start times (feedback 2026-11-14), each with its own "İcra müddəti" (feedback
+ * 2026-11-27): one row per run, time then length. The grace ("Gecikmə icazəsi") is no longer asked: it keeps its
+ * default, or the value an older assignment stored.
  */
 function FixedTimes({ value, onChange, max }: { value: FixedTiming; onChange: (t: Timing) => void; max: number }) {
   const { t } = useTranslation();
   const id = useId();
-  const times = [value.startTime, ...(value.extraTimes ?? [])];
-  const set = (next: string[]) => {
+  const extra = value.extraTimes ?? [];
+  const rows = [
+    { time: value.startTime, due: value.dueAfterMinutes },
+    ...extra.map((time, i) => ({ time, due: value.extraDueAfterMinutes?.[i] ?? value.dueAfterMinutes })),
+  ];
+  const set = (next: { time: string; due: number }[]) => {
     const [first, ...rest] = next;
-    const { extraTimes: _drop, ...base } = value;
-    onChange(rest.length ? { ...base, startTime: first!, extraTimes: rest } : { ...base, startTime: first! });
+    const { extraTimes: _times, extraDueAfterMinutes: _dues, ...base } = value;
+    const head = { ...base, startTime: first!.time, dueAfterMinutes: first!.due };
+    onChange(rest.length ? { ...head, extraTimes: rest.map((r) => r.time), extraDueAfterMinutes: rest.map((r) => r.due) } : head);
   };
-  const nextTime = () => minutesToTime(Math.min(timeToMinutes(times[times.length - 1]!) + Math.max(value.dueAfterMinutes, 60), 23 * 60 + 59));
+  const last = rows[rows.length - 1]!;
+  const nextRow = () => ({ time: minutesToTime(Math.min(timeToMinutes(last.time) + Math.max(last.due, 60), 23 * 60 + 59)), due: last.due });
+  const many = rows.length > 1;
   const issues = validateTiming(value);
   return (
     <div className="grid gap-3">
       <div className="grid gap-1.5" role="group" aria-label={t('scheduling.builder.startTimes')}>
-        <span className="text-sm font-medium">{t('scheduling.builder.startTimes')}</span>
-        <div className="flex flex-wrap items-center gap-2">
-          {times.map((time, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <Input
-                id={i === 0 ? `${id}-start` : undefined}
-                type="time"
-                className="w-32"
-                aria-label={times.length === 1 ? t('scheduling.builder.startTime') : t('scheduling.builder.startTimeN', { n: i + 1 })}
-                value={time}
-                onChange={(e) => e.target.value && set(times.map((x, j) => (j === i ? e.target.value : x)))}
+        <div className="text-muted-foreground grid grid-cols-[8rem_8rem] gap-2 text-sm font-medium">
+          <span>{t(many ? 'scheduling.builder.startTimes' : 'scheduling.builder.startTime')}</span>
+          <span>{t('scheduling.builder.dueAfter')}</span>
+        </div>
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input
+              id={i === 0 ? `${id}-start` : undefined}
+              type="time"
+              className="w-32"
+              aria-label={many ? t('scheduling.builder.startTimeN', { n: i + 1 }) : t('scheduling.builder.startTime')}
+              value={row.time}
+              onChange={(e) => e.target.value && set(rows.map((x, j) => (j === i ? { ...x, time: e.target.value } : x)))}
+            />
+            <div className="w-32">
+              <NumberField
+                id={`${id}-due-${i}`}
+                hideLabel
+                label={many ? t('scheduling.builder.dueAfterN', { n: i + 1 }) : t('scheduling.builder.dueAfter')}
+                value={row.due}
+                min={1}
+                max={max}
+                onChange={(due) => set(rows.map((x, j) => (j === i ? { ...x, due } : x)))}
               />
-              {times.length > 1 && (
-                <Button type="button" variant="ghost" size="icon" className="size-8" aria-label={t('scheduling.builder.removeTime', { time })} onClick={() => set(times.filter((_, j) => j !== i))}>
-                  <X className="size-3.5" />
-                </Button>
-              )}
             </div>
-          ))}
-          {times.length < FIXED_MAX_TIMES && (
-            <Button type="button" variant="outline" size="sm" onClick={() => set([...times, nextTime()])}>
+            {many && (
+              <Button type="button" variant="ghost" size="icon" className="size-8" aria-label={t('scheduling.builder.removeTime', { time: row.time })} onClick={() => set(rows.filter((_, j) => j !== i))}>
+                <X className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        ))}
+        {rows.length < FIXED_MAX_TIMES && (
+          <div>
+            <Button type="button" variant="outline" size="sm" onClick={() => set([...rows, nextRow()])}>
               <Plus className="size-3.5" /> {t('scheduling.builder.addTime')}
             </Button>
-          )}
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        <NumberField id={`${id}-due`} label={t('scheduling.builder.dueAfter')} value={value.dueAfterMinutes} min={1} max={max} onChange={(dueAfterMinutes) => onChange({ ...value, dueAfterMinutes })} />
+          </div>
+        )}
       </div>
       {issues.map((i) => (
         <p key={`${i.code}-${i.path.join('.')}`} className="text-destructive text-sm">

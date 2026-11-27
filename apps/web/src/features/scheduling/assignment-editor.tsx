@@ -238,7 +238,8 @@ export function AssignmentEditor({ initial, preset, today: todayProp, onSaved, o
         <FormError message={error} />
         <div className="flex gap-2">
           <Button onClick={() => void save()} disabled={!canSave}>
-            {t('common.save')}
+            {/* A new assignment is "sent" to its people (feedback 2026-11-27); an edit is saved. */}
+            {initial ? t('common.save') : t('scheduling.assignments.send')}
           </Button>
           <Button variant="outline" onClick={onCancel}>
             {t('common.cancel')}
