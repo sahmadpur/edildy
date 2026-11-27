@@ -122,7 +122,7 @@ export default {
   fields: {
     acceptedAt: 'Принято',
     active: 'Активен',
-    address: 'Адрес',
+    address: 'Комментарий',
     answers: 'Ответы',
     assigneeIds: 'Исполнители',
     assigneeTeamId: 'Команда',

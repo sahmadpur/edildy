@@ -84,10 +84,10 @@ describe('AssignmentEditor', () => {
     expect(await screen.findByRole('option', { name: 'Mətbəx · Zona' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: /Soyuducu · Bölmə/ })).toBeInTheDocument();
     await userEvent.selectOptions(await screen.findByLabelText('Yoxlama vərəqəsi'), 'c1');
-    expect(screen.getByRole('button', { name: 'Yadda saxla' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Təyinat göndər' })).toBeDisabled();
     await userEvent.selectOptions(place, 's1');
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Elvin' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Təyinat göndər' }));
     await waitFor(() => expect(mocks.api.assignments.create).toHaveBeenCalledWith(expect.objectContaining({ siteId: 's1' })));
   });
 
@@ -103,7 +103,7 @@ describe('AssignmentEditor', () => {
       expect(mocks.api.assignments.preview).toHaveBeenLastCalledWith({ siteId: 'site1', schedule: SCHEDULE, timing: TIMING, assigneeIds: ['u1'] }),
     );
     expect(await screen.findByText(/08:00–10:00$/, { selector: 'li' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Təyinat göndər' }));
     await waitFor(() =>
       expect(mocks.api.assignments.create).toHaveBeenCalledWith({ name: null, checklistId: 'c1', siteId: 'site1', assigneeIds: ['u1'], schedule: SCHEDULE, timing: TIMING }),
     );
@@ -113,10 +113,10 @@ describe('AssignmentEditor', () => {
   it('clears assignees when the site changes', async () => {
     renderWithProviders(<AssignmentEditor today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
     await fillBasics();
-    expect(screen.getByRole('button', { name: 'Yadda saxla' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Təyinat göndər' })).toBeEnabled();
     await userEvent.selectOptions(screen.getByLabelText('Filial'), 'site2');
     expect(await screen.findByRole('checkbox', { name: 'Elvin' })).not.toBeChecked();
-    expect(screen.getByRole('button', { name: 'Yadda saxla' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Təyinat göndər' })).toBeDisabled();
   });
 
   it('names the users an error is about', async () => {
@@ -125,7 +125,7 @@ describe('AssignmentEditor', () => {
     );
     renderWithProviders(<AssignmentEditor today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
     await fillBasics();
-    await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Təyinat göndər' }));
     expect(await screen.findByText('Seçilmiş icraçılardan biri bu filiala aid deyil. (Elvin)')).toBeInTheDocument();
   });
 
@@ -137,7 +137,7 @@ describe('AssignmentEditor', () => {
     renderWithProviders(<AssignmentEditor today="2026-11-02" onSaved={vi.fn()} onCancel={vi.fn()} />);
     await fillBasics();
     expect(await screen.findByText('İcra müddəti 24 saatdan uzundur. Bunun üçün xüsusi icazə lazımdır.')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Yadda saxla' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Təyinat göndər' }));
     expect(await screen.findByText('Bitmə tarixi başlama tarixindən əvvəl ola bilməz.')).toBeInTheDocument();
   });
 

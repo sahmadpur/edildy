@@ -9,6 +9,8 @@ import { FormError } from '@/components/form-error';
 import { NativeSelect } from '@/components/native-select';
 import { TextField } from '@/components/text-field';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { applyFieldErrors, errorText } from '@/lib/errors';
 
@@ -29,7 +31,7 @@ interface Props {
 }
 
 export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubmit }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const activeTypes = types.filter((ty) => ty.active || ty.id === site?.typeId);
   // A new place inside another starts one level down (Filial → Zona → Bölmə, feedback 2026-11-14); a new top-level one as the first type.
@@ -47,6 +49,13 @@ export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubm
     },
   });
   const typeId = useWatch({ control: form.control, name: 'typeId' });
+  // "Yeni zona" under a filial, not "Yeni filial" (feedback 2026-11-27): a new place is titled by the type picked.
+  const pickedType = types.find((ty) => ty.id === typeId)?.name;
+  const title = site
+    ? t('sites.form.editTitle', { name: site.name })
+    : pickedType
+      ? t('sites.form.createTitleOf', { type: pickedType.toLocaleLowerCase(i18n.language) })
+      : t('sites.form.createTitle');
   useEffect(() => {
     if (firstTypeId && !form.getValues('typeId')) form.setValue('typeId', firstTypeId);
   }, [firstTypeId, form]);
@@ -63,7 +72,7 @@ export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubm
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{site ? t('sites.form.editTitle') : t('sites.form.createTitle')}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="grid gap-4" noValidate>
           {parent && (
@@ -90,7 +99,11 @@ export function SiteFormDialog({ open, onOpenChange, types, site, parent, onSubm
               ))}
             </NativeSelect>
           </Field>
-          <TextField form={form} name="address" label={t('sites.form.address')} />
+          {/* Stored as `address`; shown as a free comment (feedback 2026-11-27). */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="site-address">{t('sites.form.address')}</Label>
+            <Textarea id="site-address" rows={2} maxLength={300} {...form.register('address')} />
+          </div>
           <FormError message={error} />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

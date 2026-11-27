@@ -164,7 +164,8 @@ export function bucketCondition(b: RunBucket): SQL {
     case 'planned':
       return sql`r.status in ${statusList(INDICATOR_STATUSES.planned)}`;
     case 'all':
-      return sql`true`;
+      // "Hamısı" lists every run but the cancelled ones, which count nowhere (feedback 2026-11-15, 2026-11-27).
+      return sql`r.status <> 'cancelled'`;
   }
 }
 

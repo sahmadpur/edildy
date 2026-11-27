@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   expandSchedule,
+  fixedRuns,
   type Recurrence,
   recurrenceSchema,
   scheduleDates,
@@ -13,6 +14,7 @@ import {
   validateTiming,
   windowMinutes,
 } from './scheduling.js';
+import { describeSchedule } from './scheduling-describe.js';
 
 const ID = '0192f1e2-7c3a-7b4d-8e5f-0a1b2c3d4e5f';
 const range = (startDate: string, extra: Partial<{ endDate: string | null; skipDates: string[] }> = {}) => ({
@@ -192,6 +194,36 @@ describe('several fixed times (feedback 2026-11-14)', () => {
     expect(validateTiming(fixed)).toEqual([]);
     expect(validateTiming({ ...fixed, extraTimes: ['08:00'] })).toEqual([{ path: ['extraTimes', 0], code: 'scheduling.issues.duplicateTime' }]);
     expect(validateTiming({ ...fixed, extraTimes: ['09:00'] })).toEqual([{ path: ['dueAfterMinutes'], code: 'scheduling.issues.timesTooClose' }]);
+  });
+});
+
+describe('each fixed time with its own icra müddəti (feedback 2026-11-27)', () => {
+  // 18:00 lasts 30 minutes, 13:00 has no entry and falls back to the first time's 120.
+  const fixed = { mode: 'fixed', startTime: '08:00', extraTimes: ['18:00', '13:00'], extraDueAfterMinutes: [30], dueAfterMinutes: 120, graceMinutes: 0 } as const;
+
+  it('parses and gives every run its own length', () => {
+    expect(timingSchema.parse(fixed)).toEqual(fixed);
+    expect(fixedRuns(fixed)).toEqual([
+      { time: '08:00', dueAfterMinutes: 120 },
+      { time: '13:00', dueAfterMinutes: 120 },
+      { time: '18:00', dueAfterMinutes: 30 },
+    ]);
+    const slots = slotsFor('2026-11-02', fixed, null, 'UTC');
+    expect(slots.map((s) => s.dueAt.toISOString())).toEqual(['2026-11-02T10:00:00.000Z', '2026-11-02T15:00:00.000Z', '2026-11-02T18:30:00.000Z']);
+  });
+
+  it('uses the longest run for the window and checks each gap against the run before it', () => {
+    expect(windowMinutes({ ...fixed, extraDueAfterMinutes: [300, 30] }, null)).toBe(300);
+    expect(validateTiming(fixed)).toEqual([]);
+    // 13:00 now lasts 6 hours, past 18:00.
+    expect(validateTiming({ ...fixed, extraDueAfterMinutes: [30, 360] })).toEqual([{ path: ['dueAfterMinutes'], code: 'scheduling.issues.timesTooClose' }]);
+  });
+
+  it('describes each window', () => {
+    const t = (k: string) => k;
+    expect(describeSchedule({ kind: 'daily', every: 1, ...range('2026-11-01') }, fixed, null, t)).toBe(
+      'scheduling.summary.daily, 08:00–10:00, 13:00–15:00, 18:00–18:30',
+    );
   });
 });
 

@@ -122,7 +122,7 @@ export default {
   fields: {
     acceptedAt: 'Qəbul edilib',
     active: 'Aktiv',
-    address: 'Ünvan',
+    address: 'Şərh',
     answers: 'Cavablar',
     assigneeIds: 'İcraçılar',
     assigneeTeamId: 'Komanda',

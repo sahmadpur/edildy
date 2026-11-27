@@ -24,6 +24,27 @@ describe('TabBar (Nov 2026 feedback points 1–2)', () => {
     expect(screen.queryByTestId('tab-sync')).toBeNull();
   });
 
+  it('splits by count when the plan hides the tabs before Home (feedback 2026-11-27)', async () => {
+    // Pro: no Tapşırıqlar or Problemlər, so every visible tab comes after Home in the routes.
+    const manager = props(['tasks', 'problems/index', 'index', 'calendar', 'team/index', 'profile'], { hidden: ['tasks', 'problems/index'] });
+    await render(<TabBar {...manager} />);
+    expect(screen.getAllByRole('tab').map((t) => t.props.testID)).toEqual(['tab-calendar', 'tab-team/index', 'tab-profile', 'tab-index']);
+    // Two slots a side: the lone right tab is as wide as the left ones.
+    expect(screen.getByTestId('tab-profile').props.style).toEqual(expect.arrayContaining([expect.objectContaining({ width: '50%' })]));
+  });
+
+  it('gives a Pro worker one tab a side', async () => {
+    const worker = props(['tasks', 'problems/index', 'index', 'calendar', 'team/index', 'profile'], { hidden: ['tasks', 'problems/index', 'team/index'] });
+    await render(<TabBar {...worker} />);
+    expect(screen.getAllByRole('tab').map((t) => t.props.testID)).toEqual(['tab-calendar', 'tab-profile', 'tab-index']);
+  });
+
+  it('puts the odd tab on the left with every tab on (XL)', async () => {
+    const p = props(['tasks', 'problems/index', 'index', 'calendar', 'team/index', 'profile']);
+    await render(<TabBar {...p} />);
+    expect(screen.getAllByRole('tab').map((t) => t.props.testID)).toEqual(['tab-tasks', 'tab-problems/index', 'tab-calendar', 'tab-team/index', 'tab-profile', 'tab-index']);
+  });
+
   it('navigates to a tab that is not focused', async () => {
     const p = props(['tasks', 'problems/index', 'index', 'profile']);
     await render(<TabBar {...p} />);

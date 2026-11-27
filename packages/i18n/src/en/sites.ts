@@ -31,10 +31,11 @@ export default {
   },
   form: {
     createTitle: 'New branch',
-    editTitle: 'Edit branch',
+    createTitleOf: 'New {{type}}',
+    editTitle: 'Edit: {{name}}',
     name: 'Name',
     type: 'Type',
-    address: 'Address',
+    address: 'Comment',
     parent: 'Parent branch: {{name}}',
   },
 } as const;

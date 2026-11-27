@@ -122,7 +122,7 @@ export default {
   fields: {
     acceptedAt: 'Accepted',
     active: 'Active',
-    address: 'Address',
+    address: 'Comment',
     answers: 'Answers',
     assigneeIds: 'Assignees',
     assigneeTeamId: 'Team',

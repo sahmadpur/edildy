@@ -31,7 +31,7 @@ describe('report data scope (spec §4)', () => {
   it('shows a site_subtree manager only their branch and its zones', async () => {
     const api = w.leyla.api;
     expect(await planned(api)).toBe(13);
-    expect(await runIds(api)).toEqual(runs('r1', 'r2', 'r3', 'r5', 'r6', 'r7', 'r8', 'r9', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16'));
+    expect(await runIds(api)).toEqual(runs('r1', 'r2', 'r3', 'r5', 'r7', 'r8', 'r9', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16'));
     expect(names(await get<SiteReportRow[]>(api, 'sites'))).toEqual(['Filial A', 'Zona A1', 'Zona A2']);
     expect(names(await get<EmployeeReportRow[]>(api, 'employees'))).toEqual(['Aynur Quliyeva', 'Kamran Əliyev', 'Samir Məmmədov', 'Təyin edilməyib']);
     const problems = await get<ReportProblems>(api, 'problems');
@@ -43,7 +43,7 @@ describe('report data scope (spec §4)', () => {
   it('shows a subordinates manager only the runs of their people', async () => {
     const api = w.rauf.api;
     expect(await planned(api)).toBe(12);
-    expect(await runIds(api)).toEqual(runs('r1', 'r2', 'r3', 'r5', 'r6', 'r7', 'r9', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16'));
+    expect(await runIds(api)).toEqual(runs('r1', 'r2', 'r3', 'r5', 'r7', 'r9', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16'));
     expect(names(await get<EmployeeReportRow[]>(api, 'employees'))).toEqual(['Aynur Quliyeva', 'Kamran Əliyev', 'Samir Məmmədov']);
     expect((await get<ReportProblems>(api, 'problems')).items.map((p) => p.id)).toEqual([w.problems.p4, w.problems.p1]);
     expect((await get<ReportTasks>(api, 'tasks')).items.map((x) => x.id)).toEqual(tasks('t7', 't8', 't2', 't6', 't4', 't1'));

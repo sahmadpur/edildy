@@ -63,6 +63,7 @@ export const FIXED_MAX_TIMES = 12;
 
 export const REPEAT_LIMITS = { minEveryMinutes: 15, maxEveryMinutes: 720 } as const;
 
+const dueAfterMinutes = z.number().int().min(1).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes);
 const graceMinutes = z.number().int().min(0).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes);
 export const timingSchema = z.discriminatedUnion('mode', [
   z.object({
@@ -73,7 +74,12 @@ export const timingSchema = z.discriminatedUnion('mode', [
      * 13:00 and 18:00. Each time is its own run with the same length; absent on assignments made before.
      */
     extraTimes: z.array(localTimeSchema).max(FIXED_MAX_TIMES - 1).optional(),
-    dueAfterMinutes: z.number().int().min(1).max(SCHEDULING_LIMITS.maxExtendedWindowMinutes),
+    dueAfterMinutes: dueAfterMinutes,
+    /**
+     * Each extra time's own "İcra müddəti" (feedback 2026-11-27), index-aligned with `extraTimes`; a missing entry
+     * (and every assignment made before) uses `dueAfterMinutes`, which stays the first time's length.
+     */
+    extraDueAfterMinutes: z.array(dueAfterMinutes).max(FIXED_MAX_TIMES - 1).optional(),
     graceMinutes,
   }),
   z.object({ mode: z.literal('shift'), shiftId: idSchema, graceMinutes }),
@@ -141,14 +147,29 @@ export function shiftDurationMinutes(s: ShiftHours): number {
   return Math.max(...s.ranges.map(rangeMinutes));
 }
 
+/** One run of a fixed-time assignment: its start and its own length. */
+export interface FixedRun {
+  time: LocalTime;
+  dueAfterMinutes: number;
+}
+
+/** Every run of a fixed-time assignment, sorted by time; a repeated time keeps its first entry. */
+export function fixedRuns(timing: Extract<Timing, { mode: 'fixed' }>): FixedRun[] {
+  const runs: FixedRun[] = [{ time: timing.startTime, dueAfterMinutes: timing.dueAfterMinutes }];
+  (timing.extraTimes ?? []).forEach((time, i) => {
+    if (!runs.some((r) => r.time === time)) runs.push({ time, dueAfterMinutes: timing.extraDueAfterMinutes?.[i] ?? timing.dueAfterMinutes });
+  });
+  return runs.sort((a, b) => (a.time < b.time ? -1 : a.time > b.time ? 1 : 0));
+}
+
 /** Every start time of a fixed-time assignment, sorted, without repeats. */
 export function fixedStartTimes(timing: Extract<Timing, { mode: 'fixed' }>): LocalTime[] {
-  return [...new Set([timing.startTime, ...(timing.extraTimes ?? [])])].sort();
+  return fixedRuns(timing).map((r) => r.time);
 }
 
 /** Start → close length of every slot (FR-09.05). */
 export function windowMinutes(timing: Timing, shift: ShiftHours | null): number {
-  if (timing.mode === 'fixed') return timing.dueAfterMinutes + timing.graceMinutes;
+  if (timing.mode === 'fixed') return Math.max(...fixedRuns(timing).map((r) => r.dueAfterMinutes)) + timing.graceMinutes;
   if (timing.mode === 'anytime') return ANYTIME_WINDOW_MINUTES;
   if (timing.mode === 'repeat') return timing.everyMinutes;
   if (!shift) throw new Error('shift timing needs the shift hours');
@@ -220,7 +241,7 @@ export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | nu
     return shift.ranges.map((range) => rangeSlot(date, range, timing.graceMinutes, tz)).sort((a, b) => +a.startsAt - +b.startsAt);
   }
   if (timing.mode === 'fixed') {
-    return fixedStartTimes(timing).map((time) => fixedSlot(date, time, timing, tz));
+    return fixedRuns(timing).map((run) => fixedSlot(date, run, timing, tz));
   }
   if (timing.mode !== 'repeat') return [slotFor(date, timing, shift, tz)];
   const end = timeToMinutes(timing.endTime);
@@ -231,9 +252,9 @@ export function slotsFor(date: LocalDate, timing: Timing, shift: ShiftHours | nu
   });
 }
 
-function fixedSlot(date: LocalDate, time: LocalTime, timing: Extract<Timing, { mode: 'fixed' }>, tz: string): Slot {
-  const startsAt = zonedTimeToUtc(date, timeToMinutes(time), tz);
-  const dueAt = new Date(+startsAt + timing.dueAfterMinutes * 60_000);
+function fixedSlot(date: LocalDate, run: FixedRun, timing: Extract<Timing, { mode: 'fixed' }>, tz: string): Slot {
+  const startsAt = zonedTimeToUtc(date, timeToMinutes(run.time), tz);
+  const dueAt = new Date(+startsAt + run.dueAfterMinutes * 60_000);
   return { localDate: date, startsAt, dueAt, closesAt: new Date(+dueAt + timing.graceMinutes * 60_000) };
 }
 
@@ -244,7 +265,7 @@ export function slotFor(date: LocalDate, timing: Timing, shift: ShiftHours | nul
     if (!first) throw new Error(`${timing.mode} timing has no run`);
     return first;
   }
-  if (timing.mode === 'fixed') return fixedSlot(date, fixedStartTimes(timing)[0]!, timing, tz);
+  if (timing.mode === 'fixed') return fixedSlot(date, fixedRuns(timing)[0]!, timing, tz);
   if (timing.mode === 'anytime') {
     // Midnight to the next midnight in the tenant's zone: due when the day ends, nothing after.
     const startsAt = zonedTimeToUtc(date, 0, tz);
@@ -312,8 +333,8 @@ export function validateTiming(timing: Timing): ContentIssue[] {
       seen.add(time);
     });
     // Each run is due before the next one starts, so two runs of one assignment never overlap their working time.
-    const minutes = fixedStartTimes(timing).map(timeToMinutes);
-    if (minutes.some((m, i) => i > 0 && m - minutes[i - 1]! < timing.dueAfterMinutes)) {
+    const runs = fixedRuns(timing);
+    if (runs.some((r, i) => i > 0 && timeToMinutes(r.time) - timeToMinutes(runs[i - 1]!.time) < runs[i - 1]!.dueAfterMinutes)) {
       issues.push({ path: ['dueAfterMinutes'], code: 'scheduling.issues.timesTooClose' });
     }
     return issues;

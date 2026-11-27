@@ -36,7 +36,8 @@ describe('report exports (spec §5.4)', () => {
     expect(rows[0]).toEqual([
       'Tarix', 'Son vaxt', 'Yoxlama vərəqəsi', 'Filial', 'Status', 'İcraçılar', 'Yoxlayan', 'Başlanıb', 'Tamamlanıb (cihaz)', 'Serverə çatıb', 'Bal', 'Problemlər', 'Kritik', 'Gecikmə ilə', 'Saat şübhəli', 'Audit', 'Düzəliş edilib',
     ]);
-    expect(rows).toHaveLength(17);
+    // A header and the 15 runs that are not cancelled (feedback 2026-11-27).
+    expect(rows).toHaveLength(16);
     // r7: done on the phone at 11:00 Baku on Monday, received by the server on Wednesday at 09:00 (FR-10.14).
     expect(rows.find((r) => r[9] === '04.11.2026 09:00')).toEqual([
       '02.11.2026', '02.11.2026 10:00', 'Açılış yoxlaması', 'Zona A1', 'Tamamlanıb', 'Aynur Quliyeva', 'Aynur Quliyeva', '02.11.2026 08:10', '02.11.2026 11:00', '04.11.2026 09:00', '90.0', '0', '0', 'Bəli', 'Xeyr', '', 'Xeyr',
